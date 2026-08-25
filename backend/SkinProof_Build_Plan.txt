@@ -1,0 +1,397 @@
+SKINPROOF — END-TO-END IMPLEMENTATION PLAN
+==============================================
+
+SkinProof's thesis: skincare doesn't have an information problem, it has an
+attribution problem. This plan translates that thesis into a buildable
+system — capture, computer vision, causal attribution, an honest weekly
+verdict, and the infrastructure to scale it from a beachhead of skincare
+obsessives to a personalized skincare measurement platform.
+
+
+00. THESIS & SCOPE
+-------------------
+Not a tracker. Not a diagnosis app. A measurement instrument for one
+person's own face, calibrated against itself.
+
+Three things have to be true simultaneously for this to work, and each maps
+to a system we build:
+
+1. Comparable photos — same face, same framing, same light, days apart.
+   This is a capture and calibration problem before it is a computer
+   vision problem.
+2. Honest measurement — blemishes, redness, dark spots, texture,
+   quantified against the user's own baseline, with the discipline to say
+   "no clear change" instead of manufacturing false precision.
+3. Causal discipline — skin changes over weeks, not days. The product
+   enforces one-variable-at-a-time experiments so a result can actually be
+   attributed to a product.
+
+Everything below — architecture, models, roadmap — exists to make those
+three true at increasing scale, without ever crossing into medical
+diagnosis, which would change our regulatory category entirely.
+
+
+01. CORE LOOP
+-------------
+The weekly loop is the product:
+
+  Step        | User does                          | System does
+  ------------+-------------------------------------+---------------------------------------------------------------
+  Log         | Scans or searches each AM/PM product| Timestamps every product start/stop as a variable in the routine time-series
+  Capture     | Takes a guided photo every 3–7 days | Enforces framing, distance, light, expression in real time before accepting the shot
+  Measure     | Waits                               | Aligns photo to baseline, extracts blemish/redness/dark-spot/texture metrics, scores confidence
+  Attribute   | Waits                               | Correlates metric deltas against routine variable timestamps, respecting minimum stabilization windows
+  Decide      | Reads one verdict                   | Renders "keep / likely useful / evidence unclear / investigate" per product, plus one instruction: hold, or change one thing
+
+The product's entire trust proposition rests on the "Decide" row being
+defensible, not persuasive. Everything in sections 03–05 is in service of
+that.
+
+
+02. SYSTEM ARCHITECTURE
+------------------------
+Mobile client does capture and guidance; backend does everything that
+needs to be consistent, auditable, and improvable without an app release.
+
+Component map:
+
+  Mobile App (iOS / Android)
+    - Guided Capture (face-mesh + light/distance check)
+    - Routine Log (barcode / search / OCR)
+    - Weekly Verdict UI
+
+  Backend — API Layer
+    - API Gateway / BFF
+    - Identity & Consent
+    - Billing & Entitlements
+
+  Core Services
+    - Photo Ingestion (encrypt, queue)
+    - CV Analysis Pipeline
+    - Attribution Engine
+    - Insight Service (LLM-assisted)
+    - Product & Ingredient Catalog
+    - Engagement & Reminders
+
+  Data Layer
+    - Postgres — routines, users, products
+    - Object storage — encrypted photos
+    - Vector store — face embeddings, cohorts
+    - Warehouse — analytics, model training
+
+Flow: Capture -> Gateway -> Photo Ingestion -> CV Pipeline -> Attribution
+Engine -> Insight Service -> Verdict UI. Routine Log -> Gateway -> Product
+Catalog. CV Pipeline writes to the vector store and warehouse; Attribution
+Engine writes to Postgres and warehouse; Engagement service drives
+notifications back to the UI.
+
+Two design decisions worth naming up front: the CV pipeline runs
+asynchronously (photos don't need a real-time answer, they need a correct
+one), and the attribution engine is a distinct service from the CV
+pipeline, not a step inside it — attribution logic changes far more often
+than the vision models do, and it's the part regulators and skeptical
+users will scrutinize most.
+
+
+03. COMPUTER VISION PIPELINE
+-----------------------------
+Where AI actually does the measuring:
+
+Capture — On-device guidance, not just a camera.
+  Real-time face-mesh overlay (MediaPipe Face Mesh or ARKit) enforces
+  distance, yaw/pitch, and exposure before a frame is accepted. First 90
+  days, prompt for a cheap color-reference card in-frame (or use a fixed
+  screen-flash pattern) to solve white-balance drift across devices — this
+  single feature is what makes "measured, not remembered" true.
+
+Preprocess — Registration to the user's own baseline.
+  Landmark-based alignment warps every new photo onto the geometry of the
+  user's baseline shot. Lighting normalization (CLAHE, color-checker
+  correction) removes the "did I stand somewhere darker" confound before
+  any metric is computed.
+
+Extract — One model family per visible metric.
+  - Blemishes: fine-tuned lesion-detection model (YOLO/RT-DETR class)
+    counting and localizing active spots.
+  - Redness: skin-segmented a*-channel (Lab color space) analysis — a
+    deterministic, explainable calculation, not a learned model.
+  - Dark spots: contrast-thresholded segmentation tracking area x
+    intensity over time.
+  - Texture/pores: local frequency-domain descriptor (or a small learned
+    embedding) compared as a distance from baseline, not an absolute
+    score.
+
+Score — Confidence before conclusion.
+  Every metric ships with a noise floor: given known capture-to-capture
+  variance, is this delta distinguishable from nothing? Below threshold ->
+  "no clear change," exactly as shown in the product's own demo. This is
+  the single feature most responsible for user trust, and it must never be
+  silently disabled to make the app look more impressive.
+
+Build note: Do not train custom detection models before there's a labeled
+dataset of the company's own users. Ship v1 on off-the-shelf, well
+validated models (MediaPipe landmarks + deterministic color-space math)
+and spend the first 6 months collecting labeled longitudinal photo pairs —
+that dataset, not a v1 model, is the actual CV asset.
+
+
+04. ATTRIBUTION ENGINE
+------------------------
+This is the moat inside the product, distinct from the data moat. It has
+to be explainable, because the user has to trust a verdict enough to stop
+buying something.
+
+Model the routine as a time-series of typed events (product introduced,
+product removed, dose/frequency changed) and the skin metrics as a
+parallel time-series. Then:
+
+1. Enforce experiment design in the product, not just the model. If two
+   variables changed within the same window, the engine cannot attribute —
+   and the UI should proactively tell the user to wait before adding a
+   second change, exactly like "wait 10 more days" from the deck.
+2. Use change-point detection anchored to event timestamps, not
+   free-floating trend detection — the question is never "did this metric
+   change," it's "did this metric change after this specific event, more
+   than it moves on its own."
+3. Require a minimum stabilization window (product-specific: retinol needs
+   longer than a cleanser) before crediting or discrediting anything.
+4. Output one of four explainable states per product — Keep / Likely
+   useful / Evidence unclear / Investigate — each backed by the actual
+   numbers, shown on tap. No hidden model score determines the label; a
+   rules-plus-statistics layer does, so support and the founders can
+   always explain a verdict to a skeptical user.
+
+Start rules-based and statistical (interrupted time-series, paired
+difference tests against the user's own noise floor). Reach for a learned
+model only once there's enough cross-user data to justify one — and even
+then, keep the rules layer as a floor the learned model can't override in
+the direction of overclaiming.
+
+
+05. INSIGHT & LLM LAYER
+-------------------------
+Language on top of numbers, never instead of them. The LLM's job is
+narrow: turn the attribution engine's structured output into the
+one-paragraph weekly verdict, answer follow-up questions about the user's
+own data, and explain ingredients in plain language. It is not allowed to
+invent a verdict.
+
+- Grounded generation: the prompt is built entirely from structured fields
+  (deltas, confidence, days-stable, event log). The model is a translator
+  from data to sentence, not a reasoner over raw photos.
+- Data Q&A: RAG over the user's own time-series and the ingredient
+  database answers "why did redness increase" — always citing the specific
+  event/date it's referencing.
+- Safety triage: a lightweight classifier screens for anything outside
+  cosmetic scope (suspected cystic acne, changing moles, pain) and routes
+  to a "see a dermatologist" message instead of an LLM answer.
+- Ingredient explainer (premium feature): plain-language summary of what
+  an INCI ingredient list actually does, sourced from a maintained
+  ingredient database, not model memory.
+
+Keep the model swappable behind an internal interface — this is a place
+where using a frontier hosted model (e.g. Claude) for quality now, with the
+option to move to a smaller fine-tuned model later for cost, is the right
+call, since the prompts are narrow and evaluable.
+
+
+06. DATA MODEL
+----------------
+The entities that carry the moat:
+
+  Entity          | Key fields                                              | Why it matters
+  ----------------+----------------------------------------------------------+-------------------------------------------------------------------------------
+  User            | baseline_date, skin_type, consent_state                 | Anchors every comparison to one person's own history — never pooled across users for individual verdicts
+  RoutineEvent    | product_id, action(start/stop/change), timestamp, slot  | The causal variable the attribution engine indexes on
+  Product         | barcode, INCI ingredients, category                     | Shared catalog across users — the reusable, network-effect-bearing asset
+  PhotoCapture    | raw_ref, aligned_ref, capture_quality, device_meta       | Raw kept in a retention window; reprocessable as CV models improve
+  MetricSnapshot  | blemish_count, redness_delta, darkspot_area, texture_score, confidence | The actual measurement — versioned by which model produced it
+  Verdict         | product_id, label, evidence_window, generated_text      | The user-facing output; must be reconstructable from Snapshot + RoutineEvent alone
+
+Version every MetricSnapshot against the model that produced it. When the
+CV pipeline improves, this lets historical photos be reprocessed and
+back-filled without losing the original measurement's provenance — the
+12-month history called the moat is only valuable if it stays comparable
+as the models get better.
+
+
+07. TRUST, PRIVACY, REGULATORY
+---------------------------------
+Facial photos are the highest-stakes data type in the product.
+
+- Biometric data law: face images/embeddings are regulated as
+  sensitive/biometric data (GDPR Art. 9, India's DPDP Act 2023, Illinois
+  BIPA). Require explicit, specific consent for facial data separate from
+  general ToS; support full export and deletion.
+- Stay out of SaMD territory: explicitly "cosmetic tracking, never
+  diagnosis" in UI copy, model outputs, and marketing. Any wording
+  implying disease detection risks reclassification as a medical device
+  (FDA/CDSCO) — this is a legal review item before every new metric ships,
+  not just a launch-time check.
+- Minimize what's stored: keep raw photos only for a bounded retention
+  window (e.g. 24 months) needed for reprocessing; store derived,
+  non-reversible metrics indefinitely. Encrypt photo storage with
+  per-user keys.
+- On-device where possible: capture-quality checks (framing/light/
+  distance) run on-device — they never need to leave the phone, which
+  both reduces privacy exposure and cuts server cost from day one.
+
+Bring in a dermatology/cosmetic-science advisor before the first CV metric
+ships, not after — they're the check against language and features that
+drift toward diagnostic claims.
+
+
+08. TECH STACK
+-----------------
+  Layer     | Recommendation                                                          | Why
+  ----------+---------------------------------------------------------------------------+-----------------------------------------------------------------------
+  Mobile    | React Native (or native Swift/Kotlin if capture guidance needs frame-level camera control) | Camera/AR guidance is the highest-craft surface in the app — don't let a cross-platform layer degrade it; prototype capture natively first if RN camera APIs fall short
+  Backend   | Node/TypeScript or Python (FastAPI) services, event-driven via a queue (SQS/PubSub) | CV and attribution are async workloads by nature — a queue-first backend fits the domain
+  CV/ML     | PyTorch, ONNX export for on-device, MediaPipe for landmarks              | Standard, well-supported, and portable to on-device inference later
+  Storage   | Postgres (transactional), S3/GCS (encrypted photos), pgvector for embeddings early | No need for a specialized vector DB until cohort-similarity features (Discover) are built
+  Infra     | Single cloud (AWS or GCP), GPU autoscaling worker pool for CV inference, CDN for processed image delivery | Keep it boring at MVP scale — the differentiation is in the models and product, not the infra
+  LLM       | Hosted frontier model behind an internal "insight service" interface     | Narrow, evaluable prompts — quality now, swap for cost later without touching product code
+
+
+09. SCALING IN PHASES
+------------------------
+Scale the causal claims, not just the infrastructure.
+
+0 -> 500 users — Prove the loop, not the model.
+  Off-the-shelf landmarks + deterministic color-space metrics. Rules-based
+  attribution. Single region, Postgres + S3. Founders manually review a
+  sample of verdicts weekly to catch bad calls before they erode trust.
+
+500 -> 20k — Automate what was manual.
+  Train first custom detection models on the labeled dataset now
+  accumulated. Move CV inference to an autoscaling async worker pool. Add
+  an engagement/reminder service to protect the every-3–7-days capture
+  cadence, since a broken cadence breaks the whole measurement premise.
+
+20k -> 500k — Personalize and control cost.
+  Cohort-level personalization (similar skin type/routine patterns) for
+  cold-start recommendations. Push capture-quality checks fully
+  on-device. Compress/tier photo storage aggressively — this is the
+  dominant variable cost at this scale. Launch commerce (affiliate
+  reorder).
+
+500k+ — Deepen the skin model.
+  Per-user lightweight fine-tuned adapters on top of shared backbone
+  models — a true "model of one person's skin."
+
+Cost driver to watch: raw photo storage grows linearly with users x
+capture frequency and is the single largest infra cost at scale. Keep
+derived metrics forever, raw photos for a bounded window, and compress
+aggressively — reprocessability matters more than keeping every original
+pixel indefinitely.
+
+
+10. MONETIZATION
+-------------------
+Subscription first; commerce only once trust is earned.
+
+  Tier               | Includes                                                                   | Price
+  -------------------+------------------------------------------------------------------------------+---------------------
+  Free               | Baseline capture, photo history, weekly trend                             | $0
+  Premium            | Product-level effectiveness verdicts, unlimited experiments, long-term comparisons, ingredient analysis | $7–10/mo · $50–70/yr
+  Commerce (later)   | One-tap reorder when a product earned its place; alternatives surfaced when evidence is flat | Affiliate revenue only
+
+The hard constraint to write into the org from day one: recommendations
+are never for sale, and no paid placement in verdicts. The moment a "keep"
+verdict can be bought, the entire attribution engine's credibility — and
+the product's reason to exist — collapses. This should be a policy the
+commerce team is structurally unable to override, not a norm.
+
+
+11. GO-TO-MARKET
+-------------------
+Sell the proof, not the app.
+
+Beachhead: the 5–10 product skincare obsessive already taking progress
+photos and reading ingredient threads — they've already paid the cost of
+standardized capture in spirit, just not in a system that measures it.
+
+- Content that is the product: real 90-day before/after attribution case
+  studies (with consent) on skincare TikTok/Reddit communities — the demo
+  screen in the deck IS the ad.
+- Influencer seeding over paid ads early: skincare creators already run
+  these experiments manually on camera; give them the tool that automates
+  their own format.
+- ASO around intent, not brand: "does my skincare actually work,"
+  "skincare tracker," "am I wasting money on skincare."
+- Retention mechanic: streaks/reminders tied to the 3–7 day capture
+  cadence — missed captures are the biggest threat to data quality, so
+  growth and data-quality incentives point the same direction.
+
+
+12. METRICS THAT MATTER
+--------------------------
+Metrics that track the moat, not just the app.
+
+  Category      | Metric                                                          | Why it's the right one
+  --------------+-------------------------------------------------------------------+-------------------------------------------------------------------
+  Activation    | % completing baseline capture + first routine log              | Nothing works without a real baseline
+  Habit         | 2nd and 3rd photo captured within the guided window            | Measurement quality depends entirely on cadence adherence
+  Engagement    | Weekly verdict open + action-taken rate                        | Is the verdict actually changing behavior, or just being read
+  Monetization  | Free -> Premium conversion, annual mix                          | Annual plans correlate with the long-history behavior the moat depends on
+  Moat          | Median days of continuous history per active user             | Directly measures switching cost — the stated moat, made trackable
+  Trust         | Rate of "evidence unclear" verdicts users still engage with vs. abandon after | Tests whether honesty about uncertainty is compatible with retention
+
+
+13. TEAM & HIRING
+--------------------
+- Founding mobile/backend engineer: owns capture UX and the routine/
+  photo/verdict pipeline end to end — the hardest early craft is the
+  camera guidance, not the backend.
+- CV/ML engineer: hired by ~500 users once there's a labeled dataset worth
+  training on; before that, founders can run off-the-shelf models.
+- Cosmetic science / dermatology advisor: part-time, brought in before
+  the first metric ships — reviews language, metric definitions, and the
+  diagnosis/cosmetic boundary continuously.
+- Growth/content lead: owns the case-study content engine described in
+  GTM — this role is closer to "producer" than "marketer" for this
+  product.
+- Data/infra engineer: hired around the 20k-user mark when photo storage
+  cost and async CV throughput start to matter operationally.
+
+
+14. ROADMAP
+--------------
+  Window        | Ships
+  --------------+---------------------------------------------------------------------------------------------------------
+  Month 0–3     | Guided capture (landmarks + light/distance checks), routine log with barcode scan, deterministic redness/dark-spot metrics, rules-based single-product attribution, free tier only
+  Month 3–6     | Blemish detection model (v1, off-the-shelf fine-tune), premium tier launch, weekly verdict copy via LLM insight service, streak/reminder engagement loop
+  Month 6–12    | Custom-trained detection models on first-party labeled data, texture/pore metric, ingredient database + analysis feature, data-Q&A chat grounded on user history
+  Year 2        | Cohort-level personalization ("Discover" — what works for someone like me), commerce/affiliate reorder flow, on-device capture-quality inference, multi-region infra
+  Year 3        | Per-user fine-tuned model layer, deeper personalization on the skin history already collected
+
+
+15. RISKS & MITIGATIONS
+--------------------------
+  Risk                                                             | Mitigation
+  ------------------------------------------------------------------+---------------------------------------------------------------------------------
+  Users drift from the capture cadence, breaking measurement validity | Gamified reminders; make the guided-capture UX fast enough to be frictionless, not a chore
+  A false attribution damages trust                                | Conservative statistics, explicit "evidence unclear" state, minimum stabilization windows enforced in the UI itself
+  Feature/marketing language drifts toward medical claims          | Standing advisor review; language checklist as a ship-blocking review step for any new metric
+  Biometric data breach                                            | Per-user encryption keys, bounded raw-photo retention, independent security audit before scale
+  CV accuracy varies across skin tones/lighting conditions         | Deliberately diverse labeled dataset from month one; per-cohort accuracy monitoring, not just aggregate
+  Commerce perceived as biasing recommendations                    | Structural policy: no paid placement, affiliate-only, disclosed — enforced as a constraint the commerce team cannot override
+
+
+16. THREE-YEAR VISION
+------------------------
+From tracker to a model of one person's skin.
+
+After three years of continuous capture, the system holds 1,000+ days of
+one person's skin history: every routine tried, every product that
+coincided with real improvement, how winter differs from summer, what
+they actually stick to versus abandon. That is not a recommendation engine
+reused across users — it's a standing model of one person's skin, built on
+calibrated capture, longitudinal comparison, and causal attribution.
+
+
+---
+Note: the source deck (SkinProof_YC_Deck) has placeholders — founder
+names, TAM, current MRR/users, and the fundraising ask — that this plan
+was built independent of. Slot those in once available; nothing above
+depends on them.

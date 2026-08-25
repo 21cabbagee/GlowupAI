@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Phase 3.7 (feature/account): the ONLY path exposed to other apps is filesDir/exports/, and
+     only for as long as the FileProvider grants a one-time read URI to the share sheet the user
+     picked. The data export JSON never goes anywhere else (no external storage, no MediaStore). -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path name="exports" path="exports/" />
+</paths>

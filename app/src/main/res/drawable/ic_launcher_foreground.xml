@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GlowUp launcher mark (Phase 6.1 branding).
+
+  A scan-ring with a centred focus dot: a simple reticle standing in for a
+  skin-measurement capture ("this exact point, measured"). Two flat shapes,
+  ink-900 on the honey background layer, no gradients and no photographic
+  detail so it reads at 48dp and survives circle / rounded-square / squircle
+  adaptive masks alike.
+
+  Geometry is centred on the 108x108 canvas and kept inside the adaptive-icon
+  safe zone (inner 66dp, i.e. the 21..87 band on both axes):
+    - ring: centre (54,54), radius 22, 9-wide stroke -> outer edge at 30.5..77.5
+    - dot:  centre (54,54), radius 9 -> well inside the ring's inner edge (~17.5 to 54)
+  Also used as the monochrome layer (Android 13+ themed icons); the system
+  derives the mask from this shape's alpha, so the fill colour here does not
+  need to change for that purpose.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Scan ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="@color/ink_900"
+        android:strokeWidth="9"
+        android:pathData="M32,54 a22,22 0 1,0 44,0 a22,22 0 1,0 -44,0 z" />
+    <!-- Focus dot -->
+    <path
+        android:fillColor="@color/ink_900"
+        android:pathData="M45,54 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 z" />
+</vector>

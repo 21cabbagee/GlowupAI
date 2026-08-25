@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Dark variant of Theme.GlowUp — warm charcoal, matching core.design.GlowDarkColorScheme.
+      Never a grey inversion of the light theme; see app/src/main/res/values/themes.xml for the
+      full rationale.
+    -->
+    <style name="Theme.GlowUp" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@color/charcoal_900</item>
+        <item name="android:statusBarColor">@color/charcoal_900</item>
+        <item name="android:navigationBarColor">@color/charcoal_900</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">false</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">shortEdges</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+    </style>
+</resources>

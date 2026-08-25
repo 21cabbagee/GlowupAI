@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Honey brand tokens, kept in sync with core/design/Tokens.kt (HoneyPalette). These XML
+      copies exist only for the pieces Compose cannot own: the AndroidManifest window theme
+      (status/nav bar treatment shown before Compose draws) and any legacy XML view that isn't
+      migrated to Compose yet. The Compose ColorScheme in core/design is the source of truth for
+      everything drawn on screen.
+    -->
+    <color name="honey_300">#FFE29A</color>
+    <color name="honey_400">#FFD166</color>
+    <color name="honey_500">#FFBE2E</color>
+    <color name="honey_600">#F0A400</color>
+    <color name="honey_700">#B87300</color>
+    <color name="ink_900">#14110B</color>
+    <color name="ink_600">#57503F</color>
+    <color name="paper">#FFFDF8</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="charcoal_900">#0F0D0A</color>
+    <color name="charcoal_800">#1E1911</color>
+</resources>

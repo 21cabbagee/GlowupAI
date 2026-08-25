@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Default / release network security config: cleartext traffic is forbidden
+  entirely. The debug build type ships its own override at
+  app/src/debug/res/xml/network_security_config.xml that permits cleartext
+  ONLY for the emulator loopback (10.0.2.2) and localhost, so local backend
+  development keeps working without weakening the release policy.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

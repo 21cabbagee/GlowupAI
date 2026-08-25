@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legacy single-color alias some tooling (older Android Studio icon wizards,
+  some OEM launchers) expects to find at this exact name. Kept in sync with
+  the drawable of the same name and with @color/honey_500 in colors.xml,
+  which remains the single source of truth for the value.
+-->
+<resources>
+    <color name="ic_launcher_background">@color/honey_500</color>
+</resources>

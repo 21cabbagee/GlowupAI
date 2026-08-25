@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      Compose-host theme. This XML theme only controls what the platform draws before/around
+      Compose content: the window background shown for an instant at cold start, and the status
+      / navigation bar chrome. All actual UI (colors, typography, shapes) comes from
+      core.design.GlowUpTheme in Compose — this file must stay a thin shell around it, never a
+      second source of truth.
+
+      Parent is a plain framework theme (no AppCompat/Material Components library is a dependency
+      of this module) so this activity can go fully edge-to-edge and let Compose draw every pixel.
+
+      NOTE: there is deliberately no "DayNight" parent here. `android:Theme.DeviceDefault.DayNight`
+      is not a framework style at any API level — DayNight is an AppCompat/Material concept and
+      referencing it under the `android:` namespace fails resource linking. Light/dark is handled
+      by resource qualification instead: this file is the light theme, and values-night/themes.xml
+      is the warm-charcoal dark variant (a redefinition, not a grey inversion), matching
+      core.design.GlowDarkColorScheme.
+    -->
+    <style name="Theme.GlowUp" parent="android:Theme.DeviceDefault.Light.NoActionBar">
+        <item name="android:windowBackground">@color/paper</item>
+        <item name="android:statusBarColor">@color/paper</item>
+        <item name="android:navigationBarColor">@color/paper</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">shortEdges</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+    </style>
+</resources>

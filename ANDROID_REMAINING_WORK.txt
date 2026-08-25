@@ -1,0 +1,197 @@
+GlowUp AI Android — Remaining Work Handoff
+===========================================
+
+Scope
+-----
+This handoff follows ANDROID_PLAN.md as the source of truth. It intentionally excludes:
+- Production hardening and Play Store release work.
+- Backend deployment/hosting/CI and environment-secret setup.
+- Firebase project configuration and authentication-provider work.
+
+The app is a substantial Android rebuild, but it is not production-ready yet. Existing source
+presence must not be treated as completion: several areas still need compile verification, tests,
+state audits, and end-to-end API validation.
+
+Current progress
+----------------
+Completed or substantially implemented in the Android tree:
+
+1. Architecture and design system
+   - Compose feature packages exist for auth, onboarding, home, capture, routine, insights,
+     discover, account, and the shared shell.
+   - Honey/Bumble-adjacent tokens, light/dark themes, spacing, shapes, motion, reusable cards,
+     buttons, fields, error/empty/locked states, metric components, bottom navigation, and
+     previews exist.
+   - The original all-in-one MainActivity/legacy screen path has been replaced by feature-owned
+     screens and navigation graphs.
+
+2. Backend contract surface
+   - GlowUpApi.kt covers the complete documented backend route family, including health, session,
+     profile/consent, subscriptions, products, routine events, captures, dashboard/history,
+     engagement/check-ins/recap/analytics, Q&A/triage, discover/commerce, labels, reprocessing,
+     shelf scan, context/root-cause/budget/derm export, export/deletion, and admin declarations.
+   - DTO-to-domain mapping and centralized API error normalization exist.
+   - 204 deletion handling, 403 Premium/consent errors, capture quality coaching, queued jobs,
+     and backend field-name mismatches have been addressed in the data layer.
+
+3. Persistence, repositories, and background work
+   - DataStore session identity and cached entitlement/onboarding/consent/reminder state exist.
+   - Room cache/outbox structures exist for dashboard/history/product-related data and offline
+     capture upload.
+   - Domain repositories exist for session, home, capture, routine, experiments, insights,
+     discover, billing, and privacy.
+   - WorkManager capture outbox processing and server-driven reminder scheduling/notifying exist.
+   - Mutation locks, request deduplication, cache invalidation signals, and telemetry queue
+     infrastructure exist.
+
+4. Session and navigation flow
+   - SessionStateMachine is implemented and unit-tested at the domain level.
+   - Splash health check, Firebase-session handoff, profile classification, onboarding/consent,
+     baseline-needed, ready, stale-user, and unauthorized branches are represented.
+   - Type-safe destinations and graphs cover all planned feature destinations.
+   - MainActivity now injects SessionStore and Telemetry correctly.
+   - Reminder notification action routing now carries an explicit open-capture request through the
+     activity and opens Capture only after the workspace route is available.
+   - Notification permission prompting is scoped to the Home route instead of app startup.
+
+5. Network/app-shell corrections already made
+   - Hilt now uses the single NetworkFactory client, including timeout, safe-GET retry policy,
+     auth interceptor, and redacted debug logging.
+   - Retrofit base URLs were aligned with the API annotations so the /api prefix is not doubled.
+   - Release build configuration now enables minification and resource shrinking.
+   - One malformed literal newline in CaptureScreen imports was corrected.
+
+What remains between now and Android-plan completion
+----------------------------------------------------
+Priority 0 — compile and integration blockers
+
+- Obtain a clean Android compile result for the current tree. The normal Gradle wrapper download
+  is blocked in this environment, and the cached Gradle binary timed out while KSP/compilation was
+  running, so the latest source edits still need a returned compiler result.
+- Run and fix all Kotlin/Compose/Hilt/KSP errors, warnings that indicate broken behavior, Room
+  schema issues, resource merge issues, and type-safe Navigation route mismatches.
+- Verify both debug and release compilation after the base URL and release shrinking changes.
+- Confirm all generated Hilt bindings resolve, especially NetworkModule, Telemetry, WorkManager,
+  Room databases, Firebase token provider, and every ViewModel.
+- Confirm CameraX/ML Kit APIs compile on the declared dependency versions and the capture lifecycle
+  does not leak analyzers/executors.
+
+Priority 1 — shared shell and authoritative gating
+
+- Finish the explicit feature/shell/SessionGate.kt required by ANDROID_PLAN.md §2.6, or formally
+  integrate the existing AuthViewModel/Splash flow into an equivalent shell-owned gate. The
+  workspace must never render before authoritative profile state is known.
+- Enforce the capture CTA gate from authoritative consent state, not local cached flags or a
+  button press. Verify stale-user 400 handling clears only GlowUp session keys and returns to
+  Welcome.
+- Verify bottom-bar visibility, selected tab state, nested back stacks, predictive back, safe-area
+  insets, and notification deep-links across cold start, warm start, and process recreation.
+- Ensure theme preference changes actually propagate to GlowUpTheme rather than only persisting a
+  value in DataStore.
+
+Priority 2 — feature completeness and state audits
+
+Auth/onboarding is intentionally excluded from this handoff.
+
+Capture
+- Finish a full manual pass of CameraX front-camera flow, gallery import, camera permission
+  rationale/permanent-denial states, ML Kit pose values, framing HUD, downscale/JPEG/base64
+  processing, upload progress, accepted/rejected/queued/error states, and result navigation.
+- Verify every backend quality coaching entry is rendered as its own coaching tip.
+- Verify offline outbox status is visible and that a queued capture is not accidentally duplicated
+  by a retake.
+- Verify measurement feedback is reachable and maps to POST /measurement-feedback.
+
+Home
+- Confirm dashboard is the single authoritative snapshot and cached fallback banners are visible.
+- Confirm all metric values, trends, noise floor, model version, streak, weekly recap, capture
+  guide, check-ins, routine timeline, experiments, and verdicts come from backend data.
+- Verify empty arrays are distinguished from Premium-locked responses and that locked verdicts use
+  the upsell card rather than an ordinary verdict card.
+- Confirm every refresh path is explicit and no side-effecting endpoint is polled.
+
+Routine
+- Verify product search, barcode lookup, create, detail, ingredient explainer, product prediction,
+  purchase guidance, and free commerce navigation.
+- Verify routine events accept only start/stop/change and show the confound warning before and after
+  the mutation.
+- Complete shelf-scan submit → ~1.5 second poll → editable candidate checklist → confirm flow,
+  including empty-candidate manual-add fallback and retry/error/timeout UI.
+- Verify experiment list/create/detail/status and early-stop recommended-status callout.
+
+Insights
+- Verify Q&A thread_id survives multiple turns, SavedStateHandle/process recreation, and opening
+  a prior thread.
+- Verify triage runs first and dermatology_review becomes a clinician handoff without continued
+  diagnostic Q&A.
+- Verify context log, labels, root-cause messages, budget optimizer null-cost handling, derm export
+  printable/share flow, and reprocess queued-job polling with the values-may-change warning.
+- Ensure every Premium endpoint has a real Locked state and Upgrade path.
+
+Discover
+- Verify cohort recommendations show minimum cohort size and the backend disclaimer.
+- Keep affiliate offers ungated for Free users; show disclosure and currency.
+- Verify click-then-open retries without double-recording clicks.
+- Frame product prediction and purchase guidance as similarity/context, never efficacy or diagnosis.
+
+Account/privacy
+- Verify authoritative GET /subscription controls Premium UI and downgrade/cancel state.
+- Verify simulated upgrade/cancel mutation locks, refreshes profile/entitlements, and invalidates
+  plan-scoped caches.
+- Verify export writes a shareable app-private file via FileProvider.
+- Verify typed DELETE confirmation, 204 handling, local-key clearing, Firebase sign-out, and full
+  back-stack removal.
+- Verify analytics are labelled engagement metrics, not clinical confidence.
+- Verify settings: theme, reminder on/off, cadence, notification behavior, and sign-out all have
+  visible persisted effects.
+
+Priority 3 — cross-cutting Android quality
+
+- Complete Loading, Content, Empty, Error, and Locked state coverage for every screen and every
+  network-backed panel. No indefinite spinner; every failure needs a retry or recovery action.
+- Complete TalkBack semantics/content descriptions for all interactive controls and status regions.
+- Audit 48dp minimum touch targets, focus order, dynamic type through 200%, RTL layout, keyboard
+  behavior, and contrast in both Honey light and dark themes.
+- Remove any remaining hardcoded metric values, fake UI, placeholder numbers, hardcoded colors
+  outside core/design, or no-op click handlers.
+- Complete reduced-motion behavior, sheet spring behavior, capture thumbnail transitions, and
+  haptic feedback where appropriate without blocking functionality.
+- Verify release cleartext policy remains disabled while debug localhost traffic stays usable.
+- Add strict main-thread/I/O checks around bitmap processing, Room, DataStore, and file export.
+
+Priority 4 — tests required by the Android plan
+
+- Unit tests for API error mapping edge cases, 204 responses, capture quality errors, DTO mappers,
+  repositories, ViewModels, cache invalidation, outbox processing, reminder scheduling, and all
+  Premium/Free branches.
+- Compose UI tests for the five critical journeys:
+  1) onboarding → consent → baseline,
+  2) capture reject → coaching → accept,
+  3) product → routine event → experiment,
+  4) Q&A thread continuity,
+  5) delete account.
+- MockWebServer contract tests for each endpoint family and the backend field mismatches listed in
+  frontend-api-map.md §11.
+- Verify tests are deterministic, use fake repositories where appropriate, and do not depend on
+  Firebase configuration or a deployed backend.
+
+Known verification caveats
+---------------------------
+- Do not mark the app production-ready from source inspection alone.
+- Android SDK installation, real Firebase credentials, production auth configuration, deployment,
+  signing, CI, Play Console, privacy-policy/store assets, and release rollout are intentionally
+  outside this handoff.
+- Backend tests were previously observed green in an isolated temporary database environment;
+  the repository's default old SQLite file can still have schema drift. That is a backend/runtime
+  concern, not proof that the Android client is end-to-end verified.
+
+Definition of Android completion (excluding the intentionally omitted work)
+---------------------------------------------------------------------------
+The Android portion is complete when:
+- Debug and release compile cleanly.
+- Every ANDROID_PLAN.md Phase 2–5 item above has a demonstrated implementation or test.
+- Every backend route intended for the client is reachable from a real screen or covered by a
+  repository/contract test.
+- Free/Premium, consent, offline, empty, error, queued-job, and deletion behavior is explicit.
+- The five critical Compose journeys pass without real Firebase/deployment dependencies.
+- No known compile blocker, no-op user action, fake metric, or unverified endpoint family remains.

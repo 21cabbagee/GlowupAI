@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  androidx.core:core-splashscreen theme (Phase 6.1 branding). MainActivity
+  already calls installSplashScreen() before setContent; this style is what
+  it reads. This file does NOT redefine Theme.GlowUp — it only wraps it via
+  postSplashScreenTheme, which the SplashScreen library applies automatically
+  once the splash is dismissed.
+
+  Icon: @mipmap/ic_launcher (the same honey adaptive icon defined for the
+  launcher) so the brand mark is identical everywhere the app shows an icon.
+  The system masks/sizes adaptive icons for the splash surface itself, so no
+  separate "@240dp / 48dp-safe-zone" drawable is required here.
+
+  Background: honey-500, matching the icon's own adaptive background layer,
+  so the icon's background blends into the splash field and only the ink-900
+  ring+dot mark reads as a separate shape (honey surface, ink-900 mark on
+  top — never yellow text/stroke, per the binding contrast rule).
+-->
+<resources>
+    <style name="Theme.GlowUp.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/honey_500</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.GlowUp</item>
+    </style>
+</resources>

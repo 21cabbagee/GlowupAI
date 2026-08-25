@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dark-mode splash background (Phase 6.1 branding). The icon itself is
+  unchanged (@mipmap/ic_launcher, same honey adaptive icon) but the splash
+  field switches to warm charcoal, matching values-night/themes.xml and the
+  "dark surfaces on warm charcoal, honey accents — never a grey inversion"
+  rule. This reads as "honey on charcoal": the icon's own honey background
+  layer shows as a distinct honey shape with the ink-900 mark on it, sitting
+  on the charcoal splash field.
+-->
+<resources>
+    <style name="Theme.GlowUp.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/charcoal_900</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.GlowUp</item>
+    </style>
+</resources>
