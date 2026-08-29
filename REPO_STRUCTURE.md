@@ -2,12 +2,12 @@
 
 This is the actual file tree, verified by listing the directories directly
 (not copied from an earlier, inaccurate version of this document). It will
-drift as the Android rebuild in `ANDROID_PLAN.md` continues; re-run `find`
+drift as the Android rebuild continues; re-run `find`
 if you need it exact for a specific commit.
 
 ```
 -GlowUpAI/
-├── ANDROID_PLAN.md          # Working plan + ground-truth status audit — read this first
+├── PRODUCTION_READINESS.md  # Production blockers, launch gates, and rollout order
 ├── DEPLOY.md                # Backend deployment runbook (Railway/Render)
 ├── README.md                # Project overview
 ├── REPO_STRUCTURE.md        # This file

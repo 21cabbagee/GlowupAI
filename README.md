@@ -13,11 +13,10 @@ the app continues discussing. This framing is a compliance requirement, not
 a marketing choice — see `backend/docs/ui-revamp-plan.md` and
 `backend/docs/metrics-and-verdicts.md`.
 
-For the authoritative, up-to-date account of what exists and what is still
-being built, read **`ANDROID_PLAN.md`** at the repo root — it is the working
-spec that the Android rebuild is executed against, and it is kept current by
-the agents doing that work. This README is a stable overview; where the two
-disagree, trust `ANDROID_PLAN.md`.
+For the production launch checklist and remaining external prerequisites, read
+**`PRODUCTION_READINESS.md`** at the repo root. This README is a stable
+overview; deployment details live in `DEPLOY.md` and Android setup details
+live in `app/README.md`.
 
 ## Architecture
 
@@ -84,16 +83,13 @@ URLs, and how to run the `glowup_pixel` emulator.
 
 ## Current status
 
-The codebase is under active, ongoing rework against `ANDROID_PLAN.md`.
-Rather than duplicate a status snapshot here that will drift immediately,
-current status — what's built, what's in progress, what's blocked on a
-human — is tracked in `QUICK_SUMMARY.md` and, at the phase/task level, in
-`ANDROID_PLAN.md` itself. Both are updated as work lands; this README is
-not.
+The codebase is under active development. Current implementation status and
+production blockers are summarized in `QUICK_SUMMARY.md` and
+`PRODUCTION_READINESS.md`; this README is the stable product overview.
 
 ## Documentation index
 
-- `ANDROID_PLAN.md` — the working plan and ground-truth status audit.
+- `PRODUCTION_READINESS.md` — production blockers, launch gates, and rollout order.
 - `QUICK_SUMMARY.md` — plain-language status summary and what's blocked on
   a human.
 - `JOURNEY.md` — project history.

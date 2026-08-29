@@ -1,7 +1,8 @@
 # Deploying the SkinProof backend
 
 Scope: `backend/` only (`skinproof.api:app`, i.e. `skinproof.complete_api.app`).
-This is Task 1.3 of `ANDROID_PLAN.md`. It does not touch `backend/skinproof/`
+This is the backend deployment runbook. The production launch gates are in
+`PRODUCTION_READINESS.md`. It does not touch `backend/skinproof/`
 Python source, `backend/tests/`, or `app/` — only the deploy surface
 (`Dockerfile`, `docker-compose.yml`, `.env.example`, `.dockerignore`,
 `railway.json`, this file, and `backend/docs/operations.md`).

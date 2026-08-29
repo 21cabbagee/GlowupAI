@@ -17,7 +17,7 @@ experiment tracking, Q&A, products, subscriptions, and engagement.
 
 **An early Android app was built**, using Kotlin and Jetpack Compose. This
 part of the original narrative overstated what that app actually was. As
-audited on 2026-08-24 (recorded in full in `ANDROID_PLAN.md`), the real
+audited on 2026-08-24, the real
 state at that point was:
 
 - Three Kotlin files total, with nearly the entire app — every screen — in
@@ -48,12 +48,9 @@ analysis integration, progress tracking, or premium UI in the earlier
 version of this document were true in the sense implied — code existed
 under those names, but not the described functionality.
 
-**A rebuild plan was written.** `ANDROID_PLAN.md` documents this audit as
-ground truth and lays out a phased plan (environment/build spine, backend
-auth, app foundation, feature screens, polish, quality gates, release) to
-rebuild the app against the full, real backend API. That plan is the
-current source of truth for what is being built and in what order; it is
-being executed by multiple agents in parallel as of this writing.
+**A rebuild plan was written and has since been removed.** The current
+production blockers and rollout gates are documented in
+`PRODUCTION_READINESS.md`.
 
 ## Prior claims not carried forward
 
@@ -62,8 +59,8 @@ launch in "early September 2026," specific revenue milestones, and a
 multi-year fundraising trajectory. None of that is a record of anything
 that happened — it was a forward-looking projection presented inside a
 document titled as a development history, which is misleading, so it has
-been removed rather than corrected. Forward-looking plans belong in
-`ANDROID_PLAN.md`, and financial projections do not belong in project
+been removed rather than corrected. Forward-looking production steps belong
+in `PRODUCTION_READINESS.md`, and financial projections do not belong in project
 documentation at all at this stage.
 
 ## Attribution

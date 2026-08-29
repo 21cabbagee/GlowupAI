@@ -3,7 +3,7 @@ import java.util.Properties
 
 // ---------------------------------------------------------------------------
 // google-services.json is produced by a human from the Firebase console
-// (Phase 1.1 of ANDROID_PLAN.md) and is not present in a fresh checkout.
+// (See PRODUCTION_READINESS.md) and is not present in a fresh checkout.
 // Applying com.google.gms.google-services without that file hard-fails the
 // build for every other agent/developer today, so we gate it on the file's
 // existence and surface a loud, unmissable warning instead of failing.
@@ -142,8 +142,8 @@ if (hasGoogleServicesFile) {
         appendLine("Gradle plugins were NOT applied. Firebase Auth/Analytics/Crashlytics")
         appendLine("dependencies will still compile, but Firebase will not be configured and")
         appendLine("will fail to initialize at runtime.")
-        appendLine("Fix: create the 'glowup-ai' Firebase project (see ANDROID_PLAN.md Phase")
-        appendLine("1.1), download google-services.json from the console, and place it at")
+        appendLine("Fix: create the 'glowup-ai' Firebase project (see PRODUCTION_READINESS.md),")
+        appendLine("download google-services.json from the console, and place it at")
         appendLine("app/google-services.json, then re-sync Gradle.")
         appendLine("!".repeat(78))
     }

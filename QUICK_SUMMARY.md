@@ -6,11 +6,9 @@ Mac-specific paths (`/Users/21cabbage/...`) that do not apply to this
 machine or this repo. None of that belonged in a status document. This
 version states what is verifiably true as of this writing and nothing else.
 
-The authoritative, continuously-updated source for status is
-`ANDROID_PLAN.md` — this file is a plain-language summary of it and of the
-current repo contents, written at one point in time while a multi-agent
-rebuild is in progress. If this file and `ANDROID_PLAN.md` disagree, trust
-`ANDROID_PLAN.md`.
+`PRODUCTION_READINESS.md` is the current launch checklist for the completed
+Android/backend implementation. This file remains a historical status
+summary; production blockers and rollout gates live in that document.
 
 ## Where this started
 
@@ -21,8 +19,8 @@ backend's roughly 56 endpoints wired up, a new backend user created on
 every single analysis, five of six result-screen metrics hardcoded, a
 hardcoded mock streak, the unmodified purple Compose template theme, no
 release signing, R8 disabled, and only the two Android Studio template
-tests. `ANDROID_PLAN.md` records this audit in full and is the reason a
-structured rebuild plan exists at all.
+tests. The repository history and production checklist preserve the useful
+parts of that audit without retaining the old planning artifact.
 
 ## What exists now
 
@@ -30,13 +28,12 @@ The app package (`app/src/main/java/com/glowup/ai/`) now has a layered
 structure — `core/design`, `core/ui`, `data/remote`, `data/local`,
 `data/repository`, `data/work`, `di`, `domain`, and one `feature/<name>`
 package per product area (auth, onboarding, capture, home, routine,
-insights, discover, account, shell) — matching the target architecture in
-`ANDROID_PLAN.md` §1. That is a structural observation from reading the
+insights, discover, account, shell) — matching the target architecture. That is a structural observation from reading the
 file tree, not a claim that every screen is feature-complete or bug-free;
 several feature packages are still being actively written by other agents
 as this document is being written, and this file was not re-verified after
-those edits. `ANDROID_PLAN.md`'s phase gates are the place to check for the
-current, exact state of each phase.
+those edits. `PRODUCTION_READINESS.md` is the place to check the current
+production gates.
 
 Backend: `backend/skinproof/complete_api.py` is the live FastAPI app
 (`skinproof.complete_api:app`), backed by `complete_service.py`, exposing
@@ -76,7 +73,7 @@ account, a browser login, or a secret that must not be held by an agent:
 
 ## Where to look for more detail
 
-- `ANDROID_PLAN.md` — phase-by-phase plan, task ownership, and gates.
+- `PRODUCTION_READINESS.md` — production blockers, launch gates, and rollout order.
 - `REPO_STRUCTURE.md` — the actual file tree.
 - `backend/docs/frontend-api-map.md` — the full API contract.
 - `DEPLOY.md` — the deployment runbook and what has/hasn't been verified.

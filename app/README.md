@@ -1,8 +1,8 @@
 # GlowUp AI — Android app
 
 Setup notes for building and running this module (`:app`, package
-`com.glowup.ai`). For what the app is and its overall status, see the repo
-root `README.md`, `QUICK_SUMMARY.md`, and `ANDROID_PLAN.md`.
+`com.glowup.ai`). For what the app is and its production status, see the repo
+root `README.md`, `QUICK_SUMMARY.md`, and `PRODUCTION_READINESS.md`.
 
 ## Requirements
 
@@ -48,7 +48,7 @@ mirror entry to "fix" it.
 
 Firebase Auth/Analytics/Crashlytics require `app/google-services.json`,
 generated from the Firebase console for the `glowup-ai` project (see
-`ANDROID_PLAN.md` Phase 1.1 — this is a human-only step, it needs a
+`PRODUCTION_READINESS.md` Firebase section — this is a human-only step, it needs a
 console login). **This file is not present by default in a fresh checkout,
 and the build tolerates that on purpose:** `app/build.gradle.kts` checks
 whether the file exists and only applies the
