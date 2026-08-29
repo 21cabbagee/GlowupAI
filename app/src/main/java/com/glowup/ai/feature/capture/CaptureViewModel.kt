@@ -98,7 +98,10 @@ class CaptureViewModel @Inject constructor(
 
     fun submitCameraJpeg(jpegBytes: ByteArray, rotationDegrees: Int, isBaseline: Boolean) {
         val userId = _userId.value ?: return
-        submitProcessed(userId, isBaseline) {
+        // Capture the pose at shutter time. Reading the live analyzer state after JPEG processing
+        // can attach a later frame's pose (or null) to this image.
+        val poseAtShutter = _livePose.value?.pose
+        submitProcessed(userId, isBaseline, poseAtShutter) {
             withContext(Dispatchers.Default) { CaptureImageProcessor.processCameraJpeg(jpegBytes, rotationDegrees) }
         }
     }
@@ -107,12 +110,17 @@ class CaptureViewModel @Inject constructor(
         val userId = _userId.value ?: return
         // A camera pose is not valid for a different gallery image.
         _livePose.value = null
-        submitProcessed(userId, isBaseline) {
+        submitProcessed(userId, isBaseline, pose = null) {
             withContext(Dispatchers.Default) { CaptureImageProcessor.normalizeBitmap(decode(uri)) }
         }
     }
 
-    private fun submitProcessed(userId: String, isBaseline: Boolean, decode: suspend () -> Bitmap) {
+    private fun submitProcessed(
+        userId: String,
+        isBaseline: Boolean,
+        pose: com.glowup.ai.domain.model.CapturePose?,
+        decode: suspend () -> Bitmap,
+    ) {
         if (_phase.value != CapturePhase.Framing || _gateState.value !is CaptureGateState.Ready) return
         // Reserve the input synchronously before launching decode work. Two quick taps otherwise
         // both observe Framing and can enqueue duplicate uploads.
@@ -122,7 +130,7 @@ class CaptureViewModel @Inject constructor(
                 _phase.value = CapturePhase.Failed("Couldn't process that photo. Please choose another.")
                 return@launch
             }
-            submitBitmap(bitmap, userId, isBaseline, _livePose.value?.pose)
+            submitBitmap(bitmap, userId, isBaseline, pose)
         }
     }
 

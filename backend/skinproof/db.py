@@ -4,6 +4,7 @@ import json
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
+from threading import RLock
 from typing import Any, Iterator
 
 
@@ -121,35 +122,46 @@ class Database:
     def __init__(self, path: str | Path = ".data/skinproof.sqlite3") -> None:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        # The API and background job runner intentionally share one SQLite connection. SQLite
+        # allows that connection across threads only with check_same_thread=False; it still does
+        # not make interleaved statements/commits safe. A re-entrant lock keeps each operation
+        # atomic and also lets transaction callers perform nested connection work.
+        self._lock = RLock()
         self.connection = sqlite3.connect(self.path, check_same_thread=False)
         self.connection.row_factory = sqlite3.Row
-        self.connection.execute("PRAGMA foreign_keys = ON")
-        self.connection.execute("PRAGMA journal_mode = WAL")
-        self.connection.executescript(SCHEMA)
-        self.connection.commit()
+        with self._lock:
+            self.connection.execute("PRAGMA foreign_keys = ON")
+            self.connection.execute("PRAGMA journal_mode = WAL")
+            self.connection.executescript(SCHEMA)
+            self.connection.commit()
 
     @contextmanager
     def transaction(self) -> Iterator[sqlite3.Connection]:
-        try:
-            yield self.connection
-            self.connection.commit()
-        except Exception:
-            self.connection.rollback()
-            raise
+        with self._lock:
+            try:
+                yield self.connection
+                self.connection.commit()
+            except Exception:
+                self.connection.rollback()
+                raise
 
     def execute(self, sql: str, params: tuple[Any, ...] = ()) -> sqlite3.Cursor:
-        cursor = self.connection.execute(sql, params)
-        self.connection.commit()
-        return cursor
+        with self._lock:
+            cursor = self.connection.execute(sql, params)
+            self.connection.commit()
+            return cursor
 
     def fetchone(self, sql: str, params: tuple[Any, ...] = ()) -> sqlite3.Row | None:
-        return self.connection.execute(sql, params).fetchone()
+        with self._lock:
+            return self.connection.execute(sql, params).fetchone()
 
     def fetchall(self, sql: str, params: tuple[Any, ...] = ()) -> list[sqlite3.Row]:
-        return list(self.connection.execute(sql, params).fetchall())
+        with self._lock:
+            return list(self.connection.execute(sql, params).fetchall())
 
     def healthcheck(self) -> bool:
         return self.fetchone("SELECT 1 AS ok")["ok"] == 1
 
     def close(self) -> None:
-        self.connection.close()
+        with self._lock:
+            self.connection.close()

@@ -139,6 +139,7 @@ private fun HomeContent(
     // state machine every other screen uses rather than reading `Entitlement.isPremium` loose.
     val sessionState = SessionStateMachine.onProfileResult(GlowResult.Success(dashboard.profile))
     val isPremium = sessionState.canUsePremium
+    val captureEnabled = sessionState.canCapture
 
     val sortedHistory = state.history.sortedBy { it.capturedAt }
     val latest = sortedHistory.lastOrNull()
@@ -179,6 +180,7 @@ private fun HomeContent(
             CaptureGuideBanner(
                 guide = dashboard.engagement?.guide,
                 onCaptureClick = { onNavigate(GlowDestination.Capture) },
+                captureEnabled = captureEnabled,
             )
         }
 
@@ -206,6 +208,7 @@ private fun HomeContent(
                 selectedMetric = state.selectedMetric,
                 onMetricSelected = onMetricSelected,
                 onCaptureAgain = { onNavigate(GlowDestination.Capture) },
+                captureEnabled = captureEnabled,
             )
             if (state.historyError != null) {
                 androidx.compose.material3.Text(

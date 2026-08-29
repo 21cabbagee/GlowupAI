@@ -93,6 +93,7 @@ class ShelfScanViewModel @Inject constructor(
 
     fun toggleCandidate(index: Int, checked: Boolean) {
         val current = _uiState.value as? ShelfScanUiState.Ready ?: return
+        if (index !in current.candidates.indices) return
         val updated = current.candidates.toMutableList().also {
             it[index] = it[index].copy(checked = checked)
         }
@@ -101,12 +102,14 @@ class ShelfScanViewModel @Inject constructor(
 
     fun editCandidateName(index: Int, name: String) {
         val current = _uiState.value as? ShelfScanUiState.Ready ?: return
+        if (index !in current.candidates.indices) return
         val updated = current.candidates.toMutableList().also { it[index] = it[index].copy(name = name) }
         _uiState.value = current.copy(candidates = updated)
     }
 
     fun editCandidateCategory(index: Int, category: String) {
         val current = _uiState.value as? ShelfScanUiState.Ready ?: return
+        if (index !in current.candidates.indices) return
         val updated = current.candidates.toMutableList().also { it[index] = it[index].copy(category = category) }
         _uiState.value = current.copy(candidates = updated)
     }

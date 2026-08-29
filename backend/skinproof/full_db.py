@@ -248,5 +248,6 @@ class FullDatabase(Database):
 
     def __init__(self, path: str | Path = ".data/skinproof.sqlite3") -> None:
         super().__init__(path)
-        self.connection.executescript(FULL_SCHEMA)
-        self.connection.commit()
+        with self._lock:
+            self.connection.executescript(FULL_SCHEMA)
+            self.connection.commit()

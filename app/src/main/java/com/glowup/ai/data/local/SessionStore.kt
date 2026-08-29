@@ -140,10 +140,10 @@ class SessionStore @Inject constructor(
         windowStart: String? = null,
         windowEnd: String? = null,
     ) = dataStore.edit {
-        cadenceDays?.let { days -> it[Keys.REMINDER_CADENCE_DAYS] = days }
-        nextAt?.let { at -> it[Keys.REMINDER_NEXT_AT] = at }
-        windowStart?.let { s -> it[Keys.REMINDER_WINDOW_START] = s }
-        windowEnd?.let { e -> it[Keys.REMINDER_WINDOW_END] = e }
+        if (cadenceDays == null) it.remove(Keys.REMINDER_CADENCE_DAYS) else it[Keys.REMINDER_CADENCE_DAYS] = cadenceDays
+        if (nextAt == null) it.remove(Keys.REMINDER_NEXT_AT) else it[Keys.REMINDER_NEXT_AT] = nextAt
+        if (windowStart == null) it.remove(Keys.REMINDER_WINDOW_START) else it[Keys.REMINDER_WINDOW_START] = windowStart
+        if (windowEnd == null) it.remove(Keys.REMINDER_WINDOW_END) else it[Keys.REMINDER_WINDOW_END] = windowEnd
     }
 
     suspend fun setRemindersEnabled(enabled: Boolean) = dataStore.edit { it[Keys.REMINDER_ENABLED] = enabled }

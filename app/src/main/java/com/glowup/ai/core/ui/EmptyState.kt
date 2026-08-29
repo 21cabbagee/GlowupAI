@@ -30,6 +30,7 @@ fun EmptyState(
     body: String? = null,
     ctaLabel: String,
     onCtaClick: () -> Unit,
+    enabled: Boolean = true,
 ) {
     val glow = LocalGlowColors.current
     Column(
@@ -60,6 +61,7 @@ fun EmptyState(
             modifier = Modifier.padding(top = 16.dp),
             text = ctaLabel,
             onClick = onCtaClick,
+            enabled = enabled,
             variant = GlowButtonVariant.Primary,
         )
     }

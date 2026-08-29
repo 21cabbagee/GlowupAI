@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Scaffold
@@ -22,6 +23,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.ui.EmptyState
@@ -43,6 +46,8 @@ fun ContextLogScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val form by viewModel.form.collectAsState()
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(topBar = { GlowTopBar(title = "Context log", onBack = onBack) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -61,7 +66,7 @@ fun ContextLogScreen(
                 is ScreenState.Error -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
                     ErrorState(message = current.message, onRetry = viewModel::load)
                 }
-                is ScreenState.Empty -> LazyColumn(contentPadding = PaddingValues(GlowSpacing.md)) {
+                is ScreenState.Empty -> LazyColumn(state = listState, contentPadding = PaddingValues(GlowSpacing.md)) {
                     item { ContextEventForm(form, viewModel) }
                     item {
                         EmptyState(
@@ -69,11 +74,14 @@ fun ContextLogScreen(
                             title = current.title,
                             body = current.body,
                             ctaLabel = "Log the first event",
-                            onCtaClick = {},
+                            onCtaClick = {
+                                coroutineScope.launch { listState.animateScrollToItem(index = 0) }
+                            },
                         )
                     }
                 }
                 is ScreenState.Content -> LazyColumn(
+                    state = listState,
                     contentPadding = PaddingValues(GlowSpacing.md),
                     verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
                 ) {

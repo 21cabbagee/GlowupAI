@@ -25,9 +25,12 @@ fun CaptureGuideBanner(
     modifier: Modifier = Modifier,
     guide: CaptureGuide?,
     onCaptureClick: () -> Unit,
+    captureEnabled: Boolean = true,
 ) {
     val glow = LocalGlowColors.current
-    val (title, ctaLabel, urgent) = when (guide?.state) {
+    val (title, ctaLabel, urgent) = if (!captureEnabled) {
+        Triple("Photo tracking is off", "Capture unavailable", false)
+    } else when (guide?.state) {
         CaptureGuideState.BASELINE_NEEDED -> Triple("Set your baseline", "Take baseline capture", true)
         CaptureGuideState.DUE -> Triple("Capture due", "Capture now", true)
         CaptureGuideState.OVERDUE -> Triple("Capture overdue", "Capture now", true)
@@ -43,7 +46,11 @@ fun CaptureGuideBanner(
             color = glow.ink900,
         )
         Text(
-            text = guide?.message ?: "Take a guided photo to keep your tracking accurate.",
+            text = if (!captureEnabled) {
+                "Re-enable facial-photo consent in Account → Data & Privacy to resume tracking."
+            } else {
+                guide?.message ?: "Take a guided photo to keep your tracking accurate."
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = glow.ink600,
             modifier = Modifier.padding(top = 4.dp),
@@ -52,6 +59,7 @@ fun CaptureGuideBanner(
             modifier = Modifier.padding(top = 12.dp),
             text = ctaLabel,
             onClick = onCaptureClick,
+            enabled = captureEnabled,
             variant = if (urgent) GlowButtonVariant.Primary else GlowButtonVariant.Secondary,
         )
     }

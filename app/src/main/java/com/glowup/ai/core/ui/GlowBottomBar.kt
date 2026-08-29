@@ -22,8 +22,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,6 +54,7 @@ fun GlowBottomBar(
     selectedIndex: Int,
     onItemSelected: (Int) -> Unit,
     onFabClick: () -> Unit,
+    enabled: Boolean = true,
     fabContentDescription: String = "Capture",
 ) {
     val glow = LocalGlowColors.current
@@ -97,12 +100,17 @@ fun GlowBottomBar(
                 .offset(y = (-22).dp)
                 .size(56.dp)
                 .background(glow.honey500, CircleShape)
+                .alpha(if (enabled) 1f else 0.45f)
                 .clickable(
+                    enabled = enabled,
                     onClickLabel = fabContentDescription,
                     role = Role.Button,
                     onClick = onFabClick,
                 )
-                .semantics { contentDescription = fabContentDescription },
+                .semantics {
+                    contentDescription = fabContentDescription
+                    if (!enabled) disabled()
+                },
             contentAlignment = Alignment.Center,
         ) {
             Icon(

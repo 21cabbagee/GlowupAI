@@ -61,8 +61,9 @@ fun DataAndPrivacyRoute(
     LaunchedEffect(uiState.export) {
         val export = uiState.export
         if (export is ExportState.Success) {
-            launchShareSheet(context, export.uri)
-            viewModel.dismissExportState()
+            runCatching { launchShareSheet(context, export.uri) }
+                .onSuccess { viewModel.dismissExportState() }
+                .onFailure { viewModel.onExportShareFailed() }
         }
     }
 

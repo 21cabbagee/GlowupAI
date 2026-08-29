@@ -32,6 +32,7 @@ import com.glowup.ai.domain.model.HistoryItem
 import com.glowup.ai.domain.model.WeeklyRecap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -207,17 +208,19 @@ class HomeRepository @Inject constructor(
     suspend fun logEngagementEvent(userId: String, request: EngagementEventRequest): GlowResult<Unit> =
         apiCall { api.logEngagementEvent(userId, request.toDto()) }.map { }
 
-    suspend fun getCaptureGuide(userId: String, vertical: String = "skin"): GlowResult<CaptureGuide> =
-        apiCall { api.getCaptureGuide(userId, vertical).toDomain() }.also { result ->
-            if (result is GlowResult.Success) {
-                sessionStore.setReminderSchedule(
-                    cadenceDays = null,
-                    nextAt = null,
-                    windowStart = result.data.nextWindowStart,
-                    windowEnd = result.data.nextWindowEnd,
-                )
-            }
+    suspend fun getCaptureGuide(userId: String, vertical: String = "skin"): GlowResult<CaptureGuide> {
+        val result = apiCall { api.getCaptureGuide(userId, vertical).toDomain() }
+        if (result is GlowResult.Success) {
+            sessionStore.setReminderSchedule(
+                cadenceDays = null,
+                nextAt = null,
+                windowStart = result.data.nextWindowStart,
+                windowEnd = result.data.nextWindowEnd,
+            )
+            scheduleReminderFrom(result.data.nextWindowStart, cadenceDays = null)
         }
+        return result
+    }
 
     suspend fun getHistory(userId: String, vertical: String = "skin"): GlowResult<Cached<List<HistoryItem>>> {
         val plan = sessionStore.plan()
@@ -271,11 +274,17 @@ class HomeRepository @Inject constructor(
     /** Reschedules [com.glowup.ai.data.work.ReminderWorker] from whatever the server just said —
      * prefers an explicit `nextAt` timestamp, falls back to `cadenceDays`, and does nothing (never
      * invents an interval) if neither is present. */
-    private fun scheduleReminderFrom(nextAt: String?, cadenceDays: Int?) {
+    private suspend fun scheduleReminderFrom(nextAt: String?, cadenceDays: Int?) {
+        if (!sessionStore.reminderSettingsFlow.first().enabled) {
+            workScheduler.cancelReminder()
+            return
+        }
         val delayMillis = nextAt?.let { parseIsoToEpochMillis(it) }?.let { it - System.currentTimeMillis() }
             ?: cadenceDays?.let { TimeUnit.DAYS.toMillis(it.toLong()) }
         if (delayMillis != null && delayMillis > 0) {
             workScheduler.scheduleReminder(delayMillis)
+        } else {
+            workScheduler.cancelReminder()
         }
     }
 

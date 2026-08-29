@@ -62,6 +62,7 @@ fun HistoryTrendSection(
     selectedMetric: PrimaryMetric,
     onMetricSelected: (PrimaryMetric) -> Unit,
     onCaptureAgain: () -> Unit,
+    captureEnabled: Boolean = true,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(title = "History trend")
@@ -80,7 +81,16 @@ fun HistoryTrendSection(
             }
         }
 
+        val chartHistory = history.filter { it.valueFor(selectedMetric) != null }
         when {
+            !captureEnabled -> EmptyState(
+                modifier = Modifier.padding(top = 16.dp),
+                title = "Photo tracking is off",
+                body = "Re-enable facial-photo consent in Account → Data & Privacy to collect new readings.",
+                ctaLabel = "Capture unavailable",
+                onCtaClick = onCaptureAgain,
+                enabled = false,
+            )
             history.isEmpty() -> EmptyState(
                 modifier = Modifier.padding(top = 16.dp),
                 title = "No captures yet",
@@ -88,20 +98,20 @@ fun HistoryTrendSection(
                 ctaLabel = "Capture now",
                 onCtaClick = onCaptureAgain,
             )
-            history.size < 2 -> EmptyState(
+            chartHistory.size < 2 -> EmptyState(
                 modifier = Modifier.padding(top = 16.dp),
-                title = "Needs 2+ captures",
-                body = "One capture isn't a trend yet. Capture again in your next window to see how ${selectedMetric.label().lowercase()} is changing.",
+                title = "Not enough ${selectedMetric.label().lowercase()} readings",
+                body = "Capture at least two comparable readings to see how this metric is changing.",
                 ctaLabel = "Capture again",
                 onCtaClick = onCaptureAgain,
             )
             else -> {
                 TrendChartCanvas(
                     modifier = Modifier.padding(top = 16.dp),
-                    history = history,
+                    history = chartHistory,
                     metric = selectedMetric,
                 )
-                val latest = history.lastOrNull()
+                val latest = chartHistory.lastOrNull()
                 val noiseFloor = latest?.noiseFloor?.get(selectedMetric.toWire())
                 Text(
                     text = buildString {

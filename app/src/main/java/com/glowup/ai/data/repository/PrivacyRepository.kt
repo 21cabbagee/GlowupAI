@@ -2,6 +2,7 @@ package com.glowup.ai.data.repository
 
 import com.glowup.ai.core.util.GlowResult
 import com.glowup.ai.core.util.onSuccess
+import com.glowup.ai.data.local.LocalDataCleaner
 import com.glowup.ai.data.local.SessionStore
 import com.glowup.ai.data.remote.GlowUpApi
 import com.glowup.ai.data.remote.apiCallNoContent
@@ -11,6 +12,7 @@ import com.glowup.ai.data.repository.support.MutationLock
 import com.glowup.ai.domain.model.Analytics
 import com.glowup.ai.domain.model.ExportBundle
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,6 +29,8 @@ import javax.inject.Singleton
 class PrivacyRepository @Inject constructor(
     private val api: GlowUpApi,
     private val sessionStore: SessionStore,
+    private val localDataCleaner: LocalDataCleaner,
+    private val invalidationBus: com.glowup.ai.data.repository.support.CacheInvalidationBus,
 ) {
 
     private val mutations = MutationLock<String>()
@@ -51,6 +55,15 @@ class PrivacyRepository @Inject constructor(
         mutations.run("delete_account:$userId") {
             apiCallNoContent { api.deleteUser(userId) }
         }.onSuccess {
-            sessionStore.clearSession()
+            try {
+                localDataCleaner.clearUser(userId)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // The server deletion already succeeded; local cleanup remains best effort.
+            } finally {
+                sessionStore.clearSession()
+                invalidationBus.publish(com.glowup.ai.data.repository.support.InvalidationSignal.SessionCleared(userId))
+            }
         }
 }

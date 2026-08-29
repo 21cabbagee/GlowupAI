@@ -13,6 +13,7 @@ import com.glowup.ai.feature.auth.toMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,10 +24,8 @@ import javax.inject.Inject
 /** The exact string a user must type to enable the delete-account submit button. */
 const val DELETE_CONFIRMATION_TOKEN = "DELETE"
 
-/** The one-time consent copy version this build asks for — kept local to this feature since
- * `feature/onboarding`'s consent screen (Phase 3.1, not yet built) owns the first-grant flow;
- * this screen only owns changing an existing grant. */
-private const val PRIVACY_POLICY_VERSION = "v1"
+/** Must match the first-grant consent flow so changing consent records one policy version. */
+private const val PRIVACY_POLICY_VERSION = "2026-08-24"
 
 sealed interface ExportState {
     data object Idle : ExportState
@@ -156,8 +155,16 @@ class DataAndPrivacyViewModel @Inject constructor(
             }
             when (val result = privacyRepository.exportData(userId)) {
                 is GlowResult.Success -> {
-                    val uri = ExportFileWriter.write(appContext, userId, result.data)
-                    _uiState.value = _uiState.value.copy(export = ExportState.Success(uri))
+                    try {
+                        val uri = ExportFileWriter.write(appContext, userId, result.data)
+                        _uiState.value = _uiState.value.copy(export = ExportState.Success(uri))
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        _uiState.value = _uiState.value.copy(
+                            export = ExportState.Failed("Couldn't prepare the export. Please try again."),
+                        )
+                    }
                 }
                 is GlowResult.Failure -> _uiState.value = _uiState.value.copy(
                     export = ExportState.Failed(result.error.toMessage()),
@@ -168,6 +175,12 @@ class DataAndPrivacyViewModel @Inject constructor(
 
     fun dismissExportState() {
         _uiState.value = _uiState.value.copy(export = ExportState.Idle)
+    }
+
+    fun onExportShareFailed() {
+        _uiState.value = _uiState.value.copy(
+            export = ExportState.Failed("Couldn't open a share or save app. Please try exporting again."),
+        )
     }
 
     // -- Deletion ---------------------------------------------------------------------------------

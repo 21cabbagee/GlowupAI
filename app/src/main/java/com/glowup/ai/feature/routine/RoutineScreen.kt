@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -20,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.ui.DisclaimerNote
 import com.glowup.ai.core.ui.EmptyState
@@ -84,9 +87,12 @@ private fun RoutineScreen(
     onRetryTimeline: () -> Unit,
 ) {
     val glow = LocalGlowColors.current
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(topBar = { GlowTopBar(title = "Routine") }) { padding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp),
         ) {
@@ -197,7 +203,9 @@ private fun RoutineScreen(
                         title = "No routine changes logged yet",
                         body = "Log when you start, stop or change a product to build a causal timeline.",
                         ctaLabel = "Search for a product",
-                        onCtaClick = { /* focuses search visually; field is already on screen */ },
+                        onCtaClick = {
+                            coroutineScope.launch { listState.animateScrollToItem(index = 2) }
+                        },
                     )
                 }
                 else -> items(state.timeline) { event -> TimelineRow(event = event, modifier = Modifier.padding(bottom = 8.dp)) }

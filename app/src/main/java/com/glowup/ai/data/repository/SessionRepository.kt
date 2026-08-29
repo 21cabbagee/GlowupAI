@@ -2,6 +2,7 @@ package com.glowup.ai.data.repository
 
 import com.glowup.ai.core.util.GlowResult
 import com.glowup.ai.core.util.onSuccess
+import com.glowup.ai.data.local.LocalDataCleaner
 import com.glowup.ai.data.local.SessionStore
 import com.glowup.ai.data.remote.GlowUpApi
 import com.glowup.ai.data.remote.apiCall
@@ -15,6 +16,7 @@ import com.glowup.ai.domain.model.HealthStatus
 import com.glowup.ai.domain.model.Profile
 import com.glowup.ai.domain.model.ProfileUpdateRequest
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,6 +37,7 @@ import javax.inject.Singleton
 class SessionRepository @Inject constructor(
     private val api: GlowUpApi,
     private val sessionStore: SessionStore,
+    private val localDataCleaner: LocalDataCleaner,
     private val invalidationBus: com.glowup.ai.data.repository.support.CacheInvalidationBus,
 ) {
 
@@ -94,9 +97,20 @@ class SessionRepository @Inject constructor(
         }
     }
 
-    /** Never a blanket wipe — delegates straight to [SessionStore.clearSession], which only
-     * removes GlowUp's own keys. */
-    suspend fun clearSession() = sessionStore.clearSession()
+    /** Clears user-scoped data before removing identity keys, including stale offline captures. */
+    suspend fun clearSession() {
+        val userId = sessionStore.userId()
+        try {
+            userId?.let { localDataCleaner.clearUser(it) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            // Local cleanup is best effort; stale identity must never survive sign-out.
+        } finally {
+            sessionStore.clearSession()
+            userId?.let { invalidationBus.publish(com.glowup.ai.data.repository.support.InvalidationSignal.SessionCleared(it)) }
+        }
+    }
 
     private suspend fun persist(profile: Profile) {
         sessionStore.setUserId(profile.user.id)

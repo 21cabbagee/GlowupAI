@@ -68,7 +68,9 @@ fun GlowUpApp(
         val isWorkspaceRoute = currentDestination.isWorkspaceDestination()
         val isAuthoritative = sessionState.isAuthoritative
         val showWorkspaceChrome = isWorkspaceRoute && isAuthoritative &&
-            (sessionState is SessionState.BaselineNeeded || sessionState is SessionState.Ready)
+            (sessionState is SessionState.BaselineNeeded ||
+                sessionState is SessionState.Ready ||
+                sessionState is SessionState.ConsentDeclined)
         val selectedTab = currentDestination.selectedTabIndex()
 
         LaunchedEffect(Unit) {
@@ -105,6 +107,7 @@ fun GlowUpApp(
                                 navController.navigate(GlowDestination.Capture)
                             }
                         },
+                        enabled = sessionState.canCapture,
                         fabContentDescription = if (sessionState.canCapture) {
                             "Capture a skin progress photo"
                         } else {
