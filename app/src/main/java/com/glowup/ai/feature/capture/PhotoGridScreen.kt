@@ -21,7 +21,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.glowup.ai.core.design.HoneyTheme
+import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.ui.GlowTopBar
 import com.glowup.ai.domain.model.Capture
 import java.time.LocalDate
@@ -52,7 +52,7 @@ fun PhotoGridScreen(
         topBar = {
             GlowTopBar(
                 title = if (selectionMode) "${selectedCaptures.size} selected" else "Your Photos",
-                onNavigationClick = {
+                onBack = {
                     if (selectionMode) {
                         selectionMode = false
                         selectedCaptures = emptySet()
@@ -237,7 +237,8 @@ private fun PhotoGridItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val honeyColor = HoneyTheme.colors.primary
+    val glowColors = LocalGlowColors.current
+    val honeyColor = glowColors.honey500
 
     Box(
         modifier = modifier

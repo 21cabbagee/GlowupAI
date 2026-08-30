@@ -36,6 +36,8 @@ class Settings:
     database_pool_min_size: int = 1
     database_pool_max_size: int = 10
     database_connect_timeout: int = 10
+    database_statement_timeout: int = 30000  # milliseconds
+    database_pool_timeout: int = 30  # seconds
     raw_photo_retention_days: int = 730
     model_version: str = "deterministic-3.0"
     policy_version: str = "2026-01"
@@ -46,6 +48,12 @@ class Settings:
     auth_required: bool = False
     admin_token: str | None = None
     allowed_origins: list[str] = field(default_factory=list)  # CORS allowed origins
+    # Production settings
+    log_level: str = "INFO"
+    json_logs: bool = True
+    rate_limit_enabled: bool = True
+    request_timeout: int = 30  # seconds
+    otel_enabled: bool = False
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -66,9 +74,17 @@ class Settings:
         auth_required_value = os.getenv("SKINPROOF_AUTH_REQUIRED", "0").strip().casefold()
         # CORS allowed origins - comma-separated list or single origin
         allowed_origins_env = os.getenv("SKINPROOF_ALLOWED_ORIGINS", "").strip()
+        env_name = os.getenv("SKINPROOF_ENV", "development").strip().casefold()
+
         if allowed_origins_env:
             allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",")]
         else:
+            # Production must explicitly set CORS origins - fail fast if not configured
+            if env_name in {"prod", "production"}:
+                raise RuntimeError(
+                    "SKINPROOF_ALLOWED_ORIGINS must be explicitly configured in production. "
+                    "Set comma-separated origins (e.g., SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai)"
+                )
             # Development default: allow localhost and emulator
             allowed_origins = [
                 "http://localhost:3000",
@@ -84,6 +100,8 @@ class Settings:
             database_pool_min_size=max(1, int(os.getenv("SKINPROOF_DB_POOL_MIN_SIZE", "1"))),
             database_pool_max_size=max(1, int(os.getenv("SKINPROOF_DB_POOL_MAX_SIZE", "10"))),
             database_connect_timeout=max(1, int(os.getenv("SKINPROOF_DB_CONNECT_TIMEOUT", "10"))),
+            database_statement_timeout=max(1000, int(os.getenv("SKINPROOF_DB_STATEMENT_TIMEOUT", "30000"))),
+            database_pool_timeout=max(5, int(os.getenv("SKINPROOF_DB_POOL_TIMEOUT", "30"))),
             raw_photo_retention_days=int(os.getenv("SKINPROOF_RAW_RETENTION_DAYS", "730")),
             model_version=os.getenv("SKINPROOF_MODEL_VERSION", "deterministic-3.0"),
             policy_version=os.getenv("SKINPROOF_POLICY_VERSION", "2026-01"),
@@ -96,6 +114,12 @@ class Settings:
             auth_required=auth_required_value in {"1", "true", "yes", "on"},
             admin_token=os.getenv("SKINPROOF_ADMIN_TOKEN", "").strip() or None,
             allowed_origins=allowed_origins,
+            # Production settings
+            log_level=os.getenv("SKINPROOF_LOG_LEVEL", "INFO").upper(),
+            json_logs=os.getenv("SKINPROOF_JSON_LOGS", "1") in {"1", "true", "yes", "on"},
+            rate_limit_enabled=os.getenv("SKINPROOF_RATE_LIMIT_ENABLED", "1") in {"1", "true", "yes", "on"},
+            request_timeout=max(5, int(os.getenv("SKINPROOF_REQUEST_TIMEOUT", "30"))),
+            otel_enabled=os.getenv("OTEL_ENABLED", "0") in {"1", "true", "yes", "on"},
         )
 
     def prepare(self) -> None:

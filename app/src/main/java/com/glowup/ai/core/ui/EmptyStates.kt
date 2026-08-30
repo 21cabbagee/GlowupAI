@@ -71,10 +71,9 @@ fun EmptyState(
             Spacer(modifier = Modifier.height(24.dp))
 
             GlowButton(
+                text = actionLabel,
                 onClick = onActionClick
-            ) {
-                Text(actionLabel)
-            }
+            )
         }
     }
 }

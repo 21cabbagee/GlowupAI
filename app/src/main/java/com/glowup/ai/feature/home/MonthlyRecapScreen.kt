@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.glowup.ai.core.design.HoneyTheme
+import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.ui.GlowButton
 import com.glowup.ai.core.ui.GlowTopBar
 import java.time.YearMonth
@@ -42,14 +42,15 @@ fun MonthlyRecapScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val honeyColor = HoneyTheme.colors.primary
-    val inkColor = HoneyTheme.colors.onPrimary
+    val glowColors = LocalGlowColors.current
+    val honeyColor = glowColors.honey500
+    val inkColor = glowColors.ink900
 
     Scaffold(
         topBar = {
             GlowTopBar(
                 title = "Your ${month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} Journey",
-                onNavigationClick = onBackClick
+                onBack = onBackClick
             )
         }
     ) { padding ->
@@ -98,17 +99,10 @@ fun MonthlyRecapScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             GlowButton(
+                text = "Share Your Progress",
                 onClick = onShareClick,
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Share,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Share Your Progress")
-            }
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
         }

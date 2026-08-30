@@ -18,8 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.glowup.ai.core.design.HoneyTheme
-import com.glowup.ai.domain.model.Achievement
+import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.domain.model.AchievementTier
 import com.glowup.ai.domain.model.UserAchievement
 
@@ -34,8 +33,9 @@ fun AchievementCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
-    val honeyColor = HoneyTheme.colors.primary
-    val inkColor = HoneyTheme.colors.onPrimary
+    val glowColors = LocalGlowColors.current
+    val honeyColor = glowColors.honey500
+    val inkColor = glowColors.ink900
 
     // Animate unlock state
     val scale by animateFloatAsState(
@@ -203,7 +203,8 @@ fun AchievementCelebration(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val honeyColor = HoneyTheme.colors.primary
+    val glowColors = LocalGlowColors.current
+    val honeyColor = glowColors.honey500
     val tierColor = getTierColor(achievement.type.tier)
 
     // Scale animation for icon
@@ -319,7 +320,7 @@ fun AchievementCelebration(
                 onClick = onDismiss,
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = honeyColor,
-                    contentColor = HoneyTheme.colors.onPrimary
+                    contentColor = glowColors.ink900
                 )
             ) {
                 Text("Awesome!")

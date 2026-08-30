@@ -21,7 +21,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.glowup.ai.core.design.HoneyTheme
+import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.domain.model.Streak
 
 /**
@@ -37,8 +37,9 @@ fun StreakCounter(
     showWarning: Boolean = false,
     warningMessage: String? = null
 ) {
-    val honeyColor = HoneyTheme.colors.primary
-    val inkColor = HoneyTheme.colors.onPrimary
+    val glowColors = LocalGlowColors.current
+    val honeyColor = glowColors.honey500
+    val inkColor = glowColors.ink900
 
     // Animate streak number
     val scale by animateFloatAsState(
@@ -231,8 +232,9 @@ fun CompactStreakIndicator(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
-    val honeyColor = HoneyTheme.colors.primary
-    val inkColor = HoneyTheme.colors.onPrimary
+    val glowColors = LocalGlowColors.current
+    val honeyColor = glowColors.honey500
+    val inkColor = glowColors.ink900
 
     Surface(
         modifier = modifier,

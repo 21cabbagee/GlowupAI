@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.glowup.ai.core.design.HoneyTheme
+import com.glowup.ai.core.design.LocalGlowColors
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -32,9 +32,10 @@ fun CalendarHeatmap(
     currentMonth: YearMonth = YearMonth.now(),
     onDateClick: (LocalDate) -> Unit = {}
 ) {
-    val honeyColor = HoneyTheme.colors.primary
-    val paperColor = HoneyTheme.colors.background
-    val inkColor = HoneyTheme.colors.onBackground
+    val glowColors = LocalGlowColors.current
+    val honeyColor = glowColors.honey500
+    val paperColor = glowColors.paper
+    val inkColor = MaterialTheme.colorScheme.onBackground
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -63,9 +64,11 @@ fun CalendarHeatmap(
                     color = inkColor
                 )
 
-                // Capture count for month
-                val capturesThisMonth = captureDates.count {
-                    it.month == currentMonth.month && it.year == currentMonth.year
+                // PERFORMANCE: Memoize month count (PERFORMANCE_OPTIMIZATIONS.md §2.3)
+                val capturesThisMonth = remember(captureDates, currentMonth) {
+                    captureDates.count {
+                        it.month == currentMonth.month && it.year == currentMonth.year
+                    }
                 }
                 Text(
                     text = "$capturesThisMonth captures",
@@ -95,12 +98,15 @@ fun CalendarHeatmap(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Calendar grid
-            val firstDayOfMonth = currentMonth.atDay(1)
-            val daysInMonth = currentMonth.lengthOfMonth()
-            val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7 // 0 = Sunday
+            // PERFORMANCE: Memoize calendar calculations (PERFORMANCE_OPTIMIZATIONS.md §2.3)
+            val firstDayOfMonth = remember(currentMonth) { currentMonth.atDay(1) }
+            val daysInMonth = remember(currentMonth) { currentMonth.lengthOfMonth() }
+            val firstDayOfWeek = remember(firstDayOfMonth) { firstDayOfMonth.dayOfWeek.value % 7 } // 0 = Sunday
 
             // Calculate weeks needed
-            val weeksNeeded = ((firstDayOfWeek + daysInMonth) / 7.0).toInt() + 1
+            val weeksNeeded = remember(firstDayOfWeek, daysInMonth) {
+                ((firstDayOfWeek + daysInMonth) / 7.0).toInt() + 1
+            }
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -151,9 +157,8 @@ fun CalendarHeatmap(
             // Legend
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 LegendItem(
                     color = MaterialTheme.colorScheme.surfaceVariant,
@@ -261,18 +266,23 @@ fun CompactCalendarHeatmap(
     modifier: Modifier = Modifier,
     onDateClick: (LocalDate) -> Unit = {}
 ) {
-    val honeyColor = HoneyTheme.colors.primary
-    val currentMonth = YearMonth.now()
-    val firstDayOfMonth = currentMonth.atDay(1)
-    val daysInMonth = currentMonth.lengthOfMonth()
-    val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7
+    val glowColors = LocalGlowColors.current
+    val honeyColor = glowColors.honey500
+    val currentMonth = remember { YearMonth.now() }
+
+    // PERFORMANCE: Memoize calendar calculations (PERFORMANCE_OPTIMIZATIONS.md §2.4)
+    val firstDayOfMonth = remember(currentMonth) { currentMonth.atDay(1) }
+    val daysInMonth = remember(currentMonth) { currentMonth.lengthOfMonth() }
+    val firstDayOfWeek = remember(firstDayOfMonth) { firstDayOfMonth.dayOfWeek.value % 7 }
 
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // Calculate weeks
-        val weeksNeeded = minOf(5, ((firstDayOfWeek + daysInMonth) / 7.0).toInt() + 1)
+        val weeksNeeded = remember(firstDayOfWeek, daysInMonth) {
+            minOf(5, ((firstDayOfWeek + daysInMonth) / 7.0).toInt() + 1)
+        }
 
         repeat(weeksNeeded) { week ->
             Row(

@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import binascii
 import json
+import logging
+import os
 import secrets
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -16,7 +19,18 @@ from .auth import AuthError, verify_id_token
 from .complete_service import CompleteSkinProofService
 from .config import Settings
 from .complete_db import build_full_database
+from .logging_config import RequestLoggingMiddleware, setup_logging
+from .middleware import (
+    ErrorHandlingMiddleware,
+    RateLimitMiddleware,
+    TimeoutMiddleware,
+    create_health_checker,
+)
+from .observability import MetricsCollector, MetricsMiddleware, setup_opentelemetry, instrument_fastapi
 from .photos import build_photo_store
+from .shutdown import create_shutdown_handler
+
+logger = logging.getLogger(__name__)
 
 
 class UserCreate(BaseModel):
@@ -158,20 +172,75 @@ class PurchaseGuidanceCreate(BaseModel):
     currency: str = Field(default="INR", min_length=3, max_length=3)
 
 def create_complete_app(service: CompleteSkinProofService | None = None) -> FastAPI:
+    # Setup structured logging
+    log_level = os.getenv("SKINPROOF_LOG_LEVEL", "INFO")
+    use_json_logs = os.getenv("SKINPROOF_JSON_LOGS", "1") == "1"
+    setup_logging(log_level, use_json_logs)
+    logger.info("Initializing SkinProof application")
+
     settings = Settings.from_env()
     settings.prepare()
     active = service or CompleteSkinProofService(build_full_database(settings), settings, build_photo_store(settings.photo_dir))
-    app = FastAPI(title="SkinProof", version="3.0.0", description="A complete personal appearance measurement system. Cosmetic tracking, never diagnosis.")
+
+    app = FastAPI(
+        title="SkinProof",
+        version="3.0.0",
+        description="A complete personal appearance measurement system. Cosmetic tracking, never diagnosis."
+    )
     app.state.skinproof = active
-    # CORS: Use explicit allowed origins from config instead of wildcard
-    # In production, set SKINPROOF_ALLOWED_ORIGINS env variable
+
+    # Initialize metrics collector
+    metrics_collector = MetricsCollector()
+    app.state.metrics = metrics_collector
+
+    # Setup OpenTelemetry (if enabled)
+    otel_enabled = os.getenv("OTEL_ENABLED", "0") == "1"
+    otel_config = setup_opentelemetry("skinproof", enabled=otel_enabled)
+    if otel_config:
+        instrument_fastapi(app, otel_config)
+
+    # Setup graceful shutdown
+    def cleanup_db():
+        """Close database connections on shutdown."""
+        logger.info("Closing database connections")
+        try:
+            active.db.close()
+        except Exception as exc:
+            logger.error(f"Error closing database: {exc}")
+
+    shutdown_handler = create_shutdown_handler(app, cleanup_db)
+    shutdown_handler.setup_signal_handlers()
+
+    # Add middleware in correct order (last added = first executed)
+    # 1. CORS (outermost)
+    # Security: allow_credentials=False because we use Bearer token auth (not cookies)
+    # This prevents CSRF attacks. Explicit headers list instead of wildcard.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
-        allow_credentials=True,
+        allow_credentials=False,  # Bearer tokens don't require credentials
         allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-        allow_headers=["*"],
+        allow_headers=["Authorization", "Content-Type"],  # Explicit headers only
     )
+
+    # 2. Error handling (catch all errors)
+    app.add_middleware(ErrorHandlingMiddleware)
+
+    # 3. Request logging (log all requests)
+    app.add_middleware(RequestLoggingMiddleware)
+
+    # 4. Metrics collection
+    app.add_middleware(MetricsMiddleware, collector=metrics_collector)
+
+    # 5. Rate limiting (check limits)
+    rate_limit_enabled = os.getenv("SKINPROOF_RATE_LIMIT_ENABLED", "1") == "1"
+    app.add_middleware(RateLimitMiddleware, enabled=rate_limit_enabled)
+
+    # 6. Request timeout (innermost, closest to handlers)
+    timeout_seconds = int(os.getenv("SKINPROOF_REQUEST_TIMEOUT", "30"))
+    app.add_middleware(TimeoutMiddleware, timeout_seconds=timeout_seconds)
+
+    logger.info(f"Middleware configured: rate_limit={rate_limit_enabled}, timeout={timeout_seconds}s")
 
     def run(callable_, *args, **kwargs):
         try:
@@ -224,12 +293,41 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
             raise HTTPException(status_code=403, detail="invalid admin token")
 
     @app.get("/api/health")
-    def health():
+    async def health():
+        """Enhanced health check with database, disk, and dependency checks."""
+        health_checker = create_health_checker(active.db.healthcheck, settings)
         try:
-            database_ready = active.db.healthcheck()
+            health_status = await health_checker()
+
+            # Add version and feature info
+            health_status["version"] = "3.0.0"
+            health_status["scope"] = "cosmetic_tracking"
+            health_status["features"] = [
+                "experiments", "qna", "discover", "commerce", "reprocessing",
+                "shelf_scan", "product_prediction", "root_cause_search",
+                "budget_optimizer", "derm_export"
+            ]
+
+            # Return 503 if unhealthy, 200 if healthy
+            status_code = 200 if health_status["status"] == "healthy" else 503
+            return JSONResponse(content=health_status, status_code=status_code)
+
         except Exception as exc:
-            raise HTTPException(status_code=503, detail=f"database unavailable: {exc}") from exc
-        return {"status": "ok", "database": getattr(active.db, "backend", "sqlite"), "database_ready": database_ready, "version": "3.0.0", "scope": "cosmetic_tracking", "features": ["experiments", "qna", "discover", "commerce", "reprocessing", "shelf_scan", "product_prediction", "root_cause_search", "budget_optimizer", "derm_export"]}
+            logger.exception("Health check failed")
+            return JSONResponse(
+                content={
+                    "status": "unhealthy",
+                    "error": "Health check failed",
+                    "version": "3.0.0"
+                },
+                status_code=503
+            )
+
+    @app.get("/api/metrics", tags=["monitoring"])
+    def metrics(authorization: str | None = Header(default=None)):
+        """Get application metrics (admin only)."""
+        _require_admin(authorization)
+        return metrics_collector.get_metrics()
 
     @app.post("/api/users")
     def create_user(payload: UserCreate):

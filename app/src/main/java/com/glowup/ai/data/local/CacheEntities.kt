@@ -2,6 +2,7 @@ package com.glowup.ai.data.local
 
 import androidx.room.Dao
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
@@ -25,7 +26,13 @@ import kotlinx.coroutines.flow.Flow
  *   trap #7 (never poll either endpoint).
  */
 
-@Entity(tableName = "dashboard_cache")
+@Entity(
+    tableName = "dashboard_cache",
+    indices = [
+        Index(value = ["userId", "plan"]),
+        Index(value = ["cacheKey"])
+    ]
+)
 data class DashboardCacheEntity(
     /** "<userId>:<plan>:<vertical>" */
     @PrimaryKey val cacheKey: String,
@@ -55,7 +62,13 @@ interface DashboardCacheDao {
     suspend fun clearForUser(userId: String)
 }
 
-@Entity(tableName = "history_cache")
+@Entity(
+    tableName = "history_cache",
+    indices = [
+        Index(value = ["userId", "vertical"]),
+        Index(value = ["capturedAt"])
+    ]
+)
 data class HistoryCacheEntity(
     @PrimaryKey val id: String,
     val userId: String,
@@ -86,7 +99,13 @@ interface HistoryCacheDao {
 
 /** Product rows are GLOBAL, not per-user (frontend-api-map.md trap: `POST /api/products` takes no
  * `user_id`) — this table has no `userId` column on purpose. */
-@Entity(tableName = "product_cache")
+@Entity(
+    tableName = "product_cache",
+    indices = [
+        Index(value = ["name"]),
+        Index(value = ["barcode"])
+    ]
+)
 data class ProductCacheEntity(
     @PrimaryKey val id: String,
     val name: String,
@@ -141,7 +160,13 @@ interface ProductDetailCacheDao {
     suspend fun clearAll()
 }
 
-@Entity(tableName = "routine_event_cache")
+@Entity(
+    tableName = "routine_event_cache",
+    indices = [
+        Index(value = ["userId"]),
+        Index(value = ["productId"])
+    ]
+)
 data class RoutineEventCacheEntity(
     @PrimaryKey val id: String,
     val userId: String,
@@ -162,7 +187,12 @@ interface RoutineEventCacheDao {
     suspend fun clearForUser(userId: String)
 }
 
-@Entity(tableName = "experiment_cache")
+@Entity(
+    tableName = "experiment_cache",
+    indices = [
+        Index(value = ["userId", "plan", "valid"])
+    ]
+)
 data class ExperimentCacheEntity(
     @PrimaryKey val id: String,
     val userId: String,
@@ -316,7 +346,13 @@ interface LabelCacheDao {
     suspend fun clearForUser(userId: String)
 }
 
-@Entity(tableName = "context_event_cache")
+@Entity(
+    tableName = "context_event_cache",
+    indices = [
+        Index(value = ["userId"]),
+        Index(value = ["occurredAt"])
+    ]
+)
 data class ContextEventCacheEntity(
     @PrimaryKey val id: String,
     val userId: String,

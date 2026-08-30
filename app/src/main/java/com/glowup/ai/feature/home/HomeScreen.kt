@@ -21,7 +21,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -173,9 +175,17 @@ private fun HomeContent(
     val isPremium = sessionState.canUsePremium
     val captureEnabled = sessionState.canCapture
 
-    val sortedHistory = state.history.sortedBy { it.capturedAt }
-    val latest = sortedHistory.lastOrNull()
-    val previous = sortedHistory.getOrNull(sortedHistory.size - 2)
+    // PERFORMANCE: Use derivedStateOf to avoid re-sorting on every recomposition
+    // (PERFORMANCE_OPTIMIZATIONS.md §2.1 - sortedBy is O(n log n), expensive for large history)
+    val sortedHistory = remember(state.history) {
+        derivedStateOf { state.history.sortedBy { it.capturedAt } }
+    }.value
+    val latest = remember(sortedHistory) {
+        derivedStateOf { sortedHistory.lastOrNull() }
+    }.value
+    val previous = remember(sortedHistory) {
+        derivedStateOf { sortedHistory.getOrNull(sortedHistory.size - 2) }
+    }.value
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -218,18 +228,23 @@ private fun HomeContent(
         }
 
         item {
-            // Extract capture dates from history (convert ISO-8601 strings to LocalDate)
-            val captureDates = sortedHistory.mapNotNull { capture ->
-                try {
-                    capture.capturedAt?.let { isoString ->
-                        Instant.parse(isoString)
-                            .atZone(ZoneId.systemDefault())
-                            .toLocalDate()
-                    }
-                } catch (e: Exception) {
-                    null
+            // PERFORMANCE: Use derivedStateOf to avoid re-parsing dates on every recomposition
+            // (PERFORMANCE_OPTIMIZATIONS.md §2.1 - Instant.parse is expensive, runs 30+ times for typical user)
+            val captureDates = remember(sortedHistory) {
+                derivedStateOf {
+                    sortedHistory.mapNotNull { capture ->
+                        try {
+                            capture.capturedAt?.let { isoString ->
+                                Instant.parse(isoString)
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDate()
+                            }
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }.toSet()
                 }
-            }.toSet()
+            }.value
 
             Card(
                 modifier = Modifier.fillMaxWidth(),

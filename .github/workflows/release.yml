@@ -1,0 +1,312 @@
+name: Release Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name (e.g., 1.0.0)'
+        required: true
+        type: string
+      version_code:
+        description: 'Version code (integer)'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes'
+        required: false
+        type: string
+        default: 'New release'
+      build_type:
+        description: 'Build type'
+        required: true
+        type: choice
+        options:
+          - release
+          - staging
+        default: release
+
+jobs:
+  pre-flight:
+    name: Pre-flight Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate version format
+        run: |
+          if ! echo "${{ inputs.version_name }}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$'; then
+            echo "❌ Invalid version format. Expected: X.Y.Z or X.Y.Z-suffix"
+            exit 1
+          fi
+          echo "✅ Version format is valid"
+
+      - name: Check for required secrets
+        run: |
+          echo "Checking required secrets..."
+          if [ -z "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" ]; then
+            echo "❌ RELEASE_KEYSTORE_BASE64 secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.KEYSTORE_PASSWORD }}" ]; then
+            echo "❌ KEYSTORE_PASSWORD secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.KEY_ALIAS }}" ]; then
+            echo "❌ KEY_ALIAS secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.KEY_PASSWORD }}" ]; then
+            echo "❌ KEY_PASSWORD secret is not set"
+            exit 1
+          fi
+          echo "✅ All required secrets are set"
+
+  build:
+    name: Build Release APK
+    needs: pre-flight
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: wrapper
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Decode and setup keystore
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+
+          # Create keystore.properties
+          cat > app/keystore.properties << EOF
+          storeFile=release.keystore
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          EOF
+
+      - name: Update version in build.gradle.kts
+        run: |
+          sed -i 's/versionCode = [0-9]*/versionCode = ${{ inputs.version_code }}/' app/build.gradle.kts
+          sed -i 's/versionName = ".*"/versionName = "${{ inputs.version_name }}"/' app/build.gradle.kts
+
+      - name: Run full test suite
+        run: ./gradlew test --stacktrace
+
+      - name: Run lint checks
+        run: ./gradlew lint --stacktrace
+
+      - name: Build Release APK
+        run: |
+          if [ "${{ inputs.build_type }}" = "staging" ]; then
+            ./gradlew assembleStaging --stacktrace
+          else
+            ./gradlew assembleRelease --stacktrace
+          fi
+
+      - name: Sign APK
+        run: |
+          echo "✅ APK signed successfully with release keystore"
+          if [ "${{ inputs.build_type }}" = "staging" ]; then
+            APK_PATH=$(find app/build/outputs/apk/staging -name "*.apk" -type f)
+          else
+            APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" -type f)
+          fi
+          echo "APK located at: $APK_PATH"
+
+          # Verify APK signature
+          $ANDROID_HOME/build-tools/*/apksigner verify --print-certs "$APK_PATH"
+
+      - name: Generate APK metadata
+        id: apk_info
+        run: |
+          if [ "${{ inputs.build_type }}" = "staging" ]; then
+            APK_PATH=$(find app/build/outputs/apk/staging -name "*.apk" -type f)
+          else
+            APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" -type f)
+          fi
+          APK_SIZE=$(ls -lh "$APK_PATH" | awk '{print $5}')
+          APK_SHA256=$(sha256sum "$APK_PATH" | awk '{print $1}')
+
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+          echo "apk_size=$APK_SIZE" >> $GITHUB_OUTPUT
+          echo "apk_sha256=$APK_SHA256" >> $GITHUB_OUTPUT
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: glowup-${{ inputs.build_type }}-${{ inputs.version_name }}
+          path: ${{ steps.apk_info.outputs.apk_path }}
+          retention-days: 90
+
+      - name: Upload mapping files
+        uses: actions/upload-artifact@v4
+        with:
+          name: mapping-files-${{ inputs.version_name }}
+          path: |
+            app/build/outputs/mapping/*/mapping.txt
+            app/build/outputs/mapping/*/configuration.txt
+          retention-days: 365
+
+      - name: Cleanup keystore
+        if: always()
+        run: |
+          rm -f app/release.keystore
+          rm -f app/keystore.properties
+
+      - name: Build summary
+        run: |
+          echo "## 🚀 Release Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ inputs.version_name }} (build ${{ inputs.version_code }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Type:** ${{ inputs.build_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **APK Size:** ${{ steps.apk_info.outputs.apk_size }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **SHA-256:** \`${{ steps.apk_info.outputs.apk_sha256 }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Build completed successfully!" >> $GITHUB_STEP_SUMMARY
+
+  create-release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: inputs.build_type == 'release'
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: glowup-${{ inputs.build_type }}-${{ inputs.version_name }}
+          path: ./artifacts
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ inputs.version_name }}
+          release_name: GlowUp AI v${{ inputs.version_name }}
+          body: |
+            ## GlowUp AI v${{ inputs.version_name }}
+
+            ${{ inputs.release_notes }}
+
+            ### 📦 Installation
+            Download the APK below and install on your Android device.
+
+            ### 🔒 Security
+            - APK is signed with the official GlowUp AI release key
+            - SHA-256 checksum provided below
+
+            ### 📱 Requirements
+            - Android 7.0 (API 24) or higher
+            - ~50MB storage space
+
+            ---
+            Built with ❤️ by the GlowUp AI team
+          draft: false
+          prerelease: ${{ contains(inputs.version_name, '-') }}
+
+      - name: Upload APK to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/app-${{ inputs.build_type }}.apk
+          asset_name: GlowUp-v${{ inputs.version_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Create release notes file
+        run: |
+          cat > release-notes.md << EOF
+          # GlowUp AI v${{ inputs.version_name }}
+
+          **Release Date:** $(date +%Y-%m-%d)
+          **Version Code:** ${{ inputs.version_code }}
+
+          ## What's New
+          ${{ inputs.release_notes }}
+
+          ## Download
+          [GlowUp-v${{ inputs.version_name }}.apk](${{ steps.create_release.outputs.html_url }})
+
+          ## Verification
+          After downloading, you can verify the APK integrity by checking the SHA-256 checksum.
+          EOF
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes-${{ inputs.version_name }}
+          path: release-notes.md
+          retention-days: 365
+
+  notify:
+    name: Notify Success
+    needs: [build, create-release]
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Create success notification
+        run: |
+          echo "## 🎉 Release Build Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "GlowUp AI v${{ inputs.version_name }} has been built successfully." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download the APK from the artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Test on physical devices" >> $GITHUB_STEP_SUMMARY
+          echo "3. Upload to Google Play Console" >> $GITHUB_STEP_SUMMARY
+          echo "4. Submit for review" >> $GITHUB_STEP_SUMMARY
+
+      # Uncomment and configure for Slack notifications
+      # - name: Send Slack notification
+      #   uses: slackapi/slack-github-action@v1
+      #   with:
+      #     payload: |
+      #       {
+      #         "text": "🚀 New GlowUp AI release: v${{ inputs.version_name }}",
+      #         "blocks": [
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "*New Release Built*\n*Version:* ${{ inputs.version_name }}\n*Build:* ${{ inputs.version_code }}"
+      #             }
+      #           }
+      #         ]
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

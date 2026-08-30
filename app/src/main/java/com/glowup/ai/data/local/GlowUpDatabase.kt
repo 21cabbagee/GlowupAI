@@ -31,7 +31,7 @@ import androidx.room.TypeConverters
         LabelCacheEntity::class,
         ContextEventCacheEntity::class,
     ],
-    version = 1,
+    version = 2, // Bumped from 1 to 2 for index additions (PERFORMANCE_OPTIMIZATIONS.md §4)
     // `false` because the Task 0.3 build-config agent owns app/build.gradle.kts and
     // `room.schemaLocation` is not wired there yet; true (with an unconfigured location) is a
     // noisy KSP warning, not a hard error, but there's no reason to ship it. Flip to `true` once
