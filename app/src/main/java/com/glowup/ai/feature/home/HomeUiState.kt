@@ -5,6 +5,8 @@ import com.glowup.ai.domain.model.CheckInSkinFeel
 import com.glowup.ai.domain.model.Dashboard
 import com.glowup.ai.domain.model.HistoryItem
 import com.glowup.ai.domain.model.PrimaryMetric
+import com.glowup.ai.domain.model.Streak
+import com.glowup.ai.domain.model.UserAchievement
 
 /**
  * `feature/home`'s screen-level state. `GET /dashboard` is the single initial snapshot (task
@@ -41,6 +43,12 @@ sealed interface HomeUiState {
         val checkInSheetVisible: Boolean,
         val checkInSubmitting: Boolean,
         val checkInError: String?,
+        /** Calculated streak from capture history using loss aversion psychology */
+        val streak: Streak,
+        /** All achievements with progress and unlock status */
+        val achievements: List<UserAchievement> = emptyList(),
+        /** Achievement to show in celebration dialog, null if none */
+        val celebrationAchievement: UserAchievement? = null,
     ) : HomeUiState
 }
 

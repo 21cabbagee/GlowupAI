@@ -5,13 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.glowup.ai.core.util.GlowResult
 import com.glowup.ai.data.local.SessionStore
 import com.glowup.ai.data.remote.ApiError
+import com.glowup.ai.data.repository.AchievementRepository
 import com.glowup.ai.data.repository.HomeRepository
 import com.glowup.ai.data.telemetry.Telemetry
 import com.glowup.ai.data.telemetry.TelemetryEvent
+import com.glowup.ai.domain.calculator.AchievementCalculator
 import com.glowup.ai.domain.model.CheckInCreateRequest
 import com.glowup.ai.domain.model.CheckInRoutineState
 import com.glowup.ai.domain.model.CheckInSkinFeel
 import com.glowup.ai.domain.model.PrimaryMetric
+import com.glowup.ai.domain.model.Streak
+import com.glowup.ai.domain.model.UserAchievement
+import com.glowup.ai.domain.StreakCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,12 +44,15 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val homeRepository: HomeRepository,
+    private val achievementRepository: AchievementRepository,
     private val sessionStore: SessionStore,
     private val telemetry: Telemetry,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
+
+    private var freezeDayUsedThisWeek = false
 
     init {
         viewModelScope.launch { load(initial = true) }
@@ -92,6 +100,12 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun onFreezeDayUsed() {
+        freezeDayUsedThisWeek = true
+        telemetry.track(TelemetryEvent.STREAK_FREEZE_DAY_USED)
+        viewModelScope.launch { load(initial = false) }
+    }
+
     private suspend fun load(initial: Boolean) {
         val userId = sessionStore.userId()
         if (userId == null) {
@@ -118,6 +132,25 @@ class HomeViewModel @Inject constructor(
         val historyCached = (historyResult as? GlowResult.Success)?.data
         val previousMetric = (_state.value as? HomeUiState.Content)?.selectedMetric ?: PrimaryMetric.REDNESS_SCORE
 
+        // Calculate streak from history items (Capture is typealias for HistoryItem)
+        val historyForStreak = historyCached?.data ?: dashboardCached.data.history
+        val streak = StreakCalculator.calculateStreak(
+            captures = historyForStreak,
+            freezeDayUsedThisWeek = freezeDayUsedThisWeek
+        )
+
+        // Check achievements
+        val previouslyUnlocked = achievementRepository.getUnlockedIds(userId)
+        val achievements = AchievementCalculator.calculateAchievements(
+            dashboard = dashboardCached.data,
+            previouslyUnlocked = previouslyUnlocked
+        )
+        achievementRepository.saveAchievements(userId, achievements)
+
+        // Find newly unlocked achievements for celebration
+        val newlyUnlocked = achievements.filter { it.isNew }
+        val celebrationAchievement = newlyUnlocked.firstOrNull()
+
         _state.value = HomeUiState.Content(
             dashboard = dashboardCached.data,
             dashboardStale = dashboardCached.stale,
@@ -133,7 +166,16 @@ class HomeViewModel @Inject constructor(
             checkInSheetVisible = false,
             checkInSubmitting = false,
             checkInError = null,
+            streak = streak,
+            achievements = achievements,
+            celebrationAchievement = celebrationAchievement,
         )
+    }
+
+    fun onAchievementCelebrationDismissed() {
+        _state.update { current ->
+            (current as? HomeUiState.Content)?.copy(celebrationAchievement = null) ?: current
+        }
     }
 }
 

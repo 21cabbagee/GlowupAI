@@ -31,6 +31,7 @@ enum class TelemetryEvent(val wireName: String) {
     OFFER_OPENED("offer_opened"),
     ACCOUNT_EXPORT_REQUESTED("account_export_requested"),
     ACCOUNT_DELETED("account_deleted"),
+    STREAK_FREEZE_DAY_USED("streak_freeze_day_used"),
 }
 
 /**

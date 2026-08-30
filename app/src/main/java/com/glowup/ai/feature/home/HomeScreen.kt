@@ -2,25 +2,43 @@ package com.glowup.ai.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import com.glowup.ai.core.ui.AchievementCelebration
+import com.glowup.ai.core.ui.AchievementSummary
+import com.glowup.ai.core.ui.CompactCalendarHeatmap
 import com.glowup.ai.core.ui.DisclaimerNote
 import com.glowup.ai.core.ui.ErrorState
 import com.glowup.ai.core.ui.GlowTopBar
 import com.glowup.ai.core.ui.ShimmerSkeleton
+import com.glowup.ai.core.ui.StreakCounter
+import com.glowup.ai.domain.StreakCalculator
 import com.glowup.ai.domain.SessionStateMachine
 import com.glowup.ai.core.util.GlowResult
 import com.glowup.ai.domain.model.CheckInRoutineState
@@ -59,6 +77,8 @@ fun HomeRoute(
         onCheckInClick = viewModel::onCheckInSheetRequested,
         onCheckInDismiss = viewModel::onCheckInSheetDismissed,
         onCheckInSubmit = viewModel::onCheckInSubmitted,
+        onFreezeDayUsed = viewModel::onFreezeDayUsed,
+        onAchievementCelebrationDismiss = viewModel::onAchievementCelebrationDismissed,
         onNavigate = onNavigate,
     )
 }
@@ -72,6 +92,8 @@ fun HomeScreen(
     onCheckInClick: () -> Unit,
     onCheckInDismiss: () -> Unit,
     onCheckInSubmit: (CheckInRoutineState, CheckInSkinFeel, String?) -> Unit,
+    onFreezeDayUsed: () -> Unit,
+    onAchievementCelebrationDismiss: () -> Unit,
     onNavigate: (GlowDestination) -> Unit,
 ) {
     Scaffold(
@@ -96,6 +118,7 @@ fun HomeScreen(
                 state = state,
                 onMetricSelected = onMetricSelected,
                 onCheckInClick = onCheckInClick,
+                onFreezeDayUsed = onFreezeDayUsed,
                 onNavigate = onNavigate,
             )
         }
@@ -106,6 +129,14 @@ fun HomeScreen(
                 submitting = state.checkInSubmitting,
                 errorMessage = state.checkInError,
                 onSubmit = onCheckInSubmit,
+            )
+        }
+
+        // Achievement celebration dialog
+        if (state is HomeUiState.Content && state.celebrationAchievement != null) {
+            AchievementCelebration(
+                achievement = state.celebrationAchievement,
+                onDismiss = onAchievementCelebrationDismiss
             )
         }
     }
@@ -130,6 +161,7 @@ private fun HomeContent(
     state: HomeUiState.Content,
     onMetricSelected: (com.glowup.ai.domain.model.PrimaryMetric) -> Unit,
     onCheckInClick: () -> Unit,
+    onFreezeDayUsed: () -> Unit,
     onNavigate: (GlowDestination) -> Unit,
 ) {
     val dashboard: Dashboard = state.dashboard
@@ -169,11 +201,88 @@ private fun HomeContent(
         }
 
         item {
+            StreakCounter(
+                streak = state.streak,
+                onFreezeDayClick = onFreezeDayUsed,
+                showWarning = StreakCalculator.wouldStreakBreak(state.streak),
+                warningMessage = StreakCalculator.getStreakWarning(state.streak),
+            )
+        }
+
+        item {
             HomeStatsSection(
                 engagement = dashboard.engagement,
                 latest = latest,
                 previous = previous,
             )
+        }
+
+        item {
+            // Extract capture dates from history (convert ISO-8601 strings to LocalDate)
+            val captureDates = sortedHistory.mapNotNull { capture ->
+                try {
+                    capture.capturedAt?.let { isoString ->
+                        Instant.parse(isoString)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDate()
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+            }.toSet()
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Capture Calendar",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = com.glowup.ai.core.design.LocalGlowColors.current.ink
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    CompactCalendarHeatmap(
+                        captureDates = captureDates,
+                        onDateClick = { date ->
+                            // Find the capture for this date and navigate
+                            val captureForDate = sortedHistory.find { capture ->
+                                try {
+                                    capture.capturedAt?.let { isoString ->
+                                        Instant.parse(isoString)
+                                            .atZone(ZoneId.systemDefault())
+                                            .toLocalDate() == date
+                                    } ?: false
+                                } catch (e: Exception) {
+                                    false
+                                }
+                            }
+                            // For now, navigate to Capture screen
+                            // TODO: Navigate to specific capture detail when captureForDate.id is available
+                            onNavigate(GlowDestination.Capture)
+                        }
+                    )
+                }
+            }
+        }
+
+        // Achievements section
+        if (state.achievements.isNotEmpty()) {
+            item {
+                AchievementSummary(
+                    achievements = state.achievements,
+                    onClick = { onNavigate(GlowDestination.Achievements) }
+                )
+            }
         }
 
         item {

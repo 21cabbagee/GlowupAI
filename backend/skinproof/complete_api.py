@@ -163,7 +163,15 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
     active = service or CompleteSkinProofService(build_full_database(settings), settings, build_photo_store(settings.photo_dir))
     app = FastAPI(title="SkinProof", version="3.0.0", description="A complete personal appearance measurement system. Cosmetic tracking, never diagnosis.")
     app.state.skinproof = active
-    app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+    # CORS: Use explicit allowed origins from config instead of wildcard
+    # In production, set SKINPROOF_ALLOWED_ORIGINS env variable
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+        allow_headers=["*"],
+    )
 
     def run(callable_, *args, **kwargs):
         try:

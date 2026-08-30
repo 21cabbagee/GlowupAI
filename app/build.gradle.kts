@@ -74,14 +74,18 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
+            // Temporarily commented out so debug build uses com.glowup.ai (matches Firebase)
+            // TODO: Add com.glowup.ai.debug to Firebase and uncomment this
+            // applicationIdSuffix = ".debug"
             isDebuggable = true
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000/\"")
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000/api/\"")
         }
 
         create("staging") {
             initWith(getByName("debug"))
-            applicationIdSuffix = ".staging"
+            // Temporarily commented out so staging uses com.glowup.ai (matches Firebase)
+            // TODO: Add com.glowup.ai.staging to Firebase and uncomment this
+            // applicationIdSuffix = ".staging"
             isDebuggable = false
             matchingFallbacks += listOf("debug")
             buildConfigField("String", "API_BASE_URL", "\"$stagingApiBaseUrl\"")

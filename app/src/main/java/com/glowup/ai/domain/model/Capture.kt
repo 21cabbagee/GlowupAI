@@ -1,5 +1,10 @@
 package com.glowup.ai.domain.model
 
+/**
+ * Typealias for StreakCalculator - uses HistoryItem which has capturedAt field
+ */
+typealias Capture = HistoryItem
+
 /** Client-measured pose/face fields sent to the server. Brightness and
  * sharpness are always overwritten by the server, so they are not part of
  * the outgoing request shape at all (see [CaptureCreateRequest]). */

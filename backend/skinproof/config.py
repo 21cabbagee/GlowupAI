@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -45,6 +45,7 @@ class Settings:
     firebase_project_id: str | None = None
     auth_required: bool = False
     admin_token: str | None = None
+    allowed_origins: list[str] = field(default_factory=list)  # CORS allowed origins
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -63,6 +64,19 @@ class Settings:
         )
         enabled_value = os.getenv("SKINPROOF_GEMINI_ENABLED", "1").strip().casefold()
         auth_required_value = os.getenv("SKINPROOF_AUTH_REQUIRED", "0").strip().casefold()
+        # CORS allowed origins - comma-separated list or single origin
+        allowed_origins_env = os.getenv("SKINPROOF_ALLOWED_ORIGINS", "").strip()
+        if allowed_origins_env:
+            allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",")]
+        else:
+            # Development default: allow localhost and emulator
+            allowed_origins = [
+                "http://localhost:3000",
+                "http://localhost:8000",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:8000",
+                "http://10.0.2.2:8000",  # Android emulator
+            ]
         return cls(
             db_path=db_path,
             photo_dir=Path(photo_dir_value) if photo_dir_value else None,
@@ -81,6 +95,7 @@ class Settings:
             # web client carry no bearer tokens and must keep passing/working.
             auth_required=auth_required_value in {"1", "true", "yes", "on"},
             admin_token=os.getenv("SKINPROOF_ADMIN_TOKEN", "").strip() or None,
+            allowed_origins=allowed_origins,
         )
 
     def prepare(self) -> None:

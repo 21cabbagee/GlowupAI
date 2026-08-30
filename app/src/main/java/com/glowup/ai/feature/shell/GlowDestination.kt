@@ -32,6 +32,7 @@ sealed interface GlowDestination {
 
     // ---- feature/home -------------------------------------------------------
     @Serializable data object Home : GlowDestination
+    @Serializable data object Achievements : GlowDestination
 
     // ---- feature/capture ----------------------------------------------------
     @Serializable data object Capture : GlowDestination

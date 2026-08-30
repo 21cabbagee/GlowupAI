@@ -6,6 +6,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.glowup.ai.feature.account.accountGraph
+import com.glowup.ai.feature.achievements.achievementsGraph
 import com.glowup.ai.feature.auth.authGraph
 import com.glowup.ai.feature.capture.captureGraph
 import com.glowup.ai.feature.discover.discoverGraph
@@ -36,6 +37,7 @@ fun GlowNavGraph(navController: NavHostController) {
         authGraph(navController)
         onboardingGraph(navController)
         homeGraph(navController)
+        achievementsGraph(navController)
         captureGraph(navController)
         routineGraph(navController)
         insightsGraph(navController)
