@@ -1,9 +1,12 @@
 package com.glowup.ai.core.ui
 
+import android.view.HapticFeedbackConstants
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -13,19 +16,27 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.glowup.ai.core.design.GlowMotion
+import com.glowup.ai.core.design.GlowShapes
+import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.GlowUpTheme
 import com.glowup.ai.core.design.LocalGlowColors
+import com.glowup.ai.core.design.rememberReducedMotion
 
 /** Visual treatments for [GlowButton]. Brand yellow is a surface only — never text. */
 enum class GlowButtonVariant { Primary, Secondary, Ghost, Danger }
@@ -82,17 +93,38 @@ fun GlowButton(
     val colors = colorsFor(variant)
     val isInteractive = enabled && !loading
     val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val reducedMotion = rememberReducedMotion()
+    val view = LocalView.current
+
+    // Haptic feedback on press
+    LaunchedEffect(isPressed) {
+        if (isPressed && isInteractive) {
+            view.performHaptic(HapticFeedbackConstants.KEYBOARD_TAP)
+        }
+    }
+
+    // Press scale animation: 96% scale when pressed
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed && isInteractive) 0.96f else 1f,
+        animationSpec = GlowMotion.respectingReducedMotion(
+            GlowMotion.fast,
+            reducedMotion
+        ) as androidx.compose.animation.core.AnimationSpec<Float>,
+        label = "buttonPressScale"
+    )
 
     Box(
         modifier = modifier
+            .scale(scale)
             .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
             .background(
                 color = if (isInteractive) colors.background else colors.background.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(14.dp),
+                shape = GlowShapes.md,
             )
             .then(
                 if (colors.border != null) {
-                    Modifier.border(1.dp, colors.border, RoundedCornerShape(14.dp))
+                    Modifier.border(1.dp, colors.border, GlowShapes.md)
                 } else Modifier,
             )
             .clickable(
@@ -101,7 +133,7 @@ fun GlowButton(
                 enabled = isInteractive,
                 onClick = onClick,
             )
-            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .padding(horizontal = GlowSpacing.lg, vertical = 12.dp)
             .semantics {
                 this.contentDescription = contentDescription ?: text
                 if (!isInteractive) disabled()

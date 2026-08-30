@@ -19,9 +19,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.LocalGlowColors
+import com.glowup.ai.core.design.GlowShapes
+import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.domain.model.Streak
 
 /**
@@ -47,9 +50,28 @@ fun StreakCounter(
         animationSpec = tween(300)
     )
 
+    // Pulse animation for flame icon (breathing effect)
+    val flamePulse = rememberPulseAnimation(
+        enabled = streak.currentStreak > 0,
+        minScale = 0.97f,
+        maxScale = 1.03f,
+        durationMillis = 2000
+    )
+
+    // Shake animation when at risk
+    val shakeOffset = rememberShakeAnimation(trigger = showWarning)
+
+    // Track freeze day usage for celebration
+    var freezeDayUsed by remember { mutableStateOf(false) }
+    val celebration = rememberCelebrationAnimation(trigger = freezeDayUsed)
+
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                translationX = shakeOffset
+            },
+        shape = GlowShapes.md,
         colors = CardDefaults.cardColors(
             containerColor = if (showWarning) {
                 MaterialTheme.colorScheme.errorContainer
@@ -62,7 +84,7 @@ fun StreakCounter(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
+                .padding(GlowSpacing.md),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Warning message if at risk
@@ -118,7 +140,9 @@ fun StreakCounter(
                             imageVector = Icons.Filled.LocalFireDepartment,
                             contentDescription = "Streak flame",
                             tint = if (streak.currentStreak > 0) inkColor else inkColor.copy(alpha = 0.3f),
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier
+                                .size(40.dp)
+                                .scale(flamePulse)
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -208,11 +232,19 @@ fun StreakCounter(
 
                     if (streak.canUseFreeze && showWarning) {
                         FilledTonalButton(
-                            onClick = onFreezeDayClick,
+                            onClick = {
+                                freezeDayUsed = true
+                                onFreezeDayClick()
+                            },
                             colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = inkColor,
                                 contentColor = honeyColor
-                            )
+                            ),
+                            modifier = Modifier
+                                .scale(celebration.scale)
+                                .graphicsLayer {
+                                    rotationZ = celebration.rotation
+                                }
                         ) {
                             Text("Use Freeze")
                         }
@@ -236,23 +268,33 @@ fun CompactStreakIndicator(
     val honeyColor = glowColors.honey500
     val inkColor = glowColors.ink900
 
+    // Subtle pulse for active streaks
+    val flamePulse = rememberPulseAnimation(
+        enabled = streak.currentStreak > 0,
+        minScale = 0.98f,
+        maxScale = 1.02f,
+        durationMillis = 2500
+    )
+
     Surface(
-        modifier = modifier,
+        modifier = modifier.animatedClickable(onClick = onClick),
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
+        shape = GlowShapes.md,
         color = honeyColor,
         shadowElevation = 2.dp
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
                 imageVector = Icons.Filled.LocalFireDepartment,
                 contentDescription = "Streak",
                 tint = inkColor,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier
+                    .size(18.dp)
+                    .scale(flamePulse)
             )
             Text(
                 text = "${streak.currentStreak}",

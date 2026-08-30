@@ -53,14 +53,7 @@ fun AchievementsScreen(
         topBar = {
             GlowTopBar(
                 title = "Achievements",
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
+                onBack = onBack
             )
         }
     ) { padding ->

@@ -13,12 +13,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.LocalGlowColors
+import com.glowup.ai.core.design.GlowShapes
 import com.glowup.ai.domain.model.AchievementTier
 import com.glowup.ai.domain.model.UserAchievement
 
@@ -36,25 +43,52 @@ fun AchievementCard(
     val glowColors = LocalGlowColors.current
     val honeyColor = glowColors.honey500
     val inkColor = glowColors.ink900
+    val reducedMotion = isReducedMotionEnabled()
 
-    // Animate unlock state
+    // Animate unlock state (respecting reduced motion)
     val scale by animateFloatAsState(
-        targetValue = if (achievement.isNew) 1.1f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        )
+        targetValue = if (achievement.isNew && !reducedMotion) 1.1f else 1f,
+        animationSpec = if (reducedMotion) {
+            tween(0)
+        } else {
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        },
+        label = "achievementScale"
     )
 
     val alpha = if (achievement.isUnlocked) 1f else 0.6f
     val tierColor = getTierColor(achievement.type.tier)
 
+    // Shine effect for unlocked achievements
+    val shinePosition = rememberShineAnimation(trigger = achievement.isUnlocked && achievement.isNew)
+
+    // Animated progress
+    val animatedProgress = rememberProgressAnimation(achievement.progress)
+
+    val cardDescription = buildString {
+        append(achievement.type.title)
+        append(". ")
+        append(achievement.type.description)
+        append(". ")
+        if (achievement.isUnlocked) {
+            append("Unlocked. ${achievement.type.tier.displayName} tier.")
+        } else {
+            append("Locked. Progress: ${achievement.getProgressText()}")
+        }
+    }
+
     Card(
         modifier = modifier
             .scale(scale)
-            .alpha(alpha),
+            .alpha(alpha)
+            .semantics {
+                contentDescription = cardDescription
+            },
         onClick = onClick,
-        shape = RoundedCornerShape(16.dp),
+        shape = GlowShapes.md,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -77,7 +111,7 @@ fun AchievementCard(
                     .then(
                         if (achievement.isUnlocked) {
                             Modifier.border(
-                                width = 3.dp,
+                                width = 4.dp,
                                 color = tierColor,
                                 shape = CircleShape
                             )
@@ -122,27 +156,43 @@ fun AchievementCard(
 
             // Progress or unlock date
             if (achievement.isUnlocked) {
-                // Tier badge
+                // Tier badge with shine effect
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = tierColor.copy(alpha = 0.2f)
+                    shape = GlowShapes.sm,
+                    color = tierColor.copy(alpha = 0.2f),
+                    modifier = Modifier.drawWithContent {
+                        drawContent()
+                        // Draw shine effect overlay
+                        if (shinePosition >= 0f) {
+                            val shineGradient = Brush.linearGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.White.copy(alpha = 0.3f),
+                                    Color.Transparent
+                                ),
+                                start = Offset(shinePosition * size.width - size.width, 0f),
+                                end = Offset(shinePosition * size.width, size.height)
+                            )
+                            drawRect(brush = shineGradient)
+                        }
+                    }
                 ) {
                     Text(
                         text = achievement.type.tier.displayName,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = tierColor,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                     )
                 }
             } else {
-                // Progress bar
+                // Animated progress bar
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     LinearProgressIndicator(
-                        progress = achievement.progress,
+                        progress = { animatedProgress },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)
@@ -182,12 +232,15 @@ fun AchievementBadge(
                 width = 2.dp,
                 color = tierColor,
                 shape = CircleShape
-            ),
+            )
+            .semantics {
+                contentDescription = "${achievement.type.title} achievement badge, ${achievement.type.tier.displayName} tier"
+            },
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = achievement.type.icon,
-            contentDescription = achievement.type.title,
+            contentDescription = null,
             tint = tierColor,
             modifier = Modifier.size((size * 0.6).dp)
         )
@@ -206,26 +259,37 @@ fun AchievementCelebration(
     val glowColors = LocalGlowColors.current
     val honeyColor = glowColors.honey500
     val tierColor = getTierColor(achievement.type.tier)
+    val reducedMotion = isReducedMotionEnabled()
 
-    // Scale animation for icon
-    val scale by rememberInfiniteTransition().animateFloat(
-        initialValue = 0.8f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = EaseInOut),
-            repeatMode = RepeatMode.Reverse
+    // Scale animation for icon (disabled with reduced motion)
+    val scale by if (reducedMotion) {
+        remember { mutableStateOf(1f) }
+    } else {
+        rememberInfiniteTransition(label = "celebrationScale").animateFloat(
+            initialValue = 0.8f,
+            targetValue = 1.2f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(1000, easing = EaseInOut),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "scale"
         )
-    )
+    }
 
-    // Rotation for confetti effect
-    val rotation by rememberInfiniteTransition().animateFloat(
-        initialValue = -10f,
-        targetValue = 10f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500, easing = EaseInOut),
-            repeatMode = RepeatMode.Reverse
+    // Rotation for confetti effect (disabled with reduced motion)
+    val rotation by if (reducedMotion) {
+        remember { mutableStateOf(0f) }
+    } else {
+        rememberInfiniteTransition(label = "celebrationRotation").animateFloat(
+            initialValue = -10f,
+            targetValue = 10f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(500, easing = EaseInOut),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "rotation"
         )
-    )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,

@@ -6,6 +6,7 @@ import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
 import coil3.request.CachePolicy
 import coil3.util.DebugLogger
+import okio.Path.Companion.toPath
 import com.glowup.ai.BuildConfig
 import dagger.Module
 import dagger.Provides
@@ -54,20 +55,13 @@ object CoilModule {
             }
             .diskCache {
                 DiskCache.Builder()
-                    .directory(context.cacheDir.resolve("image_cache").toPath())
+                    .directory(context.cacheDir.resolve("image_cache").absolutePath.toPath())
                     .maxSizePercent(0.02) // 2% of disk space
                     .build()
             }
             // Backend doesn't send Cache-Control headers yet - rely on local cache policy
-            .respectCacheHeaders(false)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)
-            .crossfade(true) // Smooth fade-in for loaded images
-            .apply {
-                if (BuildConfig.DEBUG) {
-                    logger(DebugLogger())
-                }
-            }
             .build()
     }
 }

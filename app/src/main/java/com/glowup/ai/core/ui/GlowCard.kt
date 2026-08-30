@@ -14,6 +14,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.GlowUpTheme
 import com.glowup.ai.core.design.LocalGlowColors
+import com.glowup.ai.core.design.GlowShapes
+import com.glowup.ai.core.design.GlowSpacing
 
 /**
  * The base surface for grouped content. Optionally interactive (pass [onClick]) — when it is,
@@ -28,7 +30,7 @@ fun GlowCard(
 ) {
     val glow = LocalGlowColors.current
     var cardModifier = modifier
-        .background(color = glow.surfaceCard, shape = RoundedCornerShape(18.dp))
+        .background(color = glow.surfaceCard, shape = GlowShapes.md)
 
     cardModifier = if (onClick != null) {
         cardModifier.clickable(
@@ -39,7 +41,7 @@ fun GlowCard(
     } else cardModifier
 
     Column(
-        modifier = cardModifier.padding(20.dp),
+        modifier = cardModifier.padding(GlowSpacing.md),
         content = content,
     )
 }

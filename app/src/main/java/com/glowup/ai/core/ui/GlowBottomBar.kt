@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -97,7 +98,7 @@ fun GlowBottomBar(
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .offset(y = (-22).dp)
+                .offset(y = (-24).dp)
                 .size(56.dp)
                 .background(glow.honey500, CircleShape)
                 .alpha(if (enabled) 1f else 0.45f)
@@ -133,9 +134,14 @@ private fun BottomBarTab(
     val tint = if (isSelected) glow.honey600 else glow.ink600
     val interactionSource = remember { MutableInteractionSource() }
 
+    val tabDescription = buildString {
+        append(item.contentDescription)
+        if (isSelected) append(", selected")
+    }
+
     Column(
         modifier = Modifier
-            .size(48.dp)
+            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -143,7 +149,7 @@ private fun BottomBarTab(
                 onClick = onClick,
             )
             .semantics {
-                contentDescription = item.contentDescription
+                contentDescription = tabDescription
                 this.selected = isSelected
             },
         horizontalAlignment = Alignment.CenterHorizontally,

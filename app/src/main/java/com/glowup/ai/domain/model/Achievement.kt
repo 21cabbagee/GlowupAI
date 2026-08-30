@@ -65,7 +65,7 @@ enum class AchievementType(
         id = "quarter_streak",
         title = "Quarterly Champion",
         description = "Maintained a 90-day streak",
-        icon = Icons.Filled.CelebrationOutlined,
+        icon = Icons.Filled.EmojiEvents,
         requirement = AchievementRequirement.StreakDays(90)
     ),
 

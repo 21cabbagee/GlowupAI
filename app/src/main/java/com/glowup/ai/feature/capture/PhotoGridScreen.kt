@@ -334,7 +334,7 @@ private fun filterCaptures(
             date.month == lastMonth.month && date.year == lastMonth.year
         }
         PhotoGridFilter.BASELINE -> captures.filter { it.isBaseline }
-        PhotoGridFilter.EXPERIMENTS -> captures.filter { it.experimentId != null }
+        PhotoGridFilter.EXPERIMENTS -> emptyList() // TODO: Add experiment tracking to HistoryItem
     }
 }
 

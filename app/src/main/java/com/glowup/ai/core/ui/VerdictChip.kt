@@ -49,7 +49,7 @@ fun VerdictChip(
         text = text,
         modifier = modifier
             .background(surface, RoundedCornerShape(50))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
             .semantics { contentDescription = "Verdict: $text" },
         color = content,
         style = MaterialTheme.typography.labelMedium,

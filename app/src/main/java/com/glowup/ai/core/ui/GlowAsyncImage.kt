@@ -8,6 +8,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 
@@ -38,7 +40,7 @@ import coil3.request.ImageRequest
  * ```
  *
  * @param url Image URL to load (nullable - shows placeholder if null)
- * @param contentDescription Accessibility description for the image
+ * @param contentDescription Accessibility description for the image (required for WCAG compliance)
  * @param modifier Modifier for the image container
  * @param contentScale How to scale the image within its bounds
  * @param placeholder Optional painter to show while loading (defaults to shimmer)
@@ -48,7 +50,7 @@ import coil3.request.ImageRequest
 @Composable
 fun GlowAsyncImage(
     url: String?,
-    contentDescription: String?,
+    contentDescription: String,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
     placeholder: Painter? = null,
@@ -60,7 +62,11 @@ fun GlowAsyncImage(
     if (url.isNullOrBlank()) {
         // No URL provided - show placeholder box
         Box(
-            modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+            modifier = modifier
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .semantics {
+                    this.contentDescription = contentDescription
+                }
         )
         return
     }
@@ -72,7 +78,6 @@ fun GlowAsyncImage(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(url)
-                    .crossfade(true)
                     .memoryCacheKey(url)
                     .diskCacheKey(url)
                     .build(),
@@ -86,7 +91,6 @@ fun GlowAsyncImage(
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(url)
-                .crossfade(true)
                 .memoryCacheKey(url)
                 .diskCacheKey(url)
                 .build(),

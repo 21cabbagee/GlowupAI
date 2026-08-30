@@ -17,9 +17,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntSize
 import com.glowup.ai.core.ui.GlowButton
@@ -47,7 +49,7 @@ fun PhotoComparisonScreen(
         topBar = {
             GlowTopBar(
                 title = "Compare Progress",
-                onNavigationClick = onBackClick,
+                onBack = onBackClick,
                 actions = {
                     IconButton(onClick = onShareClick) {
                         Icon(
@@ -101,17 +103,10 @@ fun PhotoComparisonScreen(
                 }
 
                 GlowButton(
+                    text = "Share",
                     onClick = onShareClick,
                     modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Share,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Share")
-                }
+                )
             }
 
             // Tips
@@ -237,6 +232,7 @@ fun PhotoComparisonSlider(
 ) {
     var sliderPosition by remember { mutableStateOf(0.5f) } // 0.0 to 1.0
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
+    val density = LocalDensity.current
 
     Box(
         modifier = modifier
@@ -330,7 +326,7 @@ fun PhotoComparisonSlider(
         if (containerSize.width > 0) {
             Box(
                 modifier = Modifier
-                    .offset(x = (containerSize.width * sliderPosition / containerSize.density).dp)
+                    .offset(x = with(density) { (containerSize.width * sliderPosition).toDp() })
                     .fillMaxHeight()
                     .width(60.dp)
                     .pointerInput(Unit) {
@@ -407,7 +403,5 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.clipRect(
             )
         )
     }
-    clipPath(path) {
-        block()
-    }
+    clipPath(path, androidx.compose.ui.graphics.ClipOp.Intersect, block)
 }

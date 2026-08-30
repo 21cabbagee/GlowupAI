@@ -32,6 +32,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import com.glowup.ai.core.design.GlowShapes
+import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.ui.AchievementCelebration
 import com.glowup.ai.core.ui.AchievementSummary
 import com.glowup.ai.core.ui.CompactCalendarHeatmap
@@ -147,13 +149,13 @@ fun HomeScreen(
 @Composable
 private fun HomeLoadingSkeleton(padding: PaddingValues) {
     androidx.compose.foundation.layout.Column(
-        modifier = Modifier.fillMaxSize().padding(padding).padding(20.dp),
+        modifier = Modifier.fillMaxSize().padding(padding).padding(GlowSpacing.md),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ShimmerSkeleton(height = 120.dp, cornerRadius = 24.dp)
         ShimmerSkeleton(height = 90.dp)
-        ShimmerSkeleton(height = 180.dp, cornerRadius = 18.dp)
-        ShimmerSkeleton(height = 220.dp, cornerRadius = 18.dp)
+        ShimmerSkeleton(height = 180.dp, cornerRadius = 16.dp)
+        ShimmerSkeleton(height = 220.dp, cornerRadius = 16.dp)
     }
 }
 
@@ -190,12 +192,12 @@ private fun HomeContent(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            start = 20.dp,
-            end = 20.dp,
-            top = padding.calculateTopPadding() + 16.dp,
-            bottom = padding.calculateBottomPadding() + 32.dp,
+            start = GlowSpacing.md,
+            end = GlowSpacing.md,
+            top = padding.calculateTopPadding() + GlowSpacing.md,
+            bottom = padding.calculateBottomPadding() + GlowSpacing.xl,
         ),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
         item {
             DisclaimerNote(text = dashboard.disclaimer)
@@ -248,7 +250,7 @@ private fun HomeContent(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = GlowShapes.md,
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),

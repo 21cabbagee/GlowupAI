@@ -17,6 +17,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.GlowUpTheme
 import com.glowup.ai.core.design.LocalGlowColors
+import com.glowup.ai.core.design.GlowShapes
+import com.glowup.ai.core.design.GlowSpacing
 
 /**
  * An empty state that ALWAYS names the next action. There is no overload without [ctaLabel] /
@@ -36,9 +38,9 @@ fun EmptyState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(GlowShapes.md)
             .background(glow.surfaceCard)
-            .padding(24.dp),
+            .padding(GlowSpacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -54,7 +56,7 @@ fun EmptyState(
                 style = MaterialTheme.typography.bodyMedium,
                 color = glow.ink600,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 6.dp),
+                modifier = Modifier.padding(top = GlowSpacing.sm),
             )
         }
         GlowButton(

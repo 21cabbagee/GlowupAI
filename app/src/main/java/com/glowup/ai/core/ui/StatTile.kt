@@ -19,6 +19,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.GlowUpTheme
 import com.glowup.ai.core.design.LocalGlowColors
+import com.glowup.ai.core.design.GlowShapes
+import com.glowup.ai.core.design.GlowSpacing
 
 /** Direction of change for a [StatTile] delta. Color is derived unless a caller overrides it. */
 enum class StatDeltaDirection { Up, Down, Flat }
@@ -56,8 +58,8 @@ fun StatTile(
     Column(
         modifier = modifier
             .defaultMinSize(minHeight = 48.dp)
-            .background(background, RoundedCornerShape(18.dp))
-            .padding(20.dp)
+            .background(background, GlowShapes.md)
+            .padding(GlowSpacing.md)
             .semantics {
                 contentDescription = buildString {
                     append(label)

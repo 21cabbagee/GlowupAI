@@ -1,8 +1,8 @@
 package com.glowup.ai.domain.calculator
 
-import com.glowup.ai.domain.model.Achievement
 import com.glowup.ai.domain.model.AchievementRequirement
 import com.glowup.ai.domain.model.AchievementType
+import com.glowup.ai.domain.model.ConsentState
 import com.glowup.ai.domain.model.Dashboard
 import com.glowup.ai.domain.model.ExperimentStatus
 import com.glowup.ai.domain.model.Plan
@@ -42,7 +42,7 @@ object AchievementCalculator {
                 experimentCount = dashboard.experiments.size,
                 completedExperimentCount = dashboard.experiments.count { it.status == ExperimentStatus.COMPLETED },
                 hasBaseline = dashboard.analytics?.baselineCapture == true,
-                hasConsent = profile.consentHistory.isNotEmpty(),
+                hasConsent = profile.user.consentState != ConsentState.PENDING,
                 sharedProgress = false, // TODO: track this when sharing feature is added
                 isPremium = profile.entitlement.plan == Plan.PREMIUM
             )

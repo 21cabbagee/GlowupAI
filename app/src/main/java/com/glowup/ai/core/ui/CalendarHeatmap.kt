@@ -9,8 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -135,6 +140,7 @@ fun CalendarHeatmap(
                                     modifier = Modifier
                                         .weight(1f)
                                         .aspectRatio(1f)
+                                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                         .clickable(enabled = !isFuture) {
                                             onDateClick(date)
                                         }
@@ -187,6 +193,12 @@ private fun CalendarDayCell(
     honeyColor: Color,
     modifier: Modifier = Modifier
 ) {
+    // Fade-in animation with staggered delay
+    val fadeAlpha = rememberFadeInAnimation(delay = day * 15)
+
+    // Highlight pulse animation for today
+    val highlightAlpha = rememberHighlightAnimation(enabled = isToday)
+
     val backgroundColor = when {
         isFuture -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         hasCapture -> honeyColor
@@ -198,19 +210,36 @@ private fun CalendarDayCell(
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
+    val cellDescription = buildString {
+        append("Day $day")
+        if (isToday) append(", today")
+        if (hasCapture) append(", captured")
+        else if (!isFuture) append(", no capture")
+        if (isFuture) append(", future date")
+    }
+
     Box(
         modifier = modifier
+            .alpha(fadeAlpha)
             .clip(RoundedCornerShape(8.dp))
             .background(backgroundColor)
             .then(
                 if (isToday) {
-                    Modifier.border(
-                        width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(8.dp)
-                    )
+                    Modifier
+                        .border(
+                            width = 2.dp,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = highlightAlpha),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .graphicsLayer {
+                            scaleX = 0.95f + (highlightAlpha * 0.05f)
+                            scaleY = 0.95f + (highlightAlpha * 0.05f)
+                        }
                 } else Modifier
-            ),
+            )
+            .semantics {
+                contentDescription = cellDescription
+            },
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -301,6 +330,7 @@ fun CompactCalendarHeatmap(
                             modifier = Modifier
                                 .weight(1f)
                                 .aspectRatio(1f)
+                                .defaultMinSize(minWidth = 40.dp, minHeight = 40.dp)
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(
                                     when {
@@ -311,6 +341,13 @@ fun CompactCalendarHeatmap(
                                 )
                                 .clickable(enabled = hasCapture && !isFuture) {
                                     onDateClick(date)
+                                }
+                                .semantics {
+                                    contentDescription = when {
+                                        isFuture -> "Future date"
+                                        hasCapture -> "Capture on day $dayNumber"
+                                        else -> "No capture on day $dayNumber"
+                                    }
                                 }
                         )
                     } else {
