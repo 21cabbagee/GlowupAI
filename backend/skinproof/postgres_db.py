@@ -30,6 +30,8 @@ class PostgresDatabase:
         min_size: int = 1,
         max_size: int = 10,
         connect_timeout: int = 10,
+        pool_timeout: int = 30,
+        statement_timeout: int = 30000,
     ) -> None:
         try:
             from psycopg.rows import dict_row
@@ -40,11 +42,19 @@ class PostgresDatabase:
             ) from exc
 
         self._dict_row = dict_row
+
+        # Build connection options
+        conn_kwargs = {
+            "connect_timeout": connect_timeout,
+            "options": f"-c statement_timeout={statement_timeout}",
+        }
+
         self.pool = ConnectionPool(
             conninfo=url,
-            kwargs={"connect_timeout": connect_timeout},
+            kwargs=conn_kwargs,
             min_size=min_size,
             max_size=max(max_size, min_size),
+            timeout=pool_timeout,
             open=False,
         )
         self.pool.open()

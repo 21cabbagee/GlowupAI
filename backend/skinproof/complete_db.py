@@ -13,6 +13,8 @@ def build_full_database(settings: Settings):
             min_size=settings.database_pool_min_size,
             max_size=settings.database_pool_max_size,
             connect_timeout=settings.database_connect_timeout,
+            pool_timeout=settings.database_pool_timeout,
+            statement_timeout=settings.database_statement_timeout,
         )
     return FullDatabase(settings.db_path)
 

@@ -263,7 +263,7 @@ private fun HomeContent(
                         text = "Capture Calendar",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = com.glowup.ai.core.design.LocalGlowColors.current.ink
+                        color = com.glowup.ai.core.design.LocalGlowColors.current.ink900
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     CompactCalendarHeatmap(

@@ -1,11 +1,11 @@
 package com.glowup.ai.di
 
 import android.content.Context
-import coil.ImageLoader
-import coil.disk.DiskCache
-import coil.memory.MemoryCache
-import coil.request.CachePolicy
-import coil.util.DebugLogger
+import coil3.ImageLoader
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
+import coil3.request.CachePolicy
+import coil3.util.DebugLogger
 import com.glowup.ai.BuildConfig
 import dagger.Module
 import dagger.Provides
@@ -43,15 +43,18 @@ object CoilModule {
         okHttpClient: OkHttpClient, // Injected from NetworkModule - shares auth, connection pool
     ): ImageLoader {
         return ImageLoader.Builder(context)
-            .okHttpClient(okHttpClient)
+            .components {
+                // Coil 3 uses components DSL for OkHttp integration
+                add(coil3.network.okhttp.OkHttpNetworkFetcherFactory(callFactory = { okHttpClient }))
+            }
             .memoryCache {
-                MemoryCache.Builder(context)
-                    .maxSizePercent(0.25) // 25% of app memory
+                MemoryCache.Builder()
+                    .maxSizePercent(context, 0.25) // 25% of app memory
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
-                    .directory(context.cacheDir.resolve("image_cache"))
+                    .directory(context.cacheDir.resolve("image_cache").toPath())
                     .maxSizePercent(0.02) // 2% of disk space
                     .build()
             }
