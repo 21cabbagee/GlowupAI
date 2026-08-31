@@ -116,11 +116,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             )
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                content={
-                    "detail": str(exc),
-                    "error_code": "RATE_LIMIT_EXCEEDED"
-                },
-                headers={"Retry-After": "60"}
+                content={"detail": str(exc), "error_code": "RATE_LIMIT_EXCEEDED"},
+                headers={"Retry-After": "60"},
             )
 
 
@@ -139,8 +136,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
 
         try:
             return await asyncio.wait_for(
-                call_next(request),
-                timeout=self.timeout_seconds
+                call_next(request), timeout=self.timeout_seconds
             )
         except asyncio.TimeoutError:
             logger.error(
