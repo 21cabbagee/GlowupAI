@@ -6,7 +6,7 @@ import com.glowup.ai.core.util.GlowResult
 import com.glowup.ai.data.local.SessionStore
 import com.glowup.ai.data.repository.HomeRepository
 import com.glowup.ai.data.repository.ExperimentRepository
-import com.glowup.ai.domain.calculator.StreakCalculator
+import com.glowup.ai.domain.StreakCalculator
 import com.glowup.ai.domain.model.Capture
 import com.glowup.ai.domain.model.HistoryItem
 import dagger.hilt.android.lifecycle.HiltViewModel
