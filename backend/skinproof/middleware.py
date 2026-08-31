@@ -151,8 +151,8 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
                 content={
                     "detail": f"Request timeout after {self.timeout_seconds} seconds",
-                    "error_code": "REQUEST_TIMEOUT"
-                }
+                    "error_code": "REQUEST_TIMEOUT",
+                },
             )
 
 
@@ -170,7 +170,7 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                 extra={
                     "endpoint": f"{request.method} {request.url.path}",
                     "exception_type": type(exc).__name__,
-                }
+                },
             )
 
             # Return user-friendly error (no stack traces to client)
@@ -180,7 +180,7 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                     "detail": "An internal server error occurred",
                     "error_code": "INTERNAL_SERVER_ERROR",
                     # Include exception type in development mode only
-                }
+                },
             )
 
 

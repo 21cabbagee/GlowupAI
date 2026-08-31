@@ -318,9 +318,9 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
                 content={
                     "status": "unhealthy",
                     "error": "Health check failed",
-                    "version": "3.0.0"
+                    "version": "3.0.0",
                 },
-                status_code=503
+                status_code=503,
             )
 
     @app.get("/api/metrics", tags=["monitoring"])
