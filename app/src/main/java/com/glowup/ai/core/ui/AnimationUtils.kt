@@ -160,8 +160,9 @@ fun rememberShakeAnimation(
                 0f at 600
             }
         },
-        label = "shakeOffset"
-    ) { _ -> 0f }.value
+        label = "shakeOffset",
+        targetValueByState = { state -> if (state) 0f else 0f }
+    ).value
 }
 
 /**
@@ -350,8 +351,9 @@ fun rememberBounceAnimation(
                 1f at 400
             }
         },
-        label = "bounceScale"
-    ) { 1f }.value
+        label = "bounceScale",
+        targetValueByState = { state -> if (state) 1f else 1f }
+    ).value
 }
 
 /**
