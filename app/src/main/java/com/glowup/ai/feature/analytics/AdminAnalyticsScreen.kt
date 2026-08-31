@@ -40,7 +40,7 @@ fun AdminAnalyticsScreen(
         topBar = {
             GlowTopBar(
                 title = "Admin Analytics",
-                onNavigateUp = onNavigateBack
+                onBack = onNavigateBack
             )
         }
     ) { padding ->
@@ -104,7 +104,7 @@ fun AdminAnalyticsScreen(
                     title = "Daily Active Features",
                     metrics = listOf(
                         MetricRow("Capture", "1,234 sessions", glow.honey700),
-                        MetricRow("Home Dashboard", "892 views", glow.sage),
+                        MetricRow("Home Dashboard", "892 views", glow.success),
                         MetricRow("Routine Tracking", "567 logs", Color(0xFF9C27B0)),
                         MetricRow("Insights", "234 views", Color(0xFF2196F3)),
                         MetricRow("Experiments", "123 active", Color(0xFFFF5722))
@@ -178,7 +178,7 @@ fun AdminAnalyticsScreen(
                 MetricCard(
                     title = "User Behavior",
                     metrics = listOf(
-                        MetricRow("Avg. Session Duration", "4m 32s", glow.sage),
+                        MetricRow("Avg. Session Duration", "4m 32s", glow.success),
                         MetricRow("Captures per User", "2.4 / week", glow.honey700),
                         MetricRow("Avg. Streak", "8.3 days", Color(0xFF4CAF50)),
                         MetricRow("Feature Discovery", "72%", Color(0xFF2196F3))
@@ -241,7 +241,7 @@ private fun MetricCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        glow.surface,
+                        glow.surfaceCard,
                         RoundedCornerShape(8.dp)
                     )
                     .padding(GlowSpacing.sm),

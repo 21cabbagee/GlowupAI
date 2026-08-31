@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,7 +38,7 @@ fun AnalyticsScreen(
         topBar = {
             GlowTopBar(
                 title = "Analytics",
-                onNavigateUp = onNavigateBack,
+                onBack = onNavigateBack,
                 actions = {
                     IconButton(onClick = { viewModel.refresh() }) {
                         Icon(
@@ -172,7 +173,7 @@ private fun AnalyticsContent(
                         MetricType.REDNESS -> glow.danger
                         MetricType.BLEMISH -> glow.honey700
                         MetricType.DARKSPOT -> Color(0xFF8B4513)
-                        MetricType.TEXTURE -> glow.sage
+                        MetricType.TEXTURE -> glow.success
                     }
                 )
             }

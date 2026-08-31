@@ -101,8 +101,19 @@ class SettingsViewModel @Inject constructor(
         sessionStore.cloudBackupFlow,
         _signingOut,
         _exportInProgress,
-    ) { theme, reminders, reminderTime, streakWarnings, weeklyRecap, achievementCelebrations,
-        fontSize, reduceAnimations, cloudBackup, signingOut, exportInProgress ->
+    ) { flows ->
+        val theme = flows[0] as String
+        val reminders = flows[1] as SessionStore.ReminderSettings
+        val reminderTime = flows[2] as SessionStore.ReminderTime
+        val streakWarnings = flows[3] as Boolean
+        val weeklyRecap = flows[4] as Boolean
+        val achievementCelebrations = flows[5] as Boolean
+        val fontSize = flows[6] as String
+        val reduceAnimations = flows[7] as Boolean
+        val cloudBackup = flows[8] as Boolean
+        val signingOut = flows[9] as Boolean
+        val exportInProgress = flows[10] as Boolean
+
         // Get Firebase user info
         val firebaseUser = FirebaseAuthGateway.currentUser()
 
@@ -215,13 +226,13 @@ class SettingsViewModel @Inject constructor(
 
                 when (val result = privacyRepository.exportData(userId)) {
                     is com.glowup.ai.core.util.GlowResult.Success -> {
-                        val uri = ExportFileWriter.write(context, userId, result.value)
+                        val uri = ExportFileWriter.write(context, userId, result.data)
                         val shareIntent = ExportFileWriter.shareIntent(uri)
                         context.startActivity(shareIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
                         Log.d("SettingsViewModel", "Data export completed")
                     }
                     is com.glowup.ai.core.util.GlowResult.Failure -> {
-                        Log.e("SettingsViewModel", "Data export failed: ${result.message}")
+                        Log.e("SettingsViewModel", "Data export failed: ${result.error.toUserMessage()}")
                     }
                 }
             } catch (e: Exception) {
@@ -264,7 +275,7 @@ class SettingsViewModel @Inject constructor(
                         Log.d("SettingsViewModel", "Account deleted successfully")
                     }
                     is com.glowup.ai.core.util.GlowResult.Failure -> {
-                        Log.e("SettingsViewModel", "Account deletion failed: ${result.message}")
+                        Log.e("SettingsViewModel", "Account deletion failed: ${result.error.toUserMessage()}")
                     }
                 }
             } catch (e: Exception) {
