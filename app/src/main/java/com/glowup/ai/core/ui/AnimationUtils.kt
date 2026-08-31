@@ -161,7 +161,7 @@ fun rememberShakeAnimation(
             }
         },
         label = "shakeOffset"
-    ) { 0f }.value
+    ) { _ -> 0f }.value
 }
 
 /**

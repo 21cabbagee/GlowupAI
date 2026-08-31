@@ -121,3 +121,4 @@ adb: device offline'
 INFO         | Warning: skipping QEventPoint(id=1 ts=0 pos=0,0 scn=412.957,227.629 gbl=412.957,227.629 Released ellipse=(1x1 ∡ 0) vel=0,0 press=-412.957,-227.629 last=-412.957,-227.629 Δ 412.957,227.629) : no target window (:0, )
 INFO         | Warning: skipping QEventPoint(id=1 ts=0 pos=0,0 scn=80.0415,327.988 gbl=80.0415,327.988 Released ellipse=(1x1 ∡ 0) vel=0,0 press=-80.0415,-327.988 last=-80.0415,-327.988 Δ 80.0415,327.988) : no target window (:0, )
 INFO         | Warning: skipping QEventPoint(id=1 ts=0 pos=0,0 scn=808.12,123.258 gbl=808.12,123.258 Released ellipse=(1x1 ∡ 0) vel=0,0 press=-808.12,-123.258 last=-808.12,-123.258 Δ 808.12,123.258) : no target window (:0, )
+INFO         | Warning: skipping QEventPoint(id=1 ts=0 pos=0,0 scn=1022.66,118.233 gbl=1022.66,118.233 Released ellipse=(1x1 ∡ 0) vel=0,0 press=-1022.66,-118.233 last=-1022.66,-118.233 Δ 1022.66,118.233) : no target window (:0, )
