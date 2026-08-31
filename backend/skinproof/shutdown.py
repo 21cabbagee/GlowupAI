@@ -1,4 +1,5 @@
 """Graceful shutdown handling for production deployments."""
+
 from __future__ import annotations
 
 import asyncio
@@ -54,6 +55,7 @@ class GracefulShutdown:
 
     def setup_signal_handlers(self):
         """Setup signal handlers for SIGTERM and SIGINT."""
+
         def signal_handler(signum, frame):
             logger.info(f"Received signal {signum}, initiating shutdown")
             # Create task for async shutdown
@@ -66,7 +68,9 @@ class GracefulShutdown:
         logger.info("Signal handlers registered for graceful shutdown")
 
 
-def create_shutdown_handler(app, db_close_func: Callable | None = None) -> GracefulShutdown:
+def create_shutdown_handler(
+    app, db_close_func: Callable | None = None
+) -> GracefulShutdown:
     """Create shutdown handler for the application.
 
     Args:

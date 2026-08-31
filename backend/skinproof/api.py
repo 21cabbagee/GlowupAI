@@ -6,16 +6,59 @@ from .complete_api import app, create_complete_app
 
 _legacy_apps = []
 ROADMAP = [
-    {"phase": "Measure", "window": "Month 0-3", "status": "shipped", "features": ["guided capture", "quality gates", "baseline history", "routine logging", "deterministic metrics"]},
-    {"phase": "Experiment", "window": "Month 3-6", "status": "shipped", "features": ["Premium", "one-variable experiments", "four-state verdicts", "grounded insight copy", "streaks and reminders"]},
-    {"phase": "Personalize", "window": "Month 6-12", "status": "shipped", "features": ["ingredient intelligence", "grounded data Q&A", "labels", "model reprocessing", "analytics"]},
-    {"phase": "Discover", "window": "Year 2", "status": "shipped", "features": ["minimum-sample cohorts", "affiliate-only commerce", "multi-appearance history"]},
+    {
+        "phase": "Measure",
+        "window": "Month 0-3",
+        "status": "shipped",
+        "features": [
+            "guided capture",
+            "quality gates",
+            "baseline history",
+            "routine logging",
+            "deterministic metrics",
+        ],
+    },
+    {
+        "phase": "Experiment",
+        "window": "Month 3-6",
+        "status": "shipped",
+        "features": [
+            "Premium",
+            "one-variable experiments",
+            "four-state verdicts",
+            "grounded insight copy",
+            "streaks and reminders",
+        ],
+    },
+    {
+        "phase": "Personalize",
+        "window": "Month 6-12",
+        "status": "shipped",
+        "features": [
+            "ingredient intelligence",
+            "grounded data Q&A",
+            "labels",
+            "model reprocessing",
+            "analytics",
+        ],
+    },
+    {
+        "phase": "Discover",
+        "window": "Year 2",
+        "status": "shipped",
+        "features": [
+            "minimum-sample cohorts",
+            "affiliate-only commerce",
+            "multi-appearance history",
+        ],
+    },
 ]
 
 
 def create_app(service=None):
     if service is not None:
         from .api_legacy import create_app as create_legacy_app
+
         legacy = create_legacy_app(service)
         _legacy_apps.append(legacy)
         return legacy

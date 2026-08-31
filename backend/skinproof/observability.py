@@ -1,4 +1,5 @@
 """OpenTelemetry instrumentation and metrics for production observability."""
+
 from __future__ import annotations
 
 import logging
@@ -28,7 +29,9 @@ class MetricsCollector:
             "status_code_counts": {},
         }
 
-    def record_request(self, method: str, path: str, status_code: int, duration_ms: float):
+    def record_request(
+        self, method: str, path: str, status_code: int, duration_ms: float
+    ):
         """Record a request metric."""
         self.metrics["request_count"] += 1
         self.metrics["request_duration_sum"] += duration_ms
@@ -54,8 +57,8 @@ class MetricsCollector:
         avg_duration = 0.0
         if self.metrics["request_duration_count"] > 0:
             avg_duration = (
-                self.metrics["request_duration_sum"] /
-                self.metrics["request_duration_count"]
+                self.metrics["request_duration_sum"]
+                / self.metrics["request_duration_count"]
             )
 
         error_rate = 0.0
@@ -70,7 +73,7 @@ class MetricsCollector:
             "top_endpoints": sorted(
                 self.metrics["endpoint_counts"].items(),
                 key=lambda x: x[1],
-                reverse=True
+                reverse=True,
             )[:10],
             "status_codes": self.metrics["status_code_counts"],
         }
@@ -87,7 +90,9 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.collector = collector
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Collect metrics for each request."""
         start_time = time.time()
 
@@ -97,10 +102,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
             # Record metrics
             self.collector.record_request(
-                request.method,
-                request.url.path,
-                response.status_code,
-                duration_ms
+                request.method, request.url.path, response.status_code, duration_ms
             )
 
             return response
@@ -109,15 +111,14 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             duration_ms = (time.time() - start_time) * 1000
             # Record as 500 error
             self.collector.record_request(
-                request.method,
-                request.url.path,
-                500,
-                duration_ms
+                request.method, request.url.path, 500, duration_ms
             )
             raise
 
 
-def setup_opentelemetry(service_name: str = "skinproof", enabled: bool = False) -> dict | None:
+def setup_opentelemetry(
+    service_name: str = "skinproof", enabled: bool = False
+) -> dict | None:
     """Setup OpenTelemetry instrumentation.
 
     This is a placeholder for full OpenTelemetry setup. To enable:
@@ -135,7 +136,9 @@ def setup_opentelemetry(service_name: str = "skinproof", enabled: bool = False) 
         OpenTelemetry configuration dict or None if disabled
     """
     if not enabled:
-        logger.info("OpenTelemetry instrumentation disabled (set OTEL_ENABLED=1 to enable)")
+        logger.info(
+            "OpenTelemetry instrumentation disabled (set OTEL_ENABLED=1 to enable)"
+        )
         return None
 
     try:
@@ -143,7 +146,9 @@ def setup_opentelemetry(service_name: str = "skinproof", enabled: bool = False) 
         from opentelemetry import trace
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+            OTLPSpanExporter,
+        )
         from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
         from opentelemetry.sdk.resources import Resource
 

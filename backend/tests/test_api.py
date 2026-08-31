@@ -27,7 +27,13 @@ def png() -> str:
     return base64.b64encode(output.getvalue()).decode()
 
 
-QUALITY = {"face_present": True, "yaw_degrees": 0, "pitch_degrees": 0, "distance_cm": 45, "expression_neutral": True}
+QUALITY = {
+    "face_present": True,
+    "yaw_degrees": 0,
+    "pitch_degrees": 0,
+    "distance_cm": 45,
+    "expression_neutral": True,
+}
 
 
 class ApiTests(unittest.TestCase):
@@ -45,12 +51,38 @@ class ApiTests(unittest.TestCase):
         user = self.client.post("/api/users", json={"skin_type": "combination"})
         self.assertEqual(user.status_code, 200)
         user_id = user.json()["id"]
-        self.assertEqual(self.client.post(f"/api/users/{user_id}/consent", json={"facial_data": True}).status_code, 200)
-        product = self.client.post("/api/products", json={"name": "API serum", "stabilization_days": 0, "ingredients": "Water, Niacinamide"})
+        self.assertEqual(
+            self.client.post(
+                f"/api/users/{user_id}/consent", json={"facial_data": True}
+            ).status_code,
+            200,
+        )
+        product = self.client.post(
+            "/api/products",
+            json={
+                "name": "API serum",
+                "stabilization_days": 0,
+                "ingredients": "Water, Niacinamide",
+            },
+        )
         self.assertEqual(product.status_code, 200)
         product_id = product.json()["id"]
-        self.assertEqual(self.client.post("/api/routine-events", json={"user_id": user_id, "product_id": product_id, "action": "start"}).status_code, 200)
-        capture = self.client.post("/api/captures", json={"user_id": user_id, "image_base64": png(), "quality": QUALITY, "is_baseline": True})
+        self.assertEqual(
+            self.client.post(
+                "/api/routine-events",
+                json={"user_id": user_id, "product_id": product_id, "action": "start"},
+            ).status_code,
+            200,
+        )
+        capture = self.client.post(
+            "/api/captures",
+            json={
+                "user_id": user_id,
+                "image_base64": png(),
+                "quality": QUALITY,
+                "is_baseline": True,
+            },
+        )
         self.assertEqual(capture.status_code, 200)
         self.assertEqual(capture.json()["metric"]["model_version"], "deterministic-3.0")
         dashboard = self.client.get(f"/api/users/{user_id}/dashboard")
@@ -59,7 +91,10 @@ class ApiTests(unittest.TestCase):
 
     def test_photo_capture_requires_explicit_consent(self):
         user_id = self.client.post("/api/users", json={}).json()["id"]
-        response = self.client.post("/api/captures", json={"user_id": user_id, "image_base64": png(), "quality": QUALITY})
+        response = self.client.post(
+            "/api/captures",
+            json={"user_id": user_id, "image_base64": png(), "quality": QUALITY},
+        )
         self.assertEqual(response.status_code, 403)
 
 

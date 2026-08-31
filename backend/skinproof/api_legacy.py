@@ -92,11 +92,23 @@ def create_app(service: SkinProofService | None = None) -> FastAPI:
 
     @app.post("/api/users/{user_id}/consent")
     def consent(user_id: str, payload: ConsentCreate):
-        return run(active_service.grant_consent, user_id, payload.facial_data, payload.policy_version)
+        return run(
+            active_service.grant_consent,
+            user_id,
+            payload.facial_data,
+            payload.policy_version,
+        )
 
     @app.post("/api/products")
     def create_product(payload: ProductCreate):
-        return run(active_service.create_product, payload.name, payload.barcode, payload.category, payload.ingredients, payload.stabilization_days)
+        return run(
+            active_service.create_product,
+            payload.name,
+            payload.barcode,
+            payload.category,
+            payload.ingredients,
+            payload.stabilization_days,
+        )
 
     @app.get("/api/products/search")
     def search_products(q: str = ""):
@@ -111,8 +123,18 @@ def create_app(service: SkinProofService | None = None) -> FastAPI:
         try:
             image = base64.b64decode(payload.image_base64, validate=True)
         except (binascii.Error, ValueError) as exc:
-            raise HTTPException(status_code=400, detail="image_base64 must be valid base64") from exc
-        return run(active_service.create_capture, payload.user_id, image, payload.quality, payload.captured_at, payload.device_meta, payload.is_baseline)
+            raise HTTPException(
+                status_code=400, detail="image_base64 must be valid base64"
+            ) from exc
+        return run(
+            active_service.create_capture,
+            payload.user_id,
+            image,
+            payload.quality,
+            payload.captured_at,
+            payload.device_meta,
+            payload.is_baseline,
+        )
 
     @app.get("/api/users/{user_id}/dashboard")
     def dashboard(user_id: str):

@@ -5,7 +5,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
-
 _SQLITE_PARAMETER = re.compile(r"\?")
 _SQLITE_NOW = re.compile(r"datetime\('now'\)", re.IGNORECASE)
 _SQLITE_IS_PARAMETER = re.compile(r"\bIS\s+\?", re.IGNORECASE)
@@ -110,14 +109,12 @@ class PostgresDatabase:
         migration_dir = Path(__file__).parent / "migrations"
         with self.pool.connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     CREATE TABLE IF NOT EXISTS schema_migrations (
                         version TEXT PRIMARY KEY,
                         applied_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP::text)
                     )
-                    """
-                )
+                    """)
                 cursor.execute("SELECT version FROM schema_migrations")
                 applied = {row[0] for row in cursor.fetchall()}
                 for migration in sorted(migration_dir.glob("*.sql")):
@@ -125,7 +122,9 @@ class PostgresDatabase:
                         continue
                     statements = [
                         statement.strip()
-                        for statement in migration.read_text(encoding="utf-8").split(";")
+                        for statement in migration.read_text(encoding="utf-8").split(
+                            ";"
+                        )
                         if statement.strip()
                     ]
                     for statement in statements:

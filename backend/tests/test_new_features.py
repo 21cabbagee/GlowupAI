@@ -33,8 +33,15 @@ class NewFeatureTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         path = Path(self.temp.name) / "features.sqlite3"
         self.db = FullDatabase(path)
-        settings = Settings(db_path=path, photo_dir=None, gemini_enabled=False, admin_token="test-admin-token")
-        self.service = CompleteSkinProofService(self.db, settings=settings, photos=MemoryPhotoStore())
+        settings = Settings(
+            db_path=path,
+            photo_dir=None,
+            gemini_enabled=False,
+            admin_token="test-admin-token",
+        )
+        self.service = CompleteSkinProofService(
+            self.db, settings=settings, photos=MemoryPhotoStore()
+        )
         self.client = TestClient(create_complete_app(self.service))
 
     def tearDown(self):
@@ -53,40 +60,76 @@ class NewFeatureTests(unittest.TestCase):
         user_id = self.user()
         first = self.client.post(
             "/api/captures",
-            json={"user_id": user_id, "image_base64": image_b64(), "is_baseline": True, "captured_at": "2026-08-01T10:00:00Z"},
+            json={
+                "user_id": user_id,
+                "image_base64": image_b64(),
+                "is_baseline": True,
+                "captured_at": "2026-08-01T10:00:00Z",
+            },
         )
         self.assertEqual(first.status_code, 200)
         self.assertIn("measurement", first.json())
         self.assertIn("confidence_message", first.json()["measurement"])
         second = self.client.post(
             "/api/captures",
-            json={"user_id": user_id, "image_base64": image_b64(), "captured_at": "2026-08-05T10:00:00Z"},
+            json={
+                "user_id": user_id,
+                "image_base64": image_b64(),
+                "captured_at": "2026-08-05T10:00:00Z",
+            },
         )
         self.assertEqual(second.status_code, 200)
         capture_id = second.json()["capture"]["id"]
-        check_in = self.client.post(f"/api/users/{user_id}/check-ins", json={"routine_state": "steady", "skin_feel": "same"})
+        check_in = self.client.post(
+            f"/api/users/{user_id}/check-ins",
+            json={"routine_state": "steady", "skin_feel": "same"},
+        )
         self.assertEqual(check_in.status_code, 200)
-        recap = self.client.get(f"/api/users/{user_id}/weekly-recap?as_of=2026-08-05T10:00:00Z")
+        recap = self.client.get(
+            f"/api/users/{user_id}/weekly-recap?as_of=2026-08-05T10:00:00Z"
+        )
         self.assertEqual(recap.status_code, 200)
         self.assertIn(recap.json()["status"], {"directional", "steady"})
         dashboard = self.client.get(f"/api/users/{user_id}/dashboard").json()
         self.assertIn("weekly_recap", dashboard)
         self.assertEqual(len(dashboard["check_ins"]), 1)
-        feedback = self.client.post(f"/api/users/{user_id}/measurement-feedback", json={"capture_id": capture_id, "agreement": "fair"})
+        feedback = self.client.post(
+            f"/api/users/{user_id}/measurement-feedback",
+            json={"capture_id": capture_id, "agreement": "fair"},
+        )
         self.assertEqual(feedback.status_code, 200)
-        self.assertEqual(self.client.get("/api/admin/measurement-feedback", headers={"Authorization": "Bearer test-admin-token"}).json()["counts"]["fair"], 1)
+        self.assertEqual(
+            self.client.get(
+                "/api/admin/measurement-feedback",
+                headers={"Authorization": "Bearer test-admin-token"},
+            ).json()["counts"]["fair"],
+            1,
+        )
 
     def test_purchase_guidance_lookup_and_premium_gate(self):
         free_user = self.user(premium=False)
-        blocked = self.client.post(f"/api/users/{free_user}/purchase-guidance", json={"name": "Test serum", "ingredients": "Water, Niacinamide"})
+        blocked = self.client.post(
+            f"/api/users/{free_user}/purchase-guidance",
+            json={"name": "Test serum", "ingredients": "Water, Niacinamide"},
+        )
         self.assertEqual(blocked.status_code, 403)
 
         user_id = self.user()
-        product = self.client.post("/api/products", json={"name": "Known serum", "barcode": "890123", "ingredients": "Water, Niacinamide"}).json()
+        product = self.client.post(
+            "/api/products",
+            json={
+                "name": "Known serum",
+                "barcode": "890123",
+                "ingredients": "Water, Niacinamide",
+            },
+        ).json()
         lookup = self.client.get("/api/products/lookup?barcode=890123")
         self.assertEqual(lookup.status_code, 200)
         self.assertEqual(lookup.json()["id"], product["id"])
-        guidance = self.client.post(f"/api/users/{user_id}/purchase-guidance", json={"barcode": "890123", "price_cents": 120000})
+        guidance = self.client.post(
+            f"/api/users/{user_id}/purchase-guidance",
+            json={"barcode": "890123", "price_cents": 120000},
+        )
         self.assertEqual(guidance.status_code, 200)
         self.assertEqual(guidance.json()["product_id"], product["id"])
         self.assertIn("next_action", guidance.json())

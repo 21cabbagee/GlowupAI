@@ -43,7 +43,9 @@ class InMemoryRateLimiter:
         self._store: dict[str, RateLimitEntry] = defaultdict(RateLimitEntry)
         self._lock = Lock()
 
-    def is_allowed(self, key: str, requests: int, window_seconds: int) -> tuple[bool, int]:
+    def is_allowed(
+        self, key: str, requests: int, window_seconds: int
+    ) -> tuple[bool, int]:
         """Check if request is allowed under rate limit.
 
         Returns (is_allowed, retry_after_seconds).
@@ -166,7 +168,9 @@ def get_remote_address(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def create_rate_limiter(enabled: bool = True) -> tuple[InMemoryRateLimiter, dict[str, RateLimitConfig]]:
+def create_rate_limiter(
+    enabled: bool = True,
+) -> tuple[InMemoryRateLimiter, dict[str, RateLimitConfig]]:
     """Factory function to create rate limiter with default configuration.
 
     Returns (limiter, rate_limits_config).
@@ -183,7 +187,9 @@ def create_rate_limiter(enabled: bool = True) -> tuple[InMemoryRateLimiter, dict
         "/api/users/.*/captures": RateLimitConfig(30, 3600, "/api/users"),
         # Gemini-powered features: 10 per hour (expensive)
         "/api/users/.*/qna": RateLimitConfig(10, 3600, "/api/users/.*/qna"),
-        "/api/users/.*/shelf-scan": RateLimitConfig(10, 3600, "/api/users/.*/shelf-scan"),
+        "/api/users/.*/shelf-scan": RateLimitConfig(
+            10, 3600, "/api/users/.*/shelf-scan"
+        ),
         # General API: 100 requests per minute
         "/api": RateLimitConfig(100, 60, "/api"),
     }

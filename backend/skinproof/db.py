@@ -7,7 +7,6 @@ from pathlib import Path
 from threading import RLock
 from typing import Any, Iterator
 
-
 SCHEMA = """
 PRAGMA foreign_keys = ON;
 

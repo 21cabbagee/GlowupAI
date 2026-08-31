@@ -75,11 +75,15 @@ def _http_fetch_jwks(url: str) -> tuple[dict[str, object], int]:
             body = response.read()
             max_age = _parse_max_age(response.headers.get("Cache-Control"))
     except URLError as exc:
-        raise AuthError(f"could not reach the Firebase signing-key endpoint: {exc}") from exc
+        raise AuthError(
+            f"could not reach the Firebase signing-key endpoint: {exc}"
+        ) from exc
     try:
         payload = json.loads(body)
     except json.JSONDecodeError as exc:
-        raise AuthError("Firebase signing-key endpoint returned malformed JSON") from exc
+        raise AuthError(
+            "Firebase signing-key endpoint returned malformed JSON"
+        ) from exc
     keys: dict[str, object] = {}
     for jwk in payload.get("keys", []):
         kid = jwk.get("kid")
@@ -143,7 +147,9 @@ def get_default_cache() -> JWKSCache:
     return _default_cache
 
 
-def verify_id_token(token: str, project_id: str | None, *, jwks: JWKSCache | None = None) -> FirebaseIdentity:
+def verify_id_token(
+    token: str, project_id: str | None, *, jwks: JWKSCache | None = None
+) -> FirebaseIdentity:
     """Verify a Firebase ID token and return the identity it asserts.
 
     Checks signature (RS256 against Google's published JWKS), `exp`, `iss`
@@ -154,7 +160,9 @@ def verify_id_token(token: str, project_id: str | None, *, jwks: JWKSCache | Non
     if not token or not token.strip():
         raise AuthError("missing bearer token")
     if not project_id:
-        raise AuthError("SKINPROOF_FIREBASE_PROJECT_ID is not configured on this server")
+        raise AuthError(
+            "SKINPROOF_FIREBASE_PROJECT_ID is not configured on this server"
+        )
     cache = jwks or get_default_cache()
     try:
         header = jwt.get_unverified_header(token)

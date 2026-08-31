@@ -18,4 +18,5 @@ def build_full_database(settings: Settings):
         )
     return FullDatabase(settings.db_path)
 
+
 __all__ = ["FULL_SCHEMA", "FullDatabase", "PostgresDatabase", "build_full_database"]

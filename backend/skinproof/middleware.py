@@ -1,4 +1,5 @@
 """Production middleware: rate limiting, error handling, timeouts."""
+
 from __future__ import annotations
 
 import asyncio
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class RateLimitExceeded(Exception):
     """Exception raised when rate limit is exceeded."""
+
     pass
 
 
@@ -72,7 +74,7 @@ class RateLimiter:
             time_passed = now - client["last_update"]
             client["tokens"] = min(
                 burst_size,
-                client["tokens"] + (time_passed * requests_per_minute / 60.0)
+                client["tokens"] + (time_passed * requests_per_minute / 60.0),
             )
             client["last_update"] = now
 
@@ -82,8 +84,12 @@ class RateLimiter:
                 return True
             else:
                 # Calculate retry after time
-                retry_after = int((1 - client["tokens"]) * 60.0 / requests_per_minute) + 1
-                raise RateLimitExceeded(f"Rate limit exceeded. Retry after {retry_after} seconds.")
+                retry_after = (
+                    int((1 - client["tokens"]) * 60.0 / requests_per_minute) + 1
+                )
+                raise RateLimitExceeded(
+                    f"Rate limit exceeded. Retry after {retry_after} seconds."
+                )
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -94,7 +100,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.limiter = RateLimiter()
         self.enabled = enabled
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Apply rate limiting to requests."""
         if not self.enabled:
             return await call_next(request)
@@ -112,7 +120,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         except RateLimitExceeded as exc:
             logger.warning(
                 f"Rate limit exceeded for {client_id} on {request.url.path}",
-                extra={"client_id": client_id, "endpoint": request.url.path}
+                extra={"client_id": client_id, "endpoint": request.url.path},
             )
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -128,7 +136,9 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.timeout_seconds = timeout_seconds
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Apply timeout to requests."""
         # Skip timeout for health check
         if request.url.path == "/api/health":
@@ -141,7 +151,7 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         except asyncio.TimeoutError:
             logger.error(
                 f"Request timeout after {self.timeout_seconds}s: {request.method} {request.url.path}",
-                extra={"endpoint": f"{request.method} {request.url.path}"}
+                extra={"endpoint": f"{request.method} {request.url.path}"},
             )
             return JSONResponse(
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
@@ -155,7 +165,9 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
     """Middleware for global error handling."""
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Catch and format all unhandled exceptions."""
         try:
             return await call_next(request)
@@ -190,48 +202,41 @@ def create_health_checker(db_check: Callable, settings) -> Callable:
     Returns:
         Health check function
     """
+
     async def health_check() -> dict:
         """Comprehensive health check."""
-        checks = {
-            "status": "healthy",
-            "checks": {}
-        }
+        checks = {"status": "healthy", "checks": {}}
 
         # Database check
         try:
             db_healthy = await asyncio.get_event_loop().run_in_executor(None, db_check)
             checks["checks"]["database"] = {
                 "status": "healthy" if db_healthy else "unhealthy",
-                "backend": getattr(settings, "database_url", None) and "postgres" or "sqlite"
+                "backend": getattr(settings, "database_url", None)
+                and "postgres"
+                or "sqlite",
             }
         except Exception as exc:
-            checks["checks"]["database"] = {
-                "status": "unhealthy",
-                "error": str(exc)
-            }
+            checks["checks"]["database"] = {"status": "unhealthy", "error": str(exc)}
             checks["status"] = "unhealthy"
 
         # Disk check (for photo storage)
         try:
             import shutil
+
             if settings.photo_dir:
                 stat = shutil.disk_usage(str(settings.photo_dir.parent))
-                free_gb = stat.free / (1024 ** 3)
+                free_gb = stat.free / (1024**3)
                 checks["checks"]["disk"] = {
                     "status": "healthy" if free_gb > 1.0 else "warning",
-                    "free_gb": round(free_gb, 2)
+                    "free_gb": round(free_gb, 2),
                 }
         except Exception as exc:
-            checks["checks"]["disk"] = {
-                "status": "unknown",
-                "error": str(exc)
-            }
+            checks["checks"]["disk"] = {"status": "unknown", "error": str(exc)}
 
         # Gemini API check (if enabled)
         if settings.gemini_enabled and settings.gemini_api_key:
-            checks["checks"]["gemini_api"] = {
-                "status": "configured"
-            }
+            checks["checks"]["gemini_api"] = {"status": "configured"}
 
         return checks
 

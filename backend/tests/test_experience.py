@@ -19,7 +19,9 @@ class ExperienceTests(unittest.TestCase):
         db_path = Path(self.temp.name) / "experience.sqlite3"
         self.db = FullDatabase(db_path)
         settings = Settings(db_path=db_path, photo_dir=None, gemini_enabled=False)
-        self.service = CompleteSkinProofService(self.db, settings=settings, photos=MemoryPhotoStore())
+        self.service = CompleteSkinProofService(
+            self.db, settings=settings, photos=MemoryPhotoStore()
+        )
         self.client = TestClient(create_complete_app(self.service))
 
     def tearDown(self):
@@ -47,9 +49,16 @@ class ExperienceTests(unittest.TestCase):
         self.assertEqual(profile["experience_profile"]["display_name"], "Ari")
         self.assertEqual(profile["experience_profile"]["goals"], ["Redness", "Texture"])
         self.assertIsNotNone(profile["experience_profile"]["onboarding_completed_at"])
-        self.assertEqual(self.client.get(f"/api/users/{user_id}/profile").json()["experience_profile"]["display_name"], "Ari")
+        self.assertEqual(
+            self.client.get(f"/api/users/{user_id}/profile").json()[
+                "experience_profile"
+            ]["display_name"],
+            "Ari",
+        )
 
-        invalid = self.client.patch(f"/api/users/{user_id}/profile", json={"focus_vertical": "teeth"})
+        invalid = self.client.patch(
+            f"/api/users/{user_id}/profile", json={"focus_vertical": "teeth"}
+        )
         self.assertEqual(invalid.status_code, 400)
 
     def test_new_consumer_assets_are_served(self):

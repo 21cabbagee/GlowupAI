@@ -26,7 +26,12 @@ from .middleware import (
     TimeoutMiddleware,
     create_health_checker,
 )
-from .observability import MetricsCollector, MetricsMiddleware, setup_opentelemetry, instrument_fastapi
+from .observability import (
+    MetricsCollector,
+    MetricsMiddleware,
+    setup_opentelemetry,
+    instrument_fastapi,
+)
 from .photos import build_photo_store
 from .shutdown import create_shutdown_handler
 
@@ -151,7 +156,9 @@ class ContextEventCreate(BaseModel):
 
 
 class CheckInCreate(BaseModel):
-    routine_state: str = Field(default="steady", pattern="^(steady|changed|missed|not_sure)$")
+    routine_state: str = Field(
+        default="steady", pattern="^(steady|changed|missed|not_sure)$"
+    )
     skin_feel: str = Field(default="not_sure", pattern="^(better|same|worse|not_sure)$")
     note: str | None = Field(default=None, max_length=400)
     occurred_at: str | None = None
@@ -171,6 +178,7 @@ class PurchaseGuidanceCreate(BaseModel):
     price_cents: int | None = Field(default=None, ge=0)
     currency: str = Field(default="INR", min_length=3, max_length=3)
 
+
 def create_complete_app(service: CompleteSkinProofService | None = None) -> FastAPI:
     # Setup structured logging
     log_level = os.getenv("SKINPROOF_LOG_LEVEL", "INFO")
@@ -180,12 +188,14 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
 
     settings = Settings.from_env()
     settings.prepare()
-    active = service or CompleteSkinProofService(build_full_database(settings), settings, build_photo_store(settings.photo_dir))
+    active = service or CompleteSkinProofService(
+        build_full_database(settings), settings, build_photo_store(settings.photo_dir)
+    )
 
     app = FastAPI(
         title="SkinProof",
         version="3.0.0",
-        description="A complete personal appearance measurement system. Cosmetic tracking, never diagnosis."
+        description="A complete personal appearance measurement system. Cosmetic tracking, never diagnosis.",
     )
     app.state.skinproof = active
 
@@ -240,7 +250,9 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
     timeout_seconds = int(os.getenv("SKINPROOF_REQUEST_TIMEOUT", "30"))
     app.add_middleware(TimeoutMiddleware, timeout_seconds=timeout_seconds)
 
-    logger.info(f"Middleware configured: rate_limit={rate_limit_enabled}, timeout={timeout_seconds}s")
+    logger.info(
+        f"Middleware configured: rate_limit={rate_limit_enabled}, timeout={timeout_seconds}s"
+    )
 
     def run(callable_, *args, **kwargs):
         try:
@@ -279,13 +291,21 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
         if not active.settings.auth_required:
             return
         identity = _bearer_identity(authorization)
-        row = active.db.fetchone("SELECT id FROM users WHERE firebase_uid = ?", (identity.uid,))
+        row = active.db.fetchone(
+            "SELECT id FROM users WHERE firebase_uid = ?", (identity.uid,)
+        )
         if not row or row["id"] != user_id:
-            raise HTTPException(status_code=403, detail="the authenticated account does not own this user_id")
+            raise HTTPException(
+                status_code=403,
+                detail="the authenticated account does not own this user_id",
+            )
 
     def _require_admin(authorization: str | None) -> None:
         if not active.settings.admin_token:
-            raise HTTPException(status_code=403, detail="admin endpoints are disabled: SKINPROOF_ADMIN_TOKEN is not configured")
+            raise HTTPException(
+                status_code=403,
+                detail="admin endpoints are disabled: SKINPROOF_ADMIN_TOKEN is not configured",
+            )
         if not authorization or not authorization.lower().startswith("bearer "):
             raise HTTPException(status_code=403, detail="missing admin bearer token")
         token = authorization.split(" ", 1)[1].strip()
@@ -303,9 +323,16 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
             health_status["version"] = "3.0.0"
             health_status["scope"] = "cosmetic_tracking"
             health_status["features"] = [
-                "experiments", "qna", "discover", "commerce", "reprocessing",
-                "shelf_scan", "product_prediction", "root_cause_search",
-                "budget_optimizer", "derm_export"
+                "experiments",
+                "qna",
+                "discover",
+                "commerce",
+                "reprocessing",
+                "shelf_scan",
+                "product_prediction",
+                "root_cause_search",
+                "budget_optimizer",
+                "derm_export",
             ]
 
             # Return 503 if unhealthy, 200 if healthy
@@ -336,7 +363,13 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
     @app.post("/api/auth/session")
     def auth_session(authorization: str | None = Header(default=None)):
         identity = _bearer_identity(authorization)
-        return run(active.session_for_identity, identity.uid, identity.email, identity.email_verified, identity.name)
+        return run(
+            active.session_for_identity,
+            identity.uid,
+            identity.email,
+            identity.email_verified,
+            identity.name,
+        )
 
     @app.get("/api/users/{user_id}/profile")
     def profile(user_id: str, authorization: str | None = Header(default=None)):
@@ -344,14 +377,24 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
         return run(active.profile, user_id)
 
     @app.patch("/api/users/{user_id}/profile", tags=["profile"])
-    def update_experience_profile(user_id: str, payload: ExperienceProfileUpdate, authorization: str | None = Header(default=None)):
+    def update_experience_profile(
+        user_id: str,
+        payload: ExperienceProfileUpdate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.update_profile, user_id, **payload.model_dump())
 
     @app.post("/api/users/{user_id}/consent")
-    def consent(user_id: str, payload: ConsentCreate, authorization: str | None = Header(default=None)):
+    def consent(
+        user_id: str,
+        payload: ConsentCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
-        return run(active.grant_consent, user_id, payload.facial_data, payload.policy_version)
+        return run(
+            active.grant_consent, user_id, payload.facial_data, payload.policy_version
+        )
 
     @app.get("/api/users/{user_id}/subscription")
     def subscription(user_id: str, authorization: str | None = Header(default=None)):
@@ -359,18 +402,31 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
         return run(active.entitlement, user_id)
 
     @app.post("/api/users/{user_id}/subscription/upgrade")
-    def upgrade(user_id: str, payload: UpgradeCreate, authorization: str | None = Header(default=None)):
+    def upgrade(
+        user_id: str,
+        payload: UpgradeCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.upgrade, user_id, payload.source)
 
     @app.post("/api/users/{user_id}/subscription/cancel")
-    def cancel_subscription(user_id: str, authorization: str | None = Header(default=None)):
+    def cancel_subscription(
+        user_id: str, authorization: str | None = Header(default=None)
+    ):
         _require_owner(user_id, authorization)
         return run(active.downgrade, user_id)
 
     @app.post("/api/products")
     def create_product(payload: ProductCreate):
-        return run(active.create_product, payload.name, payload.barcode, payload.category, payload.ingredients, payload.stabilization_days)
+        return run(
+            active.create_product,
+            payload.name,
+            payload.barcode,
+            payload.category,
+            payload.ingredients,
+            payload.stabilization_days,
+        )
 
     @app.get("/api/products/search")
     def search_products(q: str = ""):
@@ -379,56 +435,100 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
     @app.get("/api/products/lookup")
     def lookup_product(barcode: str):
         return run(active.lookup_product, barcode)
+
     @app.get("/api/products/{product_id}")
-    def product_detail(product_id: str, user_id: str, authorization: str | None = Header(default=None)):
+    def product_detail(
+        product_id: str, user_id: str, authorization: str | None = Header(default=None)
+    ):
         _require_owner(user_id, authorization)
         return run(active.product_detail, user_id, product_id)
 
     @app.get("/api/products/{product_id}/ingredient-explainer")
-    def ingredient_explainer(product_id: str, user_id: str, authorization: str | None = Header(default=None)):
+    def ingredient_explainer(
+        product_id: str, user_id: str, authorization: str | None = Header(default=None)
+    ):
         _require_owner(user_id, authorization)
         return run(active.ingredient_explainer, user_id, product_id)
 
     @app.get("/api/products/{product_id}/predict")
-    def predict_product(product_id: str, user_id: str, authorization: str | None = Header(default=None)):
+    def predict_product(
+        product_id: str, user_id: str, authorization: str | None = Header(default=None)
+    ):
         _require_owner(user_id, authorization)
         return run(active.predict_product, user_id, product_id)
 
     @app.post("/api/users/{user_id}/purchase-guidance")
-    def purchase_guidance(user_id: str, payload: PurchaseGuidanceCreate, authorization: str | None = Header(default=None)):
+    def purchase_guidance(
+        user_id: str,
+        payload: PurchaseGuidanceCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.purchase_guidance, user_id, **payload.model_dump())
+
     @app.post("/api/routine-events")
-    def routine_event(payload: RoutineEventCreate, authorization: str | None = Header(default=None)):
+    def routine_event(
+        payload: RoutineEventCreate, authorization: str | None = Header(default=None)
+    ):
         _require_owner(payload.user_id, authorization)
         return run(active.add_routine_event, **payload.model_dump())
 
     @app.get("/api/users/{user_id}/confound-check")
-    def confound_check(user_id: str, exclude_product_id: str | None = None, authorization: str | None = Header(default=None)):
+    def confound_check(
+        user_id: str,
+        exclude_product_id: str | None = None,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.confound_check, user_id, exclude_product_id)
 
     @app.post("/api/captures")
-    def capture(payload: CaptureCreate, authorization: str | None = Header(default=None)):
+    def capture(
+        payload: CaptureCreate, authorization: str | None = Header(default=None)
+    ):
         _require_owner(payload.user_id, authorization)
         try:
             image = base64.b64decode(payload.image_base64, validate=True)
         except (binascii.Error, ValueError) as exc:
-            raise HTTPException(status_code=400, detail="image_base64 must be valid base64") from exc
-        return run(active.create_capture, payload.user_id, image, payload.quality, payload.captured_at, payload.device_meta, payload.is_baseline, payload.vertical, payload.experiment_id)
+            raise HTTPException(
+                status_code=400, detail="image_base64 must be valid base64"
+            ) from exc
+        return run(
+            active.create_capture,
+            payload.user_id,
+            image,
+            payload.quality,
+            payload.captured_at,
+            payload.device_meta,
+            payload.is_baseline,
+            payload.vertical,
+            payload.experiment_id,
+        )
 
     @app.get("/api/users/{user_id}/capture-guide")
-    def capture_guide(user_id: str, vertical: str = "skin", authorization: str | None = Header(default=None)):
+    def capture_guide(
+        user_id: str,
+        vertical: str = "skin",
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.capture_guide, user_id, vertical)
 
     @app.get("/api/users/{user_id}/dashboard")
-    def dashboard(user_id: str, vertical: str = "skin", authorization: str | None = Header(default=None)):
+    def dashboard(
+        user_id: str,
+        vertical: str = "skin",
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.dashboard, user_id, vertical)
 
     @app.get("/api/users/{user_id}/history")
-    def history(user_id: str, vertical: str = "skin", authorization: str | None = Header(default=None)):
+    def history(
+        user_id: str,
+        vertical: str = "skin",
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.history, user_id, vertical)
 
@@ -438,38 +538,80 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
         return run(active.engagement, user_id)
 
     @app.post("/api/users/{user_id}/engagement")
-    def engagement_event(user_id: str, payload: EngagementCreate, authorization: str | None = Header(default=None)):
+    def engagement_event(
+        user_id: str,
+        payload: EngagementCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
-        return run(active.record_engagement, user_id, payload.event_type, payload.reference_id, payload.metadata)
+        return run(
+            active.record_engagement,
+            user_id,
+            payload.event_type,
+            payload.reference_id,
+            payload.metadata,
+        )
 
     @app.get("/api/users/{user_id}/check-ins")
-    def check_ins(user_id: str, limit: int = 30, authorization: str | None = Header(default=None)):
+    def check_ins(
+        user_id: str, limit: int = 30, authorization: str | None = Header(default=None)
+    ):
         _require_owner(user_id, authorization)
         return run(active.check_ins, user_id, limit)
 
     @app.post("/api/users/{user_id}/check-ins")
-    def create_check_in(user_id: str, payload: CheckInCreate, authorization: str | None = Header(default=None)):
+    def create_check_in(
+        user_id: str,
+        payload: CheckInCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.create_check_in, user_id, **payload.model_dump())
 
     @app.get("/api/users/{user_id}/weekly-recap")
-    def weekly_recap(user_id: str, vertical: str = "skin", as_of: str | None = None, authorization: str | None = Header(default=None)):
+    def weekly_recap(
+        user_id: str,
+        vertical: str = "skin",
+        as_of: str | None = None,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.weekly_recap, user_id, vertical, as_of)
 
     @app.post("/api/users/{user_id}/measurement-feedback")
-    def measurement_feedback(user_id: str, payload: MeasurementFeedbackCreate, authorization: str | None = Header(default=None)):
+    def measurement_feedback(
+        user_id: str,
+        payload: MeasurementFeedbackCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
-        return run(active.add_measurement_feedback, user_id, payload.capture_id, payload.agreement, payload.note)
+        return run(
+            active.add_measurement_feedback,
+            user_id,
+            payload.capture_id,
+            payload.agreement,
+            payload.note,
+        )
+
     @app.get("/api/users/{user_id}/analytics")
     def analytics(user_id: str, authorization: str | None = Header(default=None)):
         _require_owner(user_id, authorization)
         return run(active.analytics, user_id)
 
     @app.post("/api/experiments")
-    def experiment(payload: ExperimentCreate, authorization: str | None = Header(default=None)):
+    def experiment(
+        payload: ExperimentCreate, authorization: str | None = Header(default=None)
+    ):
         _require_owner(payload.user_id, authorization)
-        return run(active.create_experiment, payload.user_id, payload.name, payload.hypothesis, payload.product_id, payload.primary_metric, payload.target_days)
+        return run(
+            active.create_experiment,
+            payload.user_id,
+            payload.name,
+            payload.hypothesis,
+            payload.product_id,
+            payload.primary_metric,
+            payload.target_days,
+        )
 
     @app.get("/api/users/{user_id}/experiments")
     def experiments(user_id: str, authorization: str | None = Header(default=None)):
@@ -477,19 +619,32 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
         return run(active.experiments, user_id)
 
     @app.get("/api/users/{user_id}/experiments/{experiment_id}")
-    def experiment_detail(user_id: str, experiment_id: str, authorization: str | None = Header(default=None)):
+    def experiment_detail(
+        user_id: str,
+        experiment_id: str,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.experiment, experiment_id, user_id)
 
     @app.post("/api/users/{user_id}/experiments/{experiment_id}/status")
-    def experiment_status(user_id: str, experiment_id: str, payload: ExperimentStatus, authorization: str | None = Header(default=None)):
+    def experiment_status(
+        user_id: str,
+        experiment_id: str,
+        payload: ExperimentStatus,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         if payload.user_id != user_id:
             raise HTTPException(status_code=400, detail="user_id mismatch")
         return run(active.set_experiment_status, user_id, experiment_id, payload.status)
 
     @app.post("/api/users/{user_id}/qna")
-    def qna(user_id: str, payload: QnaCreate, authorization: str | None = Header(default=None)):
+    def qna(
+        user_id: str,
+        payload: QnaCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.ask, user_id, payload.question, payload.thread_id)
 
@@ -504,19 +659,34 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
         return run(active.discover, user_id)
 
     @app.get("/api/users/{user_id}/commerce/offers")
-    def offers(user_id: str, product_id: str | None = None, authorization: str | None = Header(default=None)):
+    def offers(
+        user_id: str,
+        product_id: str | None = None,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.offers, user_id, product_id)
 
     @app.post("/api/users/{user_id}/commerce/offers/{offer_id}/click")
-    def click_offer(user_id: str, offer_id: str, authorization: str | None = Header(default=None)):
+    def click_offer(
+        user_id: str, offer_id: str, authorization: str | None = Header(default=None)
+    ):
         _require_owner(user_id, authorization)
         return run(active.click_offer, user_id, offer_id)
 
     @app.post("/api/admin/offers")
-    def add_offer(payload: OfferCreate, authorization: str | None = Header(default=None)):
+    def add_offer(
+        payload: OfferCreate, authorization: str | None = Header(default=None)
+    ):
         _require_admin(authorization)
-        return run(active.add_offer, payload.product_id, payload.merchant, payload.url, payload.price_cents, payload.currency)
+        return run(
+            active.add_offer,
+            payload.product_id,
+            payload.merchant,
+            payload.url,
+            payload.price_cents,
+            payload.currency,
+        )
 
     @app.get("/api/users/{user_id}/labels")
     def labels(user_id: str, authorization: str | None = Header(default=None)):
@@ -524,36 +694,67 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
         return run(active.labels, user_id)
 
     @app.post("/api/users/{user_id}/labels")
-    def add_label(user_id: str, payload: LabelCreate, authorization: str | None = Header(default=None)):
+    def add_label(
+        user_id: str,
+        payload: LabelCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
-        return run(active.add_label, user_id, payload.photo_id, payload.label_type, payload.value, payload.confidence, payload.notes)
+        return run(
+            active.add_label,
+            user_id,
+            payload.photo_id,
+            payload.label_type,
+            payload.value,
+            payload.confidence,
+            payload.notes,
+        )
 
     @app.post("/api/users/{user_id}/reprocess")
-    def reprocess(user_id: str, payload: ReprocessCreate, authorization: str | None = Header(default=None)):
+    def reprocess(
+        user_id: str,
+        payload: ReprocessCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.reprocess, user_id, payload.model_version)
 
     @app.get("/api/users/{user_id}/reprocess/{job_id}")
-    def reprocess_status(user_id: str, job_id: str, authorization: str | None = Header(default=None)):
+    def reprocess_status(
+        user_id: str, job_id: str, authorization: str | None = Header(default=None)
+    ):
         _require_owner(user_id, authorization)
         return run(active.reprocess_status, user_id, job_id)
 
     @app.post("/api/users/{user_id}/shelf-scan")
-    def shelf_scan(user_id: str, payload: ShelfScanCreate, authorization: str | None = Header(default=None)):
+    def shelf_scan(
+        user_id: str,
+        payload: ShelfScanCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         try:
             image = base64.b64decode(payload.image_base64, validate=True)
         except (binascii.Error, ValueError) as exc:
-            raise HTTPException(status_code=400, detail="image_base64 must be valid base64") from exc
+            raise HTTPException(
+                status_code=400, detail="image_base64 must be valid base64"
+            ) from exc
         return run(active.scan_shelf, user_id, image)
 
     @app.get("/api/users/{user_id}/shelf-scan/{job_id}")
-    def shelf_scan_status(user_id: str, job_id: str, authorization: str | None = Header(default=None)):
+    def shelf_scan_status(
+        user_id: str, job_id: str, authorization: str | None = Header(default=None)
+    ):
         _require_owner(user_id, authorization)
         return run(active.shelf_scan_status, user_id, job_id)
 
     @app.post("/api/users/{user_id}/shelf-scan/{job_id}/confirm")
-    def shelf_scan_confirm(user_id: str, job_id: str, payload: ShelfScanConfirm, authorization: str | None = Header(default=None)):
+    def shelf_scan_confirm(
+        user_id: str,
+        job_id: str,
+        payload: ShelfScanConfirm,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.confirm_shelf_scan, user_id, job_id, payload.selections)
 
@@ -563,17 +764,34 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
         return run(active.context_events, user_id)
 
     @app.post("/api/users/{user_id}/context-events")
-    def add_context_event(user_id: str, payload: ContextEventCreate, authorization: str | None = Header(default=None)):
+    def add_context_event(
+        user_id: str,
+        payload: ContextEventCreate,
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
-        return run(active.add_context_event, user_id, payload.event_type, payload.value, payload.occurred_at, payload.notes)
+        return run(
+            active.add_context_event,
+            user_id,
+            payload.event_type,
+            payload.value,
+            payload.occurred_at,
+            payload.notes,
+        )
 
     @app.get("/api/users/{user_id}/root-cause")
-    def root_cause(user_id: str, metric: str = "texture_score", authorization: str | None = Header(default=None)):
+    def root_cause(
+        user_id: str,
+        metric: str = "texture_score",
+        authorization: str | None = Header(default=None),
+    ):
         _require_owner(user_id, authorization)
         return run(active.root_cause_search, user_id, metric)
 
     @app.get("/api/users/{user_id}/budget-optimizer")
-    def budget_optimizer(user_id: str, authorization: str | None = Header(default=None)):
+    def budget_optimizer(
+        user_id: str, authorization: str | None = Header(default=None)
+    ):
         _require_owner(user_id, authorization)
         return run(active.budget_optimizer, user_id)
 
@@ -605,6 +823,7 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
     def measurement_feedback_summary(authorization: str | None = Header(default=None)):
         _require_admin(authorization)
         return active.measurement_feedback_summary()
+
     static_dir = Path(__file__).parent / "static"
     app.mount("/assets", StaticFiles(directory=static_dir), name="assets")
     static_file = static_dir / "index.html"

@@ -10,12 +10,26 @@ class SafetyResult:
     matched_terms: tuple[str, ...] = ()
 
     def as_dict(self) -> dict:
-        return {"scope": self.scope, "message": self.message, "matched_terms": list(self.matched_terms)}
+        return {
+            "scope": self.scope,
+            "message": self.message,
+            "matched_terms": list(self.matched_terms),
+        }
 
 
 TRIAGE_TERMS = (
-    "changing mole", "bleeding", "severe pain", "painful", "cystic", "pus", "infected",
-    "wound", "ulcer", "rapidly spreading", "suspicious lesion", "skin cancer",
+    "changing mole",
+    "bleeding",
+    "severe pain",
+    "painful",
+    "cystic",
+    "pus",
+    "infected",
+    "wound",
+    "ulcer",
+    "rapidly spreading",
+    "suspicious lesion",
+    "skin cancer",
 )
 
 

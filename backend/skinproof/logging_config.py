@@ -1,4 +1,5 @@
 """Structured logging configuration with request ID tracking."""
+
 from __future__ import annotations
 
 import json
@@ -49,7 +50,9 @@ class StructuredFormatter(logging.Formatter):
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware to log requests with timing and request IDs."""
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         """Process request with logging."""
         # Generate and set request ID
         req_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
@@ -65,7 +68,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             extra={
                 "endpoint": f"{request.method} {request.url.path}",
                 "client_ip": request.client.host if request.client else None,
-            }
+            },
         )
 
         # Process request
@@ -80,7 +83,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "status_code": response.status_code,
                     "duration_ms": duration_ms,
                     "endpoint": f"{request.method} {request.url.path}",
-                }
+                },
             )
 
             # Add request ID to response headers
@@ -94,7 +97,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 extra={
                     "duration_ms": duration_ms,
                     "endpoint": f"{request.method} {request.url.path}",
-                }
+                },
             )
             raise
 

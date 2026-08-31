@@ -47,7 +47,9 @@ class EncryptedFilePhotoStore:
         try:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM
         except ImportError as exc:  # pragma: no cover - exercised in deployment
-            raise RuntimeError("Encrypted photo storage requires the 'cryptography' package") from exc
+            raise RuntimeError(
+                "Encrypted photo storage requires the 'cryptography' package"
+            ) from exc
         if len(root_key) != 32:
             raise ValueError("photo root key must be exactly 32 bytes")
         self.root = Path(root)
@@ -68,7 +70,9 @@ class EncryptedFilePhotoStore:
         path = self._path(user_id, capture_id)
         path.parent.mkdir(parents=True, exist_ok=True)
         nonce = os.urandom(12)
-        ciphertext = self._aesgcm(self._key(user_id)).encrypt(nonce, data, capture_id.encode())
+        ciphertext = self._aesgcm(self._key(user_id)).encrypt(
+            nonce, data, capture_id.encode()
+        )
         path.write_bytes(nonce + ciphertext)
         # Keep the canonical Windows path in the reference instead of asking
         # urlparse to reinterpret drive letters as a URI authority.
@@ -82,12 +86,18 @@ class EncryptedFilePhotoStore:
         user_id = values.get("user_id", [None])[0]
         capture_id = values.get("capture_id", [None])[0]
         if not user_id or not capture_id:
-            raise ValueError("encrypted photo reference is missing authenticated lookup metadata")
+            raise ValueError(
+                "encrypted photo reference is missing authenticated lookup metadata"
+            )
         expected_path = self._path(user_id, capture_id).resolve()
         if Path(raw_path).resolve() != expected_path:
-            raise ValueError("encrypted photo reference path does not match its authenticated metadata")
+            raise ValueError(
+                "encrypted photo reference path does not match its authenticated metadata"
+            )
         blob = expected_path.read_bytes()
-        return self._aesgcm(self._key(user_id)).decrypt(blob[:12], blob[12:], capture_id.encode())
+        return self._aesgcm(self._key(user_id)).decrypt(
+            blob[:12], blob[12:], capture_id.encode()
+        )
 
     def read_for_user(self, user_id: str, capture_id: str) -> bytes:
         reference = f"file://{self._path(user_id, capture_id).as_posix()}?user_id={quote(user_id)}&capture_id={quote(capture_id)}"
@@ -110,5 +120,7 @@ def build_photo_store(photo_dir: Path | None) -> PhotoStore:
             key = base64.b64decode(encoded_key, validate=True)
             return EncryptedFilePhotoStore(photo_dir, key)
         except (ValueError, TypeError) as exc:
-            raise RuntimeError("SKINPROOF_PHOTO_KEY must be valid base64 for 32 bytes") from exc
+            raise RuntimeError(
+                "SKINPROOF_PHOTO_KEY must be valid base64 for 32 bytes"
+            ) from exc
     return MemoryPhotoStore()

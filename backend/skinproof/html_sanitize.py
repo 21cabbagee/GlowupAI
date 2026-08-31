@@ -9,14 +9,33 @@ import html
 import re
 from typing import Collection
 
-
 # Default allowed HTML tags for dermatologist export
 SAFE_TAGS = {
-    "p", "br", "strong", "em", "b", "i", "u",
-    "h1", "h2", "h3", "h4", "h5", "h6",
-    "ul", "ol", "li",
-    "table", "thead", "tbody", "tr", "th", "td",
-    "div", "span", "hr",
+    "p",
+    "br",
+    "strong",
+    "em",
+    "b",
+    "i",
+    "u",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "ul",
+    "ol",
+    "li",
+    "table",
+    "thead",
+    "tbody",
+    "tr",
+    "th",
+    "td",
+    "div",
+    "span",
+    "hr",
 }
 
 # Default allowed attributes
@@ -29,13 +48,26 @@ SAFE_ATTRS = {
 
 # Safe CSS properties (for inline styles)
 SAFE_CSS_PROPS = {
-    "color", "background-color", "font-size", "font-weight", "font-style",
-    "text-align", "text-decoration", "padding", "margin",
-    "border", "border-radius", "width", "height", "display",
+    "color",
+    "background-color",
+    "font-size",
+    "font-weight",
+    "font-style",
+    "text-align",
+    "text-decoration",
+    "padding",
+    "margin",
+    "border",
+    "border-radius",
+    "width",
+    "height",
+    "display",
 }
 
 
-def sanitize_html(html_content: str, allowed_tags: Collection[str] | None = None) -> str:
+def sanitize_html(
+    html_content: str, allowed_tags: Collection[str] | None = None
+) -> str:
     """Sanitize HTML content by removing dangerous tags and attributes.
 
     This is a simple whitelist-based sanitizer. For production, consider using
@@ -54,18 +86,29 @@ def sanitize_html(html_content: str, allowed_tags: Collection[str] | None = None
     allowed = allowed_tags or SAFE_TAGS
 
     # Remove script and style tags entirely
-    html_content = re.sub(r"<script\b[^>]*>.*?</script>", "", html_content, flags=re.IGNORECASE | re.DOTALL)
-    html_content = re.sub(r"<style\b[^>]*>.*?</style>", "", html_content, flags=re.IGNORECASE | re.DOTALL)
+    html_content = re.sub(
+        r"<script\b[^>]*>.*?</script>",
+        "",
+        html_content,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    html_content = re.sub(
+        r"<style\b[^>]*>.*?</style>", "", html_content, flags=re.IGNORECASE | re.DOTALL
+    )
 
     # Remove on* event handlers (onclick, onerror, etc.)
-    html_content = re.sub(r'\bon\w+\s*=\s*["\'][^"\']*["\']', "", html_content, flags=re.IGNORECASE)
-    html_content = re.sub(r"\bon\w+\s*=\s*[^>\s]+", "", html_content, flags=re.IGNORECASE)
+    html_content = re.sub(
+        r'\bon\w+\s*=\s*["\'][^"\']*["\']', "", html_content, flags=re.IGNORECASE
+    )
+    html_content = re.sub(
+        r"\bon\w+\s*=\s*[^>\s]+", "", html_content, flags=re.IGNORECASE
+    )
 
     # Remove javascript: URLs
-    html_content = re.sub(r'javascript:', "", html_content, flags=re.IGNORECASE)
+    html_content = re.sub(r"javascript:", "", html_content, flags=re.IGNORECASE)
 
     # Remove data: URLs (can contain base64-encoded scripts)
-    html_content = re.sub(r'data:', "", html_content, flags=re.IGNORECASE)
+    html_content = re.sub(r"data:", "", html_content, flags=re.IGNORECASE)
 
     # Simple tag filtering (not perfect, but better than nothing)
     # For production, use a proper HTML parser like BeautifulSoup or lxml
@@ -94,13 +137,13 @@ def sanitize_css(css_value: str) -> str:
         return ""
 
     # Remove url() functions (can load external resources)
-    css_value = re.sub(r'url\([^)]*\)', "", css_value, flags=re.IGNORECASE)
+    css_value = re.sub(r"url\([^)]*\)", "", css_value, flags=re.IGNORECASE)
 
     # Remove @import
-    css_value = re.sub(r'@import[^;]*;', "", css_value, flags=re.IGNORECASE)
+    css_value = re.sub(r"@import[^;]*;", "", css_value, flags=re.IGNORECASE)
 
     # Remove expression() (IE-specific XSS vector)
-    css_value = re.sub(r'expression\([^)]*\)', "", css_value, flags=re.IGNORECASE)
+    css_value = re.sub(r"expression\([^)]*\)", "", css_value, flags=re.IGNORECASE)
 
     # Parse and filter properties
     safe_props = []
@@ -161,6 +204,7 @@ def sanitize_derm_export(html_content: str) -> str:
     # Try bleach first (more secure), fall back to regex
     try:
         import bleach
+
         return sanitize_html_bleach(html_content)
     except ImportError:
         return sanitize_html(html_content)

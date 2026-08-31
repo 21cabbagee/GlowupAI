@@ -43,10 +43,24 @@ class _NetworkForbiddenCache(JWKSCache):
         self._expires_at = time.time() + 3600
 
 
-def make_token(private_key, kid=KID, *, sub="firebase-uid-1", project_id=PROJECT_ID, iss=None, aud=None, exp_delta=3600, email=None, email_verified=None, name=None):
+def make_token(
+    private_key,
+    kid=KID,
+    *,
+    sub="firebase-uid-1",
+    project_id=PROJECT_ID,
+    iss=None,
+    aud=None,
+    exp_delta=3600,
+    email=None,
+    email_verified=None,
+    name=None,
+):
     now = int(time.time())
     claims = {
-        "iss": iss if iss is not None else f"https://securetoken.google.com/{project_id}",
+        "iss": (
+            iss if iss is not None else f"https://securetoken.google.com/{project_id}"
+        ),
         "aud": aud if aud is not None else project_id,
         "sub": sub,
         "iat": now,
@@ -68,7 +82,9 @@ class TokenVerificationTests(unittest.TestCase):
         self.cache = _NetworkForbiddenCache({KID: PUBLIC_KEY})
 
     def test_valid_token_is_accepted_and_claims_extracted(self):
-        token = make_token(PRIVATE_KEY, email="demo@example.com", email_verified=True, name="Alex Demo")
+        token = make_token(
+            PRIVATE_KEY, email="demo@example.com", email_verified=True, name="Alex Demo"
+        )
         identity = verify_id_token(token, PROJECT_ID, jwks=self.cache)
         self.assertEqual(identity.uid, "firebase-uid-1")
         self.assertEqual(identity.email, "demo@example.com")
@@ -92,7 +108,9 @@ class TokenVerificationTests(unittest.TestCase):
             verify_id_token(token, PROJECT_ID, jwks=self.cache)
 
     def test_wrong_issuer_is_rejected(self):
-        token = make_token(PRIVATE_KEY, iss="https://securetoken.google.com/some-other-project")
+        token = make_token(
+            PRIVATE_KEY, iss="https://securetoken.google.com/some-other-project"
+        )
         with self.assertRaises(AuthError):
             verify_id_token(token, PROJECT_ID, jwks=self.cache)
 
@@ -133,7 +151,9 @@ class _BaseAppTest(unittest.TestCase):
             auth_required=self.auth_required,
             admin_token=self.admin_token,
         )
-        self.service = CompleteSkinProofService(self.db, settings=self.settings, photos=MemoryPhotoStore())
+        self.service = CompleteSkinProofService(
+            self.db, settings=self.settings, photos=MemoryPhotoStore()
+        )
         self.client = TestClient(create_complete_app(self.service))
 
     def tearDown(self):
@@ -174,14 +194,20 @@ class SessionEndpointTests(_BaseAppTest):
         self.assertEqual(second.status_code, 200)
         self.assertEqual(first.json()["user"]["id"], second.json()["user"]["id"])
 
-        rows = self.db.fetchall("SELECT id FROM users WHERE firebase_uid = ?", ("uid-beta",))
+        rows = self.db.fetchall(
+            "SELECT id FROM users WHERE firebase_uid = ?", ("uid-beta",)
+        )
         self.assertEqual(len(rows), 1)
 
     def test_session_returns_the_same_shape_as_get_profile(self):
         token = make_token(PRIVATE_KEY, sub="uid-gamma")
-        session_body = self.client.post("/api/auth/session", headers=self.bearer(token)).json()
+        session_body = self.client.post(
+            "/api/auth/session", headers=self.bearer(token)
+        ).json()
         user_id = session_body["user"]["id"]
-        profile_body = self.client.get(f"/api/users/{user_id}/profile", headers=self.bearer(token)).json()
+        profile_body = self.client.get(
+            f"/api/users/{user_id}/profile", headers=self.bearer(token)
+        ).json()
         self.assertEqual(set(session_body.keys()), set(profile_body.keys()))
         self.assertEqual(session_body["user"]["id"], profile_body["user"]["id"])
 
@@ -189,18 +215,24 @@ class SessionEndpointTests(_BaseAppTest):
 class OwnershipEnforcementTests(_BaseAppTest):
     def _session(self, sub: str) -> tuple[str, str]:
         token = make_token(PRIVATE_KEY, sub=sub)
-        user_id = self.client.post("/api/auth/session", headers=self.bearer(token)).json()["user"]["id"]
+        user_id = self.client.post(
+            "/api/auth/session", headers=self.bearer(token)
+        ).json()["user"]["id"]
         return user_id, token
 
     def test_owner_can_read_their_own_profile(self):
         user_id, token = self._session("uid-owner")
-        response = self.client.get(f"/api/users/{user_id}/profile", headers=self.bearer(token))
+        response = self.client.get(
+            f"/api/users/{user_id}/profile", headers=self.bearer(token)
+        )
         self.assertEqual(response.status_code, 200)
 
     def test_mismatched_uid_gets_403(self):
         user_id_a, _token_a = self._session("uid-owner-a")
         _user_id_b, token_b = self._session("uid-owner-b")
-        response = self.client.get(f"/api/users/{user_id_a}/profile", headers=self.bearer(token_b))
+        response = self.client.get(
+            f"/api/users/{user_id_a}/profile", headers=self.bearer(token_b)
+        )
         self.assertEqual(response.status_code, 403)
 
     def test_missing_token_on_a_protected_route_gets_401(self):
@@ -212,7 +244,9 @@ class OwnershipEnforcementTests(_BaseAppTest):
         # POST /api/routine-events carries user_id in the JSON body, not the path.
         user_id_a, _token_a = self._session("uid-routine-a")
         _user_id_b, token_b = self._session("uid-routine-b")
-        product = self.client.post("/api/products", json={"name": "Auth test serum"}).json()
+        product = self.client.post(
+            "/api/products", json={"name": "Auth test serum"}
+        ).json()
         response = self.client.post(
             "/api/routine-events",
             json={"user_id": user_id_a, "product_id": product["id"], "action": "start"},
@@ -222,7 +256,12 @@ class OwnershipEnforcementTests(_BaseAppTest):
 
     def test_health_and_triage_stay_open_without_a_token(self):
         self.assertEqual(self.client.get("/api/health").status_code, 200)
-        self.assertEqual(self.client.post("/api/triage", json={"text": "just checking in"}).status_code, 200)
+        self.assertEqual(
+            self.client.post(
+                "/api/triage", json={"text": "just checking in"}
+            ).status_code,
+            200,
+        )
 
 
 class AuthDisabledPassthroughTests(_BaseAppTest):
@@ -239,7 +278,9 @@ class AuthDisabledPassthroughTests(_BaseAppTest):
         user = self.client.post("/api/users", json={}).json()
         user_id = user["user"]["id"]
         unrelated_token = make_token(PRIVATE_KEY, sub="someone-else")
-        response = self.client.get(f"/api/users/{user_id}/profile", headers=self.bearer(unrelated_token))
+        response = self.client.get(
+            f"/api/users/{user_id}/profile", headers=self.bearer(unrelated_token)
+        )
         self.assertEqual(response.status_code, 200)
 
 
@@ -248,26 +289,47 @@ class AdminBoundaryTests(_BaseAppTest):
         self.assertEqual(self.client.get("/api/admin/audit").status_code, 403)
 
     def test_admin_route_rejects_wrong_token(self):
-        response = self.client.get("/api/admin/audit", headers=self.bearer("not-the-token"))
+        response = self.client.get(
+            "/api/admin/audit", headers=self.bearer("not-the-token")
+        )
         self.assertEqual(response.status_code, 403)
 
     def test_admin_route_accepts_the_configured_token(self):
-        response = self.client.get("/api/admin/audit", headers=self.bearer("test-admin-token"))
+        response = self.client.get(
+            "/api/admin/audit", headers=self.bearer("test-admin-token")
+        )
         self.assertEqual(response.status_code, 200)
 
     def test_admin_offers_route_is_gated_too(self):
-        product = self.client.post("/api/products", json={"name": "Admin gated product"}).json()
-        payload = {"product_id": product["id"], "merchant": "Acme", "url": "https://example.com/p"}
-        self.assertEqual(self.client.post("/api/admin/offers", json=payload).status_code, 403)
+        product = self.client.post(
+            "/api/products", json={"name": "Admin gated product"}
+        ).json()
+        payload = {
+            "product_id": product["id"],
+            "merchant": "Acme",
+            "url": "https://example.com/p",
+        }
         self.assertEqual(
-            self.client.post("/api/admin/offers", json=payload, headers=self.bearer("test-admin-token")).status_code,
+            self.client.post("/api/admin/offers", json=payload).status_code, 403
+        )
+        self.assertEqual(
+            self.client.post(
+                "/api/admin/offers",
+                json=payload,
+                headers=self.bearer("test-admin-token"),
+            ).status_code,
             200,
         )
 
     def test_measurement_feedback_summary_is_gated(self):
-        self.assertEqual(self.client.get("/api/admin/measurement-feedback").status_code, 403)
         self.assertEqual(
-            self.client.get("/api/admin/measurement-feedback", headers=self.bearer("test-admin-token")).status_code,
+            self.client.get("/api/admin/measurement-feedback").status_code, 403
+        )
+        self.assertEqual(
+            self.client.get(
+                "/api/admin/measurement-feedback",
+                headers=self.bearer("test-admin-token"),
+            ).status_code,
             200,
         )
 
@@ -279,8 +341,15 @@ class AdminBoundaryWithoutTokenConfiguredTests(_BaseAppTest):
 
     def test_admin_routes_refuse_every_request_when_no_token_is_configured(self):
         self.assertEqual(self.client.get("/api/admin/audit").status_code, 403)
-        self.assertEqual(self.client.get("/api/admin/audit", headers=self.bearer("anything")).status_code, 403)
-        self.assertEqual(self.client.get("/api/admin/measurement-feedback").status_code, 403)
+        self.assertEqual(
+            self.client.get(
+                "/api/admin/audit", headers=self.bearer("anything")
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            self.client.get("/api/admin/measurement-feedback").status_code, 403
+        )
 
 
 if __name__ == "__main__":

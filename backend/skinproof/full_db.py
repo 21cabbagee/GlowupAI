@@ -4,7 +4,6 @@ from pathlib import Path
 
 from .db import Database
 
-
 FULL_SCHEMA = """
 CREATE TABLE IF NOT EXISTS appearance_profiles (
     id TEXT PRIMARY KEY,

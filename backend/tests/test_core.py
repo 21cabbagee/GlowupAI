@@ -64,20 +64,46 @@ class CoreTests(unittest.TestCase):
         user = self.service.create_user()
         self.service.grant_consent(user["id"], True)
         with self.assertRaises(ValueError):
-            self.service.create_capture(user["id"], flat_image_bytes(), quality_data={"sharpness": 1.0})
+            self.service.create_capture(
+                user["id"], flat_image_bytes(), quality_data={"sharpness": 1.0}
+            )
 
     def test_conservative_attribution_requires_stabilization_and_clean_window(self):
         user = self.service.create_user()
         self.service.grant_consent(user["id"], True)
         product = self.service.create_product("Test serum", stabilization_days=7)
         day = datetime(2026, 1, 1, tzinfo=timezone.utc)
-        quality = {"face_present": True, "distance_cm": 45, "yaw_degrees": 0, "pitch_degrees": 0, "expression_neutral": True}
-        self.service.create_capture(user["id"], image_bytes(), quality_data=quality, captured_at=day.isoformat(), is_baseline=True)
-        self.service.add_routine_event(user["id"], product["id"], "start", (day + timedelta(days=1)).isoformat())
-        self.service.create_capture(user["id"], image_bytes(red_spot=True), quality_data=quality, captured_at=(day + timedelta(days=4)).isoformat())
+        quality = {
+            "face_present": True,
+            "distance_cm": 45,
+            "yaw_degrees": 0,
+            "pitch_degrees": 0,
+            "expression_neutral": True,
+        }
+        self.service.create_capture(
+            user["id"],
+            image_bytes(),
+            quality_data=quality,
+            captured_at=day.isoformat(),
+            is_baseline=True,
+        )
+        self.service.add_routine_event(
+            user["id"], product["id"], "start", (day + timedelta(days=1)).isoformat()
+        )
+        self.service.create_capture(
+            user["id"],
+            image_bytes(red_spot=True),
+            quality_data=quality,
+            captured_at=(day + timedelta(days=4)).isoformat(),
+        )
         early = self.service.attribution.evaluate_product(user["id"], product["id"])
         self.assertEqual(early.label, "evidence_unclear")
-        self.service.create_capture(user["id"], image_bytes(), quality_data=quality, captured_at=(day + timedelta(days=10)).isoformat())
+        self.service.create_capture(
+            user["id"],
+            image_bytes(),
+            quality_data=quality,
+            captured_at=(day + timedelta(days=10)).isoformat(),
+        )
         later = self.service.attribution.evaluate_product(user["id"], product["id"])
         self.assertIn(later.label, {"keep", "likely_useful", "evidence_unclear"})
         self.assertGreaterEqual(later.evidence["n_after"], 1)
@@ -90,7 +116,9 @@ class CoreTests(unittest.TestCase):
         export = self.service.export_user(user["id"])
         self.assertEqual(export["user"]["id"], user["id"])
         self.service.delete_user(user["id"])
-        self.assertIsNone(self.db.fetchone("SELECT id FROM users WHERE id = ?", (user["id"],)))
+        self.assertIsNone(
+            self.db.fetchone("SELECT id FROM users WHERE id = ?", (user["id"],))
+        )
 
     def test_safety_triage_is_outside_llm_scope(self):
         result = self.service.triage_question("I have a changing mole and pain")

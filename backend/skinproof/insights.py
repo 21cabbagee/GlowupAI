@@ -15,7 +15,9 @@ class GroundedInsightService:
         product = evidence.get("product_name", "this product")
         days = evidence.get("days_stable", 0)
         if label == "likely_useful":
-            metric = evidence.get("best_improvement_metric", "your measured skin metrics")
+            metric = evidence.get(
+                "best_improvement_metric", "your measured skin metrics"
+            )
             return f"After {days} days of a stable routine, {product} is likely useful: {metric} improved beyond the capture noise floor. Keep the rest of the routine steady so the signal remains attributable."
         if label == "investigate":
             metric = evidence.get("worst_metric", "one or more metrics")

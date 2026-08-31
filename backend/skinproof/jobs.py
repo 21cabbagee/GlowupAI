@@ -8,7 +8,12 @@ from datetime import datetime, timezone
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def dump(value) -> str:
@@ -35,9 +40,18 @@ class JobRunner:
 
     def __init__(self, db, max_workers: int = 4) -> None:
         self.db = db
-        self._executor = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="skinproof-job")
+        self._executor = ThreadPoolExecutor(
+            max_workers=max_workers, thread_name_prefix="skinproof-job"
+        )
 
-    def submit(self, job_type: str, fn, *args, user_id: str | None = None, payload: dict | None = None) -> str:
+    def submit(
+        self,
+        job_type: str,
+        fn,
+        *args,
+        user_id: str | None = None,
+        payload: dict | None = None,
+    ) -> str:
         job_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO jobs (id, user_id, job_type, payload_json) VALUES (?, ?, ?, ?)",
@@ -47,7 +61,10 @@ class JobRunner:
         return job_id
 
     def _run(self, job_id: str, fn, args) -> None:
-        self.db.execute("UPDATE jobs SET status='running', started_at=? WHERE id=?", (now_iso(), job_id))
+        self.db.execute(
+            "UPDATE jobs SET status='running', started_at=? WHERE id=?",
+            (now_iso(), job_id),
+        )
         try:
             result = fn(*args)
             self.db.execute(
