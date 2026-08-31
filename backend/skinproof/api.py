@@ -77,13 +77,13 @@ def _close_databases() -> None:
         from . import complete_api
 
         apps.append(complete_api.app)
-    except Exception:
+    except Exception:  # nosec B110 - intentional fallback if module unavailable
         pass
     try:
         from . import api_legacy
 
         apps.append(api_legacy.app)
-    except Exception:
+    except Exception:  # nosec B110 - intentional fallback if module unavailable
         pass
     apps.extend(_legacy_apps)
     seen = set()

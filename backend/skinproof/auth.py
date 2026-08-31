@@ -71,7 +71,7 @@ def _http_fetch_jwks(url: str) -> tuple[dict[str, object], int]:
 
     request = Request(url, headers={"Accept": "application/json"})
     try:
-        with urlopen(request, timeout=5) as response:  # noqa: S310 - fixed Google URL
+        with urlopen(request, timeout=5) as response:  # nosec B310 - fixed Google URL
             body = response.read()
             max_age = _parse_max_age(response.headers.get("Cache-Control"))
     except URLError as exc:
