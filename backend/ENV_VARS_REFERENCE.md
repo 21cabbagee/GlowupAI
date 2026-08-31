@@ -156,7 +156,7 @@ SKINPROOF_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
 
 **Example:**
 ```bash
-GEMINI_API_KEY=AIzaSyD1234567890abcdefghijklmnopqrstuv
+GEMINI_API_KEY=your_actual_gemini_api_key_here
 ```
 
 **Alternative name:** `SKINPROOF_GEMINI_API_KEY`
