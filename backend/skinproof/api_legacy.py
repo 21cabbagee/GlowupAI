@@ -59,8 +59,14 @@ class TriageCreate(BaseModel):
 def create_app(service: SkinProofService | None = None) -> FastAPI:
     settings = Settings.from_env()
     settings.prepare()
-    active_service = service or SkinProofService(build_full_database(settings), settings, build_photo_store(settings.photo_dir))
-    app = FastAPI(title="SkinProof API", version="0.1.0", description="Cosmetic tracking, not diagnosis.")
+    active_service = service or SkinProofService(
+        build_full_database(settings), settings, build_photo_store(settings.photo_dir)
+    )
+    app = FastAPI(
+        title="SkinProof API",
+        version="0.1.0",
+        description="Cosmetic tracking, not diagnosis.",
+    )
     app.state.skinproof = active_service
 
     def run(callable_, *args, **kwargs):

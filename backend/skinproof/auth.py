@@ -38,9 +38,7 @@ from urllib.request import Request, urlopen
 import jwt
 from jwt.algorithms import RSAAlgorithm
 
-FIREBASE_JWKS_URL = (
-    "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
-)
+FIREBASE_JWKS_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
 DEFAULT_JWKS_TTL_SECONDS = 300
 MIN_JWKS_TTL_SECONDS = 60
 

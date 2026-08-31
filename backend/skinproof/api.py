@@ -32,11 +32,13 @@ def _close_databases() -> None:
     apps = [app]
     try:
         from . import complete_api
+
         apps.append(complete_api.app)
     except Exception:
         pass
     try:
         from . import api_legacy
+
         apps.append(api_legacy.app)
     except Exception:
         pass
