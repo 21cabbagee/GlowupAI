@@ -24,7 +24,6 @@ class AnalyticsViewModel @Inject constructor(
     private val homeRepository: HomeRepository,
     private val experimentRepository: ExperimentRepository,
     private val sessionStore: SessionStore,
-    private val streakCalculator: StreakCalculator,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AnalyticsUiState())
@@ -62,7 +61,7 @@ class AnalyticsViewModel @Inject constructor(
                 historyResult is GlowResult.Failure -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = "Failed to load analytics: ${historyResult.error.toUserMessage()}"
+                        error = "Failed to load analytics: ${historyResult.error}"
                     )
                 }
                 else -> {
@@ -191,7 +190,7 @@ class AnalyticsViewModel @Inject constructor(
 
         return ConsistencyData(
             captureDates = captureDates,
-            streakDays = streakCalculator.calculate(history.map { it as Capture }).current,
+            streakDays = StreakCalculator.calculateStreak(history.map { it as Capture }).currentStreak,
             longestStreak = longestStreak,
             captureRate = captureRate,
             bestTimeOfDay = bestTimeOfDay

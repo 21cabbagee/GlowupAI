@@ -50,8 +50,8 @@ fun InsightCard(
             Icons.Filled.Psychology
         )
         InsightType.ACHIEVEMENT -> Triple(
-            glow.sage.copy(alpha = 0.15f),
-            glow.sage,
+            glow.success.copy(alpha = 0.15f),
+            glow.success,
             Icons.Filled.EmojiEvents
         )
         InsightType.RECOMMENDATION -> Triple(
@@ -142,7 +142,7 @@ fun InsightCard(
                     horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Tips,
+                        imageVector = Icons.Filled.Lightbulb,
                         contentDescription = null,
                         tint = glow.honey700,
                         modifier = Modifier.size(16.dp)

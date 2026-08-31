@@ -141,7 +141,7 @@ class EnhancedOnboardingViewModel @Inject constructor(
 
             is GlowResult.Failure -> {
                 _uiState.value = EnhancedOnboardingUiState.Error(
-                    "Failed to load profile: ${result.error.message ?: "Unknown error"}"
+                    "Failed to load profile: ${result.error}"
                 )
             }
         }

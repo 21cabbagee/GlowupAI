@@ -290,7 +290,7 @@ fun ComparisonChart(
             horizontalArrangement = Arrangement.spacedBy(GlowSpacing.md)
         ) {
             LegendItem(color = glow.honey700, label = "Before")
-            LegendItem(color = glow.sage, label = "After")
+            LegendItem(color = glow.success, label = "After")
         }
 
         Spacer(modifier = Modifier.height(GlowSpacing.sm))
@@ -307,7 +307,7 @@ fun ComparisonChart(
             if (afterPoints.isNotEmpty()) {
                 LineChart(
                     points = afterPoints,
-                    color = glow.sage,
+                    color = glow.success,
                     showGrid = false,
                     animated = false
                 )
