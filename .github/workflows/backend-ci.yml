@@ -57,6 +57,8 @@ jobs:
 
       - name: Run pytest with coverage
         working-directory: backend
+        env:
+          SKINPROOF_RATE_LIMIT_ENABLED: "0"
         run: |
           pytest tests/ \
             --cov=skinproof \
@@ -135,6 +137,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: false
+          load: true
           tags: glowup-backend:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -185,5 +188,6 @@ jobs:
           DATABASE_URL: postgresql://glowup_test:test_password@localhost:5432/glowup_test
           JWT_SECRET_KEY: test-secret-key-for-ci
           ENCRYPTION_KEY: test-encryption-key-32-bytes-long
+          SKINPROOF_RATE_LIMIT_ENABLED: "0"
         run: |
           pytest tests/ -v -m "integration or not unit" || echo "No integration tests found"
