@@ -115,6 +115,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     buildFeatures {
@@ -163,6 +164,9 @@ if (!hasKeystoreProperties) {
 }
 
 dependencies {
+    // Core library desugaring for java.time APIs on API < 26
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs)
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

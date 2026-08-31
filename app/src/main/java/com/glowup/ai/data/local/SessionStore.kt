@@ -50,12 +50,28 @@ class SessionStore @Inject constructor(
         val REMINDER_WINDOW_END = stringPreferencesKey("glowup_reminder_window_end")
         val NOTIFICATION_PERMISSION_PROMPTED = booleanPreferencesKey("glowup_notification_permission_prompted")
 
+        // Additional notification preferences
+        val REMINDER_TIME_HOUR = intPreferencesKey("glowup_reminder_time_hour")
+        val REMINDER_TIME_MINUTE = intPreferencesKey("glowup_reminder_time_minute")
+        val STREAK_WARNINGS_ENABLED = booleanPreferencesKey("glowup_streak_warnings_enabled")
+        val WEEKLY_RECAP_ENABLED = booleanPreferencesKey("glowup_weekly_recap_enabled")
+        val ACHIEVEMENT_CELEBRATIONS_ENABLED = booleanPreferencesKey("glowup_achievement_celebrations_enabled")
+
+        // Display preferences
+        val FONT_SIZE = stringPreferencesKey("glowup_font_size")
+        val REDUCE_ANIMATIONS = booleanPreferencesKey("glowup_reduce_animations")
+
+        // Data & Privacy preferences
+        val CLOUD_BACKUP_ENABLED = booleanPreferencesKey("glowup_cloud_backup_enabled")
+
         /** Every key this store owns. [clearSession] removes exactly this set — nothing else. */
         val ALL: Set<Preferences.Key<*>> = setOf(
             USER_ID, FIREBASE_UID, PLAN, ENTITLEMENT_STATUS, CONSENT_STATE, ONBOARDING_STEP,
             ONBOARDING_COMPLETE, SELECTED_VERTICAL, THEME_PREFERENCE, REMINDER_ENABLED,
             REMINDER_CADENCE_DAYS, REMINDER_NEXT_AT, REMINDER_WINDOW_START, REMINDER_WINDOW_END,
-            NOTIFICATION_PERMISSION_PROMPTED,
+            NOTIFICATION_PERMISSION_PROMPTED, REMINDER_TIME_HOUR, REMINDER_TIME_MINUTE,
+            STREAK_WARNINGS_ENABLED, WEEKLY_RECAP_ENABLED, ACHIEVEMENT_CELEBRATIONS_ENABLED,
+            FONT_SIZE, REDUCE_ANIMATIONS, CLOUD_BACKUP_ENABLED,
         )
     }
 
@@ -154,6 +170,46 @@ class SessionStore @Inject constructor(
     suspend fun setNotificationPermissionPrompted(prompted: Boolean) = dataStore.edit {
         it[Keys.NOTIFICATION_PERMISSION_PROMPTED] = prompted
     }
+
+    // -- Additional notification preferences ------------------------------------------------------
+
+    data class ReminderTime(val hour: Int, val minute: Int)
+
+    val reminderTimeFlow: Flow<ReminderTime> = dataStore.data.map { prefs ->
+        ReminderTime(
+            hour = prefs[Keys.REMINDER_TIME_HOUR] ?: 20,
+            minute = prefs[Keys.REMINDER_TIME_MINUTE] ?: 0,
+        )
+    }
+
+    suspend fun setReminderTime(hour: Int, minute: Int) = dataStore.edit {
+        it[Keys.REMINDER_TIME_HOUR] = hour
+        it[Keys.REMINDER_TIME_MINUTE] = minute
+    }
+
+    val streakWarningsFlow: Flow<Boolean> = dataStore.data.map { it[Keys.STREAK_WARNINGS_ENABLED] ?: true }
+    suspend fun setStreakWarnings(enabled: Boolean) = dataStore.edit { it[Keys.STREAK_WARNINGS_ENABLED] = enabled }
+
+    val weeklyRecapFlow: Flow<Boolean> = dataStore.data.map { it[Keys.WEEKLY_RECAP_ENABLED] ?: true }
+    suspend fun setWeeklyRecap(enabled: Boolean) = dataStore.edit { it[Keys.WEEKLY_RECAP_ENABLED] = enabled }
+
+    val achievementCelebrationsFlow: Flow<Boolean> =
+        dataStore.data.map { it[Keys.ACHIEVEMENT_CELEBRATIONS_ENABLED] ?: true }
+    suspend fun setAchievementCelebrations(enabled: Boolean) =
+        dataStore.edit { it[Keys.ACHIEVEMENT_CELEBRATIONS_ENABLED] = enabled }
+
+    // -- Display preferences ----------------------------------------------------------------------
+
+    val fontSizeFlow: Flow<String> = dataStore.data.map { it[Keys.FONT_SIZE] ?: "medium" }
+    suspend fun setFontSize(size: String) = dataStore.edit { it[Keys.FONT_SIZE] = size }
+
+    val reduceAnimationsFlow: Flow<Boolean> = dataStore.data.map { it[Keys.REDUCE_ANIMATIONS] ?: false }
+    suspend fun setReduceAnimations(enabled: Boolean) = dataStore.edit { it[Keys.REDUCE_ANIMATIONS] = enabled }
+
+    // -- Data & Privacy preferences ---------------------------------------------------------------
+
+    val cloudBackupFlow: Flow<Boolean> = dataStore.data.map { it[Keys.CLOUD_BACKUP_ENABLED] ?: false }
+    suspend fun setCloudBackup(enabled: Boolean) = dataStore.edit { it[Keys.CLOUD_BACKUP_ENABLED] = enabled }
 
     // -- Session teardown -------------------------------------------------------------------------
 
