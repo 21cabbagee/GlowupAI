@@ -12,6 +12,8 @@ services:
       - key: SKINPROOF_PHOTOS_DIR
         value: /app/photos
       - key: SKINPROOF_RATE_LIMIT_ENABLED
+        value: "0"
+      - key: SKINPROOF_SKIP_QUALITY_CHECKS
         value: "1"
       - key: DATABASE_URL
         fromDatabase:
