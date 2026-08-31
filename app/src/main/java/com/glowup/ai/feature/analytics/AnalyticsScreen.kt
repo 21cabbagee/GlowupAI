@@ -218,9 +218,9 @@ private fun AnalyticsContent(
         item {
             if (uiState.insights.isEmpty()) {
                 EmptyState(
+                    icon = Icons.Filled.Psychology,
                     title = "No insights yet",
-                    body = "Keep capturing regularly to unlock personalized insights",
-                    icon = Icons.Filled.Psychology
+                    description = "Keep capturing regularly to unlock personalized insights"
                 )
             } else {
                 InsightsList(insights = uiState.insights)

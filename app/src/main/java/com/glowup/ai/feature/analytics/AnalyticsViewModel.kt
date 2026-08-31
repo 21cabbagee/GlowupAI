@@ -56,7 +56,7 @@ class AnalyticsViewModel @Inject constructor(
             // Load dashboard for engagement data
             val dashboardResult = homeRepository.getDashboard(userId)
             val historyResult = homeRepository.getHistory(userId)
-            val experimentsResult = experimentRepository.getExperiments(userId)
+            val experimentsResult = experimentRepository.listExperiments(userId)
 
             when {
                 historyResult is GlowResult.Failure -> {

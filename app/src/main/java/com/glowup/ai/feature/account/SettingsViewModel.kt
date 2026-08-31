@@ -232,7 +232,7 @@ class SettingsViewModel @Inject constructor(
                         Log.d("SettingsViewModel", "Data export completed")
                     }
                     is com.glowup.ai.core.util.GlowResult.Failure -> {
-                        Log.e("SettingsViewModel", "Data export failed: ${result.error.toUserMessage()}")
+                        Log.e("SettingsViewModel", "Data export failed: ${result.error}")
                     }
                 }
             } catch (e: Exception) {
@@ -275,7 +275,7 @@ class SettingsViewModel @Inject constructor(
                         Log.d("SettingsViewModel", "Account deleted successfully")
                     }
                     is com.glowup.ai.core.util.GlowResult.Failure -> {
-                        Log.e("SettingsViewModel", "Account deletion failed: ${result.error.toUserMessage()}")
+                        Log.e("SettingsViewModel", "Account deletion failed: ${result.error}")
                     }
                 }
             } catch (e: Exception) {
