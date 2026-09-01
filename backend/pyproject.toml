@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=83.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,17 +8,17 @@ version = "3.0.0"
 description = "A complete privacy-conscious personal appearance evidence workspace"
 requires-python = ">=3.11"
 dependencies = [
-  "fastapi>=0.110",
-  "uvicorn[standard]>=0.29",
-  "pillow>=10.0",
-  "opencv-python>=4.8.0",
-  "numpy>=1.24.0",
-  "cryptography>=42.0",
+  "fastapi>=0.115.6",
+  "uvicorn[standard]>=0.34.0",
+  "pillow>=11.0.0",
+  "opencv-python>=4.10.0.84",
+  "numpy>=2.0.0",
+  "cryptography>=44.0.0",
   "google-genai>=1.0.0",
-  "psycopg[binary,pool]>=3.2",
-  "PyJWT[crypto]>=2.8",
-  "redis>=5.0.0",
-  "sentry-sdk[fastapi]>=2.0.0",
+  "psycopg[binary,pool]>=3.2.6",
+  "PyJWT[crypto]>=2.10.0",
+  "redis>=5.2.1",
+  "sentry-sdk[fastapi]>=2.20.0",
 ]
 
 [project.optional-dependencies]
@@ -74,11 +74,12 @@ skip_covered = false
 
 [tool.black]
 line-length = 88
-target-version = ['py311']
+target-version = ['py311', 'py312']
 include = '\.pyi?$'
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
+ignore_missing_imports = true
