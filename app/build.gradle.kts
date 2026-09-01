@@ -77,8 +77,8 @@ android {
             // TODO: Add com.glowup.ai.debug to Firebase and uncomment this
             // applicationIdSuffix = ".debug"
             isDebuggable = true
-            // Production backend on Render (works on real devices, emulator has DNS issues)
-            buildConfigField("String", "API_BASE_URL", "\"https://glowupai-20ca.onrender.com/api/\"")
+            // LOCAL BACKEND - Your computer IP: 192.168.7.6
+            buildConfigField("String", "API_BASE_URL", "\"http://192.168.7.6:8000/api/\"")
         }
 
         create("staging") {
