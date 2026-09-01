@@ -128,7 +128,7 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         )
 
     @router.get("/products/search")
-    def search_products(q: str = "") -> Dict[str, Any]:
+    def search_products(q: str = "") -> List[Dict[str, Any]]:
         return run_handler(service.search_products, q)
 
     @router.get("/products/lookup")
