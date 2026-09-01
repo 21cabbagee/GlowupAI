@@ -77,8 +77,12 @@ android {
             // TODO: Add com.glowup.ai.debug to Firebase and uncomment this
             // applicationIdSuffix = ".debug"
             isDebuggable = true
-            // LOCAL BACKEND - Your computer IP: 192.168.7.6
-            buildConfigField("String", "API_BASE_URL", "\"http://192.168.7.6:8000/api/\"")
+            // LOCAL BACKEND - Configurable via local.properties
+            // Add DEBUG_API_BASE_URL=http://YOUR_IP:8000/api/ to local.properties
+            val debugApiUrl = project.findProperty("DEBUG_API_BASE_URL") as String?
+                ?: System.getenv("DEBUG_API_BASE_URL")
+                ?: "http://10.0.2.2:8000/api/"  // Default: Android emulator localhost
+            buildConfigField("String", "API_BASE_URL", "\"$debugApiUrl\"")
         }
 
         create("staging") {

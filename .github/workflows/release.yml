@@ -209,12 +209,10 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version_name }}
-          release_name: GlowUp AI v${{ inputs.version_name }}
+          name: GlowUp AI v${{ inputs.version_name }}
           body: |
             ## GlowUp AI v${{ inputs.version_name }}
 
@@ -235,16 +233,8 @@ jobs:
             Built with ❤️ by the GlowUp AI team
           draft: false
           prerelease: ${{ contains(inputs.version_name, '-') }}
-
-      - name: Upload APK to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/app-${{ inputs.build_type }}.apk
-          asset_name: GlowUp-v${{ inputs.version_name }}.apk
-          asset_content_type: application/vnd.android.package-archive
+          files: |
+            ./artifacts/app-${{ inputs.build_type }}.apk
 
       - name: Create release notes file
         run: |

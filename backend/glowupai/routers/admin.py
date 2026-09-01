@@ -65,7 +65,9 @@ def setup_admin_router(service, analytics, metrics_collector, run_handler, requi
         )
 
     @router.post("/triage")
-    def triage_question(payload: TriageCreate) -> Dict[str, Any]:
+    def triage_question(payload: TriageCreate, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+        """AI triage endpoint - requires authentication to prevent abuse."""
+        require_admin(authorization)  # Protect against AI service abuse
         return service.triage_question(payload.text)
 
     @router.get("/admin/audit")

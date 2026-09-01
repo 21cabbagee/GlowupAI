@@ -1,6 +1,0 @@
-{"timestamp": "2026-09-01 17:17:55,643", "level": "INFO", "logger": "glowupai.complete_api", "message": "Initializing GlowupAI application", "request_id": null}
-{"timestamp": "2026-09-01 17:18:01,957", "level": "WARNING", "logger": "psycopg.pool", "message": "error connecting in 'pool-1': missing \"=\" after \"sqlite:///perf_test.db\" in connection info string\n", "request_id": null}
-{"timestamp": "2026-09-01 17:18:02,894", "level": "WARNING", "logger": "psycopg.pool", "message": "error connecting in 'pool-1': missing \"=\" after \"sqlite:///perf_test.db\" in connection info string\n", "request_id": null}
-{"timestamp": "2026-09-01 17:18:04,764", "level": "WARNING", "logger": "psycopg.pool", "message": "error connecting in 'pool-1': missing \"=\" after \"sqlite:///perf_test.db\" in connection info string\n", "request_id": null}
-{"timestamp": "2026-09-01 17:18:08,493", "level": "WARNING", "logger": "psycopg.pool", "message": "error connecting in 'pool-1': missing \"=\" after \"sqlite:///perf_test.db\" in connection info string\n", "request_id": null}
-{"timestamp": "2026-09-01 17:18:15,953", "level": "WARNING", "logger": "psycopg.pool", "message": "error connecting in 'pool-1': missing \"=\" after \"sqlite:///perf_test.db\" in connection info string\n", "request_id": null}

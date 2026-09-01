@@ -12,9 +12,13 @@ services:
       - key: GLOWUPAI_PHOTOS_DIR
         value: /app/photos
       - key: GLOWUPAI_RATE_LIMIT_ENABLED
-        value: "0"
+        value: "1"  # ENABLED for production security
       - key: GLOWUPAI_SKIP_QUALITY_CHECKS
         value: "1"
+      - key: GLOWUPAI_ENV
+        value: "production"
+      - key: GLOWUPAI_ADMIN_TOKEN
+        sync: false  # Set via Render dashboard for security
       - key: DATABASE_URL
         fromDatabase:
           name: glowupai-db

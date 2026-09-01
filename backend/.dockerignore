@@ -1,20 +1,84 @@
+# Git
 .git
 .gitignore
-.env
-.env.*
-!.env.example
-.data
-.pytest_cache
-__pycache__
+.gitattributes
+
+# CI/CD
+.github
+
+# Documentation
+*.md
+docs/
+
+# Python
+__pycache__/
 *.py[cod]
-*.egg-info
-.mypy_cache
-.ruff_cache
-first.py
-tests
-docs
-DEPLOY.md
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+venv.old/
+test_venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test files
+tests/
+test_*.py
+*_test.py
+*.test.py
+
+# Development databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Test results
+*.json
+*.csv
+*.html
+test_results/
+htmlcov/
+.coverage
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local config
+.env.local
+.env.*.local
+
+# Docker
 docker-compose.yml
-web
-web/node_modules
-web/.next
+docker-compose.*.yml
+Dockerfile.dev
+
+# Performance/load test artifacts
+locustfile.py
+performance_*.py
+load_test_*.py
