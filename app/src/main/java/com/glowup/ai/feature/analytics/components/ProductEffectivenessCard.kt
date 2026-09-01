@@ -21,6 +21,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.GlowSpacing
@@ -93,6 +94,7 @@ fun ProductEffectivenessCard(
 
                 Text(
                     text = "${(productScore.effectivenessScore * 100).toInt()}",
+                    fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = glow.ink900
@@ -131,6 +133,7 @@ fun ProductEffectivenessCard(
             productScore.changePercent?.let { change ->
                 Text(
                     text = "${if (change > 0) "+" else ""}${String.format("%.1f", change)}%",
+                    fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = trendColor

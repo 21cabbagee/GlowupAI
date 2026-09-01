@@ -55,6 +55,9 @@ import com.glowup.ai.feature.home.components.DiscoverShortcutCard
 import com.glowup.ai.feature.home.components.ExperimentsSection
 import com.glowup.ai.feature.home.components.HistoryTrendSection
 import com.glowup.ai.feature.home.components.HomeStatsSection
+import com.glowup.ai.feature.home.components.MetricCardGrid
+import com.glowup.ai.feature.home.components.PersonalizedGreeting
+import com.glowup.ai.feature.home.components.RecentPhotosSection
 import com.glowup.ai.feature.home.components.RoutineTimelineSection
 import com.glowup.ai.feature.home.components.VerdictsSection
 import com.glowup.ai.feature.home.components.WeeklyRecapCard
@@ -189,18 +192,39 @@ private fun HomeContent(
         derivedStateOf { sortedHistory.getOrNull(sortedHistory.size - 2) }
     }.value
 
+    // Calculate days since first capture for journey count
+    val dayCount = remember(sortedHistory) {
+        derivedStateOf {
+            sortedHistory.firstOrNull()?.capturedAt?.let { firstCapture ->
+                try {
+                    val firstDate = Instant.parse(firstCapture)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                    val today = LocalDate.now()
+                    java.time.temporal.ChronoUnit.DAYS.between(firstDate, today).toInt() + 1
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        }
+    }.value
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            start = GlowSpacing.md,
-            end = GlowSpacing.md,
-            top = padding.calculateTopPadding() + GlowSpacing.md,
+            start = GlowSpacing.lg,
+            end = GlowSpacing.lg,
+            top = padding.calculateTopPadding() + GlowSpacing.lg,
             bottom = padding.calculateBottomPadding() + GlowSpacing.xl,
         ),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
+        // Personalized greeting - creates emotional connection
         item {
-            DisclaimerNote(text = dashboard.disclaimer)
+            PersonalizedGreeting(
+                displayName = dashboard.profile.experienceProfile?.displayName,
+                dayCount = dayCount
+            )
         }
 
         if (state.dashboardStale) {
@@ -212,6 +236,7 @@ private fun HomeContent(
             }
         }
 
+        // Streak counter - prominent display with gradient (Peak moment design)
         item {
             StreakCounter(
                 streak = state.streak,
@@ -221,14 +246,64 @@ private fun HomeContent(
             )
         }
 
+        // Metric cards grid - clear, data-focused display
         item {
-            HomeStatsSection(
-                engagement = dashboard.engagement,
+            MetricCardGrid(
                 latest = latest,
                 previous = previous,
             )
         }
 
+        // Recent photos section - visual progress tracking
+        item {
+            RecentPhotosSection(
+                history = sortedHistory,
+                onPhotoClick = { captureId ->
+                    // Navigate to capture detail when implemented
+                    onNavigate(GlowDestination.Capture)
+                },
+                onSeeAllClick = {
+                    // Navigate to full history view
+                    onNavigate(GlowDestination.Capture)
+                }
+            )
+        }
+
+        // Achievements section - celebrate wins
+        if (state.achievements.isNotEmpty()) {
+            item {
+                AchievementSummary(
+                    achievements = state.achievements,
+                    onClick = { onNavigate(GlowDestination.Achievements) }
+                )
+            }
+        }
+
+        // Capture guide banner - actionable guidance
+        item {
+            CaptureGuideBanner(
+                guide = dashboard.engagement?.guide,
+                onCaptureClick = { onNavigate(GlowDestination.Capture) },
+                captureEnabled = captureEnabled,
+            )
+        }
+
+        // Weekly recap - progress summary
+        if (dashboard.weeklyRecap != null) {
+            item {
+                WeeklyRecapCard(recap = dashboard.weeklyRecap)
+            }
+        }
+
+        // Check-in section - daily engagement (End moment design)
+        item {
+            CheckInSection(
+                checkIns = dashboard.checkIns,
+                onCheckInClick = onCheckInClick,
+            )
+        }
+
+        // Capture calendar - visual history
         item {
             // PERFORMANCE: Use derivedStateOf to avoid re-parsing dates on every recomposition
             // (PERFORMANCE_OPTIMIZATIONS.md §2.1 - Instant.parse is expensive, runs 30+ times for typical user)
@@ -259,12 +334,12 @@ private fun HomeContent(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(GlowSpacing.md)
                 ) {
                     Text(
                         text = "Capture Calendar",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.SemiBold,
                         color = com.glowup.ai.core.design.LocalGlowColors.current.ink900
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -292,32 +367,7 @@ private fun HomeContent(
             }
         }
 
-        // Achievements section
-        if (state.achievements.isNotEmpty()) {
-            item {
-                AchievementSummary(
-                    achievements = state.achievements,
-                    onClick = { onNavigate(GlowDestination.Achievements) }
-                )
-            }
-        }
-
-        item {
-            CaptureGuideBanner(
-                guide = dashboard.engagement?.guide,
-                onCaptureClick = { onNavigate(GlowDestination.Capture) },
-                captureEnabled = captureEnabled,
-            )
-        }
-
-        item {
-            DiscoverShortcutCard(onClick = { onNavigate(GlowDestination.Discover) })
-        }
-
-        item {
-            WeeklyRecapCard(recap = dashboard.weeklyRecap)
-        }
-
+        // Verdicts section - product insights
         item {
             VerdictsSection(
                 verdicts = dashboard.verdicts,
@@ -328,6 +378,7 @@ private fun HomeContent(
             )
         }
 
+        // History trend section - detailed analytics
         item {
             HistoryTrendSection(
                 history = sortedHistory,
@@ -346,6 +397,7 @@ private fun HomeContent(
             }
         }
 
+        // Experiments section - A/B testing
         item {
             ExperimentsSection(
                 experiments = dashboard.experiments,
@@ -356,6 +408,7 @@ private fun HomeContent(
             )
         }
 
+        // Routine timeline - product tracking
         item {
             RoutineTimelineSection(
                 events = dashboard.routineEvents,
@@ -363,11 +416,14 @@ private fun HomeContent(
             )
         }
 
+        // Discover shortcut
         item {
-            CheckInSection(
-                checkIns = dashboard.checkIns,
-                onCheckInClick = onCheckInClick,
-            )
+            DiscoverShortcutCard(onClick = { onNavigate(GlowDestination.Discover) })
+        }
+
+        // Disclaimer at bottom
+        item {
+            DisclaimerNote(text = dashboard.disclaimer)
         }
     }
 }

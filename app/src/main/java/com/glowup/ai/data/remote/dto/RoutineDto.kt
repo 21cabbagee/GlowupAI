@@ -35,10 +35,10 @@ fun RoutineEventRequest.toDto(): RoutineEventCreateRequestDto = RoutineEventCrea
 
 @Serializable
 data class ActiveProductWindowDto(
-    @SerialName("product_id") val productId: String,
-    @SerialName("product_name") val productName: String,
-    @SerialName("started_at") val startedAt: String,
-    @SerialName("stable_at") val stableAt: String,
+    @SerialName("product_id") val productId: String = "",
+    @SerialName("product_name") val productName: String = "",
+    @SerialName("started_at") val startedAt: String = "",
+    @SerialName("stable_at") val stableAt: String = "",
 )
 
 @Serializable
@@ -56,10 +56,10 @@ fun ConfoundCheckDto.toDomain(): ConfoundCheck = ConfoundCheck(
 
 @Serializable
 data class RoutineEventDto(
-    val id: String,
-    @SerialName("product_id") val productId: String,
+    val id: String = "",
+    @SerialName("product_id") val productId: String = "",
     @SerialName("product_name") val productName: String? = null,
-    val action: String,
+    val action: String = "start",
     val timestamp: String? = null,
     val slot: String? = null,
     val dose: String? = null,

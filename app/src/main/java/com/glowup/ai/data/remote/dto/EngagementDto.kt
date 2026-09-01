@@ -16,10 +16,10 @@ import kotlinx.serialization.json.contentOrNull
 
 @Serializable
 data class ReminderDto(
-    val id: String,
+    val id: String = "",
     val kind: String = "capture",
     @SerialName("next_at") val nextAt: String? = null,
-    val enabled: Boolean = true,
+    @Serializable(with = IntBooleanSerializer::class) val enabled: Boolean = true,
     @SerialName("cadence_days") val cadenceDays: Int? = null,
     @SerialName("last_sent_at") val lastSentAt: String? = null,
 )
@@ -59,6 +59,8 @@ data class MetricSummaryDto(
     val label: String = "",
     val direction: String = "",
     val delta: Double? = null,
+    @SerialName("noise_floor") val noiseFloor: Double? = null,
+    val sentence: String? = null,
 )
 
 @Serializable
@@ -90,14 +92,14 @@ fun WeeklyRecapDto.toDomain(): WeeklyRecap = WeeklyRecap(
     checkInCount = checkInCount,
     comparisonMode = comparisonMode,
     confidenceLabel = confidenceLabel,
-    metricSummaries = metricSummaries.map { MetricSummary(it.metric, it.label, it.direction, it.delta) },
+    metricSummaries = metricSummaries.map { MetricSummary(it.metric, it.label, it.direction, it.delta, it.noiseFloor, it.sentence) },
     period = WeeklyRecapPeriod(period.start, period.end),
     disclaimer = disclaimer,
 )
 
 @Serializable
 data class AnalyticsDto(
-    val activation: String? = null,
+    val activation: Boolean? = null,
     @SerialName("baseline_capture") val baselineCapture: Boolean? = null,
     @SerialName("first_three_captures") val firstThreeCaptures: Boolean? = null,
     @SerialName("median_history_days") val medianHistoryDays: Double? = null,
@@ -110,7 +112,7 @@ data class AnalyticsDto(
 )
 
 fun AnalyticsDto.toDomain(): Analytics = Analytics(
-    activation = activation,
+    activation = activation?.toString(),
     baselineCapture = baselineCapture,
     firstThreeCaptures = firstThreeCaptures,
     medianHistoryDays = medianHistoryDays,

@@ -12,6 +12,7 @@ import com.glowup.ai.domain.model.VerdictEvidence
 import com.glowup.ai.domain.model.VerdictLabel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class VerdictEvidenceDto(
@@ -57,24 +58,28 @@ fun DashboardRoutineEventDto.toDomain(): DashboardRoutineEvent = DashboardRoutin
 
 @Serializable
 data class DashboardAnalyticsDto(
-    @SerialName("median_history_days") val medianHistoryDays: Double? = null,
+    val activation: Boolean? = null,
     @SerialName("baseline_capture") val baselineCapture: Boolean? = null,
     @SerialName("first_three_captures") val firstThreeCaptures: Boolean? = null,
-    val activation: String? = null,
+    @SerialName("median_history_days") val medianHistoryDays: Double? = null,
+    @SerialName("weekly_verdict_open_rate") val weeklyVerdictOpenRate: Double? = null,
+    @SerialName("verdict_action_rate") val verdictActionRate: Double? = null,
+    @SerialName("evidence_unclear_engagement_rate") val evidenceUnclearEngagementRate: Double? = null,
+    @SerialName("raw_events") val rawEvents: JsonElement? = null,
 )
 
 @Serializable
 data class DashboardFeaturesDto(
-    @SerialName("product_verdicts_unlocked") val productVerdictsUnlocked: Boolean = false,
-    val experiments: Boolean = false,
-    @SerialName("ingredient_analysis") val ingredientAnalysis: Boolean = false,
-    @SerialName("long_history") val longHistory: Boolean = false,
-    val qna: Boolean = false,
-    val discover: Boolean = false,
-    @SerialName("root_cause") val rootCause: Boolean = false,
-    @SerialName("budget_optimizer") val budgetOptimizer: Boolean = false,
-    @SerialName("derm_export") val dermExport: Boolean = false,
-    @SerialName("product_prediction") val productPrediction: Boolean = false,
+    @SerialName("product_verdicts_unlocked") @Serializable(with = IntBooleanSerializer::class) val productVerdictsUnlocked: Boolean = false,
+    @Serializable(with = IntBooleanSerializer::class) val experiments: Boolean = false,
+    @SerialName("ingredient_analysis") @Serializable(with = IntBooleanSerializer::class) val ingredientAnalysis: Boolean = false,
+    @SerialName("long_history") @Serializable(with = IntBooleanSerializer::class) val longHistory: Boolean = false,
+    @Serializable(with = IntBooleanSerializer::class) val qna: Boolean = false,
+    @Serializable(with = IntBooleanSerializer::class) val discover: Boolean = false,
+    @SerialName("root_cause") @Serializable(with = IntBooleanSerializer::class) val rootCause: Boolean = false,
+    @SerialName("budget_optimizer") @Serializable(with = IntBooleanSerializer::class) val budgetOptimizer: Boolean = false,
+    @SerialName("derm_export") @Serializable(with = IntBooleanSerializer::class) val dermExport: Boolean = false,
+    @SerialName("product_prediction") @Serializable(with = IntBooleanSerializer::class) val productPrediction: Boolean = false,
 )
 
 fun DashboardFeaturesDto.toDomain(): DashboardFeatures = DashboardFeatures(
@@ -115,7 +120,14 @@ fun DashboardDto.toDomain(): Dashboard = Dashboard(
     verdicts = verdicts.map { it.toDomain() },
     experiments = experiments.map { it.toDomain() },
     engagement = engagement?.toDomain(),
-    analytics = analytics?.let { DashboardAnalytics(it.medianHistoryDays, it.baselineCapture, it.firstThreeCaptures, it.activation) },
+    analytics = analytics?.let {
+        DashboardAnalytics(
+            medianHistoryDays = it.medianHistoryDays,
+            baselineCapture = it.baselineCapture,
+            firstThreeCaptures = it.firstThreeCaptures,
+            activation = it.activation?.toString(),
+        )
+    },
     weeklyRecap = weeklyRecap?.toDomain(),
     checkIns = checkIns.map { it.toDomain() },
     routineEvents = routineEvents.map { it.toDomain() },
@@ -140,7 +152,7 @@ fun com.glowup.ai.domain.model.CheckInCreateRequest.toDto(): CheckInCreateReques
 
 @Serializable
 data class CheckInDto(
-    val id: String,
+    val id: String = "",
     @SerialName("routine_state") val routineState: String = "steady",
     @SerialName("skin_feel") val skinFeel: String = "not_sure",
     val note: String? = null,

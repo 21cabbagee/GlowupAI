@@ -96,6 +96,8 @@ data class MetricSummary(
     val label: String,
     val direction: String,
     val delta: Double?,
+    val noiseFloor: Double?,
+    val sentence: String?,
 )
 
 data class WeeklyRecapPeriod(val start: String?, val end: String?)

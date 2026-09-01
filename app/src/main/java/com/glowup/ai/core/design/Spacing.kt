@@ -2,8 +2,9 @@ package com.glowup.ai.core.design
 
 import androidx.compose.ui.unit.dp
 
-/** Canonical spacing scale. Use these instead of ad-hoc `.dp` literals. */
-object GlowSpacing {
+/** Legacy spacing scale - replaced by GlowSpacing in DesignTokens.kt */
+@Deprecated("Use GlowSpacing from DesignTokens.kt instead")
+object LegacySpacing {
     val xs = 4.dp
     val sm = 8.dp
     val md = 16.dp

@@ -26,7 +26,7 @@ data class ConsentRequestDto(
 
 @Serializable
 data class UserDto(
-    val id: String,
+    val id: String = "",
     @SerialName("skin_type") val skinType: String? = null,
     @SerialName("consent_state") val consentState: String = "pending",
     @SerialName("created_at") val createdAt: String? = null,
@@ -35,8 +35,8 @@ data class UserDto(
 
 @Serializable
 data class AppearanceProfileDto(
-    val id: String,
-    val vertical: String,
+    val id: String = "",
+    val vertical: String = "skin",
     @SerialName("baseline_capture_id") val baselineCaptureId: String? = null,
 )
 
@@ -56,7 +56,7 @@ data class ExperienceProfileDto(
     @SerialName("focus_vertical") val focusVertical: String? = null,
     val goals: List<String> = emptyList(),
     @SerialName("experience_level") val experienceLevel: String? = null,
-    @SerialName("onboarding_complete") val onboardingComplete: Boolean = false,
+    @SerialName("onboarding_complete") @Serializable(with = IntBooleanSerializer::class) val onboardingComplete: Boolean = false,
     @SerialName("onboarding_completed_at") val onboardingCompletedAt: String? = null,
 )
 

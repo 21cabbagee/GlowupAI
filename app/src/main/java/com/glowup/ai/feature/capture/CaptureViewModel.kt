@@ -126,8 +126,15 @@ class CaptureViewModel @Inject constructor(
         // both observe Framing and can enqueue duplicate uploads.
         _phase.value = CapturePhase.Processing
         viewModelScope.launch {
-            val bitmap = runCatching { decode() }.getOrElse {
-                _phase.value = CapturePhase.Failed("Couldn't process that photo. Please choose another.")
+            val bitmap = runCatching { decode() }.getOrElse { error ->
+                android.util.Log.e("CaptureViewModel", "Photo decode failed", error)
+                val message = when {
+                    error.message?.contains("empty") == true -> "The captured image was empty. Please try again."
+                    error.message?.contains("corrupt") == true -> "That image appears corrupt. Please try again or choose from gallery."
+                    error.message?.contains("decode") == true -> "Couldn't decode that image. Try choosing from gallery instead."
+                    else -> "Couldn't process that photo (${error.message}). Please choose another or try gallery."
+                }
+                _phase.value = CapturePhase.Failed(message)
                 return@launch
             }
             submitBitmap(bitmap, userId, isBaseline, pose)

@@ -27,6 +27,11 @@ suspend fun <T> apiCall(block: suspend () -> T): GlowResult<T> = try {
 } catch (exception: CancellationException) {
     throw exception
 } catch (exception: Exception) {
+    // Log the full exception details for debugging parsing errors
+    android.util.Log.e("ApiCall", "API call failed with exception: ${exception.message}", exception)
+    if (exception is kotlinx.serialization.SerializationException) {
+        android.util.Log.e("ApiCall", "JSON parsing error. This usually means a required field is missing or has wrong type in the API response.")
+    }
     GlowResult.Failure(ApiErrorMapper.map(exception))
 }
 

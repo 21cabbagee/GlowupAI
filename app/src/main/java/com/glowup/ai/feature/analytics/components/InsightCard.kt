@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.GlowSpacing
@@ -104,6 +105,7 @@ fun InsightCard(
                 insight.changePercent?.let { change ->
                     Text(
                         text = "${if (change > 0) "+" else ""}${String.format("%.1f", change)}%",
+                        fontFamily = FontFamily.Monospace,
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
                         color = if (change > 0) glow.success else glow.danger

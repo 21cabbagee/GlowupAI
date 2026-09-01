@@ -12,12 +12,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.LocalGlowColors
@@ -127,36 +130,9 @@ private fun AnalyticsContent(
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(GlowSpacing.md),
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg)
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.md)
     ) {
-        // Overview Section
-        item {
-            SectionHeader(title = "Overview")
-        }
-
-        item {
-            uiState.overview?.let { overview ->
-                OverviewSection(overview = overview)
-            }
-        }
-
-        // Trend Charts Section
-        item {
-            SectionHeader(
-                title = "Progress Trends",
-                modifier = Modifier.padding(top = GlowSpacing.md)
-            )
-        }
-
-        item {
-            uiState.trends?.let { trends ->
-                MetricSelector(
-                    selectedMetric = trends.selectedMetric,
-                    onMetricSelected = onMetricSelected
-                )
-            }
-        }
-
+        // Primary Metric - Hero Section
         item {
             uiState.trends?.let { trends ->
                 val points = when (trends.selectedMetric) {
@@ -166,15 +142,73 @@ private fun AnalyticsContent(
                     MetricType.TEXTURE -> trends.texturePoints
                 }
 
-                LineChart(
-                    points = points,
-                    label = "${trends.selectedMetric.name.lowercase().capitalize()} over time",
-                    color = when (trends.selectedMetric) {
-                        MetricType.REDNESS -> glow.danger
-                        MetricType.BLEMISH -> glow.honey700
-                        MetricType.DARKSPOT -> Color(0xFF8B4513)
-                        MetricType.TEXTURE -> glow.success
+                if (points.isNotEmpty()) {
+                    val currentValue = points.lastOrNull()?.value
+                    val trend = trends.changePercent?.let { change ->
+                        MetricTrend(
+                            direction = when {
+                                change > 0 -> TrendDirection.UP
+                                change < 0 -> TrendDirection.DOWN
+                                else -> TrendDirection.STABLE
+                            },
+                            changePercent = change,
+                            description = "vs last week"
+                        )
                     }
+
+                    PrimaryMetricCard(
+                        title = trends.selectedMetric.name.lowercase().capitalize(),
+                        value = currentValue?.let { String.format("%.2f", it) } ?: "—",
+                        trend = trend
+                    ) {
+                        LineChart(
+                            points = points,
+                            label = "",
+                            color = when (trends.selectedMetric) {
+                                MetricType.REDNESS -> glow.danger
+                                MetricType.BLEMISH -> glow.honey700
+                                MetricType.DARKSPOT -> Color(0xFF8B4513)
+                                MetricType.TEXTURE -> glow.success
+                            },
+                            showGrid = true,
+                            animated = true
+                        )
+                    }
+                } else {
+                    EmptyMetricCard(
+                        title = "No data yet",
+                        description = "Take your first photo to start tracking"
+                    )
+                }
+            }
+        }
+
+        // Metric Selector
+        item {
+            uiState.trends?.let { trends ->
+                MetricSelector(
+                    selectedMetric = trends.selectedMetric,
+                    onMetricSelected = onMetricSelected
+                )
+            }
+        }
+
+        // Overview Metrics Grid
+        item {
+            Spacer(modifier = Modifier.height(GlowSpacing.md))
+        }
+
+        item {
+            SectionHeader(title = "Overview")
+        }
+
+        item {
+            uiState.overview?.let { overview ->
+                OverviewMetricGrid(overview = overview)
+            } ?: run {
+                EmptyMetricCard(
+                    title = "No overview data",
+                    description = "Start using the app to see your progress"
                 )
             }
         }
@@ -183,6 +217,7 @@ private fun AnalyticsContent(
         item {
             uiState.trends?.let { trends ->
                 if (trends.comparisonEnabled && trends.beforeValue != null && trends.afterValue != null) {
+                    Spacer(modifier = Modifier.height(GlowSpacing.sm))
                     BeforeAfterCard(
                         beforeValue = trends.beforeValue,
                         afterValue = trends.afterValue,
@@ -195,24 +230,31 @@ private fun AnalyticsContent(
 
         // Consistency Section
         item {
-            SectionHeader(
-                title = "Routine Consistency",
-                modifier = Modifier.padding(top = GlowSpacing.md)
-            )
+            Spacer(modifier = Modifier.height(GlowSpacing.md))
+        }
+
+        item {
+            SectionHeader(title = "Routine Consistency")
         }
 
         item {
             uiState.consistency?.let { consistency ->
                 ConsistencySection(consistency = consistency)
+            } ?: run {
+                EmptyMetricCard(
+                    title = "Build your routine",
+                    description = "Capture daily to track consistency"
+                )
             }
         }
 
         // AI Insights Section
         item {
-            SectionHeader(
-                title = "AI-Generated Insights",
-                modifier = Modifier.padding(top = GlowSpacing.md)
-            )
+            Spacer(modifier = Modifier.height(GlowSpacing.md))
+        }
+
+        item {
+            SectionHeader(title = "AI-Generated Insights")
         }
 
         item {
@@ -229,17 +271,25 @@ private fun AnalyticsContent(
 
         // Product Effectiveness Section
         item {
-            SectionHeader(
-                title = "Product Effectiveness",
-                modifier = Modifier.padding(top = GlowSpacing.md)
-            )
+            Spacer(modifier = Modifier.height(GlowSpacing.md))
         }
 
         item {
-            ProductEffectivenessList(products = uiState.productEffectiveness)
+            SectionHeader(title = "Product Effectiveness")
         }
 
-        // Bottom spacing
+        item {
+            if (uiState.productEffectiveness.isEmpty()) {
+                EmptyMetricCard(
+                    title = "No product data",
+                    description = "Add products to your routine to track effectiveness"
+                )
+            } else {
+                ProductEffectivenessList(products = uiState.productEffectiveness)
+            }
+        }
+
+        // Bottom spacing for FAB
         item {
             Spacer(modifier = Modifier.height(80.dp))
         }
@@ -247,52 +297,47 @@ private fun AnalyticsContent(
 }
 
 @Composable
-private fun OverviewSection(overview: OverviewStats) {
+private fun OverviewMetricGrid(overview: OverviewStats) {
     val glow = LocalGlowColors.current
 
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
-        contentPadding = PaddingValues(horizontal = 2.dp)
-    ) {
-        item {
-            StatTile(
-                label = "Total Captures",
+    val metrics = buildList {
+        add(
+            MetricGridItem(
+                title = "Total Captures",
                 value = overview.totalCaptures.toString(),
-                modifier = Modifier.width(160.dp)
+                trend = null
             )
-        }
-
-        item {
-            StatTile(
-                label = "Current Streak",
-                value = "${overview.currentStreak} days",
-                delta = overview.streakChange?.let {
-                    StatDelta(
-                        text = "${if (it > 0) "+" else ""}$it days",
-                        direction = if (it > 0) StatDeltaDirection.Up else StatDeltaDirection.Down
+        )
+        add(
+            MetricGridItem(
+                title = "Current Streak",
+                value = "${overview.currentStreak}",
+                trend = overview.streakChange?.let {
+                    MetricTrend(
+                        direction = if (it > 0) TrendDirection.UP else if (it < 0) TrendDirection.DOWN else TrendDirection.STABLE,
+                        changePercent = it.toDouble(),
+                        description = "days"
                     )
-                },
-                accent = true,
-                modifier = Modifier.width(160.dp)
+                }
             )
-        }
-
-        item {
-            StatTile(
-                label = "Days Using App",
+        )
+        add(
+            MetricGridItem(
+                title = "Days Active",
                 value = overview.daysUsingApp.toString(),
-                modifier = Modifier.width(160.dp)
+                trend = null
             )
-        }
-
-        item {
-            StatTile(
-                label = "Active Experiments",
+        )
+        add(
+            MetricGridItem(
+                title = "Experiments",
                 value = overview.activeExperiments.toString(),
-                modifier = Modifier.width(160.dp)
+                trend = null
             )
-        }
+        )
     }
+
+    MetricGrid(metrics = metrics)
 }
 
 @Composable
@@ -300,8 +345,10 @@ private fun MetricSelector(
     selectedMetric: MetricType,
     onMetricSelected: (MetricType) -> Unit,
 ) {
+    val glow = LocalGlowColors.current
+
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
+        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
         contentPadding = PaddingValues(vertical = GlowSpacing.xs)
     ) {
         items(MetricType.values()) { metric ->
@@ -309,8 +356,25 @@ private fun MetricSelector(
                 selected = metric == selectedMetric,
                 onClick = { onMetricSelected(metric) },
                 label = {
-                    Text(text = metric.name.lowercase().capitalize())
-                }
+                    Text(
+                        text = metric.name.lowercase().capitalize(),
+                        fontWeight = if (metric == selectedMetric) FontWeight.SemiBold else FontWeight.Medium
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = glow.honey500,
+                    selectedLabelColor = glow.ink900,
+                    containerColor = glow.surfaceCard,
+                    labelColor = glow.ink600
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    enabled = true,
+                    selected = metric == selectedMetric,
+                    borderColor = if (metric == selectedMetric) glow.honey500 else glow.ink600.copy(alpha = 0.2f),
+                    selectedBorderColor = glow.honey500,
+                    borderWidth = 1.dp,
+                    selectedBorderWidth = 2.dp
+                )
             )
         }
     }
@@ -328,32 +392,36 @@ private fun BeforeAfterCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(glow.surfaceCard, RoundedCornerShape(12.dp))
-            .padding(GlowSpacing.md)
+            .background(glow.surfaceCard, RoundedCornerShape(16.dp))
+            .padding(GlowSpacing.lg)
     ) {
         Text(
             text = "Before & After",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = glow.ink900,
-            modifier = Modifier.padding(bottom = GlowSpacing.sm)
+            modifier = Modifier.padding(bottom = GlowSpacing.md)
         )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = String.format("%.2f", beforeValue),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = glow.ink900
                 )
                 Text(
                     text = "Before",
                     style = MaterialTheme.typography.bodySmall,
-                    color = glow.ink600
+                    fontWeight = FontWeight.SemiBold,
+                    color = glow.ink600,
+                    modifier = Modifier.padding(top = GlowSpacing.xs)
                 )
             }
 
@@ -361,44 +429,61 @@ private fun BeforeAfterCard(
                 imageVector = Icons.Filled.ArrowForward,
                 contentDescription = null,
                 tint = glow.honey700,
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .size(32.dp)
+                modifier = Modifier.size(32.dp)
             )
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = String.format("%.2f", afterValue),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = glow.ink900
                 )
                 Text(
                     text = "After",
                     style = MaterialTheme.typography.bodySmall,
-                    color = glow.ink600
+                    fontWeight = FontWeight.SemiBold,
+                    color = glow.ink600,
+                    modifier = Modifier.padding(top = GlowSpacing.xs)
                 )
             }
         }
 
         changePercent?.let { change ->
-            Spacer(modifier = Modifier.height(GlowSpacing.sm))
-            Box(
+            Spacer(modifier = Modifier.height(GlowSpacing.md))
+
+            val isImprovement = change < 0 // Lower is better for skin metrics
+            val trendColor = if (isImprovement) glow.success else glow.danger
+            val trendIcon = if (isImprovement) Icons.Filled.TrendingDown else Icons.Filled.TrendingUp
+
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        if (change < 0) glow.success.copy(alpha = 0.15f)
-                        else glow.danger.copy(alpha = 0.15f),
-                        RoundedCornerShape(8.dp)
-                    )
-                    .padding(GlowSpacing.sm),
-                contentAlignment = Alignment.Center
+                    .background(trendColor.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                    .padding(GlowSpacing.md),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(
+                    imageVector = trendIcon,
+                    contentDescription = null,
+                    tint = trendColor,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(GlowSpacing.xs))
                 Text(
-                    text = "${if (change > 0) "+" else ""}${String.format("%.1f", change)}% change in $metric",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "${if (change > 0) "+" else ""}${String.format("%.1f", change)}%",
+                    fontFamily = FontFamily.Monospace,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (change < 0) glow.success else glow.danger
+                    color = trendColor
+                )
+                Spacer(modifier = Modifier.width(GlowSpacing.xs))
+                Text(
+                    text = "change in $metric",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = glow.ink900
                 )
             }
         }
@@ -406,42 +491,107 @@ private fun BeforeAfterCard(
 }
 
 @Composable
-private fun ConsistencySection(consistency: ConsistencyData) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+private fun EmptyMetricCard(
+    title: String,
+    description: String,
+    modifier: Modifier = Modifier
+) {
+    val glow = LocalGlowColors.current
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(glow.surfaceCard, RoundedCornerShape(16.dp))
+            .padding(GlowSpacing.xl),
+        contentAlignment = Alignment.Center
     ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = glow.ink900
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = glow.ink600
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConsistencySection(consistency: ConsistencyData) {
+    val glow = LocalGlowColors.current
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.md)
+    ) {
+        // Calendar Heatmap
         CalendarHeatmap(
             captureDates = consistency.captureDates,
             currentMonth = java.time.YearMonth.now()
         )
 
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
-            contentPadding = PaddingValues(horizontal = 2.dp)
-        ) {
-            item {
-                StatTile(
-                    label = "Capture Rate",
+        // Consistency Metrics Grid
+        val metrics = buildList {
+            add(
+                MetricGridItem(
+                    title = "Capture Rate",
                     value = "${String.format("%.0f", consistency.captureRate)}%",
-                    modifier = Modifier.width(140.dp)
+                    trend = null
                 )
-            }
-
-            item {
-                StatTile(
-                    label = "Longest Streak",
-                    value = "${consistency.longestStreak} days",
-                    modifier = Modifier.width(140.dp)
+            )
+            add(
+                MetricGridItem(
+                    title = "Longest Streak",
+                    value = "${consistency.longestStreak}",
+                    trend = null
                 )
-            }
+            )
+        }
 
-            consistency.bestTimeOfDay?.let { time ->
-                item {
-                    StatTile(
-                        label = "Best Time",
-                        value = time,
-                        modifier = Modifier.width(140.dp)
+        MetricGrid(metrics = metrics)
+
+        // Best Time of Day (if available)
+        consistency.bestTimeOfDay?.let { time ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(glow.honey500.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+                    .padding(GlowSpacing.md)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.WbSunny,
+                        contentDescription = null,
+                        tint = glow.honey700,
+                        modifier = Modifier.size(24.dp)
                     )
+                    Column {
+                        Text(
+                            text = "Best Time to Capture",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = glow.ink600
+                        )
+                        Text(
+                            text = time,
+                            fontFamily = FontFamily.Monospace,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = glow.ink900
+                        )
+                    }
                 }
             }
         }

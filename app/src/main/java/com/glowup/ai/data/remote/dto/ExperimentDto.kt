@@ -51,7 +51,7 @@ fun ExperimentStatusRequest.toDto(): ExperimentStatusRequestDto = ExperimentStat
 
 @Serializable
 data class ExperimentProductDto(
-    val name: String,
+    val name: String = "",
     val category: String? = null,
     val role: String? = null,
 )
@@ -72,8 +72,8 @@ fun EarlyStopDto.toDomain(): EarlyStop = EarlyStop(
 /** `start_at`/`end_at` are the real column names — never `started_at`. */
 @Serializable
 data class ExperimentDto(
-    val id: String,
-    val name: String,
+    val id: String = "",
+    val name: String = "",
     val hypothesis: String? = null,
     @SerialName("primary_metric") val primaryMetric: String = "redness_score",
     val status: String = "running",

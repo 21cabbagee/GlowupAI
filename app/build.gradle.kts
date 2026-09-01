@@ -25,14 +25,13 @@ val keystoreProperties = Properties().apply {
     }
 }
 
-// Deployed HTTPS backend URLs don't exist yet (Phase 1.3). Until they do,
+// Production backend deployed on Render (free tier)
 // staging/release read from a Gradle property (-PSTAGING_API_BASE_URL=...,
-// -PRELEASE_API_BASE_URL=...) with an obvious placeholder default so nobody
-// mistakes it for a real, working endpoint.
+// -PRELEASE_API_BASE_URL=...) with production URL as default
 val stagingApiBaseUrl = (project.findProperty("STAGING_API_BASE_URL") as String?)
-    ?: "https://staging.glowup.example.invalid/"
+    ?: "https://glowupai-20ca.onrender.com/api/"
 val releaseApiBaseUrl = (project.findProperty("RELEASE_API_BASE_URL") as String?)
-    ?: "https://api.glowup.example.invalid/"
+    ?: "https://glowupai-20ca.onrender.com/api/"
 
 plugins {
     alias(libs.plugins.android.application)
@@ -78,7 +77,7 @@ android {
             // TODO: Add com.glowup.ai.debug to Firebase and uncomment this
             // applicationIdSuffix = ".debug"
             isDebuggable = true
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8000/api/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://glowupai-20ca.onrender.com/api/\"")
         }
 
         create("staging") {

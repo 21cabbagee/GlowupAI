@@ -93,18 +93,21 @@ fun LineChart(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(glow.honey300.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                    .background(color.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
                     .padding(GlowSpacing.sm),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = point.date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
                     style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold,
                     color = glow.ink900
                 )
                 Text(
                     text = String.format("%.2f", point.value),
-                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = glow.ink900
                 )
@@ -160,14 +163,36 @@ fun LineChart(
                 Offset(x, y)
             }
 
-            // Draw line with animation
+            // Draw smooth curved line with animation
             if (pointPositions.size > 1) {
                 val path = Path().apply {
                     val visiblePoints = (pointPositions.size * animationProgress).toInt().coerceAtLeast(2)
                     moveTo(pointPositions[0].x, pointPositions[0].y)
 
+                    // Use cubic bezier curves for smooth transitions
                     for (i in 1 until visiblePoints) {
-                        lineTo(pointPositions[i].x, pointPositions[i].y)
+                        val prev = pointPositions[i - 1]
+                        val current = pointPositions[i]
+
+                        if (i < visiblePoints - 1) {
+                            val next = pointPositions[i + 1]
+
+                            // Calculate control points for smooth curve
+                            val controlX1 = prev.x + (current.x - prev.x) * 0.5f
+                            val controlY1 = prev.y
+                            val controlX2 = current.x - (next.x - current.x) * 0.5f
+                            val controlY2 = current.y
+
+                            cubicTo(
+                                controlX1, controlY1,
+                                controlX2, controlY2,
+                                current.x, current.y
+                            )
+                        } else {
+                            // Last segment uses simpler curve
+                            val controlX = prev.x + (current.x - prev.x) * 0.5f
+                            quadraticBezierTo(controlX, prev.y, current.x, current.y)
+                        }
                     }
                 }
 

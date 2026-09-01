@@ -60,7 +60,9 @@ private fun label(size: androidx.compose.ui.unit.TextUnit) = TextStyle(
     letterSpacing = 0.02.em,
 )
 
-val GlowTypography = Typography(
+// Legacy typography - replaced by GlowTypography.kt
+@Deprecated("Use GlowTypography from GlowTypography.kt instead")
+val LegacyTypography = Typography(
     displayLarge = display(57.sp),
     displayMedium = display(45.sp),
     displaySmall = display(36.sp),

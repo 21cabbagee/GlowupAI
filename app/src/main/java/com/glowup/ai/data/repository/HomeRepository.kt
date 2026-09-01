@@ -115,26 +115,40 @@ class HomeRepository @Inject constructor(
         dashboardCache.getFresh(key, plan)?.let { return GlowResult.Success(it) }
 
         val stale = dashboardCache.peek(key, plan) ?: readDashboardFromRoom(userId, plan, vertical)
+        android.util.Log.d("HomeRepository", "getDashboard: Starting API call for userId=$userId, vertical=$vertical, plan=$plan")
         return when (
             val result = dashboardDedup.run(key) {
                 apiCall {
+                    android.util.Log.d("HomeRepository", "getDashboard: Inside apiCall block, calling api.getDashboard()")
                     val dto = api.getDashboard(userId, vertical)
+                    android.util.Log.d("HomeRepository", "getDashboard: API call succeeded, dto received: ${dto}")
                     val dashboard = dto.toDomain()
+                    android.util.Log.d("HomeRepository", "getDashboard: Converted to domain model successfully")
                     persistDashboardToRoom(userId, dashboard.profile.entitlement.plan, vertical, dto)
+                    android.util.Log.d("HomeRepository", "getDashboard: Persisted to Room successfully")
                     dashboard
                 }
             }
         ) {
             is GlowResult.Success -> {
+                android.util.Log.d("HomeRepository", "getDashboard: Result is Success, caching data")
                 dashboardCache.put(key, result.data, result.data.profile.entitlement.plan)
                 GlowResult.Success(Cached(result.data, stale = false, fetchedAtMillis = System.currentTimeMillis()))
             }
-            is GlowResult.Failure -> if (stale != null) {
-                dashboardCache.put(key, stale.data, plan, stale.fetchedAtMillis)
-                dashboardCache.invalidate { it == key } // keep the copy but mark it stale again
-                GlowResult.Success(stale.copy(refreshError = result.error))
-            } else {
-                result
+            is GlowResult.Failure -> {
+                android.util.Log.e("HomeRepository", "getDashboard: Result is Failure")
+                android.util.Log.e("HomeRepository", "getDashboard: Error type: ${result.error.javaClass.name}")
+                android.util.Log.e("HomeRepository", "getDashboard: Error: $result.error")
+                android.util.Log.e("HomeRepository", "getDashboard: Has stale cache: ${stale != null}")
+                if (stale != null) {
+                    android.util.Log.d("HomeRepository", "getDashboard: Returning stale cache with error")
+                    dashboardCache.put(key, stale.data, plan, stale.fetchedAtMillis)
+                    dashboardCache.invalidate { it == key } // keep the copy but mark it stale again
+                    GlowResult.Success(stale.copy(refreshError = result.error))
+                } else {
+                    android.util.Log.d("HomeRepository", "getDashboard: No stale cache, returning failure")
+                    result
+                }
             }
         }
     }

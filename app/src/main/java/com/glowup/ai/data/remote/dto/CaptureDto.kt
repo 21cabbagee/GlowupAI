@@ -59,8 +59,8 @@ fun CaptureCreateRequest.toDto(): CaptureCreateRequestDto = CaptureCreateRequest
 
 @Serializable
 data class CoachingTipDto(
-    val check: String,
-    val message: String,
+    val check: String = "",
+    val message: String = "",
 )
 
 fun CoachingTipDto.toDomain(): CoachingTip = CoachingTip(check, message)
@@ -125,11 +125,11 @@ data class MeasurementExplanationDto(
 
 @Serializable
 data class CaptureResponseDto(
-    val id: String,
-    @SerialName("captured_at") val capturedAt: String,
-    @SerialName("is_baseline") val isBaseline: Boolean = false,
+    val id: String = "",
+    @SerialName("captured_at") val capturedAt: String = "",
+    @SerialName("is_baseline") @Serializable(with = IntBooleanSerializer::class) val isBaseline: Boolean = false,
     val status: String = "accepted",
-    @SerialName("capture_quality") val captureQuality: CaptureQualityDto,
+    @SerialName("capture_quality") val captureQuality: CaptureQualityDto = CaptureQualityDto(),
     @SerialName("analysis_job_id") val analysisJobId: String? = null,
     val metric: MetricDto? = null,
     val measurement: MeasurementExplanationDto? = null,
@@ -149,9 +149,9 @@ fun CaptureResponseDto.toDomain(): CaptureResult = CaptureResult(
 
 @Serializable
 data class HistoryItemDto(
-    val id: String,
-    @SerialName("captured_at") val capturedAt: String,
-    @SerialName("is_baseline") val isBaseline: Boolean = false,
+    val id: String = "",
+    @SerialName("captured_at") val capturedAt: String = "",
+    @SerialName("is_baseline") @Serializable(with = IntBooleanSerializer::class) val isBaseline: Boolean = false,
     @SerialName("redness_score") val rednessScore: Double? = null,
     @SerialName("blemish_count") val blemishCount: Double? = null,
     @SerialName("redness_delta") val rednessDelta: Double? = null,
