@@ -11,7 +11,7 @@ fun ApiError.toMessage(): String =
     when (this) {
         is ApiError.Network -> "No connection. Check your network and try again."
         is ApiError.Server -> "Something went wrong on our end. Please try again."
-        is ApiError.Unauthorized -> "Your session expired. Please sign in again."
+        is ApiError.Unauthorized -> "Please sign in to continue."
         is ApiError.ConsentRequired -> "Photo tracking requires consent first."
         is ApiError.PremiumRequired -> "$feature requires Premium."
         is ApiError.CaptureQualityRejected -> "That photo didn't meet the quality checks. Please retry."

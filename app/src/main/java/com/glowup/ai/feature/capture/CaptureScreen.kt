@@ -601,7 +601,7 @@ private fun ImageCapture.takeJpegFile(
 private fun messageForGate(error: com.glowup.ai.data.remote.ApiError): String =
     when (error) {
         is com.glowup.ai.data.remote.ApiError.Network -> "No connection. Check your network and try again."
-        is com.glowup.ai.data.remote.ApiError.Unauthorized -> "Your session expired. Please sign in again."
+        is com.glowup.ai.data.remote.ApiError.Unauthorized -> "Please sign in to continue."
         is com.glowup.ai.data.remote.ApiError.Server -> "Something went wrong on our end. Please try again."
         else -> "Couldn't load capture right now. Please try again."
     }

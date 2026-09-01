@@ -423,31 +423,57 @@ class GuidanceService:
         weekly_recap_fn: Optional[Callable] = None,
         check_ins_fn: Optional[Callable] = None,
     ) -> Dict[str, Any]:
-        profile = profile_fn(user_id) if profile_fn else {}
-        history = history_fn(user_id, vertical) if history_fn else []
+        import logging
+        logger = logging.getLogger(__name__)
+
+        # Safely call each function with error handling
+        def safe_call(fn, *args, default=None, label="unknown"):
+            try:
+                if fn:
+                    return fn(*args)
+                return default
+            except Exception as e:
+                logger.error(f"Dashboard {label} failed for user {user_id}: {str(e)}")
+                return default
+
+        profile = safe_call(profile_fn, user_id, default={}, label="profile")
+        history = safe_call(history_fn, user_id, vertical, default=[], label="history")
         plan = profile.get("entitlement", {}).get("plan", "free")
-        verdicts = verdicts_for_user_fn(user_id) if verdicts_for_user_fn else []
+        verdicts = safe_call(verdicts_for_user_fn, user_id, default=[], label="verdicts")
         features = {feature: int(plan == "premium") for feature in PREMIUM_FEATURES}
-        features["product_verdicts_unlocked"] = int(
-            self._free_unlocked_product_id(user_id) is not None or plan == "premium"
-        )
-        return {
-            "profile": profile,
-            "vertical": vertical,
-            "history": history,
-            "verdicts": verdicts,
-            "experiments": experiments_fn(user_id) if experiments_fn and plan == "premium" else [],
-            "engagement": engagement_fn(user_id) if engagement_fn else {},
-            "analytics": analytics_fn(user_id) if analytics_fn else {},
-            "weekly_recap": weekly_recap_fn(user_id, vertical) if weekly_recap_fn else {},
-            "check_ins": check_ins_fn(user_id, limit=20) if check_ins_fn else [],
-            "routine_events": [
+
+        try:
+            features["product_verdicts_unlocked"] = int(
+                self._free_unlocked_product_id(user_id) is not None or plan == "premium"
+            )
+        except Exception as e:
+            logger.error(f"Dashboard features check failed for user {user_id}: {str(e)}")
+            features["product_verdicts_unlocked"] = 0
+
+        # Get routine events with error handling
+        try:
+            routine_events = [
                 row_dict(row)
                 for row in self.db.fetchall(
                     "SELECT e.*,p.name AS product_name FROM routine_events e JOIN products p ON p.id=e.product_id WHERE e.user_id=? ORDER BY e.timestamp DESC",
                     (user_id,),
                 )
-            ],
+            ]
+        except Exception as e:
+            logger.error(f"Dashboard routine_events failed for user {user_id}: {str(e)}")
+            routine_events = []
+
+        return {
+            "profile": profile,
+            "vertical": vertical,
+            "history": history,
+            "verdicts": verdicts,
+            "experiments": safe_call(experiments_fn, user_id, default=[], label="experiments") if experiments_fn and plan == "premium" else [],
+            "engagement": safe_call(engagement_fn, user_id, default={}, label="engagement"),
+            "analytics": safe_call(analytics_fn, user_id, default={}, label="analytics"),
+            "weekly_recap": safe_call(weekly_recap_fn, user_id, vertical, default={}, label="weekly_recap"),
+            "check_ins": safe_call(check_ins_fn, user_id, 20, default=[], label="check_ins"),
+            "routine_events": routine_events,
             "features": features,
             "disclaimer": "Cosmetic tracking only; GlowUpAI does not diagnose, treat, or rule out medical conditions.",
         }
