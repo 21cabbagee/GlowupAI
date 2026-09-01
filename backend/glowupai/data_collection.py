@@ -12,7 +12,7 @@ import json
 import logging
 import os
 import shutil
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,9 @@ logger = logging.getLogger(__name__)
 class DataCollector:
     """Manages anonymized data collection for model training."""
 
-    def __init__(self, db: Database, storage_path: str | Path = ".data/training_collection"):
+    def __init__(
+        self, db: Database, storage_path: str | Path = ".data/training_collection"
+    ):
         self.db = db
         self.storage_path = Path(storage_path)
         self.storage_path.mkdir(parents=True, exist_ok=True)
@@ -54,7 +56,7 @@ class DataCollector:
             (user_id,),
         )
 
-        return consent and consent["granted"] == 1
+        return consent is not None and consent["granted"] == 1
 
     def anonymize_user_id(self, user_id: str) -> str:
         """
@@ -101,7 +103,7 @@ class DataCollector:
             face_id = self.anonymize_user_id(user_id)
 
             # Generate anonymous filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             anonymous_id = hashlib.sha256(capture_id.encode()).hexdigest()[:12]
             filename = f"{face_id}_{timestamp}_{anonymous_id}"
 
@@ -131,7 +133,7 @@ class DataCollector:
             metadata = {
                 "face_id": face_id,
                 "capture_id": anonymous_id,
-                "collected_at": datetime.now().isoformat(),
+                "collected_at": datetime.now(UTC).isoformat(),
                 "lighting": {
                     "brightness": quality.get("brightness", 0),
                     "conditions": self._classify_lighting(quality.get("brightness", 0)),
@@ -148,12 +150,14 @@ class DataCollector:
                     "os": device_meta.get("os", "unknown"),
                     "os_version": device_meta.get("os_version", "unknown"),
                     "device_model": device_meta.get("device_model", "unknown"),
-                    "camera_resolution": device_meta.get("camera_resolution", "unknown"),
+                    "camera_resolution": device_meta.get(
+                        "camera_resolution", "unknown"
+                    ),
                 },
                 "privacy": {
                     "anonymized": True,
                     "user_id_hash": face_id,
-                    "collection_date": datetime.now().strftime("%Y-%m-%d"),
+                    "collection_date": datetime.now(UTC).strftime("%Y-%m-%d"),
                 },
             }
 
@@ -175,7 +179,7 @@ class DataCollector:
                 (
                     face_id,
                     anonymous_id,
-                    datetime.now().isoformat(),
+                    datetime.now(UTC).isoformat(),
                     quality.get("score", 0),
                     metrics.get("model_version", "unknown"),
                 ),
@@ -243,13 +247,21 @@ class DataCollector:
             capture_id = sample["anonymous_capture_id"]
 
             # Find matching files
-            image_files = list(self.storage_path.glob(f"images/{face_id}_*_{capture_id}.jpg"))
-            label_files = list(self.storage_path.glob(f"labels/{face_id}_*_{capture_id}.json"))
+            image_files = list(
+                self.storage_path.glob(f"images/{face_id}_*_{capture_id}.jpg")
+            )
+            label_files = list(
+                self.storage_path.glob(f"labels/{face_id}_*_{capture_id}.json")
+            )
 
             if image_files and label_files:
                 # Copy to export directory
-                shutil.copy2(image_files[0], output_dir / "images" / image_files[0].name)
-                shutil.copy2(label_files[0], output_dir / "labels" / label_files[0].name)
+                shutil.copy2(
+                    image_files[0], output_dir / "images" / image_files[0].name
+                )
+                shutil.copy2(
+                    label_files[0], output_dir / "labels" / label_files[0].name
+                )
                 exported_count += 1
             else:
                 failed_count += 1
@@ -257,6 +269,7 @@ class DataCollector:
         # Create train/val split
         all_samples = list((output_dir / "images").glob("*.jpg"))
         import random
+
         random.shuffle(all_samples)
 
         split_idx = int(len(all_samples) * 0.8)
@@ -278,7 +291,7 @@ class DataCollector:
             "train_samples": len(train_files),
             "val_samples": len(val_files),
             "min_quality_threshold": min_quality,
-            "export_date": datetime.now().isoformat(),
+            "export_date": datetime.now(UTC).isoformat(),
         }
 
         with open(output_dir / "export_stats.json", "w") as f:
@@ -297,7 +310,7 @@ class DataCollector:
         Returns:
             Number of records deleted
         """
-        cutoff_date = datetime.now() - timedelta(days=retention_days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=retention_days)
 
         # Get old records
         old_records = self.db.fetchall(
@@ -370,7 +383,7 @@ class DataCollector:
         stats["unique_faces"] = result["count"] if result else 0
 
         # Collection rate (last 7 days)
-        week_ago = (datetime.now() - timedelta(days=7)).isoformat()
+        week_ago = (datetime.now(UTC) - timedelta(days=7)).isoformat()
         result = self.db.fetchone(
             "SELECT COUNT(*) as count FROM collection_log WHERE collected_at >= ?",
             (week_ago,),

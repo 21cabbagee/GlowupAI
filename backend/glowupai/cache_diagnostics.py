@@ -29,7 +29,7 @@ def check_cache_health(cache) -> dict[str, Any]:
             "GLOWUPAI_CACHE_ENABLED": os.getenv("GLOWUPAI_CACHE_ENABLED", "1"),
             "REDIS_URL": "set" if os.getenv("REDIS_URL") else "not set",
             "REDIS_PRIVATE_URL": "set" if os.getenv("REDIS_PRIVATE_URL") else "not set",
-        }
+        },
     }
 
     # Test Redis connection
@@ -59,11 +59,11 @@ def test_cache_operations(cache) -> dict[str, Any]:
     test_key = "cache:test:diagnostic"
     test_value = {"test": "data", "timestamp": "diagnostic"}
 
-    results = {
+    results: dict[str, Any] = {
         "set": False,
         "get": False,
         "delete": False,
-        "errors": []
+        "errors": [],
     }
 
     try:
@@ -84,7 +84,7 @@ def test_cache_operations(cache) -> dict[str, Any]:
 
     except Exception as exc:
         results["errors"].append(str(exc))
-        logger.error(f"Cache operation test failed: {exc}", exc_info=True)
+        logger.exception("Cache operation test failed")
 
     results["success"] = results["set"] and results["get"] and results["delete"]
 
@@ -100,7 +100,7 @@ def get_cache_stats(cache) -> dict[str, Any]:
     Returns:
         Dictionary with cache statistics
     """
-    stats = {
+    stats: dict[str, Any] = {
         "backend": "redis" if cache.redis_client else "memory",
         "memory_entries": len(cache.memory_cache),
     }
@@ -144,15 +144,15 @@ def print_cache_diagnostics(cache) -> None:
     print(f"  Enabled: {health['enabled']}")
     print(f"  Default TTL: {health['default_ttl']}s")
 
-    if health['backend'] == 'redis':
+    if health["backend"] == "redis":
         print(f"  Redis Connected: {health['redis_connected']}")
-        if not health['redis_connected']:
+        if not health["redis_connected"]:
             print(f"  Redis Error: {health.get('redis_error', 'Unknown')}")
     else:
         print(f"  Memory Cache Size: {health['memory_cache_size']}")
 
     print("\nEnvironment Variables:")
-    for key, value in health['env_vars'].items():
+    for key, value in health["env_vars"].items():
         print(f"  {key}: {value}")
 
     # Test operations
@@ -162,9 +162,9 @@ def print_cache_diagnostics(cache) -> None:
     print(f"  Get: {'✓' if tests['get'] else '✗'}")
     print(f"  Delete: {'✓' if tests['delete'] else '✗'}")
 
-    if tests['errors']:
+    if tests["errors"]:
         print("  Errors:")
-        for error in tests['errors']:
+        for error in tests["errors"]:
             print(f"    - {error}")
 
     print(f"\n  Overall: {'✓ PASS' if tests['success'] else '✗ FAIL'}")
@@ -174,8 +174,8 @@ def print_cache_diagnostics(cache) -> None:
     print("\nCache Statistics:")
     print(f"  Backend: {stats['backend']}")
 
-    if stats['backend'] == 'redis' and stats.get('redis_stats') != 'unavailable':
-        redis_stats = stats.get('redis_stats', {})
+    if stats["backend"] == "redis" and stats.get("redis_stats") != "unavailable":
+        redis_stats = stats.get("redis_stats", {})
         print(f"  Commands: {redis_stats.get('total_commands_processed', 'N/A')}")
         print(f"  Hits: {redis_stats.get('keyspace_hits', 'N/A')}")
         print(f"  Misses: {redis_stats.get('keyspace_misses', 'N/A')}")

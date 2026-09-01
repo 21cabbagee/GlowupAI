@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from .safety import triage
 from .service import now_iso, row_dict
@@ -39,7 +40,9 @@ def load(value: Any, default: Any = None) -> Any:
 class GuidanceService:
     """Q&A, experiments, shelf scan, and reports."""
 
-    def __init__(self, db: Any, parent_service: Any, insights: Any, vision: Any, jobs: Any) -> None:
+    def __init__(
+        self, db: Any, parent_service: Any, insights: Any, vision: Any, jobs: Any
+    ) -> None:
         self.db = db
         self.parent = parent_service
         self.insights = insights
@@ -52,14 +55,14 @@ class GuidanceService:
         self,
         user_id: str,
         name: str,
-        hypothesis: Optional[str],
+        hypothesis: str | None,
         product_id: str,
         primary_metric: str = "redness_score",
         target_days: int = 14,
-        require_premium_fn: Optional[Callable] = None,
-        require_consent_fn: Optional[Callable] = None,
-        audit_fn: Optional[Callable] = None,
-    ) -> Dict[str, Any]:
+        require_premium_fn: Callable | None = None,
+        require_consent_fn: Callable | None = None,
+        audit_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         if require_premium_fn:
             require_premium_fn(user_id, "Experiments")
         if require_consent_fn:
@@ -104,7 +107,7 @@ class GuidanceService:
             )
         return self.experiment(experiment_id, user_id)
 
-    def _early_stop(self, user_id: str, experiment: Dict[str, Any]) -> Dict[str, Any]:
+    def _early_stop(self, user_id: str, experiment: dict[str, Any]) -> dict[str, Any]:
         """Tell the user when evidence is already conclusive, before target_days."""
 
         if experiment["status"] != "running" or not experiment["products"]:
@@ -136,7 +139,9 @@ class GuidanceService:
             "message": "Not yet conclusive; keep the routine stable until the target day count.",
         }
 
-    def experiment(self, experiment_id: str, user_id: str, history_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def experiment(
+        self, experiment_id: str, user_id: str, history_fn: Callable | None = None
+    ) -> dict[str, Any]:
         row = self.db.fetchone(
             "SELECT * FROM experiments WHERE id=? AND user_id=?",
             (experiment_id, user_id),
@@ -162,7 +167,9 @@ class GuidanceService:
         result["early_stop"] = self._early_stop(user_id, result)
         return result
 
-    def experiments(self, user_id: str, require_premium_fn: Optional[Callable] = None) -> List[Dict[str, Any]]:
+    def experiments(
+        self, user_id: str, require_premium_fn: Callable | None = None
+    ) -> list[dict[str, Any]]:
         if require_premium_fn:
             require_premium_fn(user_id, "Experiments")
         return [
@@ -174,8 +181,12 @@ class GuidanceService:
         ]
 
     def set_experiment_status(
-        self, user_id: str, experiment_id: str, status: str, require_premium_fn: Optional[Callable] = None
-    ) -> Dict[str, Any]:
+        self,
+        user_id: str,
+        experiment_id: str,
+        status: str,
+        require_premium_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         if require_premium_fn:
             require_premium_fn(user_id, "Experiments")
         if status not in {"planned", "running", "paused", "completed", "cancelled"}:
@@ -194,8 +205,8 @@ class GuidanceService:
     # -- grounded Q&A (Premium) ------------------------------------------------
 
     def _qna_evidence(
-        self, user_id: str, history: List[Dict[str, Any]], events: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, user_id: str, history: list[dict[str, Any]], events: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         verdicts = [
             self.parent._decode_verdict(row)
             for row in self.db.fetchall(
@@ -213,7 +224,13 @@ class GuidanceService:
         }
 
     def _deterministic_qna_answer(
-        self, user_id: str, question: str, history: List[Dict[str, Any]], events: List[Dict[str, Any]], refresh_verdicts_fn: Optional[Callable] = None, root_cause_fn: Optional[Callable] = None
+        self,
+        user_id: str,
+        question: str,
+        history: list[dict[str, Any]],
+        events: list[dict[str, Any]],
+        refresh_verdicts_fn: Callable | None = None,
+        root_cause_fn: Callable | None = None,
     ) -> str:
         lowered = question.casefold()
         if "ingredient" in lowered or "inci" in lowered:
@@ -244,7 +261,15 @@ class GuidanceService:
             )
         return f"I can ground this in {len(history)} captures and {len(events)} routine events. Ask about redness, a product, ingredients, cadence, patterns, or a specific date so I can cite the relevant evidence."
 
-    def ask(self, user_id: str, question: str, thread_id: Optional[str] = None, require_premium_fn: Optional[Callable] = None, history_fn: Optional[Callable] = None, record_engagement_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def ask(
+        self,
+        user_id: str,
+        question: str,
+        thread_id: str | None = None,
+        require_premium_fn: Callable | None = None,
+        history_fn: Callable | None = None,
+        record_engagement_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         if require_premium_fn:
             require_premium_fn(user_id, "Data Q&A")
         scope = triage(question)
@@ -304,7 +329,9 @@ class GuidanceService:
             "citations": citations,
         }
 
-    def qna_history(self, user_id: str, require_premium_fn: Optional[Callable] = None) -> List[Dict[str, Any]]:
+    def qna_history(
+        self, user_id: str, require_premium_fn: Callable | None = None
+    ) -> list[dict[str, Any]]:
         if require_premium_fn:
             require_premium_fn(user_id, "Data Q&A")
         return [
@@ -317,7 +344,7 @@ class GuidanceService:
 
     # -- shelf scan → auto-logging (free) -------------------------------------
 
-    def _run_shelf_scan(self, image_bytes: bytes) -> Dict[str, Any]:
+    def _run_shelf_scan(self, image_bytes: bytes) -> dict[str, Any]:
         if not self.vision:
             return {
                 "candidates": [],
@@ -333,7 +360,12 @@ class GuidanceService:
             ),
         }
 
-    def scan_shelf(self, user_id: str, image_bytes: bytes, record_engagement_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def scan_shelf(
+        self,
+        user_id: str,
+        image_bytes: bytes,
+        record_engagement_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         self.parent.require_user(user_id)
         if not image_bytes:
             raise ValueError("image is required")
@@ -344,7 +376,7 @@ class GuidanceService:
             record_engagement_fn(user_id, "shelf_scan_submitted", job_id)
         return {"job_id": job_id, "status": "queued"}
 
-    def shelf_scan_status(self, user_id: str, job_id: str) -> Dict[str, Any]:
+    def shelf_scan_status(self, user_id: str, job_id: str) -> dict[str, Any]:
         self.parent.require_user(user_id)
         job = self.jobs.get(job_id, user_id=user_id)
         if not job:
@@ -352,8 +384,12 @@ class GuidanceService:
         return job
 
     def confirm_shelf_scan(
-        self, user_id: str, job_id: str, selections: List[Dict[str, Any]], record_engagement_fn: Optional[Callable] = None
-    ) -> List[Dict[str, Any]]:
+        self,
+        user_id: str,
+        job_id: str,
+        selections: list[dict[str, Any]],
+        record_engagement_fn: Callable | None = None,
+    ) -> list[dict[str, Any]]:
         self.parent.require_user(user_id)
         job = self.jobs.get(job_id, user_id=user_id)
         if not job or job["status"] != "completed":
@@ -380,10 +416,17 @@ class GuidanceService:
 
     # -- dermatologist export (Premium) ---------------------------------------
 
-    def dermatologist_report(self, user_id: str, profile_fn: Callable, history_fn: Callable, require_premium_fn: Optional[Callable] = None, refresh_verdicts_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def dermatologist_report(
+        self,
+        user_id: str,
+        profile_fn: Callable,
+        history_fn: Callable,
+        require_premium_fn: Callable | None = None,
+        refresh_verdicts_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         if require_premium_fn:
             require_premium_fn(user_id, "Dermatologist export")
-        profile = profile_fn(user_id)
+        profile_fn(user_id)
         history = history_fn(user_id)
         verdicts = refresh_verdicts_fn(user_id) if refresh_verdicts_fn else []
         model_versions = sorted(
@@ -415,15 +458,15 @@ class GuidanceService:
         self,
         user_id: str,
         vertical: str = "skin",
-        profile_fn: Optional[Callable] = None,
-        history_fn: Optional[Callable] = None,
-        verdicts_for_user_fn: Optional[Callable] = None,
-        experiments_fn: Optional[Callable] = None,
-        engagement_fn: Optional[Callable] = None,
-        analytics_fn: Optional[Callable] = None,
-        weekly_recap_fn: Optional[Callable] = None,
-        check_ins_fn: Optional[Callable] = None,
-    ) -> Dict[str, Any]:
+        profile_fn: Callable | None = None,
+        history_fn: Callable | None = None,
+        verdicts_for_user_fn: Callable | None = None,
+        experiments_fn: Callable | None = None,
+        engagement_fn: Callable | None = None,
+        analytics_fn: Callable | None = None,
+        weekly_recap_fn: Callable | None = None,
+        check_ins_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         logger = logging.getLogger(__name__)
 
         # Safely call each function with error handling
@@ -433,13 +476,15 @@ class GuidanceService:
                     return fn(*args)
                 return default
             except Exception as e:
-                logger.error(f"Dashboard {label} failed for user {user_id}: {str(e)}")
+                logger.error(f"Dashboard {label} failed for user {user_id}: {e!s}")
                 return default
 
         profile = safe_call(profile_fn, user_id, default={}, label="profile")
         history = safe_call(history_fn, user_id, vertical, default=[], label="history")
         plan = profile.get("entitlement", {}).get("plan", "free")
-        verdicts = safe_call(verdicts_for_user_fn, user_id, default=[], label="verdicts")
+        verdicts = safe_call(
+            verdicts_for_user_fn, user_id, default=[], label="verdicts"
+        )
         features = {feature: int(plan == "premium") for feature in PREMIUM_FEATURES}
 
         try:
@@ -447,7 +492,7 @@ class GuidanceService:
                 self._free_unlocked_product_id(user_id) is not None or plan == "premium"
             )
         except Exception as e:
-            logger.error(f"Dashboard features check failed for user {user_id}: {str(e)}")
+            logger.error(f"Dashboard features check failed for user {user_id}: {e!s}")
             features["product_verdicts_unlocked"] = 0
 
         # Get routine events with error handling
@@ -460,7 +505,7 @@ class GuidanceService:
                 )
             ]
         except Exception as e:
-            logger.error(f"Dashboard routine_events failed for user {user_id}: {str(e)}")
+            logger.error(f"Dashboard routine_events failed for user {user_id}: {e!s}")
             routine_events = []
 
         return {
@@ -468,22 +513,34 @@ class GuidanceService:
             "vertical": vertical,
             "history": history,
             "verdicts": verdicts,
-            "experiments": safe_call(experiments_fn, user_id, default=[], label="experiments") if experiments_fn and plan == "premium" else [],
-            "engagement": safe_call(engagement_fn, user_id, default={}, label="engagement"),
-            "analytics": safe_call(analytics_fn, user_id, default={}, label="analytics"),
-            "weekly_recap": safe_call(weekly_recap_fn, user_id, vertical, default={}, label="weekly_recap"),
-            "check_ins": safe_call(check_ins_fn, user_id, 20, default=[], label="check_ins"),
+            "experiments": (
+                safe_call(experiments_fn, user_id, default=[], label="experiments")
+                if experiments_fn and plan == "premium"
+                else []
+            ),
+            "engagement": safe_call(
+                engagement_fn, user_id, default={}, label="engagement"
+            ),
+            "analytics": safe_call(
+                analytics_fn, user_id, default={}, label="analytics"
+            ),
+            "weekly_recap": safe_call(
+                weekly_recap_fn, user_id, vertical, default={}, label="weekly_recap"
+            ),
+            "check_ins": safe_call(
+                check_ins_fn, user_id, 20, default=[], label="check_ins"
+            ),
             "routine_events": routine_events,
             "features": features,
             "disclaimer": "Cosmetic tracking only; GlowUpAI does not diagnose, treat, or rule out medical conditions.",
         }
 
-    def _free_unlocked_product_id(self, user_id: str) -> Optional[str]:
+    def _free_unlocked_product_id(self, user_id: str) -> str | None:
         row = self.db.fetchone(
             "SELECT reference_id FROM engagement_events WHERE user_id=? AND event_type='free_verdict_unlocked' ORDER BY occurred_at LIMIT 1",
             (user_id,),
         )
         return row["reference_id"] if row else None
 
-    def triage_question(self, text: str) -> Dict[str, Any]:
+    def triage_question(self, text: str) -> dict[str, Any]:
         return triage(text).as_dict()

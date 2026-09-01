@@ -86,8 +86,7 @@ def _filter_transactions(event: dict, hint: dict) -> dict | None:
 
     # Don't send health checks and metrics to Sentry
     if any(
-        path in url
-        for path in ["/api/health", "/api/metrics", "/health", "/healthz"]
+        path in url for path in ["/api/health", "/api/metrics", "/health", "/healthz"]
     ):
         return None
 
@@ -119,7 +118,9 @@ def capture_exception(exc: Exception, context: dict[str, Any] | None = None) -> 
 
 
 def capture_message(
-    message: str, level: str = "info", context: dict[str, Any] | None = None,
+    message: str,
+    level: str = "info",
+    context: dict[str, Any] | None = None,
 ) -> None:
     """Capture a message and send it to Sentry with additional context.
 

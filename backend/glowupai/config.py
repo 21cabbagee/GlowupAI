@@ -105,19 +105,24 @@ class Settings:
             photo_dir=Path(photo_dir_value) if photo_dir_value else None,
             database_url=database_url,
             database_pool_min_size=max(
-                1, int(os.getenv("GLOWUPAI_DB_POOL_MIN_SIZE", "1")),
+                1,
+                int(os.getenv("GLOWUPAI_DB_POOL_MIN_SIZE", "1")),
             ),
             database_pool_max_size=max(
-                1, int(os.getenv("GLOWUPAI_DB_POOL_MAX_SIZE", "10")),
+                1,
+                int(os.getenv("GLOWUPAI_DB_POOL_MAX_SIZE", "10")),
             ),
             database_connect_timeout=max(
-                1, int(os.getenv("GLOWUPAI_DB_CONNECT_TIMEOUT", "10")),
+                1,
+                int(os.getenv("GLOWUPAI_DB_CONNECT_TIMEOUT", "10")),
             ),
             database_statement_timeout=max(
-                1000, int(os.getenv("GLOWUPAI_DB_STATEMENT_TIMEOUT", "30000")),
+                1000,
+                int(os.getenv("GLOWUPAI_DB_STATEMENT_TIMEOUT", "30000")),
             ),
             database_pool_timeout=max(
-                5, int(os.getenv("GLOWUPAI_DB_POOL_TIMEOUT", "30")),
+                5,
+                int(os.getenv("GLOWUPAI_DB_POOL_TIMEOUT", "30")),
             ),
             raw_photo_retention_days=int(
                 os.getenv("GLOWUPAI_RAW_RETENTION_DAYS", "730"),

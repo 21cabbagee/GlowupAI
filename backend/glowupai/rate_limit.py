@@ -44,7 +44,10 @@ class InMemoryRateLimiter:
         self._lock = Lock()
 
     def is_allowed(
-        self, key: str, requests: int, window_seconds: int,
+        self,
+        key: str,
+        requests: int,
+        window_seconds: int,
     ) -> tuple[bool, int]:
         """Check if request is allowed under rate limit.
 
@@ -141,7 +144,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         key = f"{client_id}:{rate_limit.endpoint_pattern}"
 
         is_allowed, retry_after = self.limiter.is_allowed(
-            key, rate_limit.requests, rate_limit.window_seconds,
+            key,
+            rate_limit.requests,
+            rate_limit.window_seconds,
         )
 
         if not is_allowed:
@@ -188,7 +193,9 @@ def create_rate_limiter(
         # Gemini-powered features: 10 per hour (expensive)
         "/api/users/.*/qna": RateLimitConfig(10, 3600, "/api/users/.*/qna"),
         "/api/users/.*/shelf-scan": RateLimitConfig(
-            10, 3600, "/api/users/.*/shelf-scan",
+            10,
+            3600,
+            "/api/users/.*/shelf-scan",
         ),
         # General API: 100 requests per minute
         "/api": RateLimitConfig(100, 60, "/api"),

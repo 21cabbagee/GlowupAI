@@ -32,13 +32,19 @@ def apply_white_balance(img: np.ndarray) -> np.ndarray:
     result = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     avg_a = np.average(result[:, :, 1])
     avg_b = np.average(result[:, :, 2])
-    result[:, :, 1] = result[:, :, 1] - ((avg_a - 128) * (result[:, :, 0] / 255.0) * 1.1)
-    result[:, :, 2] = result[:, :, 2] - ((avg_b - 128) * (result[:, :, 0] / 255.0) * 1.1)
+    result[:, :, 1] = result[:, :, 1] - (
+        (avg_a - 128) * (result[:, :, 0] / 255.0) * 1.1
+    )
+    result[:, :, 2] = result[:, :, 2] - (
+        (avg_b - 128) * (result[:, :, 0] / 255.0) * 1.1
+    )
     result = cv2.cvtColor(result, cv2.COLOR_LAB2BGR)
     return result
 
 
-def apply_clahe(img: np.ndarray, clip_limit: float = 2.0, tile_size: tuple[int, int] = (8, 8)) -> np.ndarray:
+def apply_clahe(
+    img: np.ndarray, clip_limit: float = 2.0, tile_size: tuple[int, int] = (8, 8)
+) -> np.ndarray:
     """Apply CLAHE (Contrast Limited Adaptive Histogram Equalization).
 
     CLAHE improves local contrast while avoiding over-amplification of noise.
@@ -63,7 +69,9 @@ def apply_clahe(img: np.ndarray, clip_limit: float = 2.0, tile_size: tuple[int, 
     return result
 
 
-def denoise_image(img: np.ndarray, h: int = 10, template_window: int = 7, search_window: int = 21) -> np.ndarray:
+def denoise_image(
+    img: np.ndarray, h: int = 10, template_window: int = 7, search_window: int = 21
+) -> np.ndarray:
     """Apply non-local means denoising to reduce noise while preserving edges.
 
     Args:
@@ -75,10 +83,14 @@ def denoise_image(img: np.ndarray, h: int = 10, template_window: int = 7, search
     Returns:
         Denoised image in BGR format
     """
-    return cv2.fastNlMeansDenoisingColored(img, None, h, h, template_window, search_window)
+    return cv2.fastNlMeansDenoisingColored(
+        img, None, h, h, template_window, search_window
+    )
 
 
-def resize_standard(img: np.ndarray, target_size: tuple[int, int] = (512, 512)) -> np.ndarray:
+def resize_standard(
+    img: np.ndarray, target_size: tuple[int, int] = (512, 512)
+) -> np.ndarray:
     """Resize image to standard dimensions using high-quality interpolation.
 
     Args:
@@ -91,7 +103,9 @@ def resize_standard(img: np.ndarray, target_size: tuple[int, int] = (512, 512)) 
     return cv2.resize(img, target_size, interpolation=cv2.INTER_LANCZOS4)
 
 
-def preprocess_for_analysis(image_bytes: bytes, preserve_original_size: bool = False) -> bytes:
+def preprocess_for_analysis(
+    image_bytes: bytes, preserve_original_size: bool = False
+) -> bytes:
     """Complete preprocessing pipeline for skin analysis.
 
     This pipeline applies multiple normalization steps to reduce variations
@@ -154,7 +168,9 @@ def preprocess_for_analysis(image_bytes: bytes, preserve_original_size: bool = F
         raise ValueError(f"Image preprocessing failed: {e}") from e
 
 
-def preprocess_for_analysis_pil(image_bytes: bytes, preserve_original_size: bool = False) -> bytes:
+def preprocess_for_analysis_pil(
+    image_bytes: bytes, preserve_original_size: bool = False
+) -> bytes:
     """Alternative preprocessing using PIL for compatibility.
 
     This is a lighter-weight preprocessing option that uses only PIL/Pillow
@@ -196,6 +212,7 @@ def check_preprocessing_available() -> bool:
     """
     try:
         import cv2
+
         # Test basic OpenCV functionality
         test_img = np.zeros((10, 10, 3), dtype=np.uint8)
         cv2.cvtColor(test_img, cv2.COLOR_BGR2LAB)

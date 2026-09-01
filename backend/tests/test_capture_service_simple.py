@@ -19,7 +19,10 @@ class CaptureServiceSimpleTests(unittest.TestCase):
         self.photos = MemoryPhotoStore()
         self.service = GlowupAIService(self.db, photos=self.photos)
         from glowupai.config import Settings
-        self.capture_service = CaptureService(self.db, self.service, self.photos, Settings.from_env())
+
+        self.capture_service = CaptureService(
+            self.db, self.service, self.photos, Settings.from_env()
+        )
 
     def tearDown(self):
         self.db.close()

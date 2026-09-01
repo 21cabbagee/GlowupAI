@@ -4,10 +4,11 @@ import json
 import re
 import statistics
 import uuid
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from typing import Any
 
 from .catalog import explain, parse_ingredients
-from .service import now_iso, row_dict
+from .service import row_dict
 
 
 def uid() -> str:
@@ -18,7 +19,7 @@ def dump(value: Any) -> str:
     return json.dumps(value, separators=(",", ":"), sort_keys=True)
 
 
-def load(value: Any, default: Optional[Any] = None) -> Any:
+def load(value: Any, default: Any | None = None) -> Any:
     try:
         return json.loads(value)
     except (TypeError, ValueError):
@@ -32,7 +33,13 @@ class CommerceService:
         self.db = db
         self.parent = parent_service
 
-    def predict_product(self, user_id: str, product_id: str, require_premium_fn: Optional[Callable] = None, refresh_verdicts_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def predict_product(
+        self,
+        user_id: str,
+        product_id: str,
+        require_premium_fn: Callable | None = None,
+        refresh_verdicts_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         if require_premium_fn:
             require_premium_fn(user_id, "Pre-purchase prediction")
         product = self.db.fetchone("SELECT * FROM products WHERE id=?", (product_id,))
@@ -94,7 +101,7 @@ class CommerceService:
             "disclaimer": "This is an ingredient-overlap similarity signal from your own and cohort history, not a prediction of efficacy or safety. Only your own capture-based experiment can verify how this product performs for you.",
         }
 
-    def lookup_product(self, barcode: str) -> Optional[Dict[str, Any]]:
+    def lookup_product(self, barcode: str) -> dict[str, Any] | None:
         normalized = re.sub(r"[^0-9A-Za-z-]", "", barcode or "").strip()
         if not normalized:
             raise ValueError("barcode is required")
@@ -104,15 +111,15 @@ class CommerceService:
     def purchase_guidance(
         self,
         user_id: str,
-        name: Optional[str] = None,
-        barcode: Optional[str] = None,
-        ingredients: Optional[Any] = None,
+        name: str | None = None,
+        barcode: str | None = None,
+        ingredients: Any | None = None,
         category: str = "other",
-        price_cents: Optional[int] = None,
+        price_cents: int | None = None,
         currency: str = "INR",
-        require_premium_fn: Optional[Callable] = None,
-        refresh_verdicts_fn: Optional[Callable] = None,
-    ) -> Dict[str, Any]:
+        require_premium_fn: Callable | None = None,
+        refresh_verdicts_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         if require_premium_fn:
             require_premium_fn(user_id, "Pre-purchase guidance")
         normalized_barcode = re.sub(r"[^0-9A-Za-z-]", "", barcode or "").strip() or None
@@ -211,7 +218,12 @@ class CommerceService:
             "disclaimer": "Ingredient overlap is a similarity signal from your own and cohort history, not a prediction of efficacy or safety. Only your own standardized capture series can verify this product for you.",
         }
 
-    def budget_optimizer(self, user_id: str, require_premium_fn: Optional[Callable] = None, refresh_verdicts_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def budget_optimizer(
+        self,
+        user_id: str,
+        require_premium_fn: Callable | None = None,
+        refresh_verdicts_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         if require_premium_fn:
             require_premium_fn(user_id, "Routine budget optimizer")
         verdicts = refresh_verdicts_fn(user_id) if refresh_verdicts_fn else []
@@ -250,7 +262,9 @@ class CommerceService:
             "disclaimer": "Estimates use your logged stabilization window and any known offer price; products without a known price are flagged without a cost estimate.",
         }
 
-    def discover(self, user_id: str, require_premium_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def discover(
+        self, user_id: str, require_premium_fn: Callable | None = None
+    ) -> dict[str, Any]:
         if require_premium_fn:
             require_premium_fn(user_id, "Discover")
         rows = self.db.fetchall(
@@ -299,9 +313,9 @@ class CommerceService:
         product_id: str,
         merchant: str,
         url: str,
-        price_cents: Optional[int] = None,
+        price_cents: int | None = None,
         currency: str = "USD",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if not self.db.fetchone("SELECT id FROM products WHERE id=?", (product_id,)):
             raise ValueError("product not found")
         offer_id = uid()
@@ -313,7 +327,9 @@ class CommerceService:
             self.db.fetchone("SELECT * FROM affiliate_offers WHERE id=?", (offer_id,))
         )
 
-    def offers(self, user_id: str, product_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def offers(
+        self, user_id: str, product_id: str | None = None
+    ) -> list[dict[str, Any]]:
         self.parent.require_user(user_id)
         sql = "SELECT o.*,p.name AS product_name FROM affiliate_offers o JOIN products p ON p.id=o.product_id WHERE o.active=1"
         params = ()
@@ -325,7 +341,9 @@ class CommerceService:
             for row in self.db.fetchall(sql + " ORDER BY o.created_at DESC", params)
         ]
 
-    def click_offer(self, user_id: str, offer_id: str, record_engagement_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def click_offer(
+        self, user_id: str, offer_id: str, record_engagement_fn: Callable | None = None
+    ) -> dict[str, Any]:
         self.parent.require_user(user_id)
         offer = self.db.fetchone(
             "SELECT * FROM affiliate_offers WHERE id=? AND active=1", (offer_id,)
@@ -340,7 +358,9 @@ class CommerceService:
             record_engagement_fn(user_id, "affiliate_click", offer_id)
         return row_dict(offer)
 
-    def ingredient_explainer(self, user_id: str, product_id: str, require_premium_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def ingredient_explainer(
+        self, user_id: str, product_id: str, require_premium_fn: Callable | None = None
+    ) -> dict[str, Any]:
         if require_premium_fn:
             require_premium_fn(user_id, "Ingredient analysis")
         product = self.db.fetchone("SELECT * FROM products WHERE id=?", (product_id,))
@@ -348,15 +368,19 @@ class CommerceService:
             raise ValueError("product not found")
         return explain(product["name"], product["ingredients_json"])
 
-    def product_detail(self, user_id: str, product_id: str, is_premium: bool, offers_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def product_detail(
+        self,
+        user_id: str,
+        product_id: str,
+        is_premium: bool,
+        offers_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         product = self.db.fetchone("SELECT * FROM products WHERE id=?", (product_id,))
         if not product:
             raise ValueError("product not found")
         result = row_dict(product)
         result["offers"] = offers_fn(user_id, product_id) if offers_fn else []
         result["ingredient_analysis"] = (
-            self.ingredient_explainer(user_id, product_id)
-            if is_premium
-            else None
+            self.ingredient_explainer(user_id, product_id) if is_premium else None
         )
         return result

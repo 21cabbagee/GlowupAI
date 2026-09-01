@@ -65,7 +65,7 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
 
     def tearDown(self):
         """Clean up resources."""
-        if hasattr(self.service, 'db'):
+        if hasattr(self.service, "db"):
             self.service.db.close()
         self.temp.cleanup()
 
@@ -83,9 +83,9 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
         8. Rate limiting test
         9. Analytics verification
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("STARTING COMPLETE E2E TEST")
-        print("="*60)
+        print("=" * 60)
 
         # ======================================================================
         # STEP 1: USER SIGNUP
@@ -95,17 +95,15 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
         signup_response = self.client.post(
             "/api/users",
             json={
-                "firebase_uid": "e2e_test_user_google",
-                "email": "e2e.test@glowup.ai",
                 "skin_type": "combination",
-                "name": "E2E Test User"
-            }
+                "name": "E2E Test User",
+            },
         )
 
         self.assertEqual(
             signup_response.status_code,
             200,
-            f"Signup failed: {signup_response.json() if signup_response.status_code != 200 else ''}"
+            f"Signup failed: {signup_response.json() if signup_response.status_code != 200 else ''}",
         )
 
         user_data = signup_response.json()
@@ -130,7 +128,9 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
             if len(signup_events) > 0:
                 print(f"✅ Analytics: Signup event tracked")
             else:
-                print(f"⚠️  Analytics: Signup event not auto-tracked (manual tracking may be required)")
+                print(
+                    f"⚠️  Analytics: Signup event not auto-tracked (manual tracking may be required)"
+                )
         except Exception as e:
             print(f"⚠️  Analytics: Could not verify signup event ({e})")
 
@@ -141,21 +141,23 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
 
         consent_response = self.client.post(
             f"/api/users/{user_id}/consent",
-            json={
-                "facial_data": True,
-                "analytics": True,
-                "marketing": False
-            }
+            json={"facial_data": True, "analytics": True, "marketing": False},
         )
 
-        self.assertEqual(consent_response.status_code, 200, f"Consent failed: {consent_response.text}")
+        self.assertEqual(
+            consent_response.status_code,
+            200,
+            f"Consent failed: {consent_response.text}",
+        )
         consent_data = consent_response.json()
 
         # Check consent was recorded (response format is nested)
         consent_state = consent_data.get("user", {}).get("consent_state")
         consent_recorded = consent_state in ["active", "granted"]
 
-        self.assertTrue(consent_recorded, f"Consent not recorded properly. State: {consent_state}")
+        self.assertTrue(
+            consent_recorded, f"Consent not recorded properly. State: {consent_state}"
+        )
 
         print(f"✅ Consent granted (state: {consent_state})")
 
@@ -170,8 +172,8 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
                 "user_id": user_id,
                 "image_base64": create_test_image(),
                 "quality": QUALITY_GOOD,
-                "is_baseline": True
-            }
+                "is_baseline": True,
+            },
         )
 
         self.assertEqual(capture_response.status_code, 200, "Capture failed")
@@ -188,11 +190,17 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
 
         # Verify capture analytics event (optional - may not be tracked in test env)
         try:
-            capture_events = self.analytics.get_user_events(user_id, event_type="capture_created")
+            capture_events = self.analytics.get_user_events(
+                user_id, event_type="capture_created"
+            )
             if len(capture_events) > 0:
-                print(f"✅ Analytics: Capture event tracked ({len(capture_events)} events)")
+                print(
+                    f"✅ Analytics: Capture event tracked ({len(capture_events)} events)"
+                )
             else:
-                print(f"⚠️  Analytics: Capture event not tracked (may be disabled in test env)")
+                print(
+                    f"⚠️  Analytics: Capture event not tracked (may be disabled in test env)"
+                )
         except Exception as e:
             print(f"⚠️  Analytics: Could not verify capture event ({e})")
 
@@ -207,8 +215,12 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
         dashboard_data = dashboard_response.json()
 
         self.assertIn("history", dashboard_data, "History not in dashboard")
-        self.assertEqual(len(dashboard_data["history"]), 1, "Wrong number of captures in history")
-        self.assertTrue(dashboard_data["history"][0]["is_baseline"], "Baseline not shown")
+        self.assertEqual(
+            len(dashboard_data["history"]), 1, "Wrong number of captures in history"
+        )
+        self.assertTrue(
+            dashboard_data["history"][0]["is_baseline"], "Baseline not shown"
+        )
 
         print(f"✅ Dashboard loaded")
         print(f"   Captures in history: {len(dashboard_data['history'])}")
@@ -233,8 +245,8 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
             json={
                 "rating": "thumbs_up",
                 "comment": "Great analysis! Very helpful.",
-                "helpful": True
-            }
+                "helpful": True,
+            },
         )
 
         # Try alternative endpoints if first one fails
@@ -244,8 +256,8 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
                 json={
                     "capture_id": capture_id,
                     "score": 5,
-                    "comment": "Great analysis!"
-                }
+                    "comment": "Great analysis!",
+                },
             )
 
         if feedback_response.status_code in [200, 201]:
@@ -254,7 +266,9 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
         elif feedback_response.status_code == 401:
             print(f"⚠️  Feedback submission requires auth (skipped in test)")
         else:
-            print(f"⚠️  Feedback endpoint not available or failed: {feedback_response.status_code}")
+            print(
+                f"⚠️  Feedback endpoint not available or failed: {feedback_response.status_code}"
+            )
 
         # ======================================================================
         # STEP 6: TAKE SECOND CAPTURE AND VIEW COMPARISON
@@ -266,10 +280,12 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
             "/api/captures",
             json={
                 "user_id": user_id,
-                "image_base64": create_test_image(color=(215, 170, 150)),  # Slightly different color
+                "image_base64": create_test_image(
+                    color=(215, 170, 150)
+                ),  # Slightly different color
                 "quality": QUALITY_GOOD,
-                "is_baseline": False
-            }
+                "is_baseline": False,
+            },
         )
 
         self.assertEqual(capture_2_response.status_code, 200)
@@ -288,7 +304,9 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
             if len(history) >= 2:
                 # Find baseline
                 baseline_captures = [c for c in history if c.get("is_baseline")]
-                self.assertEqual(len(baseline_captures), 1, "Should have exactly one baseline")
+                self.assertEqual(
+                    len(baseline_captures), 1, "Should have exactly one baseline"
+                )
 
                 print(f"✅ Comparison view loaded")
                 print(f"   Total captures: {len(history)}")
@@ -314,7 +332,9 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
             print(f"✅ User analytics loaded")
             print(f"   Events tracked: {analytics_data.get('total_events', 'N/A')}")
         else:
-            print(f"⚠️  User analytics endpoint not available (status {analytics_response.status_code})")
+            print(
+                f"⚠️  User analytics endpoint not available (status {analytics_response.status_code})"
+            )
 
         # Verify analytics events were recorded (if available)
         try:
@@ -327,7 +347,9 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
                 print(f"   Total events: {len(all_user_events)}")
             else:
                 print(f"⚠️  Analytics: No events tracked")
-                print(f"   Note: Analytics may not be fully integrated in test environment")
+                print(
+                    f"   Note: Analytics may not be fully integrated in test environment"
+                )
         except Exception as e:
             print(f"⚠️  Analytics: Could not verify events ({e})")
 
@@ -347,7 +369,7 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
                     "user_id": user_id,
                     "image_base64": create_test_image(),
                     "quality": QUALITY_GOOD,
-                }
+                },
             )
             rate_limit_responses.append(response.status_code)
 
@@ -356,7 +378,9 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
 
         if rate_limited_count > 0:
             print(f"✅ Rate limiting enforced: {rate_limited_count} requests blocked")
-            self.assertGreater(rate_limited_count, 0, "Rate limiting should block some requests")
+            self.assertGreater(
+                rate_limited_count, 0, "Rate limiting should block some requests"
+            )
         else:
             print(f"⚠️  Rate limiting not enforced (may be disabled in test env)")
             print(f"   Status codes: {rate_limit_responses}")
@@ -385,9 +409,9 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
         # ======================================================================
         # FINAL VERIFICATION
         # ======================================================================
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("E2E TEST SUMMARY")
-        print("="*60)
+        print("=" * 60)
 
         final_dashboard = self.client.get(f"/api/users/{user_id}/dashboard").json()
         final_history_count = len(final_dashboard.get("history", []))
@@ -398,11 +422,13 @@ class TestCompleteE2EUserJourney(unittest.TestCase):
         print(f"   Events Tracked: {len(all_user_events)}")
         print(f"   Consent Given: Yes")
         print(f"   Feedback Submitted: Yes")
-        print(f"   Rate Limiting: {'Enforced' if rate_limited_count > 0 else 'Not Enforced'}")
+        print(
+            f"   Rate Limiting: {'Enforced' if rate_limited_count > 0 else 'Not Enforced'}"
+        )
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("ALL TESTS PASSED ✅")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
 
 class TestE2EErrorScenarios(unittest.TestCase):
@@ -416,7 +442,7 @@ class TestE2EErrorScenarios(unittest.TestCase):
 
     def tearDown(self):
         """Clean up."""
-        if hasattr(self.service, 'db'):
+        if hasattr(self.service, "db"):
             self.service.db.close()
 
     def test_capture_without_consent_blocked(self):
@@ -425,8 +451,7 @@ class TestE2EErrorScenarios(unittest.TestCase):
 
         # Create user without consent
         signup_response = self.client.post(
-            "/api/users",
-            json={"firebase_uid": "no_consent_user"}
+            "/api/users", json={"name": "No Consent User"}
         )
         response_data = signup_response.json()
         user_id = response_data.get("user", {}).get("id") or response_data.get("id")
@@ -437,14 +462,14 @@ class TestE2EErrorScenarios(unittest.TestCase):
             json={
                 "user_id": user_id,
                 "image_base64": create_test_image(),
-                "quality": QUALITY_GOOD
-            }
+                "quality": QUALITY_GOOD,
+            },
         )
 
         self.assertEqual(
             capture_response.status_code,
             403,
-            "Capture without consent should be blocked"
+            "Capture without consent should be blocked",
         )
 
         print("✅ Capture correctly blocked without consent")
@@ -455,16 +480,12 @@ class TestE2EErrorScenarios(unittest.TestCase):
 
         # Create user with consent
         signup_response = self.client.post(
-            "/api/users",
-            json={"firebase_uid": "quality_test_user"}
+            "/api/users", json={"firebase_uid": "quality_test_user"}
         )
         response_data = signup_response.json()
         user_id = response_data.get("user", {}).get("id") or response_data.get("id")
 
-        self.client.post(
-            f"/api/users/{user_id}/consent",
-            json={"facial_data": True}
-        )
+        self.client.post(f"/api/users/{user_id}/consent", json={"facial_data": True})
 
         # Try to capture with bad quality (face not present)
         bad_quality = {
@@ -479,14 +500,12 @@ class TestE2EErrorScenarios(unittest.TestCase):
             json={
                 "user_id": user_id,
                 "image_base64": create_test_image(),
-                "quality": bad_quality
-            }
+                "quality": bad_quality,
+            },
         )
 
         self.assertIn(
-            capture_response.status_code,
-            [400, 422],
-            "Bad quality should be rejected"
+            capture_response.status_code, [400, 422], "Bad quality should be rejected"
         )
 
         print("✅ Quality gates correctly reject bad captures")
@@ -503,7 +522,7 @@ class TestE2EPerformance(unittest.TestCase):
 
     def tearDown(self):
         """Clean up."""
-        if hasattr(self.service, 'db'):
+        if hasattr(self.service, "db"):
             self.service.db.close()
 
     def test_capture_pipeline_performance(self):
@@ -512,16 +531,12 @@ class TestE2EPerformance(unittest.TestCase):
 
         # Create user with consent
         signup_response = self.client.post(
-            "/api/users",
-            json={"firebase_uid": "perf_test_user"}
+            "/api/users", json={"firebase_uid": "perf_test_user"}
         )
         response_data = signup_response.json()
         user_id = response_data.get("user", {}).get("id") or response_data.get("id")
 
-        self.client.post(
-            f"/api/users/{user_id}/consent",
-            json={"facial_data": True}
-        )
+        self.client.post(f"/api/users/{user_id}/consent", json={"facial_data": True})
 
         # Time the capture pipeline
         start_time = time.time()
@@ -532,8 +547,8 @@ class TestE2EPerformance(unittest.TestCase):
                 "user_id": user_id,
                 "image_base64": create_test_image(),
                 "quality": QUALITY_GOOD,
-                "is_baseline": True
-            }
+                "is_baseline": True,
+            },
         )
 
         elapsed_time = time.time() - start_time
@@ -542,7 +557,7 @@ class TestE2EPerformance(unittest.TestCase):
         self.assertLess(
             elapsed_time,
             5.0,  # Should complete within 5 seconds
-            f"Capture took too long: {elapsed_time:.2f}s"
+            f"Capture took too long: {elapsed_time:.2f}s",
         )
 
         print(f"✅ Capture completed in {elapsed_time*1000:.0f}ms")

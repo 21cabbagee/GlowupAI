@@ -6,7 +6,7 @@ import os
 import secrets
 from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -37,14 +37,14 @@ from .performance import (
 )
 from .photos import build_photo_store
 from .rate_limiter import ProductionRateLimitMiddleware
-from .shutdown import create_shutdown_handler
 from .routers import (
-    setup_users_router,
-    setup_captures_router,
-    setup_analytics_router,
-    setup_subscriptions_router,
     setup_admin_router,
+    setup_analytics_router,
+    setup_captures_router,
+    setup_subscriptions_router,
+    setup_users_router,
 )
+from .shutdown import create_shutdown_handler
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,11 @@ def setup_monitoring(
     app.state.metrics = metrics_collector
 
     # Initialize Redis cache
-    redis_url = os.getenv("REDIS_URL", "").strip() or os.getenv("REDIS_PRIVATE_URL", "").strip() or None
+    redis_url = (
+        os.getenv("REDIS_URL", "").strip()
+        or os.getenv("REDIS_PRIVATE_URL", "").strip()
+        or None
+    )
     cache = RedisCache(redis_url, default_ttl=300)  # 5-minute TTL
     app.state.cache = cache
 
@@ -142,7 +146,9 @@ def create_middleware_stack(
 
     # 5. Rate limiting (Redis-backed)
     rate_limit_enabled = os.getenv("GLOWUPAI_RATE_LIMIT_ENABLED", "1") == "1"
-    app.add_middleware(ProductionRateLimitMiddleware, redis_url=redis_url, enabled=rate_limit_enabled)
+    app.add_middleware(
+        ProductionRateLimitMiddleware, redis_url=redis_url, enabled=rate_limit_enabled
+    )
 
     # 6. Request timeout (innermost, closest to handlers)
     timeout_seconds = int(os.getenv("GLOWUPAI_REQUEST_TIMEOUT", "30"))
@@ -178,6 +184,7 @@ def register_routes(
         _require_owner: Auth helper for owner verification
         _require_admin: Auth helper for admin verification
     """
+
     # Health check endpoint (kept in main file)
     @app.get("/api/health")
     async def health():
@@ -206,7 +213,7 @@ def register_routes(
             status_code = 200 if health_status["status"] == "healthy" else 503
             return JSONResponse(content=health_status, status_code=status_code)
 
-        except (OSError, IOError, RuntimeError) as exc:
+        except (OSError, RuntimeError) as exc:
             logger.exception("Health check failed: %s", exc)
             return JSONResponse(
                 content={
@@ -222,7 +229,9 @@ def register_routes(
     app.include_router(users_router)
     logger.info("Users router registered")
 
-    captures_router = setup_captures_router(active, analytics, compressor, run, _require_owner)
+    captures_router = setup_captures_router(
+        active, analytics, compressor, run, _require_owner
+    )
     app.include_router(captures_router)
     logger.info("Captures router registered")
 
@@ -234,7 +243,9 @@ def register_routes(
     app.include_router(subscriptions_router)
     logger.info("Subscriptions router registered")
 
-    admin_router = setup_admin_router(active, analytics, metrics_collector, run, _require_admin)
+    admin_router = setup_admin_router(
+        active, analytics, metrics_collector, run, _require_admin
+    )
     app.include_router(admin_router)
     logger.info("Admin router registered")
 
@@ -273,7 +284,9 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
         settings = Settings.from_env()
         settings.prepare()
         active = CompleteGlowupAIService(
-            build_full_database(settings), settings, build_photo_store(settings.photo_dir),
+            build_full_database(settings),
+            settings,
+            build_photo_store(settings.photo_dir),
         )
 
     # Create FastAPI app
@@ -285,7 +298,9 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
     app.state.glowupai = active
 
     # Setup monitoring and performance tools
-    analytics, metrics_collector, cache, compressor, redis_url = setup_monitoring(app, active)
+    analytics, metrics_collector, cache, compressor, redis_url = setup_monitoring(
+        app, active
+    )
 
     # Setup graceful shutdown
     def cleanup_db():
@@ -334,7 +349,8 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
             return
         identity = _bearer_identity(authorization)
         row = active.db.fetchone(
-            "SELECT id FROM users WHERE firebase_uid = ?", (identity.uid,),
+            "SELECT id FROM users WHERE firebase_uid = ?",
+            (identity.uid,),
         )
         if not row or row["id"] != user_id:
             raise HTTPException(
@@ -356,8 +372,15 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
 
     # Register all routes
     register_routes(
-        app, active, settings, analytics, metrics_collector, compressor,
-        run, _require_owner, _require_admin,
+        app,
+        active,
+        settings,
+        analytics,
+        metrics_collector,
+        compressor,
+        run,
+        _require_owner,
+        _require_admin,
     )
 
     return app

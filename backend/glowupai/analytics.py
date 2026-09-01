@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from .db import Database
 
@@ -43,8 +43,8 @@ class AnalyticsTracker:
     def track_event(
         self,
         event_type: str,
-        user_id: Optional[str] = None,
-        event_data: Optional[Dict[str, Any]] = None,
+        user_id: str | None = None,
+        event_data: dict[str, Any] | None = None,
     ) -> str:
         """Track an analytics event.
 
@@ -81,7 +81,10 @@ class AnalyticsTracker:
         return event_id
 
     def track_user_signup(
-        self, user_id: str, method: str, email: Optional[str] = None,
+        self,
+        user_id: str,
+        method: str,
+        email: str | None = None,
     ) -> str:
         """Track user signup event.
 
@@ -104,7 +107,7 @@ class AnalyticsTracker:
         user_id: str,
         capture_id: str,
         is_baseline: bool = False,
-        metrics: Optional[Dict[str, Any]] = None,
+        metrics: dict[str, Any] | None = None,
     ) -> str:
         """Track capture creation event.
 
@@ -128,7 +131,9 @@ class AnalyticsTracker:
         )
 
     def track_comparison_viewed(
-        self, user_id: str, capture_ids: Optional[List[str]] = None,
+        self,
+        user_id: str,
+        capture_ids: list[str] | None = None,
     ) -> str:
         """Track comparison view event.
 
@@ -178,8 +183,11 @@ class AnalyticsTracker:
         )
 
     def get_user_events(
-        self, user_id: str, event_type: Optional[str] = None, limit: int = 100,
-    ) -> List[Dict[str, Any]]:
+        self,
+        user_id: str,
+        event_type: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
         """Get analytics events for a user.
 
         Args:
@@ -224,8 +232,10 @@ class AnalyticsTracker:
         ]
 
     def get_event_counts(
-        self, days: int = 7, event_type: Optional[str] = None,
-    ) -> Dict[str, int]:
+        self,
+        days: int = 7,
+        event_type: str | None = None,
+    ) -> dict[str, int]:
         """Get event counts for the last N days.
 
         Args:
@@ -235,7 +245,7 @@ class AnalyticsTracker:
         Returns:
             Dictionary mapping event types to counts
         """
-        since = (datetime.now() - timedelta(days=days)).isoformat()
+        since = (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
         if event_type:
             rows = self.db.fetchall(
@@ -261,7 +271,7 @@ class AnalyticsTracker:
 
         return {row["event_type"]: row["count"] for row in rows}
 
-    def get_daily_stats(self, days: int = 30) -> List[Dict[str, Any]]:
+    def get_daily_stats(self, days: int = 30) -> list[dict[str, Any]]:
         """Get daily aggregated stats for the last N days.
 
         Args:
@@ -270,7 +280,7 @@ class AnalyticsTracker:
         Returns:
             List of daily stat dictionaries
         """
-        since = (datetime.now() - timedelta(days=days)).isoformat()
+        since = (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
         rows = self.db.fetchall(
             """
@@ -321,7 +331,7 @@ class AnalyticsTracker:
 
         # Check for consecutive days
         streak = 0
-        today = datetime.now().date()
+        today = datetime.now(UTC).date()
 
         for row in rows:
             capture_date = datetime.fromisoformat(row["date"]).date()
@@ -334,7 +344,7 @@ class AnalyticsTracker:
 
         return streak
 
-    def get_analytics_summary(self, days: int = 7) -> Dict[str, Any]:
+    def get_analytics_summary(self, days: int = 7) -> dict[str, Any]:
         """Get comprehensive analytics summary.
 
         Args:
@@ -343,7 +353,7 @@ class AnalyticsTracker:
         Returns:
             Summary dictionary with key metrics
         """
-        since = (datetime.now() - timedelta(days=days)).isoformat()
+        since = (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
         # Total events
         total_events = self.db.fetchone(
@@ -386,5 +396,5 @@ class AnalyticsTracker:
                 {"user_id": row["user_id"], "event_count": row["event_count"]}
                 for row in top_users
             ],
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }

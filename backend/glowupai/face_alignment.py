@@ -12,7 +12,6 @@ from PIL import Image
 
 class FaceAlignmentError(Exception):
     """Raised when face alignment fails (no face or landmarks detected)."""
-    pass
 
 
 def _pil_to_cv2(pil_image: Image.Image) -> np.ndarray:
@@ -27,11 +26,15 @@ def _cv2_to_pil(cv_image: np.ndarray) -> Image.Image:
     return Image.fromarray(rgb)
 
 
-def _detect_eyes_with_cascade(gray: np.ndarray) -> tuple[tuple[int, int], tuple[int, int]] | None:
+def _detect_eyes_with_cascade(
+    gray: np.ndarray,
+) -> tuple[tuple[int, int], tuple[int, int]] | None:
     """Detect left and right eye centers using Haar Cascade."""
     eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
 
-    eyes = eye_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(20, 20))
+    eyes = eye_cascade.detectMultiScale(
+        gray, scaleFactor=1.1, minNeighbors=5, minSize=(20, 20)
+    )
 
     if len(eyes) < 2:
         return None
@@ -45,7 +48,10 @@ def _detect_eyes_with_cascade(gray: np.ndarray) -> tuple[tuple[int, int], tuple[
 
     # Calculate eye centers
     left_eye_center = (left_eye[0] + left_eye[2] // 2, left_eye[1] + left_eye[3] // 2)
-    right_eye_center = (right_eye[0] + right_eye[2] // 2, right_eye[1] + right_eye[3] // 2)
+    right_eye_center = (
+        right_eye[0] + right_eye[2] // 2,
+        right_eye[1] + right_eye[3] // 2,
+    )
 
     return left_eye_center, right_eye_center
 
@@ -53,7 +59,9 @@ def _detect_eyes_with_cascade(gray: np.ndarray) -> tuple[tuple[int, int], tuple[
 def _detect_face_region(image: np.ndarray) -> tuple[int, int, int, int] | None:
     """Detect face bounding box using Haar Cascade."""
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    face_cascade = cv2.CascadeClassifier(
+        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    )
 
     faces = face_cascade.detectMultiScale(
         gray,

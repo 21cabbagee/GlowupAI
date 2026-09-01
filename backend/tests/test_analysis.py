@@ -41,7 +41,7 @@ def image_to_bytes(image: Image.Image) -> bytes:
 def analyze_frame(array: np.ndarray) -> dict:
     """Wrapper to convert numpy array to the format expected by analyze()."""
     # Convert numpy array to PIL Image, then to bytes
-    image = Image.fromarray(array.astype('uint8'), 'RGB')
+    image = Image.fromarray(array.astype("uint8"), "RGB")
     image_bytes = image_to_bytes(image)
 
     # Call the actual analyze function with quality_score=1.0
@@ -49,7 +49,8 @@ def analyze_frame(array: np.ndarray) -> dict:
 
     # Convert MetricResult to dict format expected by tests
     return {
-        "smoothness_score": 100.0 - result.texture_score,  # Invert texture to smoothness
+        "smoothness_score": 100.0
+        - result.texture_score,  # Invert texture to smoothness
         "clarity_score": result.confidence * 100,
         "evenness_score": (1.0 - result.darkspot_area) * 100,
         "model_version": result.model_version,
@@ -135,7 +136,7 @@ class TestAnalysisPipeline(unittest.TestCase):
         skin_tones = [
             (250, 220, 200),  # Light
             (210, 165, 145),  # Medium
-            (150, 100, 80),   # Dark
+            (150, 100, 80),  # Dark
         ]
 
         for tone in skin_tones:
@@ -151,13 +152,13 @@ class TestAnalysisPipeline(unittest.TestCase):
 class TestFaceDetection(unittest.TestCase):
     """Test face detection functionality."""
 
-    @patch('glowupai.pipeline.detect_face')
+    @patch("glowupai.pipeline.detect_face")
     def test_face_detection_called(self, mock_detect):
         """Test that face detection is called during analysis."""
         mock_detect.return_value = {
             "face_present": True,
             "bounding_box": [50, 50, 150, 150],
-            "confidence": 0.95
+            "confidence": 0.95,
         }
 
         image = create_test_image()
@@ -225,7 +226,7 @@ class TestMetricsCalculation(unittest.TestCase):
         # Smooth image should have higher or equal smoothness score
         self.assertGreaterEqual(
             smooth_result["smoothness_score"],
-            textured_result["smoothness_score"] - 10  # Allow small variance
+            textured_result["smoothness_score"] - 10,  # Allow small variance
         )
 
     def test_model_version_included(self):

@@ -52,7 +52,8 @@ def explain(name: str, ingredients) -> dict:
     for ingredient in parsed:
         key = ingredient.casefold()
         match = next(
-            (data for known, data in INGREDIENTS.items() if known in key), None,
+            (data for known, data in INGREDIENTS.items() if known in key),
+            None,
         )
         if match:
             reviewed.append({"ingredient": ingredient, **match})

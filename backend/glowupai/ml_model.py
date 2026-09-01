@@ -9,14 +9,11 @@ from __future__ import annotations
 import io
 import logging
 import os
-from dataclasses import dataclass
-from pathlib import Path
 
-import cv2
 import numpy as np
 import torch
-import torch.nn as nn
 from PIL import Image
+from torch import nn
 
 from .face_alignment import align_face_safe
 from .metrics import NOISE_FLOORS, MetricResult
@@ -39,7 +36,8 @@ class SkinAnalysisModel(nn.Module):
         super().__init__()
 
         # Backbone: MobileNetV2 (lightweight, fast)
-        import torchvision.models as models
+        from torchvision import models
+
         mobilenet = models.mobilenet_v2(pretrained=pretrained)
 
         # Remove classification head
@@ -147,15 +145,19 @@ class MLModelInference:
         self.model = SkinAnalysisModel(pretrained=False)
 
         try:
-            checkpoint = torch.load(model_path, map_location=self.device, weights_only=True)
+            checkpoint = torch.load(
+                model_path, map_location=self.device, weights_only=True
+            )
 
             # Handle both full checkpoint and state_dict only formats
             if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
                 self.model.load_state_dict(checkpoint["model_state_dict"])
-                logger.info(f"Loaded model checkpoint (val_loss: {checkpoint.get('val_loss', 'N/A')})")
+                logger.info(
+                    f"Loaded model checkpoint (val_loss: {checkpoint.get('val_loss', 'N/A')})"
+                )
             else:
                 self.model.load_state_dict(checkpoint)
-                logger.info(f"Loaded model state dict")
+                logger.info("Loaded model state dict")
 
             self.model.to(self.device)
             self.model.eval()
@@ -163,7 +165,9 @@ class MLModelInference:
 
         except Exception as exc:
             logger.error(f"Failed to load model: {exc}")
-            raise RuntimeError(f"Failed to load ML model from {model_path}: {exc}") from exc
+            raise RuntimeError(
+                f"Failed to load ML model from {model_path}: {exc}"
+            ) from exc
 
     def preprocess_image(self, image_bytes: bytes) -> torch.Tensor:
         """
@@ -176,7 +180,9 @@ class MLModelInference:
             Preprocessed tensor ready for inference
         """
         # Apply face alignment first (same as deterministic model)
-        aligned_bytes = align_face_safe(image_bytes, target_eye_distance=80, output_size=(224, 224))
+        aligned_bytes = align_face_safe(
+            image_bytes, target_eye_distance=80, output_size=(224, 224)
+        )
 
         # Convert to PIL Image
         with Image.open(io.BytesIO(aligned_bytes)) as img:
@@ -193,7 +199,12 @@ class MLModelInference:
 
         return tensor
 
-    def predict(self, image_bytes: bytes, quality_score: float, baseline: MetricResult | None = None) -> MetricResult:
+    def predict(
+        self,
+        image_bytes: bytes,
+        quality_score: float,
+        baseline: MetricResult | None = None,
+    ) -> MetricResult:
         """
         Analyze image and return metrics.
 
@@ -231,7 +242,9 @@ class MLModelInference:
             return MetricResult(
                 blemish_count=round(blemish_count, 1),
                 redness_score=round(redness, 5),
-                redness_delta=None if redness_delta is None else round(redness_delta, 5),
+                redness_delta=(
+                    None if redness_delta is None else round(redness_delta, 5)
+                ),
                 darkspot_area=round(darkspot_area, 5),
                 texture_score=round(texture, 3),
                 confidence=round(confidence, 3),

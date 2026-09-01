@@ -74,10 +74,12 @@ class GuidanceServiceTests(unittest.TestCase):
         self.service = GlowupAIService(self.db, photos=MemoryPhotoStore())
         self.mock_jobs = MockJobQueue()
         self.mock_vision = MockVisionService()
+
         # Create a simple insights object instead of Mock
         class SimpleInsights:
             def answer(self, question, evidence):
                 return "Test answer based on evidence"
+
         self.mock_insights = SimpleInsights()
         self.guidance = GuidanceService(
             self.db, self.service, self.mock_insights, self.mock_vision, self.mock_jobs
@@ -567,13 +569,15 @@ class GuidanceServiceTests(unittest.TestCase):
             consent_calls.append({"user_id": uid})
 
         def audit_fn(action, entity_type, entity_id, uid, metadata):
-            audit_calls.append({
-                "action": action,
-                "entity_type": entity_type,
-                "entity_id": entity_id,
-                "user_id": uid,
-                "metadata": metadata,
-            })
+            audit_calls.append(
+                {
+                    "action": action,
+                    "entity_type": entity_type,
+                    "entity_id": entity_id,
+                    "user_id": uid,
+                    "metadata": metadata,
+                }
+            )
 
         experiment = self.guidance.create_experiment(
             user["id"],
@@ -596,11 +600,13 @@ class GuidanceServiceTests(unittest.TestCase):
         engagement_calls = []
 
         def record_engagement_fn(uid, event_type, ref_id):
-            engagement_calls.append({
-                "user_id": uid,
-                "event_type": event_type,
-                "reference_id": ref_id,
-            })
+            engagement_calls.append(
+                {
+                    "user_id": uid,
+                    "event_type": event_type,
+                    "reference_id": ref_id,
+                }
+            )
 
         history_fn = lambda uid: []
 
@@ -620,11 +626,13 @@ class GuidanceServiceTests(unittest.TestCase):
         engagement_calls = []
 
         def record_engagement_fn(uid, event_type, ref_id):
-            engagement_calls.append({
-                "user_id": uid,
-                "event_type": event_type,
-                "reference_id": ref_id,
-            })
+            engagement_calls.append(
+                {
+                    "user_id": uid,
+                    "event_type": event_type,
+                    "reference_id": ref_id,
+                }
+            )
 
         result = self.guidance.scan_shelf(
             user["id"],

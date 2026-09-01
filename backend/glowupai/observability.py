@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -30,7 +29,11 @@ class MetricsCollector:
         }
 
     def record_request(
-        self, method: str, path: str, status_code: int, duration_ms: float,
+        self,
+        method: str,
+        path: str,
+        status_code: int,
+        duration_ms: float,
     ):
         """Record a request metric."""
         self.metrics["request_count"] += 1
@@ -91,7 +94,9 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         self.collector = collector
 
     async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint,
+        self,
+        request: Request,
+        call_next: RequestResponseEndpoint,
     ) -> Response:
         """Collect metrics for each request."""
         start_time = time.time()
@@ -102,23 +107,30 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
             # Record metrics
             self.collector.record_request(
-                request.method, request.url.path, response.status_code, duration_ms,
+                request.method,
+                request.url.path,
+                response.status_code,
+                duration_ms,
             )
 
             return response
 
-        except (RuntimeError, ValueError, OSError, IOError) as exc:
+        except (RuntimeError, ValueError, OSError) as exc:
             duration_ms = (time.time() - start_time) * 1000
             # Record as 500 error
             logger.error(f"Request processing failed: {exc}")
             self.collector.record_request(
-                request.method, request.url.path, 500, duration_ms,
+                request.method,
+                request.url.path,
+                500,
+                duration_ms,
             )
             raise
 
 
 def setup_opentelemetry(
-    service_name: str = "glowupai", enabled: bool = False,
+    service_name: str = "glowupai",
+    enabled: bool = False,
 ) -> dict | None:
     """Setup OpenTelemetry instrumentation.
 

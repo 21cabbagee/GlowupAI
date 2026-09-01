@@ -3,35 +3,35 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..auth import verify_id_token, AuthError
+from ..auth import AuthError, verify_id_token
 
 logger = logging.getLogger(__name__)
 
 
 class UserCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    name: Optional[str] = Field(default=None, max_length=80)
-    focus: Optional[str] = None
-    skin_type: Optional[str] = None
+    name: str | None = Field(default=None, max_length=80)
+    focus: str | None = None
+    skin_type: str | None = None
 
 
 class ConsentCreate(BaseModel):
     facial_data: bool
-    policy_version: Optional[str] = None
+    policy_version: str | None = None
 
 
 class ExperienceProfileUpdate(BaseModel):
-    display_name: Optional[str] = Field(default=None, max_length=80)
-    skin_type: Optional[str] = Field(default=None, max_length=40)
-    focus_vertical: Optional[str] = None
-    goals: Optional[List[str]] = None
-    experience_level: Optional[str] = Field(default=None, max_length=80)
-    onboarding_complete: Optional[bool] = None
+    display_name: str | None = Field(default=None, max_length=80)
+    skin_type: str | None = Field(default=None, max_length=40)
+    focus_vertical: str | None = None
+    goals: list[str] | None = None
+    experience_level: str | None = Field(default=None, max_length=80)
+    onboarding_complete: bool | None = None
 
 
 def setup_users_router(service, analytics, run_handler, require_owner) -> APIRouter:
@@ -41,12 +41,14 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
     router = APIRouter(prefix="/api", tags=["users"])
 
     @router.post("/users")
-    def create_user(payload: UserCreate) -> Dict[str, Any]:
+    def create_user(payload: UserCreate) -> dict[str, Any]:
         # Create user - frontend will update profile separately
         return run_handler(service.create_user, payload.skin_type)
 
     @router.post("/auth/session")
-    def auth_session(authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    def auth_session(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         if not authorization or not authorization.lower().startswith("bearer "):
             raise HTTPException(status_code=401, detail="missing bearer token")
         token = authorization.split(" ", 1)[1].strip()
@@ -74,12 +76,16 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
         return result
 
     @router.get("/users/{id}")
-    def get_user(id: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    def get_user(
+        id: str, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
         require_owner(id, authorization)
         return run_handler(service.profile, id)
 
     @router.get("/users/{user_id}/profile")
-    def profile(user_id: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    def profile(
+        user_id: str, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.profile, user_id)
 
@@ -87,8 +93,8 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
     def update_experience_profile(
         user_id: str,
         payload: ExperienceProfileUpdate,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.update_profile, user_id, **payload.model_dump())
 
@@ -96,8 +102,8 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
     def consent(
         user_id: str,
         payload: ConsentCreate,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(
             service.grant_consent, user_id, payload.facial_data, payload.policy_version
@@ -106,25 +112,29 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
     @router.post("/users/{user_id}/consent/data-collection")
     def consent_data_collection(
         user_id: str,
-        payload: Dict[str, Any],
-        authorization: Optional[str] = Header(default=None)
-    ) -> Dict[str, Any]:
+        payload: dict[str, Any],
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         """Record user consent for data collection."""
         require_owner(user_id, authorization)
         return run_handler(
             service.record_data_collection_consent,
             user_id,
             payload.get("granted", False),
-            payload.get("policy_version", "1.0")
+            payload.get("policy_version", "1.0"),
         )
 
     @router.get("/users/{user_id}/export")
-    def export_user(user_id: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    def export_user(
+        user_id: str, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.export_user, user_id)
 
     @router.delete("/users/{user_id}", status_code=204)
-    def delete_user(user_id: str, authorization: Optional[str] = Header(default=None)) -> None:
+    def delete_user(
+        user_id: str, authorization: str | None = Header(default=None)
+    ) -> None:
         require_owner(user_id, authorization)
         run_handler(service.delete_user, user_id)
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import statistics
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from .db import Database
 
@@ -11,16 +11,13 @@ METRICS = ("blemish_count", "redness_score", "darkspot_area", "texture_score")
 
 
 def parse_time(value: str) -> datetime:
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    parsed = datetime.fromisoformat(value)
     return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
 def iso(value: datetime) -> str:
     return (
-        value.astimezone(UTC)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
+        value.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     )
 
 
@@ -69,7 +66,9 @@ class AttributionEngine:
         )
         if not events:
             return self._result(
-                product, "evidence_unclear", {"reason": "no routine event recorded"},
+                product,
+                "evidence_unclear",
+                {"reason": "no routine event recorded"},
             )
         start_event = next(
             (
@@ -120,7 +119,8 @@ class AttributionEngine:
             if start <= parse_time(row["timestamp"]) <= stable_at
         ]
         days_to_wait = max(
-            0, (stable_at - (typed_captures[-1][0] if typed_captures else start)).days,
+            0,
+            (stable_at - (typed_captures[-1][0] if typed_captures else start)).days,
         )
         base_evidence = {
             "product_id": product_id,
@@ -197,7 +197,8 @@ class AttributionEngine:
         elif improvements and composite >= 1.5 and confidence >= 0.55:
             label = "likely_useful"
             evidence["best_improvement_metric"] = max(
-                improvements, key=improvements.get,
+                improvements,
+                key=improvements.get,
             )
         elif confidence >= 0.55:
             label = "keep"

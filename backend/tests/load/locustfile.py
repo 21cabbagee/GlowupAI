@@ -23,7 +23,7 @@ def create_test_image(size=(240, 240)):
     color = (
         random.randint(150, 250),
         random.randint(100, 220),
-        random.randint(80, 200)
+        random.randint(80, 200),
     )
     image = Image.new("RGB", size, color)
     draw = ImageDraw.Draw(image)
@@ -62,9 +62,9 @@ class GlowupUser(HttpUser):
             json={
                 "firebase_uid": f"load_test_user_{random.randint(1000, 999999)}",
                 "email": f"loadtest{random.randint(1000, 999999)}@example.com",
-                "skin_type": random.choice(["normal", "dry", "oily", "combination"])
+                "skin_type": random.choice(["normal", "dry", "oily", "combination"]),
             },
-            name="/api/users [signup]"
+            name="/api/users [signup]",
         )
 
         if response.status_code == 200:
@@ -74,7 +74,7 @@ class GlowupUser(HttpUser):
             self.client.post(
                 f"/api/users/{self.user_id}/consent",
                 json={"facial_data": True, "analytics": True},
-                name="/api/users/:id/consent"
+                name="/api/users/:id/consent",
             )
 
             # Take baseline capture
@@ -84,9 +84,9 @@ class GlowupUser(HttpUser):
                     "user_id": self.user_id,
                     "image_base64": create_test_image(),
                     "quality": QUALITY,
-                    "is_baseline": True
+                    "is_baseline": True,
                 },
-                name="/api/captures [baseline]"
+                name="/api/captures [baseline]",
             )
         else:
             self.user_id = None
@@ -103,10 +103,10 @@ class GlowupUser(HttpUser):
                 "user_id": self.user_id,
                 "image_base64": create_test_image(),
                 "quality": QUALITY,
-                "is_baseline": False
+                "is_baseline": False,
             },
             name="/api/captures",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 data = response.json()
@@ -126,7 +126,7 @@ class GlowupUser(HttpUser):
         with self.client.get(
             f"/api/users/{self.user_id}/dashboard",
             name="/api/users/:id/dashboard",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 data = response.json()
@@ -144,26 +144,22 @@ class GlowupUser(HttpUser):
             {
                 "name": "Vitamin C Serum",
                 "brand": "Test Brand",
-                "ingredients": "Water, Ascorbic Acid, Vitamin E"
+                "ingredients": "Water, Ascorbic Acid, Vitamin E",
             },
             {
                 "name": "Retinol Cream",
                 "brand": "Another Brand",
-                "ingredients": "Water, Retinol, Hyaluronic Acid"
+                "ingredients": "Water, Retinol, Hyaluronic Acid",
             },
             {
                 "name": "Niacinamide Serum",
                 "brand": "Brand X",
-                "ingredients": "Water, Niacinamide, Zinc"
-            }
+                "ingredients": "Water, Niacinamide, Zinc",
+            },
         ]
 
         product = random.choice(products)
-        self.client.post(
-            "/api/products",
-            json=product,
-            name="/api/products"
-        )
+        self.client.post("/api/products", json=product, name="/api/products")
 
     @task(3)
     def manage_routine(self):
@@ -176,14 +172,16 @@ class GlowupUser(HttpUser):
             "/api/products",
             json={
                 "name": f"Product {random.randint(1, 1000)}",
-                "ingredients": "Water, Active Ingredient"
+                "ingredients": "Water, Active Ingredient",
             },
-            name="/api/products [for routine]"
+            name="/api/products [for routine]",
         )
 
         if product_response.status_code == 200:
             product_data = product_response.json()
-            product_id = product_data.get("id") or product_data.get("product", {}).get("id")
+            product_id = product_data.get("id") or product_data.get("product", {}).get(
+                "id"
+            )
 
             # Start using product
             self.client.post(
@@ -191,9 +189,9 @@ class GlowupUser(HttpUser):
                 json={
                     "user_id": self.user_id,
                     "product_id": product_id,
-                    "action": random.choice(["start", "stop"])
+                    "action": random.choice(["start", "stop"]),
                 },
-                name="/api/routine-events"
+                name="/api/routine-events",
             )
 
     @task(1)
@@ -231,9 +229,9 @@ class MobileAppUser(HttpUser):
                 "/api/users",
                 json={
                     "firebase_uid": f"mobile_user_{random.randint(1, 100)}",
-                    "email": f"mobile{random.randint(1, 100)}@example.com"
+                    "email": f"mobile{random.randint(1, 100)}@example.com",
                 },
-                name="/api/users [login attempt]"
+                name="/api/users [login attempt]",
             )
             if response.status_code == 200:
                 self.user_id = response.json()["user"]["id"]
@@ -248,7 +246,7 @@ class MobileAppUser(HttpUser):
         self.client.post(
             f"/api/users/{self.user_id}/consent",
             json={"facial_data": True},
-            name="/api/users/:id/consent [ensure]"
+            name="/api/users/:id/consent [ensure]",
         )
 
         # Take capture
@@ -257,9 +255,9 @@ class MobileAppUser(HttpUser):
             json={
                 "user_id": self.user_id,
                 "image_base64": create_test_image(),
-                "quality": QUALITY
+                "quality": QUALITY,
             },
-            name="/api/captures [mobile]"
+            name="/api/captures [mobile]",
         )
 
     @task(3)
@@ -270,7 +268,7 @@ class MobileAppUser(HttpUser):
 
         self.client.get(
             f"/api/users/{self.user_id}/dashboard",
-            name="/api/users/:id/dashboard [mobile]"
+            name="/api/users/:id/dashboard [mobile]",
         )
 
     @task(1)
@@ -283,11 +281,8 @@ class MobileAppUser(HttpUser):
         if random.random() < 0.3:
             self.client.post(
                 "/api/products",
-                json={
-                    "name": "Mobile Product",
-                    "ingredients": "Water, Active"
-                },
-                name="/api/products [mobile add]"
+                json={"name": "Mobile Product", "ingredients": "Water, Active"},
+                name="/api/products [mobile add]",
             )
 
 
@@ -300,4 +295,6 @@ if __name__ == "__main__":
     print("1. Default: locust -f locustfile.py")
     print("2. Quick test: locust -f locustfile.py --users 10 --spawn-rate 2")
     print("3. Stress test: locust -f locustfile.py --users 200 --spawn-rate 10")
-    print("4. Soak test: locust -f locustfile.py --users 50 --spawn-rate 5 --run-time 1h")
+    print(
+        "4. Soak test: locust -f locustfile.py --users 50 --spawn-rate 5 --run-time 1h"
+    )

@@ -7,12 +7,9 @@ single pipeline for consistent capture analysis.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import cv2
 import numpy as np
-
-from . import face_alignment
 
 # ImagePreprocessor not yet implemented as a class
 ImagePreprocessor = None
@@ -90,7 +87,9 @@ class CaptureProcessingPipeline:
             aligned_image = self.face_aligner.align_face(image_path, self.output_size)
 
             if save_steps:
-                temp_path = str(Path(output_path).parent / f"{Path(image_path).stem}_aligned.jpg")
+                temp_path = str(
+                    Path(output_path).parent / f"{Path(image_path).stem}_aligned.jpg"
+                )
                 cv2.imwrite(temp_path, aligned_image)
                 logger.info(f"    Saved aligned: {temp_path}")
 
@@ -102,7 +101,9 @@ class CaptureProcessingPipeline:
         # Step 2: Preprocessing
         if self.enable_preprocessing and self.preprocessor:
             logger.info("  → Preprocessing")
-            processed_image = self.preprocessor.preprocess(image_path, save_steps=save_steps)
+            processed_image = self.preprocessor.preprocess(
+                image_path, save_steps=save_steps
+            )
             cv2.imwrite(output_path, processed_image)
         else:
             # If no preprocessing, just copy aligned image
@@ -111,7 +112,9 @@ class CaptureProcessingPipeline:
             else:
                 # No processing at all, just resize
                 image = cv2.imread(image_path)
-                resized = cv2.resize(image, self.output_size, interpolation=cv2.INTER_LANCZOS4)
+                resized = cv2.resize(
+                    image, self.output_size, interpolation=cv2.INTER_LANCZOS4
+                )
                 cv2.imwrite(output_path, resized)
 
         # Clean up temporary files
@@ -187,9 +190,6 @@ def analyze_capture(image_b64: str) -> dict:
         Dictionary with metrics and quality information
     """
     import base64
-    import io
-
-    from PIL import Image
 
     from .metrics import analyze
 

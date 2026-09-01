@@ -278,6 +278,7 @@ class TestGlobalModelInstance(unittest.TestCase):
 
             # Reset global state
             import glowupai.ml_model as ml_module
+
             ml_module._ml_model = None
 
             # First call creates instance

@@ -66,7 +66,8 @@ SAFE_CSS_PROPS = {
 
 
 def sanitize_html(
-    html_content: str, allowed_tags: Collection[str] | None = None,
+    html_content: str,
+    allowed_tags: Collection[str] | None = None,
 ) -> str:
     """Sanitize HTML content by removing dangerous tags and attributes.
 
@@ -93,15 +94,24 @@ def sanitize_html(
         flags=re.IGNORECASE | re.DOTALL,
     )
     html_content = re.sub(
-        r"<style\b[^>]*>.*?</style>", "", html_content, flags=re.IGNORECASE | re.DOTALL,
+        r"<style\b[^>]*>.*?</style>",
+        "",
+        html_content,
+        flags=re.IGNORECASE | re.DOTALL,
     )
 
     # Remove on* event handlers (onclick, onerror, etc.)
     html_content = re.sub(
-        r'\bon\w+\s*=\s*["\'][^"\']*["\']', "", html_content, flags=re.IGNORECASE,
+        r'\bon\w+\s*=\s*["\'][^"\']*["\']',
+        "",
+        html_content,
+        flags=re.IGNORECASE,
     )
     html_content = re.sub(
-        r"\bon\w+\s*=\s*[^>\s]+", "", html_content, flags=re.IGNORECASE,
+        r"\bon\w+\s*=\s*[^>\s]+",
+        "",
+        html_content,
+        flags=re.IGNORECASE,
     )
 
     # Remove javascript: URLs
@@ -186,13 +196,14 @@ def sanitize_html_bleach(html_content: str) -> str:
         # Fallback to regex-based sanitizer
         return sanitize_html(html_content)
 
-    return bleach.clean(
+    result: str = bleach.clean(
         html_content,
         tags=list(SAFE_TAGS),
         attributes=SAFE_ATTRS,
         strip=True,  # Strip disallowed tags instead of escaping
         strip_comments=True,
     )
+    return result
 
 
 # Example usage for dermatologist export

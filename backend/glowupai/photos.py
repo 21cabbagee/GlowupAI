@@ -71,7 +71,9 @@ class EncryptedFilePhotoStore:
         path.parent.mkdir(parents=True, exist_ok=True)
         nonce = os.urandom(12)
         ciphertext = self._aesgcm(self._key(user_id)).encrypt(
-            nonce, data, capture_id.encode(),
+            nonce,
+            data,
+            capture_id.encode(),
         )
         path.write_bytes(nonce + ciphertext)
         # Keep the canonical Windows path in the reference instead of asking
@@ -96,7 +98,9 @@ class EncryptedFilePhotoStore:
             )
         blob = expected_path.read_bytes()
         return self._aesgcm(self._key(user_id)).decrypt(
-            blob[:12], blob[12:], capture_id.encode(),
+            blob[:12],
+            blob[12:],
+            capture_id.encode(),
         )
 
     def read_for_user(self, user_id: str, capture_id: str) -> bytes:

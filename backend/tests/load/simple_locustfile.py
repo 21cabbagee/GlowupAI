@@ -23,7 +23,7 @@ def create_test_image(size=(240, 240)):
     color = (
         random.randint(150, 250),
         random.randint(100, 220),
-        random.randint(80, 200)
+        random.randint(80, 200),
     )
     image = Image.new("RGB", size, color)
     draw = ImageDraw.Draw(image)
@@ -62,9 +62,9 @@ class GlowupUser(HttpUser):
             json={
                 "firebase_uid": f"load_test_user_{random.randint(1000, 999999)}",
                 "email": f"loadtest{random.randint(1000, 999999)}@example.com",
-                "skin_type": random.choice(["normal", "dry", "oily", "combination"])
+                "skin_type": random.choice(["normal", "dry", "oily", "combination"]),
             },
-            name="/api/users"
+            name="/api/users",
         )
 
         if response.status_code == 200:
@@ -75,7 +75,7 @@ class GlowupUser(HttpUser):
                 consent_response = self.client.post(
                     f"/api/users/{self.user_id}/consent",
                     json={"facial_data": True, "analytics": True},
-                    name="/api/users/:id/consent"
+                    name="/api/users/:id/consent",
                 )
 
                 # Take baseline capture
@@ -86,9 +86,9 @@ class GlowupUser(HttpUser):
                             "user_id": self.user_id,
                             "image_base64": create_test_image(),
                             "quality": QUALITY,
-                            "is_baseline": True
+                            "is_baseline": True,
                         },
-                        name="/api/captures [baseline]"
+                        name="/api/captures [baseline]",
                     )
             except (KeyError, ValueError) as e:
                 self.user_id = None
@@ -104,7 +104,7 @@ class GlowupUser(HttpUser):
         with self.client.get(
             f"/api/users/{self.user_id}/dashboard",
             name="/api/dashboard",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 try:
@@ -130,10 +130,10 @@ class GlowupUser(HttpUser):
                 "user_id": self.user_id,
                 "image_base64": create_test_image(),
                 "quality": QUALITY,
-                "is_baseline": False
+                "is_baseline": False,
             },
             name="/api/captures/analyze",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 try:
@@ -157,7 +157,7 @@ class GlowupUser(HttpUser):
         with self.client.get(
             f"/api/users/{self.user_id}/history",
             name="/api/history",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 try:

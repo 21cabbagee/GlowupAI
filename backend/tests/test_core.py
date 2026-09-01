@@ -167,8 +167,12 @@ class CoreTests(unittest.TestCase):
         texture_diff = abs(result_base.texture_score - result_rotated.texture_score)
 
         # Assert that differences are small (alignment reduces variance)
-        self.assertLess(blemish_diff, 3.0, "Blemish count should be consistent with alignment")
-        self.assertLess(texture_diff, 5.0, "Texture score should be consistent with alignment")
+        self.assertLess(
+            blemish_diff, 3.0, "Blemish count should be consistent with alignment"
+        )
+        self.assertLess(
+            texture_diff, 5.0, "Texture score should be consistent with alignment"
+        )
 
     def test_face_alignment_handles_no_face_gracefully(self):
         """Test that alignment gracefully handles images without faces."""

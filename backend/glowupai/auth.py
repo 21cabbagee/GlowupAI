@@ -150,7 +150,10 @@ def get_default_cache() -> JWKSCache:
 
 
 def verify_id_token(
-    token: str, project_id: str | None, *, jwks: JWKSCache | None = None,
+    token: str,
+    project_id: str | None,
+    *,
+    jwks: JWKSCache | None = None,
 ) -> FirebaseIdentity:
     """Verify a Firebase ID token and return the identity it asserts.
 

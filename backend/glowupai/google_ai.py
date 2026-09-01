@@ -73,7 +73,9 @@ class GoogleGeminiInsightService:
         response = self.client.models.generate_content(
             model=self.model,
             contents=json.dumps(
-                _provider_safe(payload), separators=(",", ":"), sort_keys=True,
+                _provider_safe(payload),
+                separators=(",", ":"),
+                sort_keys=True,
             ),
             config={
                 "system_instruction": instruction,
@@ -95,7 +97,8 @@ class GoogleGeminiInsightService:
     def answer(self, question: str, evidence: dict) -> str | None:
         try:
             return self._generate(
-                _QNA_SYSTEM_INSTRUCTION, {"question": question, "evidence": evidence},
+                _QNA_SYSTEM_INSTRUCTION,
+                {"question": question, "evidence": evidence},
             )
         except Exception:
             return None
@@ -113,7 +116,9 @@ class GoogleGeminiVisionService:
             self.client = genai.Client(api_key=api_key)
 
     def extract_products(
-        self, image_bytes: bytes, mime_type: str = "image/jpeg",
+        self,
+        image_bytes: bytes,
+        mime_type: str = "image/jpeg",
     ) -> list[dict]:
         from google.genai import types
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from .db import Database
@@ -92,7 +92,7 @@ class FeedbackCollector:
                 json.dumps(corrections or {}),
                 json.dumps(dict(metrics)) if metrics else "{}",
                 comment,
-                datetime.now().isoformat(),
+                datetime.now(UTC).isoformat(),
             ),
         )
 
@@ -120,7 +120,7 @@ class FeedbackCollector:
         stats["by_type"] = {row["feedback_type"]: row["count"] for row in type_dist}
 
         # Accuracy rate (last 30 days)
-        month_ago = (datetime.now() - timedelta(days=30)).isoformat()
+        month_ago = (datetime.now(UTC) - timedelta(days=30)).isoformat()
         result = self.db.fetchone(
             """
             SELECT
@@ -157,9 +157,11 @@ class FeedbackCollector:
                 continue
 
         # Sort by frequency
+        from typing import cast
+
         stats["top_issues"] = sorted(
             [{"issue": k, "count": v} for k, v in issue_counts.items()],
-            key=lambda x: x["count"],
+            key=lambda x: cast(int, x["count"]),
             reverse=True,
         )[:10]
 
@@ -217,9 +219,15 @@ class FeedbackCollector:
             if counts["total"] > 0:
                 analysis[metric] = {
                     "total_issues": counts["total"],
-                    "too_high_pct": round(counts["too_high"] / counts["total"] * 100, 1),
+                    "too_high_pct": round(
+                        counts["too_high"] / counts["total"] * 100, 1
+                    ),
                     "too_low_pct": round(counts["too_low"] / counts["total"] * 100, 1),
-                    "bias": "overestimating" if counts["too_high"] > counts["too_low"] else "underestimating",
+                    "bias": (
+                        "overestimating"
+                        if counts["too_high"] > counts["too_low"]
+                        else "underestimating"
+                    ),
                 }
 
         return analysis
@@ -254,13 +262,15 @@ class FeedbackCollector:
                 original = json.loads(row["original_metrics_json"])
                 corrected = json.loads(row["corrections_json"])
 
-                corrections.append({
-                    "capture_id": row["capture_id"],
-                    "image_path": row["raw_ref"],
-                    "original_predictions": original,
-                    "user_corrections": corrected,
-                    "feedback_date": row["created_at"],
-                })
+                corrections.append(
+                    {
+                        "capture_id": row["capture_id"],
+                        "image_path": row["raw_ref"],
+                        "original_predictions": original,
+                        "user_corrections": corrected,
+                        "feedback_date": row["created_at"],
+                    }
+                )
             except (json.JSONDecodeError, TypeError):
                 continue
 
@@ -296,7 +306,10 @@ class FeedbackCollector:
         total_feedback = stats.get("total_feedback", 0)
 
         if total_feedback >= 1000:
-            return True, f"Collected {total_feedback} feedback samples (threshold: 1000)"
+            return (
+                True,
+                f"Collected {total_feedback} feedback samples (threshold: 1000)",
+            )
 
         # Check 2: Low accuracy rate
         accuracy = stats.get("accuracy_rate_30d")
@@ -306,11 +319,15 @@ class FeedbackCollector:
         # Check 3: High correction rate with specific metric issues
         corrections = self.get_pending_corrections(limit=1)
         if len(corrections) >= 500:
-            return True, f"Collected {len(corrections)} user corrections (threshold: 500)"
+            return (
+                True,
+                f"Collected {len(corrections)} user corrections (threshold: 500)",
+            )
 
         return False, "Not enough feedback data yet"
 
     def _generate_id(self) -> str:
         """Generate unique feedback ID."""
         import secrets
+
         return f"fb_{secrets.token_hex(8)}"

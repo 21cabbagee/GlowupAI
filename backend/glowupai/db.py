@@ -209,14 +209,16 @@ class Database:
 
     def fetchone(self, sql: str, params: tuple[Any, ...] = ()) -> sqlite3.Row | None:
         with self._lock:
-            return self.connection.execute(sql, params).fetchone()
+            result: sqlite3.Row | None = self.connection.execute(sql, params).fetchone()
+            return result
 
     def fetchall(self, sql: str, params: tuple[Any, ...] = ()) -> list[sqlite3.Row]:
         with self._lock:
             return list(self.connection.execute(sql, params).fetchall())
 
     def healthcheck(self) -> bool:
-        return self.fetchone("SELECT 1 AS ok")["ok"] == 1
+        result = self.fetchone("SELECT 1 AS ok")
+        return result is not None and result["ok"] == 1
 
     def count_tables(self) -> int:
         """Count the number of user-created tables in the database."""

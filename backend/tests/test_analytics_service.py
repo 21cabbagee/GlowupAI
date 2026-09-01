@@ -76,7 +76,9 @@ class AnalyticsServiceTests(unittest.TestCase):
         self.service.add_routine_event(
             user["id"], product["id"], "start", now.isoformat()
         )
-        result = self.analytics.confound_check(user["id"], exclude_product_id=product["id"])
+        result = self.analytics.confound_check(
+            user["id"], exclude_product_id=product["id"]
+        )
         self.assertFalse(result["confounded"])
 
     def test_add_routine_event_with_confound_warning(self):
@@ -91,9 +93,13 @@ class AnalyticsServiceTests(unittest.TestCase):
         )
 
         # Now test the analytics service wrapper
-        confound = self.analytics.confound_check(user["id"], exclude_product_id=product2["id"])
+        confound = self.analytics.confound_check(
+            user["id"], exclude_product_id=product2["id"]
+        )
         # Verify the confound check works as expected
-        self.assertTrue(confound["confounded"] or not confound["confounded"])  # Either is valid depending on timing
+        self.assertTrue(
+            confound["confounded"] or not confound["confounded"]
+        )  # Either is valid depending on timing
 
     def test_add_routine_event_stop_action_no_confound(self):
         user = self.service.create_user()
@@ -144,7 +150,9 @@ class AnalyticsServiceTests(unittest.TestCase):
             }
         ]
 
-        recap = self.analytics.weekly_recap(user["id"], history_fn=history_fn, check_ins_fn=lambda uid, limit: [])
+        recap = self.analytics.weekly_recap(
+            user["id"], history_fn=history_fn, check_ins_fn=lambda uid, limit: []
+        )
 
         self.assertEqual(recap["status"], "building_signal")
         self.assertEqual(recap["capture_count"], 1)
@@ -165,7 +173,12 @@ class AnalyticsServiceTests(unittest.TestCase):
                 "darkspot_area": 0.2,
                 "texture_score": 0.4,
                 "confidence": 0.7,
-                "noise_floor": {"redness_score": 0.05, "blemish_count": 1, "darkspot_area": 0.03, "texture_score": 0.05},
+                "noise_floor": {
+                    "redness_score": 0.05,
+                    "blemish_count": 1,
+                    "darkspot_area": 0.03,
+                    "texture_score": 0.05,
+                },
             },
             {
                 "captured_at": day.isoformat(),
@@ -175,14 +188,17 @@ class AnalyticsServiceTests(unittest.TestCase):
                 "darkspot_area": 0.15,
                 "texture_score": 0.35,
                 "confidence": 0.75,
-                "noise_floor": {"redness_score": 0.05, "blemish_count": 1, "darkspot_area": 0.03, "texture_score": 0.05},
+                "noise_floor": {
+                    "redness_score": 0.05,
+                    "blemish_count": 1,
+                    "darkspot_area": 0.03,
+                    "texture_score": 0.05,
+                },
             },
         ]
 
         recap = self.analytics.weekly_recap(
-            user["id"],
-            history_fn=history_fn,
-            check_ins_fn=lambda uid, limit: []
+            user["id"], history_fn=history_fn, check_ins_fn=lambda uid, limit: []
         )
 
         self.assertEqual(recap["status"], "directional")
@@ -271,8 +287,12 @@ class AnalyticsServiceTests(unittest.TestCase):
                 is_baseline=(i == 0),
             )
 
-        capture_guide_fn = lambda uid: {"next_window_start": datetime.now(timezone.utc).isoformat()}
-        engagement = self.analytics.engagement(user["id"], capture_guide_fn=capture_guide_fn)
+        capture_guide_fn = lambda uid: {
+            "next_window_start": datetime.now(timezone.utc).isoformat()
+        }
+        engagement = self.analytics.engagement(
+            user["id"], capture_guide_fn=capture_guide_fn
+        )
 
         self.assertEqual(engagement["capture_count"], 4)
         self.assertGreaterEqual(engagement["capture_streak"], 1)
@@ -456,8 +476,12 @@ class AnalyticsServiceTests(unittest.TestCase):
                 is_baseline=(i == 0),
             )
 
-        capture_guide_fn = lambda uid: {"next_window_start": datetime.now(timezone.utc).isoformat()}
-        engagement = self.analytics.engagement(user["id"], capture_guide_fn=capture_guide_fn)
+        capture_guide_fn = lambda uid: {
+            "next_window_start": datetime.now(timezone.utc).isoformat()
+        }
+        engagement = self.analytics.engagement(
+            user["id"], capture_guide_fn=capture_guide_fn
+        )
 
         self.assertGreaterEqual(engagement["capture_streak"], 1)
 
@@ -467,12 +491,14 @@ class AnalyticsServiceTests(unittest.TestCase):
         engagement_calls = []
 
         def record_engagement_fn(uid, event_type, ref_id, metadata):
-            engagement_calls.append({
-                "user_id": uid,
-                "event_type": event_type,
-                "reference_id": ref_id,
-                "metadata": metadata,
-            })
+            engagement_calls.append(
+                {
+                    "user_id": uid,
+                    "event_type": event_type,
+                    "reference_id": ref_id,
+                    "metadata": metadata,
+                }
+            )
 
         check_in = self.analytics.create_check_in(
             user["id"],

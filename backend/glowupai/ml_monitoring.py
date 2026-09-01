@@ -11,9 +11,9 @@ import json
 import logging
 import os
 import smtplib
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from email.mime.text import MIMEText
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 import requests
@@ -37,9 +37,9 @@ class ModelMonitor:
     def track_prediction(
         self,
         capture_id: str,
-        predictions: Dict[str, float],
+        predictions: dict[str, float],
         processing_time_ms: float,
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         """
         Track a single prediction for monitoring.
@@ -67,11 +67,11 @@ class ModelMonitor:
                 json.dumps(predictions),
                 processing_time_ms,
                 error,
-                datetime.now().isoformat(),
+                datetime.now(UTC).isoformat(),
             ),
         )
 
-    def calculate_variance(self, time_window_hours: int = 24) -> Dict[str, float]:
+    def calculate_variance(self, time_window_hours: int = 24) -> dict[str, float]:
         """
         Calculate prediction variance for each metric.
 
@@ -83,7 +83,7 @@ class ModelMonitor:
         Returns:
             Variance scores per metric
         """
-        cutoff = (datetime.now() - timedelta(hours=time_window_hours)).isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(hours=time_window_hours)).isoformat()
 
         # Get recent predictions grouped by capture
         predictions = self.db.fetchall(
@@ -96,7 +96,7 @@ class ModelMonitor:
         )
 
         # Group by capture ID
-        capture_groups: Dict[str, List[Dict[str, Any]]] = {}
+        capture_groups: dict[str, list[dict[str, Any]]] = {}
         for row in predictions:
             capture_id = row["capture_id"]
             try:
@@ -119,7 +119,7 @@ class ModelMonitor:
             if len(pred_list) < 2:
                 continue
 
-            for metric in variances.keys():
+            for metric in variances:
                 values = [p.get(metric, 0) for p in pred_list]
                 if values:
                     variance = np.var(values)
@@ -135,7 +135,7 @@ class ModelMonitor:
 
         return avg_variances
 
-    def detect_distribution_drift(self, time_window_days: int = 7) -> Dict[str, float]:
+    def detect_distribution_drift(self, time_window_days: int = 7) -> dict[str, float]:
         """
         Detect distribution drift in predictions.
 
@@ -148,8 +148,8 @@ class ModelMonitor:
             Drift scores per metric (0-1, higher = more drift)
         """
         # Get baseline (30-60 days ago)
-        baseline_start = (datetime.now() - timedelta(days=60)).isoformat()
-        baseline_end = (datetime.now() - timedelta(days=30)).isoformat()
+        baseline_start = (datetime.now(UTC) - timedelta(days=60)).isoformat()
+        baseline_end = (datetime.now(UTC) - timedelta(days=30)).isoformat()
 
         baseline_preds = self.db.fetchall(
             """
@@ -161,7 +161,9 @@ class ModelMonitor:
         )
 
         # Get recent (last N days)
-        recent_start = (datetime.now() - timedelta(days=time_window_days)).isoformat()
+        recent_start = (
+            datetime.now(UTC) - timedelta(days=time_window_days)
+        ).isoformat()
         recent_preds = self.db.fetchall(
             """
             SELECT predictions_json
@@ -222,7 +224,7 @@ class ModelMonitor:
         Returns:
             Error rate (0-1)
         """
-        cutoff = (datetime.now() - timedelta(hours=time_window_hours)).isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(hours=time_window_hours)).isoformat()
 
         result = self.db.fetchone(
             """
@@ -240,7 +242,9 @@ class ModelMonitor:
 
         return result["errors"] / result["total"]
 
-    def get_processing_time_stats(self, time_window_hours: int = 24) -> Dict[str, float]:
+    def get_processing_time_stats(
+        self, time_window_hours: int = 24
+    ) -> dict[str, float]:
         """
         Get processing time statistics.
 
@@ -250,7 +254,7 @@ class ModelMonitor:
         Returns:
             Processing time stats (p50, p95, p99)
         """
-        cutoff = (datetime.now() - timedelta(hours=time_window_hours)).isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(hours=time_window_hours)).isoformat()
 
         times = self.db.fetchall(
             """
@@ -273,14 +277,14 @@ class ModelMonitor:
             "mean": float(np.mean(time_values)),
         }
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """
         Get overall model health status.
 
         Returns comprehensive health report.
         """
         health = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "status": "healthy",
             "issues": [],
         }
@@ -292,7 +296,11 @@ class ModelMonitor:
         health["variance"] = {
             "current": variances,
             "threshold": self.alert_thresholds["variance_threshold"],
-            "status": "ok" if max_variance < self.alert_thresholds["variance_threshold"] else "warning",
+            "status": (
+                "ok"
+                if max_variance < self.alert_thresholds["variance_threshold"]
+                else "warning"
+            ),
         }
 
         if max_variance >= self.alert_thresholds["variance_threshold"]:
@@ -304,7 +312,11 @@ class ModelMonitor:
         health["error_rate"] = {
             "current": error_rate,
             "threshold": self.alert_thresholds["error_rate_threshold"],
-            "status": "ok" if error_rate < self.alert_thresholds["error_rate_threshold"] else "critical",
+            "status": (
+                "ok"
+                if error_rate < self.alert_thresholds["error_rate_threshold"]
+                else "critical"
+            ),
         }
 
         if error_rate >= self.alert_thresholds["error_rate_threshold"]:
@@ -318,7 +330,11 @@ class ModelMonitor:
         health["drift"] = {
             "current": drift_scores,
             "threshold": self.alert_thresholds["drift_threshold"],
-            "status": "ok" if max_drift < self.alert_thresholds["drift_threshold"] else "warning",
+            "status": (
+                "ok"
+                if max_drift < self.alert_thresholds["drift_threshold"]
+                else "warning"
+            ),
         }
 
         if max_drift >= self.alert_thresholds["drift_threshold"]:
@@ -341,7 +357,13 @@ class ModelMonitor:
             "alert_email": os.getenv("ALERT_EMAIL"),
         }
 
-        if not all([email_config["smtp_user"], email_config["smtp_pass"], email_config["alert_email"]]):
+        if not all(
+            [
+                email_config["smtp_user"],
+                email_config["smtp_pass"],
+                email_config["alert_email"],
+            ]
+        ):
             logger.warning("Email not configured, skipping alert")
             return False
 
@@ -351,7 +373,9 @@ class ModelMonitor:
             msg["From"] = email_config["smtp_user"]
             msg["To"] = email_config["alert_email"]
 
-            with smtplib.SMTP(email_config["smtp_host"], email_config["smtp_port"]) as server:
+            with smtplib.SMTP(
+                email_config["smtp_host"], email_config["smtp_port"]
+            ) as server:
                 server.starttls()
                 server.login(email_config["smtp_user"], email_config["smtp_pass"])
                 server.send_message(msg)
@@ -441,31 +465,31 @@ Timestamp: {health['timestamp']}
             ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                f"health_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                f"health_{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}",
                 health["status"],
                 json.dumps(health["variance"]["current"]),
                 health["error_rate"]["current"],
                 json.dumps(health["drift"]["current"]),
                 json.dumps(health["issues"]),
-                datetime.now().isoformat(),
+                datetime.now(UTC).isoformat(),
             ),
         )
 
-    def generate_daily_report(self) -> Dict[str, Any]:
+    def generate_daily_report(self) -> dict[str, Any]:
         """
         Generate daily summary report.
 
         Returns report data.
         """
         report = {
-            "date": datetime.now().strftime("%Y-%m-%d"),
+            "date": datetime.now(UTC).strftime("%Y-%m-%d"),
             "health": self.get_health_status(),
             "predictions": {},
             "feedback": {},
         }
 
         # Prediction stats
-        day_ago = (datetime.now() - timedelta(days=1)).isoformat()
+        day_ago = (datetime.now(UTC) - timedelta(days=1)).isoformat()
         pred_result = self.db.fetchone(
             """
             SELECT
@@ -482,7 +506,11 @@ Timestamp: {health['timestamp']}
             report["predictions"] = {
                 "total": pred_result["total"],
                 "errors": pred_result["errors"],
-                "error_rate": pred_result["errors"] / pred_result["total"] if pred_result["total"] > 0 else 0,
+                "error_rate": (
+                    pred_result["errors"] / pred_result["total"]
+                    if pred_result["total"] > 0
+                    else 0
+                ),
                 "avg_processing_time_ms": pred_result["avg_time"],
             }
 

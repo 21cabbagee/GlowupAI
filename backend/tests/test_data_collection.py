@@ -92,8 +92,13 @@ class TestDataCollector(unittest.TestCase):
                 user_id, consent_type, granted, policy_version, recorded_at
             ) VALUES (?, ?, ?, ?, ?)
             """,
-            (user_id_revoked, "data_collection", 1, "1.0",
-             (datetime.now() - timedelta(days=2)).isoformat()),
+            (
+                user_id_revoked,
+                "data_collection",
+                1,
+                "1.0",
+                (datetime.now() - timedelta(days=2)).isoformat(),
+            ),
         )
 
         self.db.execute(
@@ -102,8 +107,13 @@ class TestDataCollector(unittest.TestCase):
                 user_id, consent_type, granted, policy_version, recorded_at
             ) VALUES (?, ?, ?, ?, ?)
             """,
-            (user_id_revoked, "data_collection", 0, "1.0",
-             (datetime.now() - timedelta(days=1)).isoformat()),
+            (
+                user_id_revoked,
+                "data_collection",
+                0,
+                "1.0",
+                (datetime.now() - timedelta(days=1)).isoformat(),
+            ),
         )
 
         has_consent = self.collector.check_consent(user_id_revoked)
@@ -324,7 +334,7 @@ class TestDataCollector(unittest.TestCase):
         self.assertIn("train", split_data)
         self.assertIn("val", split_data)
         self.assertEqual(len(split_data["train"]), 4)  # 80% of 5
-        self.assertEqual(len(split_data["val"]), 1)    # 20% of 5
+        self.assertEqual(len(split_data["val"]), 1)  # 20% of 5
 
     def test_export_training_dataset_quality_filter(self):
         """Test export filters by quality threshold."""
@@ -391,9 +401,15 @@ class TestDataCollector(unittest.TestCase):
         )
 
         # Create corresponding files
-        (self.storage_path / "images" / f"{face_id}_old_old_capture.jpg").write_bytes(b"data")
-        (self.storage_path / "labels" / f"{face_id}_old_old_capture.json").write_text("{}")
-        (self.storage_path / "metadata" / f"{face_id}_old_old_capture.json").write_text("{}")
+        (self.storage_path / "images" / f"{face_id}_old_old_capture.jpg").write_bytes(
+            b"data"
+        )
+        (self.storage_path / "labels" / f"{face_id}_old_old_capture.json").write_text(
+            "{}"
+        )
+        (self.storage_path / "metadata" / f"{face_id}_old_old_capture.json").write_text(
+            "{}"
+        )
 
         # Run cleanup with 365-day retention
         deleted_count = self.collector.cleanup_old_data(retention_days=365)

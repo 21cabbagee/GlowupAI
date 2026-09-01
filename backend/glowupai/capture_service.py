@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from .attribution import parse_time
 from .metrics import analyze
-from .service import GlowupAIService, now_iso, row_dict
+from .service import GlowupAIService, row_dict
 
 VERTICALS = ("skin",)
 CAPTURE_PROTOCOL_VERSION = "standardized-v1"
@@ -61,7 +62,7 @@ def as_date(value: str) -> datetime:
         Datetime object in UTC timezone.
     """
     parsed = parse_time(value)
-    return parsed.astimezone(timezone.utc)
+    return parsed.astimezone(UTC)
 
 
 def day(value: datetime) -> str:
@@ -73,13 +74,15 @@ def day(value: datetime) -> str:
     Returns:
         ISO format date string (YYYY-MM-DD) in UTC.
     """
-    return value.astimezone(timezone.utc).date().isoformat()
+    return value.astimezone(UTC).date().isoformat()
 
 
 class CaptureService:
     """Photo capture, analysis, and history management."""
 
-    def __init__(self, db: Any, parent_service: Any, photos: Any, settings: Any) -> None:
+    def __init__(
+        self, db: Any, parent_service: Any, photos: Any, settings: Any
+    ) -> None:
         """Initialize the CaptureService.
 
         Args:
@@ -93,7 +96,9 @@ class CaptureService:
         self.photos = photos
         self.settings = settings
 
-    def _vertical_metrics(self, vertical: str, metric: Dict[str, Any]) -> Dict[str, Any]:
+    def _vertical_metrics(
+        self, vertical: str, metric: dict[str, Any]
+    ) -> dict[str, Any]:
         """Extract vertical-specific metrics from full metric dictionary.
 
         Args:
@@ -114,7 +119,9 @@ class CaptureService:
             )
         }
 
-    def _get_baseline_metrics(self, user_id: str, vertical: str = "skin") -> Optional[Dict[str, Any]]:
+    def _get_baseline_metrics(
+        self, user_id: str, vertical: str = "skin"
+    ) -> dict[str, Any] | None:
         """Get the baseline capture metrics for calculating relative changes."""
         row = self.db.fetchone(
             """SELECT m.blemish_count, m.redness_score, m.darkspot_area, m.texture_score
@@ -132,7 +139,9 @@ class CaptureService:
             return None
         return row_dict(row)
 
-    def _calculate_relative_change(self, current_value: Optional[float], baseline_value: Optional[float]) -> Optional[float]:
+    def _calculate_relative_change(
+        self, current_value: float | None, baseline_value: float | None
+    ) -> float | None:
         """Calculate percentage change from baseline, handling division by zero."""
         if current_value is None or baseline_value is None:
             return None
@@ -144,7 +153,9 @@ class CaptureService:
             return None
         return round(((current_value - baseline_value) / baseline_value) * 100, 2)
 
-    def _add_baseline_comparison(self, user_id: str, metric: Dict[str, Any], vertical: str = "skin") -> Dict[str, Any]:
+    def _add_baseline_comparison(
+        self, user_id: str, metric: dict[str, Any], vertical: str = "skin"
+    ) -> dict[str, Any]:
         """Add baseline comparison data to metrics."""
         baseline = self._get_baseline_metrics(user_id, vertical)
         if not baseline:
@@ -173,7 +184,7 @@ class CaptureService:
         }
 
     @staticmethod
-    def _measurement_explanation(item: Dict[str, Any]) -> Dict[str, Any]:
+    def _measurement_explanation(item: dict[str, Any]) -> dict[str, Any]:
         """Generate user-friendly explanation of measurement confidence and quality.
 
         Provides contextual messaging based on confidence level and capture quality
@@ -215,14 +226,14 @@ class CaptureService:
         self,
         user_id: str,
         image_bytes: bytes,
-        quality_data: Optional[Dict[str, Any]] = None,
-        captured_at: Optional[str] = None,
-        device_meta: Optional[Dict[str, Any]] = None,
+        quality_data: dict[str, Any] | None = None,
+        captured_at: str | None = None,
+        device_meta: dict[str, Any] | None = None,
         is_baseline: bool = False,
         vertical: str = "skin",
-        experiment_id: Optional[str] = None,
-        record_engagement_fn: Optional[Callable] = None,
-    ) -> Dict[str, Any]:
+        experiment_id: str | None = None,
+        record_engagement_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         """Create a new photo capture with analysis and metrics.
 
         Processes a new photo capture, runs ML analysis, stores metrics, and optionally
@@ -254,8 +265,14 @@ class CaptureService:
         ):
             raise ValueError("experiment not found")
         # Call base service method directly to avoid infinite recursion
-        result = GlowupAIService.create_capture(self.parent, 
-            user_id, image_bytes, quality_data, captured_at, device_meta, is_baseline
+        result = GlowupAIService.create_capture(
+            self.parent,
+            user_id,
+            image_bytes,
+            quality_data,
+            captured_at,
+            device_meta,
+            is_baseline,
         )
         metric = result["metric"] or {}
         appearance_id = uid()
@@ -299,7 +316,9 @@ class CaptureService:
         result["capture_protocol"] = CAPTURE_PROTOCOL_VERSION
         # Add baseline comparison if this is not the baseline itself
         if not is_baseline:
-            result["baseline_comparison"] = self._add_baseline_comparison(user_id, metric, vertical)
+            result["baseline_comparison"] = self._add_baseline_comparison(
+                user_id, metric, vertical
+            )
         else:
             result["baseline_comparison"] = {
                 "has_baseline": False,
@@ -310,7 +329,9 @@ class CaptureService:
             }
         return result
 
-    def history(self, user_id: str, vertical: str = "skin", is_premium: bool = False) -> List[Dict[str, Any]]:
+    def history(
+        self, user_id: str, vertical: str = "skin", is_premium: bool = False
+    ) -> list[dict[str, Any]]:
         """Retrieve user's capture history with metrics and baseline comparisons.
 
         Returns all captures for a user with complete metrics, quality data, and
@@ -356,11 +377,13 @@ class CaptureService:
                 }
             output.append(item)
         if not is_premium:
-            cutoff = datetime.now(timezone.utc) - timedelta(days=FREE_HISTORY_DAYS)
+            cutoff = datetime.now(UTC) - timedelta(days=FREE_HISTORY_DAYS)
             output = [item for item in output if as_date(item["captured_at"]) >= cutoff]
         return output
 
-    def capture_guide(self, user_id: str, vertical: str = "skin", history_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def capture_guide(
+        self, user_id: str, vertical: str = "skin", history_fn: Callable | None = None
+    ) -> dict[str, Any]:
         """Provide guidance on when user should take their next capture.
 
         Calculates optimal capture timing based on user's history. Recommends
@@ -375,10 +398,14 @@ class CaptureService:
             Dictionary with state ('baseline_needed', 'scheduled', 'due', 'overdue'),
             last_capture timestamp, next_window timing, and user-facing message.
         """
-        history = history_fn(user_id, vertical) if history_fn else self.history(user_id, vertical)
+        history = (
+            history_fn(user_id, vertical)
+            if history_fn
+            else self.history(user_id, vertical)
+        )
         captures = [as_date(item["captured_at"]) for item in history]
         latest = max(captures) if captures else None
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if not latest:
             return {
                 "vertical": vertical,
@@ -409,8 +436,13 @@ class CaptureService:
         }
 
     def add_measurement_feedback(
-        self, user_id: str, capture_id: str, agreement: str, note: Optional[str] = None, record_engagement_fn: Optional[Callable] = None
-    ) -> Dict[str, Any]:
+        self,
+        user_id: str,
+        capture_id: str,
+        agreement: str,
+        note: str | None = None,
+        record_engagement_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         """Record user feedback on measurement accuracy for quality improvement.
 
         Allows users to rate how well the measurements match their perception,
@@ -462,7 +494,7 @@ class CaptureService:
         )
         return row_dict(row)
 
-    def measurement_feedback_summary(self) -> Dict[str, Any]:
+    def measurement_feedback_summary(self) -> dict[str, Any]:
         """Get aggregate summary of all measurement feedback.
 
         Provides counts of user feedback ratings across all captures for
@@ -484,7 +516,7 @@ class CaptureService:
             "note": "User-reported agreement is a product-quality signal, not a clinical validation study.",
         }
 
-    def labels(self, user_id: str) -> List[Dict[str, Any]]:
+    def labels(self, user_id: str) -> list[dict[str, Any]]:
         """Retrieve all labels created by a user for ML training and data collection.
 
         Args:
@@ -508,9 +540,9 @@ class CaptureService:
         photo_id: str,
         label_type: str,
         value: str,
-        confidence: Optional[float] = None,
-        notes: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        confidence: float | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
         """Add a label to a capture for ML training and data collection.
 
         Allows users to label captures with ground truth data for model improvement
@@ -545,7 +577,7 @@ class CaptureService:
             self.db.fetchone("SELECT * FROM labels WHERE id=?", (label_id,))
         )
 
-    def _run_reprocess(self, user_id: str, model_version: str) -> Dict[str, Any]:
+    def _run_reprocess(self, user_id: str, model_version: str) -> dict[str, Any]:
         """Reprocess all user captures with a new model version (background task).
 
         Re-runs ML analysis on all accepted captures using specified model version,
@@ -590,7 +622,9 @@ class CaptureService:
             processed += 1
         return {"processed_count": processed, "model_version": model_version}
 
-    def reprocess(self, user_id: str, model_version: str, jobs: Any, audit_fn: Any) -> Dict[str, Any]:
+    def reprocess(
+        self, user_id: str, model_version: str, jobs: Any, audit_fn: Any
+    ) -> dict[str, Any]:
         """Queue a background job to reprocess user captures with new model version.
 
         Args:
@@ -614,7 +648,7 @@ class CaptureService:
         )
         return {"job_id": job_id, "status": "queued"}
 
-    def reprocess_status(self, user_id: str, job_id: str, jobs: Any) -> Dict[str, Any]:
+    def reprocess_status(self, user_id: str, job_id: str, jobs: Any) -> dict[str, Any]:
         """Check status of a reprocessing background job.
 
         Args:
@@ -641,10 +675,10 @@ class CaptureService:
         capture_id: str,
         user_id: str,
         feedback_type: str,
-        issues: Optional[List[str]] = None,
-        corrections: Optional[Dict[str, float]] = None,
-        comment: Optional[str] = None
-    ) -> Dict[str, Any]:
+        issues: list[str] | None = None,
+        corrections: dict[str, float] | None = None,
+        comment: str | None = None,
+    ) -> dict[str, Any]:
         """Submit user feedback on a capture for ML improvement.
 
         Collects structured feedback from users about capture quality and
@@ -670,15 +704,15 @@ class CaptureService:
             feedback_type=feedback_type,
             issues=issues,
             corrections=corrections,
-            comment=comment
+            comment=comment,
         )
 
         return {
             "feedback_id": feedback_id,
-            "message": "Feedback submitted successfully"
+            "message": "Feedback submitted successfully",
         }
 
-    def get_feedback_stats(self) -> Dict[str, Any]:
+    def get_feedback_stats(self) -> dict[str, Any]:
         """Get aggregated feedback statistics for admin monitoring.
 
         Returns:
@@ -689,7 +723,7 @@ class CaptureService:
         feedback_collector = FeedbackCollector(self.db)
         return feedback_collector.get_feedback_stats()
 
-    def get_feedback_corrections(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_feedback_corrections(self, limit: int = 100) -> list[dict[str, Any]]:
         """Get user-submitted metric corrections for model retraining.
 
         Args:
@@ -703,7 +737,7 @@ class CaptureService:
         feedback_collector = FeedbackCollector(self.db)
         return feedback_collector.get_pending_corrections(limit=limit)
 
-    def get_metric_accuracy_analysis(self) -> Dict[str, Any]:
+    def get_metric_accuracy_analysis(self) -> dict[str, Any]:
         """Get analysis of metric accuracy based on user feedback.
 
         Returns:
@@ -714,7 +748,7 @@ class CaptureService:
         feedback_collector = FeedbackCollector(self.db)
         return feedback_collector.get_metric_accuracy_analysis()
 
-    def get_model_health_status(self) -> Dict[str, Any]:
+    def get_model_health_status(self) -> dict[str, Any]:
         """Get current model health monitoring status and alerts.
 
         Returns:
@@ -725,7 +759,7 @@ class CaptureService:
         monitor = ModelMonitor(self.db)
         return monitor.get_health_status()
 
-    def generate_monitoring_daily_report(self) -> Dict[str, Any]:
+    def generate_monitoring_daily_report(self) -> dict[str, Any]:
         """Generate daily monitoring report with model performance metrics.
 
         Returns:
@@ -736,7 +770,7 @@ class CaptureService:
         monitor = ModelMonitor(self.db)
         return monitor.generate_daily_report()
 
-    def get_collection_stats(self) -> Dict[str, Any]:
+    def get_collection_stats(self) -> dict[str, Any]:
         """Get data collection statistics for monitoring and reporting.
 
         Returns:
@@ -748,11 +782,8 @@ class CaptureService:
         return collector.get_collection_stats()
 
     def export_training_dataset(
-        self,
-        output_dir: str,
-        min_quality: float = 0.75,
-        max_samples: Optional[int] = None
-    ) -> Dict[str, Any]:
+        self, output_dir: str, min_quality: float = 0.75, max_samples: int | None = None
+    ) -> dict[str, Any]:
         """Export collected data as training dataset for ML model improvement.
 
         Exports captures and metrics meeting quality thresholds to a structured
@@ -770,17 +801,12 @@ class CaptureService:
 
         collector = DataCollector(self.db)
         stats = collector.export_training_dataset(
-            output_dir=output_dir,
-            min_quality=min_quality,
-            max_samples=max_samples
+            output_dir=output_dir, min_quality=min_quality, max_samples=max_samples
         )
 
-        return {
-            "message": "Dataset exported successfully",
-            "stats": stats
-        }
+        return {"message": "Dataset exported successfully", "stats": stats}
 
-    def cleanup_old_data(self, retention_days: int = 365) -> Dict[str, Any]:
+    def cleanup_old_data(self, retention_days: int = 365) -> dict[str, Any]:
         """Cleanup old collected data beyond retention period.
 
         Removes captured data older than the specified retention period to
@@ -799,5 +825,5 @@ class CaptureService:
 
         return {
             "message": f"Cleaned up {deleted_count} old data files",
-            "deleted_count": deleted_count
+            "deleted_count": deleted_count,
         }

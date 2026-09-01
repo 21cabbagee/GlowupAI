@@ -38,7 +38,14 @@ class TestFeedbackCollector(unittest.TestCase):
                 id, user_id, raw_ref, created_at, captured_at, capture_quality_json
             ) VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (self.capture_id, self.user_id, "/path/to/image.jpg", datetime.now().isoformat(), datetime.now().isoformat(), '{}'),
+            (
+                self.capture_id,
+                self.user_id,
+                "/path/to/image.jpg",
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+                "{}",
+            ),
         )
 
         # Create metric snapshot for the capture
@@ -59,7 +66,7 @@ class TestFeedbackCollector(unittest.TestCase):
                 8.2,
                 0.18,
                 0.9,
-                '{}',
+                "{}",
                 datetime.now().isoformat(),
             ),
         )
@@ -237,7 +244,14 @@ class TestFeedbackCollector(unittest.TestCase):
                     id, user_id, raw_ref, created_at, captured_at, capture_quality_json
                 ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (capture_id, self.user_id, f"/path/{capture_id}.jpg", datetime.now().isoformat(), datetime.now().isoformat(), '{}'),
+                (
+                    capture_id,
+                    self.user_id,
+                    f"/path/{capture_id}.jpg",
+                    datetime.now().isoformat(),
+                    datetime.now().isoformat(),
+                    "{}",
+                ),
             )
 
         # Submit feedback indicating blemishes are overestimated
@@ -255,7 +269,9 @@ class TestFeedbackCollector(unittest.TestCase):
                 capture_id=f"test_capture_analysis_{i}",
                 user_id=self.user_id,
                 feedback_type="inaccurate",
-                issues=["redness_score_too_low"],  # Use correct format: metric_name_too_low
+                issues=[
+                    "redness_score_too_low"
+                ],  # Use correct format: metric_name_too_low
             )
 
         analysis = self.collector.get_metric_accuracy_analysis()

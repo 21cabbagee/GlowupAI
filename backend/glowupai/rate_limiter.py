@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable
 
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
@@ -35,6 +34,7 @@ class RedisRateLimiter:
         if redis_url:
             try:
                 import redis
+
                 self.redis_client = redis.from_url(
                     redis_url,
                     decode_responses=True,
@@ -52,7 +52,11 @@ class RedisRateLimiter:
 
     def _get_limit_type(self, path: str, method: str) -> str:
         """Determine rate limit type from path and method."""
-        if "/api/captures/analyze" in path or "/api/captures" in path and method == "POST":
+        if (
+            "/api/captures/analyze" in path
+            or "/api/captures" in path
+            and method == "POST"
+        ):
             return "capture_analyze"
         elif "/api/auth/" in path:
             return "auth"
@@ -62,7 +66,10 @@ class RedisRateLimiter:
             return "api"
 
     async def check_rate_limit(
-        self, client_id: str, path: str, method: str,
+        self,
+        client_id: str,
+        path: str,
+        method: str,
     ) -> tuple[bool, int | None, int, int]:
         """Check if request is within rate limit.
 
@@ -79,15 +86,25 @@ class RedisRateLimiter:
 
         if self.redis_client:
             return await self._check_redis_limit(
-                client_id, limit_type, max_requests, window_seconds,
+                client_id,
+                limit_type,
+                max_requests,
+                window_seconds,
             )
         else:
             return await self._check_memory_limit(
-                client_id, limit_type, max_requests, window_seconds,
+                client_id,
+                limit_type,
+                max_requests,
+                window_seconds,
             )
 
     async def _check_redis_limit(
-        self, client_id: str, limit_type: str, max_requests: int, window_seconds: int,
+        self,
+        client_id: str,
+        limit_type: str,
+        max_requests: int,
+        window_seconds: int,
     ) -> tuple[bool, int | None, int, int]:
         """Check rate limit using Redis sliding window."""
         try:
@@ -103,7 +120,11 @@ class RedisRateLimiter:
 
             # Get oldest entry for reset calculation
             oldest = self.redis_client.zrange(key, 0, 0, withscores=True)
-            reset_timestamp = int(oldest[0][1] + window_seconds) if oldest else int(now + window_seconds)
+            reset_timestamp = (
+                int(oldest[0][1] + window_seconds)
+                if oldest
+                else int(now + window_seconds)
+            )
 
             if request_count < max_requests:
                 # Add current request
@@ -125,7 +146,11 @@ class RedisRateLimiter:
             return True, None, max_requests, int(time.time() + window_seconds)
 
     async def _check_memory_limit(
-        self, client_id: str, limit_type: str, max_requests: int, window_seconds: int,
+        self,
+        client_id: str,
+        limit_type: str,
+        max_requests: int,
+        window_seconds: int,
     ) -> tuple[bool, int | None, int, int]:
         """Check rate limit using in-memory sliding window."""
         key = f"{limit_type}:{client_id}"
@@ -163,7 +188,9 @@ class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
         self.enabled = enabled
 
     async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint,
+        self,
+        request: Request,
+        call_next: RequestResponseEndpoint,
     ) -> Response:
         """Apply rate limiting to requests."""
         if not self.enabled:
@@ -183,6 +210,7 @@ class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
             try:
                 import base64
                 import json
+
                 token = auth_header.replace("Bearer ", "").strip()
                 payload = token.split(".")[1]
                 # Add padding if needed
@@ -192,12 +220,17 @@ class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
                     client_id = f"user:{decoded['sub']}"
             except (ValueError, KeyError, IndexError, json.JSONDecodeError) as exc:
                 # JWT parsing failed - fall back to IP
-                logger.debug(f"Failed to extract user ID from JWT for rate limiting: {exc}")
-                pass
+                logger.debug(
+                    f"Failed to extract user ID from JWT for rate limiting: {exc}"
+                )
 
         # Check rate limit
-        allowed, retry_after, remaining, reset_timestamp = await self.limiter.check_rate_limit(
-            client_id, request.url.path, request.method,
+        allowed, retry_after, remaining, reset_timestamp = (
+            await self.limiter.check_rate_limit(
+                client_id,
+                request.url.path,
+                request.method,
+            )
         )
 
         limit_type = self.limiter._get_limit_type(request.url.path, request.method)

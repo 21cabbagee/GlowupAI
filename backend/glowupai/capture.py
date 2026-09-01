@@ -179,6 +179,7 @@ def inspect_image(image_bytes: bytes) -> dict:
 
 def merge_quality(client_quality: dict | None, image_bytes: bytes) -> CaptureQuality:
     import os
+
     skip_quality_checks = os.getenv("GLOWUPAI_SKIP_QUALITY_CHECKS", "0") == "1"
     image_values = inspect_image(image_bytes)
     # Pose/face fields come from the on-device mesh. Brightness and sharpness

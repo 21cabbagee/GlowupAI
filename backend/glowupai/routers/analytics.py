@@ -3,26 +3,25 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Header
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 
-
 class EngagementCreate(BaseModel):
     event_type: str
-    reference_id: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    reference_id: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class ContextEventCreate(BaseModel):
     event_type: str
-    value: Optional[str] = None
-    occurred_at: Optional[str] = None
-    notes: Optional[str] = None
+    value: str | None = None
+    occurred_at: str | None = None
+    notes: str | None = None
 
 
 def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
@@ -32,20 +31,24 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["analytics"])
 
     @router.get("/analytics/summary")
-    def analytics_summary(user_id: str) -> Dict[str, Any]:
+    def analytics_summary(user_id: str) -> dict[str, Any]:
         return run_handler(service.summary, user_id)
 
     @router.get("/analytics/trends")
-    def analytics_trends(user_id: str, vertical: str = "skin") -> Dict[str, Any]:
+    def analytics_trends(user_id: str, vertical: str = "skin") -> dict[str, Any]:
         return run_handler(service.trends, user_id, vertical)
 
     @router.get("/users/{user_id}/analytics")
-    def analytics(user_id: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    def analytics(
+        user_id: str, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.analytics, user_id)
 
     @router.get("/users/{user_id}/engagement")
-    def engagement(user_id: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    def engagement(
+        user_id: str, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.engagement, user_id)
 
@@ -53,8 +56,8 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
     def engagement_event(
         user_id: str,
         payload: EngagementCreate,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(
             service.record_engagement,
@@ -65,7 +68,9 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
         )
 
     @router.get("/users/{user_id}/context-events")
-    def context_events(user_id: str, authorization: Optional[str] = Header(default=None)) -> List[Dict[str, Any]]:
+    def context_events(
+        user_id: str, authorization: str | None = Header(default=None)
+    ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
         return run_handler(service.context_events, user_id)
 
@@ -73,8 +78,8 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
     def add_context_event(
         user_id: str,
         payload: ContextEventCreate,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(
             service.add_context_event,
@@ -89,20 +94,22 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
     def root_cause(
         user_id: str,
         metric: str = "texture_score",
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.root_cause_search, user_id, metric)
 
     @router.get("/users/{user_id}/budget-optimizer")
     def budget_optimizer(
-        user_id: str, authorization: Optional[str] = Header(default=None)
-    ) -> Dict[str, Any]:
+        user_id: str, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.budget_optimizer, user_id)
 
     @router.get("/users/{user_id}/derm-export")
-    def derm_export(user_id: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    def derm_export(
+        user_id: str, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.dermatologist_report, user_id)
 

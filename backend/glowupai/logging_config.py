@@ -8,7 +8,6 @@ import sys
 import time
 import uuid
 from contextvars import ContextVar
-from typing import Any
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
@@ -51,7 +50,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """Middleware to log requests with timing and request IDs."""
 
     async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint,
+        self,
+        request: Request,
+        call_next: RequestResponseEndpoint,
     ) -> Response:
         """Process request with logging."""
         # Generate and set request ID
@@ -90,7 +91,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response.headers["X-Request-ID"] = req_id
             return response
 
-        except (RuntimeError, ValueError, OSError, IOError, TimeoutError) as exc:
+        except (RuntimeError, ValueError, OSError, TimeoutError) as exc:
             duration_ms = round((time.time() - start_time) * 1000, 2)
             logger.exception(
                 f"Request failed: {exc}",

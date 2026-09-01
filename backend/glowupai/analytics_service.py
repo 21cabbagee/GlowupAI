@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 import statistics
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from .attribution import parse_time
 from .service import GlowupAIService, now_iso, row_dict
@@ -49,7 +50,7 @@ def dump(value: Any) -> str:
     return json.dumps(value, separators=(",", ":"), sort_keys=True)
 
 
-def load(value: Any, default: Optional[Any] = None) -> Any:
+def load(value: Any, default: Any | None = None) -> Any:
     """Deserialize a JSON string to a Python value.
 
     Args:
@@ -75,7 +76,7 @@ def as_date(value: str) -> datetime:
         Datetime object in UTC timezone.
     """
     parsed = parse_time(value)
-    return parsed.astimezone(timezone.utc)
+    return parsed.astimezone(UTC)
 
 
 def day(value: datetime) -> str:
@@ -87,7 +88,7 @@ def day(value: datetime) -> str:
     Returns:
         ISO format date string (YYYY-MM-DD) in UTC.
     """
-    return value.astimezone(timezone.utc).date().isoformat()
+    return value.astimezone(UTC).date().isoformat()
 
 
 class AnalyticsService:
@@ -104,8 +105,8 @@ class AnalyticsService:
         self.parent = parent_service
 
     def _active_product_windows(
-        self, user_id: str, exclude_product_id: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, user_id: str, exclude_product_id: str | None = None
+    ) -> list[dict[str, Any]]:
         """Products currently inside their post-start/change stabilization window."""
 
         rows = self.db.fetchall(
@@ -114,12 +115,12 @@ class AnalyticsService:
                WHERE e.user_id = ? ORDER BY e.timestamp""",
             (user_id,),
         )
-        by_product: Dict[str, List[Dict[str, Any]]] = {}
+        by_product: dict[str, list[dict[str, Any]]] = {}
         for row in rows:
             if exclude_product_id and row["product_id"] == exclude_product_id:
                 continue
             by_product.setdefault(row["product_id"], []).append(row_dict(row))
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         active = []
         for product_id, events in by_product.items():
             last_start = next(
@@ -151,8 +152,8 @@ class AnalyticsService:
         return active
 
     def confound_check(
-        self, user_id: str, exclude_product_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, user_id: str, exclude_product_id: str | None = None
+    ) -> dict[str, Any]:
         """Warn before a change that will make an in-progress window evidence_unclear."""
 
         active = self._active_product_windows(user_id, exclude_product_id)
@@ -170,14 +171,14 @@ class AnalyticsService:
         user_id: str,
         product_id: str,
         action: str,
-        timestamp: Optional[str] = None,
+        timestamp: str | None = None,
         slot: str = "unspecified",
-        dose: Optional[str] = None,
-        frequency: Optional[str] = None,
-        notes: Optional[str] = None,
-        experiment_id: Optional[str] = None,
-        audit_fn: Optional[Callable] = None,
-    ) -> Dict[str, Any]:
+        dose: str | None = None,
+        frequency: str | None = None,
+        notes: str | None = None,
+        experiment_id: str | None = None,
+        audit_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         """Record a routine event for product usage tracking.
 
         Tracks start, change, or stop actions for skincare products, checking for
@@ -204,8 +205,16 @@ class AnalyticsService:
             else {"confounded": False, "active_windows": []}
         )
         # Call base service method directly to avoid infinite recursion
-        event = GlowupAIService.add_routine_event(self.parent, 
-            user_id, product_id, action, timestamp, slot, dose, frequency, notes
+        event = GlowupAIService.add_routine_event(
+            self.parent,
+            user_id,
+            product_id,
+            action,
+            timestamp,
+            slot,
+            dose,
+            frequency,
+            notes,
         )
         if experiment_id:
             experiment = self.db.fetchone(
@@ -231,7 +240,9 @@ class AnalyticsService:
         )
         return event
 
-    def _weekly_metric_summary(self, metric: str, first: Dict[str, Any], last: Dict[str, Any]) -> Dict[str, Any]:
+    def _weekly_metric_summary(
+        self, metric: str, first: dict[str, Any], last: dict[str, Any]
+    ) -> dict[str, Any]:
         first_value = float(first[metric])
         last_value = float(last[metric])
         delta = round(last_value - first_value, 5)
@@ -255,8 +266,13 @@ class AnalyticsService:
         }
 
     def weekly_recap(
-        self, user_id: str, vertical: str = "skin", as_of: Optional[str] = None, history_fn: Optional[Callable] = None, check_ins_fn: Optional[Callable] = None
-    ) -> Dict[str, Any]:
+        self,
+        user_id: str,
+        vertical: str = "skin",
+        as_of: str | None = None,
+        history_fn: Callable | None = None,
+        check_ins_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         self.parent.require_user(user_id)
         history = history_fn(user_id, vertical) if history_fn else []
         checkins = check_ins_fn(user_id, limit=50) if check_ins_fn else []
@@ -374,7 +390,7 @@ class AnalyticsService:
             "disclaimer": "Cosmetic appearance tracking only; this is not a diagnosis.",
         }
 
-    def check_ins(self, user_id: str, limit: int = 30) -> List[Dict[str, Any]]:
+    def check_ins(self, user_id: str, limit: int = 30) -> list[dict[str, Any]]:
         self.parent.require_user(user_id)
         rows = self.db.fetchall(
             "SELECT * FROM check_ins WHERE user_id=? ORDER BY occurred_at DESC LIMIT ?",
@@ -387,10 +403,10 @@ class AnalyticsService:
         user_id: str,
         routine_state: str,
         skin_feel: str,
-        note: Optional[str] = None,
-        occurred_at: Optional[str] = None,
-        record_engagement_fn: Optional[Callable] = None,
-    ) -> Dict[str, Any]:
+        note: str | None = None,
+        occurred_at: str | None = None,
+        record_engagement_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         self.parent.require_user(user_id)
         if routine_state not in CHECK_IN_ROUTINE_STATES:
             raise ValueError(
@@ -427,9 +443,9 @@ class AnalyticsService:
         self,
         user_id: str,
         event_type: str,
-        reference_id: Optional[str] = None,
-        metadata: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+        reference_id: str | None = None,
+        metadata: Any | None = None,
+    ) -> dict[str, Any]:
         self.parent.require_user(user_id)
         event_id = uid()
         self.db.execute(
@@ -440,7 +456,9 @@ class AnalyticsService:
             self.db.fetchone("SELECT * FROM engagement_events WHERE id=?", (event_id,))
         )
 
-    def engagement(self, user_id: str, capture_guide_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def engagement(
+        self, user_id: str, capture_guide_fn: Callable | None = None
+    ) -> dict[str, Any]:
         self.parent.require_user(user_id)
         rows = self.db.fetchall(
             "SELECT captured_at FROM photo_captures WHERE user_id=? AND status='accepted' ORDER BY captured_at DESC",
@@ -465,7 +483,11 @@ class AnalyticsService:
                     streak += 1
                 else:
                     break
-        guide = capture_guide_fn(user_id) if capture_guide_fn else {"next_window_start": now_iso()}
+        guide = (
+            capture_guide_fn(user_id)
+            if capture_guide_fn
+            else {"next_window_start": now_iso()}
+        )
         reminder_id = f"{user_id}:capture"
         self.db.execute(
             "INSERT INTO reminders (id,user_id,kind,next_at,cadence_days) VALUES (?,?,?,?,4) ON CONFLICT(id) DO UPDATE SET next_at=excluded.next_at",
@@ -484,7 +506,9 @@ class AnalyticsService:
             ],
         }
 
-    def analytics(self, user_id: str, history_fn: Optional[Callable] = None) -> Dict[str, Any]:
+    def analytics(
+        self, user_id: str, history_fn: Callable | None = None
+    ) -> dict[str, Any]:
         self.parent.require_user(user_id)
         history = history_fn(user_id) if history_fn else []
         events = self.db.fetchall(
@@ -524,7 +548,7 @@ class AnalyticsService:
         }
 
     @staticmethod
-    def _median_history_days(history: List[Dict[str, Any]]) -> int:
+    def _median_history_days(history: list[dict[str, Any]]) -> int:
         if len(history) < 2:
             return 0
         dates = [as_date(item["captured_at"]) for item in history]
@@ -534,10 +558,10 @@ class AnalyticsService:
         self,
         user_id: str,
         event_type: str,
-        value: Optional[str] = None,
-        occurred_at: Optional[str] = None,
-        notes: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        value: str | None = None,
+        occurred_at: str | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
         self.parent.require_user(user_id)
         if event_type not in CONTEXT_EVENT_TYPES:
             raise ValueError(f"event_type must be one of {sorted(CONTEXT_EVENT_TYPES)}")
@@ -552,7 +576,7 @@ class AnalyticsService:
             self.db.fetchone("SELECT * FROM context_events WHERE id=?", (event_id,))
         )
 
-    def context_events(self, user_id: str) -> List[Dict[str, Any]]:
+    def context_events(self, user_id: str) -> list[dict[str, Any]]:
         self.parent.require_user(user_id)
         return [
             row_dict(row)
@@ -563,8 +587,12 @@ class AnalyticsService:
         ]
 
     def root_cause_search(
-        self, user_id: str, metric: str = "texture_score", history_fn: Optional[Callable] = None, require_premium_fn: Optional[Callable] = None
-    ) -> List[Dict[str, Any]]:
+        self,
+        user_id: str,
+        metric: str = "texture_score",
+        history_fn: Callable | None = None,
+        require_premium_fn: Callable | None = None,
+    ) -> list[dict[str, Any]]:
         if require_premium_fn:
             require_premium_fn(user_id, "Root-cause search")
         if metric not in {
@@ -591,7 +619,7 @@ class AnalyticsService:
             else 0.0
         )
         events = self.context_events(user_id)
-        by_type: Dict[str, List[float]] = {}
+        by_type: dict[str, list[float]] = {}
         for event in events:
             occurred = as_date(event["occurred_at"])
             window = [
@@ -626,7 +654,7 @@ class AnalyticsService:
             correlations, key=lambda item: abs(item["normalized_effect"]), reverse=True
         )
 
-    def summary(self, user_id: str) -> Dict[str, Any]:
+    def summary(self, user_id: str) -> dict[str, Any]:
         """Get analytics summary for a user.
 
         Args:
@@ -677,7 +705,7 @@ class AnalyticsService:
             "total_verdicts": len(verdicts),
         }
 
-    def trends(self, user_id: str, vertical: str = "skin") -> Dict[str, Any]:
+    def trends(self, user_id: str, vertical: str = "skin") -> dict[str, Any]:
         """Get trends analysis for a user.
 
         Args:
@@ -715,26 +743,37 @@ class AnalyticsService:
         first = history[0]
         last = history[-1]
 
-        for metric in ["redness_score", "blemish_count", "darkspot_area", "texture_score"]:
+        for metric in [
+            "redness_score",
+            "blemish_count",
+            "darkspot_area",
+            "texture_score",
+        ]:
             if first.get(metric) is not None and last.get(metric) is not None:
                 first_value = float(first[metric])
                 last_value = float(last[metric])
                 delta = last_value - first_value
                 percent_change = (
-                    ((last_value - first_value) / first_value * 100) if first_value != 0 else 0.0
+                    ((last_value - first_value) / first_value * 100)
+                    if first_value != 0
+                    else 0.0
                 )
 
-                direction = "improved" if delta < 0 else "increased" if delta > 0 else "steady"
+                direction = (
+                    "improved" if delta < 0 else "increased" if delta > 0 else "steady"
+                )
 
-                trends.append({
-                    "metric": metric,
-                    "label": METRIC_LABELS.get(metric, metric),
-                    "first_value": round(first_value, 3),
-                    "last_value": round(last_value, 3),
-                    "delta": round(delta, 3),
-                    "percent_change": round(percent_change, 2),
-                    "direction": direction,
-                })
+                trends.append(
+                    {
+                        "metric": metric,
+                        "label": METRIC_LABELS.get(metric, metric),
+                        "first_value": round(first_value, 3),
+                        "last_value": round(last_value, 3),
+                        "delta": round(delta, 3),
+                        "percent_change": round(percent_change, 2),
+                        "direction": direction,
+                    }
+                )
 
         return {
             "user_id": user_id,

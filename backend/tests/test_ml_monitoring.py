@@ -100,7 +100,9 @@ class TestModelMonitor(unittest.TestCase):
         # This test tracks multiple different captures with varying values instead.
 
         for i in range(5):
-            for j in range(3):  # Multiple predictions per capture (simulated by unique capture IDs)
+            for j in range(
+                3
+            ):  # Multiple predictions per capture (simulated by unique capture IDs)
                 self.monitor.track_prediction(
                     capture_id=f"capture_{i}_{j}",  # Unique capture IDs
                     predictions={
@@ -338,7 +340,9 @@ class TestModelMonitor(unittest.TestCase):
         mock_response.raise_for_status = Mock()
         mock_post.return_value = mock_response
 
-        with patch.dict("os.environ", {"SLACK_WEBHOOK_URL": "https://hooks.slack.com/test"}):
+        with patch.dict(
+            "os.environ", {"SLACK_WEBHOOK_URL": "https://hooks.slack.com/test"}
+        ):
             result = self.monitor.send_slack_alert("Test alert message")
 
             self.assertTrue(result)
@@ -361,7 +365,9 @@ class TestModelMonitor(unittest.TestCase):
         """Test Slack alert failure handling."""
         mock_post.side_effect = Exception("Network error")
 
-        with patch.dict("os.environ", {"SLACK_WEBHOOK_URL": "https://hooks.slack.com/test"}):
+        with patch.dict(
+            "os.environ", {"SLACK_WEBHOOK_URL": "https://hooks.slack.com/test"}
+        ):
             result = self.monitor.send_slack_alert("Test alert")
             self.assertFalse(result)
 
@@ -456,7 +462,14 @@ class TestModelMonitor(unittest.TestCase):
                     id, user_id, raw_ref, created_at, captured_at, capture_quality_json
                 ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (f"capture_{i}", "user_123", f"/path/capture_{i}.jpg", datetime.now().isoformat(), datetime.now().isoformat(), '{}'),
+                (
+                    f"capture_{i}",
+                    "user_123",
+                    f"/path/capture_{i}.jpg",
+                    datetime.now().isoformat(),
+                    datetime.now().isoformat(),
+                    "{}",
+                ),
             )
 
         # Insert some feedback data

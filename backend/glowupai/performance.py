@@ -7,7 +7,6 @@ import io
 import json
 import logging
 import time
-from collections.abc import Callable
 from typing import Any
 
 from fastapi import Request, Response
@@ -48,7 +47,9 @@ class ImageCompressor:
                 background = Image.new("RGB", img.size, (255, 255, 255))
                 if img.mode == "P":
                     img = img.convert("RGBA")
-                background.paste(img, mask=img.split()[-1] if img.mode == "RGBA" else None)
+                background.paste(
+                    img, mask=img.split()[-1] if img.mode == "RGBA" else None
+                )
                 img = background
 
             # Resize if needed
@@ -80,7 +81,7 @@ class ImageCompressor:
 
             return compressed_bytes
 
-        except (OSError, IOError, ValueError) as exc:
+        except (OSError, ValueError) as exc:
             logger.error(f"Image compression failed: {exc}")
             # Return original if compression fails
             return image_bytes
@@ -99,6 +100,7 @@ class RedisCache:
         if redis_url:
             try:
                 import redis
+
                 self.redis_client = redis.from_url(
                     redis_url,
                     decode_responses=True,
@@ -108,10 +110,14 @@ class RedisCache:
                 self.redis_client.ping()
                 logger.info("Redis cache initialized successfully")
             except ImportError:
-                logger.warning("redis package not installed, falling back to memory cache")
+                logger.warning(
+                    "redis package not installed, falling back to memory cache"
+                )
                 self.redis_client = None
             except (ConnectionError, TimeoutError, OSError) as exc:
-                logger.warning(f"Redis unavailable, falling back to memory cache: {exc}")
+                logger.warning(
+                    f"Redis unavailable, falling back to memory cache: {exc}"
+                )
                 self.redis_client = None
 
     def get(self, key: str) -> Any | None:
@@ -160,7 +166,13 @@ class RedisCache:
             try:
                 self.redis_client.setex(key, ttl, json.dumps(value))
                 return True
-            except (ConnectionError, TimeoutError, OSError, ValueError, TypeError) as exc:
+            except (
+                ConnectionError,
+                TimeoutError,
+                OSError,
+                ValueError,
+                TypeError,
+            ) as exc:
                 logger.error(f"Redis cache set failed: {exc}")
                 return False
         else:
@@ -214,7 +226,9 @@ class RedisCache:
                 return 0
         else:
             # Memory cache - match pattern
-            to_delete = [k for k in self.memory_cache.keys() if self._matches_pattern(k, pattern)]
+            to_delete = [
+                k for k in self.memory_cache if self._matches_pattern(k, pattern)
+            ]
             for key in to_delete:
                 del self.memory_cache[key]
                 if key in self.cache_times:
@@ -226,6 +240,7 @@ class RedisCache:
     def _matches_pattern(key: str, pattern: str) -> bool:
         """Check if key matches wildcard pattern."""
         import re
+
         regex_pattern = pattern.replace("*", ".*").replace("?", ".")
         return bool(re.match(f"^{regex_pattern}$", key))
 
@@ -251,7 +266,9 @@ class RedisCache:
 class CacheMiddleware(BaseHTTPMiddleware):
     """Middleware to cache GET responses."""
 
-    def __init__(self, app, cache: RedisCache, cacheable_paths: list[str] | None = None):
+    def __init__(
+        self, app, cache: RedisCache, cacheable_paths: list[str] | None = None
+    ):
         super().__init__(app)
         self.cache = cache
         self.cacheable_paths = cacheable_paths or ["/api/dashboard", "/api/users/"]
@@ -295,7 +312,9 @@ class CacheMiddleware(BaseHTTPMiddleware):
         return any(cacheable in path for cacheable in self.cacheable_paths)
 
     @staticmethod
-    def generate_cache_key_for_user(user_id: str, path: str, query_params: str = "") -> str:
+    def generate_cache_key_for_user(
+        user_id: str, path: str, query_params: str = ""
+    ) -> str:
         """Generate cache key for a specific user and path.
 
         Args:
@@ -316,7 +335,8 @@ class CacheMiddleware(BaseHTTPMiddleware):
         """Generate cache key from request."""
         # Try to extract user_id from path first (e.g., /api/users/{user_id}/dashboard)
         import re
-        path_match = re.search(r'/users/([^/]+)/', request.url.path)
+
+        path_match = re.search(r"/users/([^/]+)/", request.url.path)
         user_id = "anonymous"
 
         if path_match:
@@ -328,6 +348,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
             if auth_header and "." in auth_header:
                 try:
                     import base64
+
                     token = auth_header.replace("Bearer ", "").strip()
                     payload = token.split(".")[1]
                     payload += "=" * (4 - len(payload) % 4)
@@ -335,18 +356,19 @@ class CacheMiddleware(BaseHTTPMiddleware):
                     user_id = decoded.get("sub", "anonymous")
                 except (ValueError, KeyError, IndexError) as exc:
                     # JWT parsing failed - use anonymous user
-                    logger.debug(f"Failed to extract user ID from JWT for cache key: {exc}")
-                    pass
+                    logger.debug(
+                        f"Failed to extract user ID from JWT for cache key: {exc}"
+                    )
 
         # Create cache key from path, query params, and user
         return self.generate_cache_key_for_user(
-            user_id,
-            request.url.path,
-            str(request.query_params)
+            user_id, request.url.path, str(request.query_params)
         )
 
     async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint,
+        self,
+        request: Request,
+        call_next: RequestResponseEndpoint,
     ) -> Response:
         """Cache GET responses."""
         # Check if request is cacheable
@@ -385,7 +407,9 @@ class CacheMiddleware(BaseHTTPMiddleware):
                     body = response.body
                 else:
                     # Cannot cache this response type
-                    logger.warning(f"Cannot cache response: no body_iterator or body attribute")
+                    logger.warning(
+                        "Cannot cache response: no body_iterator or body attribute"
+                    )
                     return response
 
                 # Store in cache
@@ -397,7 +421,9 @@ class CacheMiddleware(BaseHTTPMiddleware):
                 }
                 self.cache.set(cache_key, cache_data)
 
-                logger.info(f"Cache MISS: {request.url.path} (stored with key: {cache_key[:16]}...)")
+                logger.info(
+                    f"Cache MISS: {request.url.path} (stored with key: {cache_key[:16]}...)"
+                )
 
                 # Return new response with body and cache status header
                 headers = dict(response.headers)
@@ -425,7 +451,9 @@ class RequestTimingMiddleware(BaseHTTPMiddleware):
         self.slow_threshold_ms = slow_threshold_ms
 
     async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint,
+        self,
+        request: Request,
+        call_next: RequestResponseEndpoint,
     ) -> Response:
         """Track request timing."""
         start_time = time.time()

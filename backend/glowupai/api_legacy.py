@@ -63,7 +63,9 @@ def create_app(service: GlowupAIService | None = None) -> FastAPI:
     settings = Settings.from_env()
     settings.prepare()
     active_service = service or GlowupAIService(
-        build_full_database(settings), settings, build_photo_store(settings.photo_dir),
+        build_full_database(settings),
+        settings,
+        build_photo_store(settings.photo_dir),
     )
     app = FastAPI(
         title="GlowupAI API",
@@ -127,7 +129,8 @@ def create_app(service: GlowupAIService | None = None) -> FastAPI:
             image = base64.b64decode(payload.image_base64, validate=True)
         except (binascii.Error, ValueError) as exc:
             raise HTTPException(
-                status_code=400, detail="image_base64 must be valid base64",
+                status_code=400,
+                detail="image_base64 must be valid base64",
             ) from exc
         return run(
             active_service.create_capture,

@@ -61,8 +61,8 @@ class TestCompleteUserFlow(unittest.TestCase):
             json={
                 "firebase_uid": "integration_test_user",
                 "email": "integration@test.com",
-                "skin_type": "combination"
-            }
+                "skin_type": "combination",
+            },
         )
         self.assertEqual(signup_response.status_code, 200)
         user_id = signup_response.json()["id"]
@@ -70,7 +70,7 @@ class TestCompleteUserFlow(unittest.TestCase):
         # Step 2: Grant consent
         consent_response = self.client.post(
             f"/api/users/{user_id}/consent",
-            json={"facial_data": True, "analytics": True}
+            json={"facial_data": True, "analytics": True},
         )
         self.assertEqual(consent_response.status_code, 200)
 
@@ -81,8 +81,8 @@ class TestCompleteUserFlow(unittest.TestCase):
                 "user_id": user_id,
                 "image_base64": create_test_image(),
                 "quality": QUALITY,
-                "is_baseline": True
-            }
+                "is_baseline": True,
+            },
         )
         self.assertEqual(capture_response.status_code, 200)
         capture_data = capture_response.json()
@@ -101,16 +101,12 @@ class TestCompleteUserFlow(unittest.TestCase):
         """Test flow: create user -> add product -> start routine -> captures."""
         # Create user
         user_response = self.client.post(
-            "/api/users",
-            json={"firebase_uid": "product_test", "skin_type": "oily"}
+            "/api/users", json={"firebase_uid": "product_test", "skin_type": "oily"}
         )
         user_id = user_response.json()["id"]
 
         # Grant consent
-        self.client.post(
-            f"/api/users/{user_id}/consent",
-            json={"facial_data": True}
-        )
+        self.client.post(f"/api/users/{user_id}/consent", json={"facial_data": True})
 
         # Take baseline capture
         baseline_response = self.client.post(
@@ -119,8 +115,8 @@ class TestCompleteUserFlow(unittest.TestCase):
                 "user_id": user_id,
                 "image_base64": create_test_image(),
                 "quality": QUALITY,
-                "is_baseline": True
-            }
+                "is_baseline": True,
+            },
         )
         self.assertEqual(baseline_response.status_code, 200)
 
@@ -131,8 +127,8 @@ class TestCompleteUserFlow(unittest.TestCase):
                 "name": "Test Vitamin C Serum",
                 "brand": "Test Brand",
                 "ingredients": "Water, Ascorbic Acid, Vitamin E",
-                "stabilization_days": 14
-            }
+                "stabilization_days": 14,
+            },
         )
         self.assertEqual(product_response.status_code, 200)
         product_id = product_response.json()["id"]
@@ -140,11 +136,7 @@ class TestCompleteUserFlow(unittest.TestCase):
         # Start using product
         routine_response = self.client.post(
             "/api/routine-events",
-            json={
-                "user_id": user_id,
-                "product_id": product_id,
-                "action": "start"
-            }
+            json={"user_id": user_id, "product_id": product_id, "action": "start"},
         )
         self.assertEqual(routine_response.status_code, 200)
 
@@ -155,8 +147,8 @@ class TestCompleteUserFlow(unittest.TestCase):
                 "user_id": user_id,
                 "image_base64": create_test_image(),
                 "quality": QUALITY,
-                "is_baseline": False
-            }
+                "is_baseline": False,
+            },
         )
         self.assertEqual(followup_response.status_code, 200)
 
@@ -170,15 +162,11 @@ class TestCompleteUserFlow(unittest.TestCase):
         """Test flow with multiple captures showing progression."""
         # Setup user
         user_response = self.client.post(
-            "/api/users",
-            json={"firebase_uid": "multi_capture"}
+            "/api/users", json={"firebase_uid": "multi_capture"}
         )
         user_id = user_response.json()["id"]
 
-        self.client.post(
-            f"/api/users/{user_id}/consent",
-            json={"facial_data": True}
-        )
+        self.client.post(f"/api/users/{user_id}/consent", json={"facial_data": True})
 
         # Take multiple captures over time
         capture_ids = []
@@ -189,8 +177,8 @@ class TestCompleteUserFlow(unittest.TestCase):
                     "user_id": user_id,
                     "image_base64": create_test_image(),
                     "quality": QUALITY,
-                    "is_baseline": (i == 0)
-                }
+                    "is_baseline": (i == 0),
+                },
             )
             self.assertEqual(response.status_code, 200)
             capture_ids.append(response.json()["id"])
@@ -208,8 +196,7 @@ class TestCompleteUserFlow(unittest.TestCase):
         """Test that capture requires explicit consent."""
         # Create user without consent
         user_response = self.client.post(
-            "/api/users",
-            json={"firebase_uid": "no_consent"}
+            "/api/users", json={"firebase_uid": "no_consent"}
         )
         user_id = user_response.json()["id"]
 
@@ -219,8 +206,8 @@ class TestCompleteUserFlow(unittest.TestCase):
             json={
                 "user_id": user_id,
                 "image_base64": create_test_image(),
-                "quality": QUALITY
-            }
+                "quality": QUALITY,
+            },
         )
 
         # Should be rejected
@@ -229,22 +216,38 @@ class TestCompleteUserFlow(unittest.TestCase):
     def test_quality_gates_enforcement(self):
         """Test that quality gates are enforced."""
         user_response = self.client.post(
-            "/api/users",
-            json={"firebase_uid": "quality_test"}
+            "/api/users", json={"firebase_uid": "quality_test"}
         )
         user_id = user_response.json()["id"]
 
-        self.client.post(
-            f"/api/users/{user_id}/consent",
-            json={"facial_data": True}
-        )
+        self.client.post(f"/api/users/{user_id}/consent", json={"facial_data": True})
 
         # Test various quality violations
         bad_quality_scenarios = [
-            {"face_present": False, "yaw_degrees": 0, "pitch_degrees": 0, "distance_cm": 45},
-            {"face_present": True, "yaw_degrees": 45, "pitch_degrees": 0, "distance_cm": 45},
-            {"face_present": True, "yaw_degrees": 0, "pitch_degrees": 45, "distance_cm": 45},
-            {"face_present": True, "yaw_degrees": 0, "pitch_degrees": 0, "distance_cm": 20},
+            {
+                "face_present": False,
+                "yaw_degrees": 0,
+                "pitch_degrees": 0,
+                "distance_cm": 45,
+            },
+            {
+                "face_present": True,
+                "yaw_degrees": 45,
+                "pitch_degrees": 0,
+                "distance_cm": 45,
+            },
+            {
+                "face_present": True,
+                "yaw_degrees": 0,
+                "pitch_degrees": 45,
+                "distance_cm": 45,
+            },
+            {
+                "face_present": True,
+                "yaw_degrees": 0,
+                "pitch_degrees": 0,
+                "distance_cm": 20,
+            },
         ]
 
         for bad_quality in bad_quality_scenarios:
@@ -254,8 +257,8 @@ class TestCompleteUserFlow(unittest.TestCase):
                     json={
                         "user_id": user_id,
                         "image_base64": create_test_image(),
-                        "quality": bad_quality
-                    }
+                        "quality": bad_quality,
+                    },
                 )
                 # Should reject bad quality
                 self.assertIn(response.status_code, [400, 422])
@@ -289,15 +292,11 @@ class TestErrorHandling(unittest.TestCase):
     def test_invalid_image_data(self):
         """Test handling of invalid image data."""
         user_response = self.client.post(
-            "/api/users",
-            json={"firebase_uid": "invalid_image_test"}
+            "/api/users", json={"firebase_uid": "invalid_image_test"}
         )
         user_id = user_response.json()["id"]
 
-        self.client.post(
-            f"/api/users/{user_id}/consent",
-            json={"facial_data": True}
-        )
+        self.client.post(f"/api/users/{user_id}/consent", json={"facial_data": True})
 
         # Send invalid base64
         response = self.client.post(
@@ -305,8 +304,8 @@ class TestErrorHandling(unittest.TestCase):
             json={
                 "user_id": user_id,
                 "image_base64": "not-valid-base64!!!",
-                "quality": QUALITY
-            }
+                "quality": QUALITY,
+            },
         )
 
         self.assertIn(response.status_code, [400, 422])
@@ -314,24 +313,17 @@ class TestErrorHandling(unittest.TestCase):
     def test_missing_required_fields(self):
         """Test handling of missing required fields."""
         # Missing firebase_uid
-        response = self.client.post(
-            "/api/users",
-            json={"email": "test@test.com"}
-        )
+        response = self.client.post("/api/users", json={"email": "test@test.com"})
         self.assertIn(response.status_code, [400, 422])
 
     def test_duplicate_baseline(self):
         """Test handling of duplicate baseline attempts."""
         user_response = self.client.post(
-            "/api/users",
-            json={"firebase_uid": "duplicate_baseline"}
+            "/api/users", json={"firebase_uid": "duplicate_baseline"}
         )
         user_id = user_response.json()["id"]
 
-        self.client.post(
-            f"/api/users/{user_id}/consent",
-            json={"facial_data": True}
-        )
+        self.client.post(f"/api/users/{user_id}/consent", json={"facial_data": True})
 
         # Create first baseline
         self.client.post(
@@ -340,8 +332,8 @@ class TestErrorHandling(unittest.TestCase):
                 "user_id": user_id,
                 "image_base64": create_test_image(),
                 "quality": QUALITY,
-                "is_baseline": True
-            }
+                "is_baseline": True,
+            },
         )
 
         # Attempt second baseline
@@ -351,8 +343,8 @@ class TestErrorHandling(unittest.TestCase):
                 "user_id": user_id,
                 "image_base64": create_test_image(),
                 "quality": QUALITY,
-                "is_baseline": True
-            }
+                "is_baseline": True,
+            },
         )
 
         # Should either reject or replace (depending on business logic)
@@ -378,15 +370,11 @@ class TestRateLimiting(unittest.TestCase):
         """Test that rate limiting is enforced on capture endpoint."""
         # Create user
         user_response = self.client.post(
-            "/api/users",
-            json={"firebase_uid": "ratelimit_test"}
+            "/api/users", json={"firebase_uid": "ratelimit_test"}
         )
         user_id = user_response.json()["id"]
 
-        self.client.post(
-            f"/api/users/{user_id}/consent",
-            json={"facial_data": True}
-        )
+        self.client.post(f"/api/users/{user_id}/consent", json={"facial_data": True})
 
         # Make rapid requests
         responses = []
@@ -396,8 +384,8 @@ class TestRateLimiting(unittest.TestCase):
                 json={
                     "user_id": user_id,
                     "image_base64": create_test_image(),
-                    "quality": QUALITY
-                }
+                    "quality": QUALITY,
+                },
             )
             responses.append(response.status_code)
 

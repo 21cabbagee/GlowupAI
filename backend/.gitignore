@@ -10,6 +10,7 @@ build/
 .env
 first.py
 *.gemini-previous
+*.backup
 
 # web UI
 web/node_modules/

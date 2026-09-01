@@ -4,16 +4,11 @@ import json
 import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 
 
 def now_iso() -> str:
-    return (
-        datetime.now(UTC)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def dump(value) -> str:
@@ -41,7 +36,8 @@ class JobRunner:
     def __init__(self, db, max_workers: int = 4) -> None:
         self.db = db
         self._executor = ThreadPoolExecutor(
-            max_workers=max_workers, thread_name_prefix="glowupai-job",
+            max_workers=max_workers,
+            thread_name_prefix="glowupai-job",
         )
 
     def submit(

@@ -4,8 +4,7 @@ import json
 import logging
 import sqlite3
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .service import GlowupAIService, now_iso, row_dict
 
@@ -35,7 +34,7 @@ def dump(value: Any) -> str:
     return json.dumps(value, separators=(",", ":"), sort_keys=True)
 
 
-def load(value: Any, default: Optional[Any] = None) -> Any:
+def load(value: Any, default: Any | None = None) -> Any:
     """Deserialize a JSON string to a Python value.
 
     Args:
@@ -67,10 +66,10 @@ class UserService:
     def _audit(
         self,
         action: str,
-        subject_type: Optional[str] = None,
-        subject_id: Optional[str] = None,
-        actor_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        subject_type: str | None = None,
+        subject_id: str | None = None,
+        actor_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Record an audit log entry for user actions.
 
@@ -86,7 +85,7 @@ class UserService:
             (uid(), actor_id, action, subject_type, subject_id, dump(metadata or {})),
         )
 
-    def create_user(self, skin_type: Optional[str] = None) -> Dict[str, Any]:
+    def create_user(self, skin_type: str | None = None) -> dict[str, Any]:
         """Create a new user with default entitlements and appearance profiles.
 
         Creates a user record, initializes a free plan entitlement, and creates
@@ -116,10 +115,10 @@ class UserService:
     def session_for_identity(
         self,
         firebase_uid: str,
-        email: Optional[str] = None,
+        email: str | None = None,
         email_verified: bool = False,
-        name: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        name: str | None = None,
+    ) -> dict[str, Any]:
         """Exchange a verified Firebase uid for a GlowUpAI profile.
 
         Idempotent per `firebase_uid`: the first call creates the user,
@@ -144,7 +143,9 @@ class UserService:
             # Lost a create-race to a concurrent request for the same uid:
             # bind to whichever row won, and drop the extra one we made
             # rather than leaving an orphaned duplicate user behind.
-            logger.warning(f"Race condition detected for firebase_uid {firebase_uid}: {exc}")
+            logger.warning(
+                f"Race condition detected for firebase_uid {firebase_uid}: {exc}"
+            )
             winner = self.db.fetchone(
                 "SELECT id FROM users WHERE firebase_uid = ?", (firebase_uid,)
             )
@@ -172,8 +173,8 @@ class UserService:
         return self.profile(user_id)
 
     def grant_consent(
-        self, user_id: str, facial_data: bool, policy_version: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, user_id: str, facial_data: bool, policy_version: str | None = None
+    ) -> dict[str, Any]:
         """Record user consent or decline for facial data processing.
 
         Args:
@@ -185,7 +186,7 @@ class UserService:
             Updated user profile dictionary.
         """
         # Call base service method directly to avoid infinite recursion
-        result = GlowupAIService.grant_consent(self.parent, user_id, facial_data, policy_version)
+        GlowupAIService.grant_consent(self.parent, user_id, facial_data, policy_version)
         self._audit(
             "consent_granted" if facial_data else "consent_declined",
             "user",
@@ -195,7 +196,7 @@ class UserService:
         )
         return self.profile(user_id)
 
-    def profile(self, user_id: str) -> Dict[str, Any]:
+    def profile(self, user_id: str) -> dict[str, Any]:
         """Retrieve complete user profile including all related data.
 
         Assembles a comprehensive profile including user data, appearance profiles
@@ -249,13 +250,13 @@ class UserService:
     def update_profile(
         self,
         user_id: str,
-        display_name: Optional[str] = None,
-        skin_type: Optional[str] = None,
-        focus_vertical: Optional[str] = None,
-        goals: Optional[List[str]] = None,
-        experience_level: Optional[str] = None,
-        onboarding_complete: Optional[bool] = None,
-    ) -> Dict[str, Any]:
+        display_name: str | None = None,
+        skin_type: str | None = None,
+        focus_vertical: str | None = None,
+        goals: list[str] | None = None,
+        experience_level: str | None = None,
+        onboarding_complete: bool | None = None,
+    ) -> dict[str, Any]:
         """Update user profile and experience settings.
 
         Updates the user's experience profile with new settings. Only provided
@@ -336,7 +337,15 @@ class UserService:
         )
         return self.profile(user_id)
 
-    def export_user(self, user_id: str, history_fn: Any, context_events_fn: Any, check_ins_fn: Any, qna_history_fn: Any, is_premium: bool) -> Dict[str, Any]:
+    def export_user(
+        self,
+        user_id: str,
+        history_fn: Any,
+        context_events_fn: Any,
+        check_ins_fn: Any,
+        qna_history_fn: Any,
+        is_premium: bool,
+    ) -> dict[str, Any]:
         """Export all user data for GDPR compliance or data portability.
 
         Assembles a comprehensive export of all user data including profile,
@@ -356,7 +365,10 @@ class UserService:
         self.parent.require_user(user_id)
 
         from .complete_service import CompleteGlowupAIService
-        complete = self.parent if isinstance(self.parent, CompleteGlowupAIService) else None
+
+        complete = (
+            self.parent if isinstance(self.parent, CompleteGlowupAIService) else None
+        )
 
         return {
             "export_version": "3",
@@ -420,11 +432,8 @@ class UserService:
         }
 
     def record_data_collection_consent(
-        self,
-        user_id: str,
-        granted: bool,
-        policy_version: str = "1.0"
-    ) -> Dict[str, Any]:
+        self, user_id: str, granted: bool, policy_version: str = "1.0"
+    ) -> dict[str, Any]:
         """Record user consent for data collection.
 
         Creates a consent event record for data collection compliance tracking.
@@ -446,16 +455,16 @@ class UserService:
                 policy_version
             ) VALUES (?, ?, ?, ?)
             """,
-            (user_id, "data_collection", 1 if granted else 0, policy_version)
+            (user_id, "data_collection", 1 if granted else 0, policy_version),
         )
 
         return {
             "message": "Consent recorded successfully",
             "user_id": user_id,
-            "granted": granted
+            "granted": granted,
         }
 
-    def admin_audit(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def admin_audit(self, limit: int = 100) -> list[dict[str, Any]]:
         """Retrieve recent audit log entries for admin review.
 
         Args:

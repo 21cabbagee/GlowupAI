@@ -70,15 +70,19 @@ def analyze(
         # Use new ML model
         try:
             from .ml_model import analyze_with_ml
+
             return analyze_with_ml(image_bytes, quality_score, baseline)
         except Exception as exc:
             # Fall back to deterministic model if ML model fails
             import logging
+
             logging.warning(f"ML model failed, falling back to deterministic: {exc}")
 
     # Apply face alignment before analysis for consistency
     # This aligns eyes to horizontal, scales to consistent distance, and centers face
-    aligned_bytes = align_face_safe(image_bytes, target_eye_distance=80, output_size=(256, 256))
+    aligned_bytes = align_face_safe(
+        image_bytes, target_eye_distance=80, output_size=(256, 256)
+    )
 
     with Image.open(io.BytesIO(aligned_bytes)) as original:
         image = original.convert("RGB").resize((96, 96))

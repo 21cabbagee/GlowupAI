@@ -6,7 +6,7 @@ import base64
 import binascii
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
@@ -19,12 +19,12 @@ logger = logging.getLogger(__name__)
 class CaptureCreate(BaseModel):
     user_id: str
     image_base64: str
-    quality: Optional[Dict[str, Any]] = None
-    captured_at: Optional[str] = None
-    device_meta: Optional[Dict[str, Any]] = None
+    quality: dict[str, Any] | None = None
+    captured_at: str | None = None
+    device_meta: dict[str, Any] | None = None
     is_baseline: bool = False
     vertical: str = "skin"
-    experiment_id: Optional[str] = None
+    experiment_id: str | None = None
 
 
 class CheckInCreate(BaseModel):
@@ -32,22 +32,22 @@ class CheckInCreate(BaseModel):
         default="steady", pattern="^(steady|changed|missed|not_sure)$"
     )
     skin_feel: str = Field(default="not_sure", pattern="^(better|same|worse|not_sure)$")
-    note: Optional[str] = Field(default=None, max_length=400)
-    occurred_at: Optional[str] = None
+    note: str | None = Field(default=None, max_length=400)
+    occurred_at: str | None = None
 
 
 class MeasurementFeedbackCreate(BaseModel):
     capture_id: str
     agreement: str = Field(pattern="^(fair|uncertain|off)$")
-    note: Optional[str] = Field(default=None, max_length=400)
+    note: str | None = Field(default=None, max_length=400)
 
 
 class LabelCreate(BaseModel):
     photo_id: str
     label_type: str
     value: str
-    confidence: Optional[float] = Field(default=None, ge=0, le=1)
-    notes: Optional[str] = None
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    notes: str | None = None
 
 
 class ReprocessCreate(BaseModel):
@@ -59,10 +59,12 @@ class ShelfScanCreate(BaseModel):
 
 
 class ShelfScanConfirm(BaseModel):
-    selections: List[Dict[str, Any]]
+    selections: list[dict[str, Any]]
 
 
-def setup_captures_router(service, analytics, compressor, run_handler, require_owner) -> APIRouter:
+def setup_captures_router(
+    service, analytics, compressor, run_handler, require_owner
+) -> APIRouter:
     """Setup capture routes with dependencies."""
 
     # Create a fresh router for each app instance
@@ -70,8 +72,8 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
 
     @router.post("/captures")
     def capture(
-        payload: CaptureCreate, authorization: Optional[str] = Header(default=None)
-    ) -> Dict[str, Any]:
+        payload: CaptureCreate, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
         require_owner(payload.user_id, authorization)
         try:
             image = base64.b64decode(payload.image_base64, validate=True)
@@ -119,12 +121,19 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
     @router.post("/captures/{capture_id}/feedback")
     def submit_feedback(
         capture_id: str,
-        payload: Dict[str, Any],
-        authorization: Optional[str] = Header(default=None)
-    ) -> Dict[str, Any]:
+        payload: dict[str, Any],
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         """Submit feedback for a capture."""
         # Extract user_id from authorization
-        uid = verify_id_token(authorization.replace("Bearer ", ""), service.settings.firebase_project_id)["uid"] if authorization else None
+        uid = (
+            verify_id_token(
+                authorization.replace("Bearer ", ""),
+                service.settings.firebase_project_id,
+            )["uid"]
+            if authorization
+            else None
+        )
         if not uid:
             raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -135,15 +144,15 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
             payload.get("feedback_type"),
             payload.get("issues"),
             payload.get("corrections"),
-            payload.get("comment")
+            payload.get("comment"),
         )
 
     @router.get("/users/{user_id}/capture-guide")
     def capture_guide(
         user_id: str,
         vertical: str = "skin",
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.capture_guide, user_id, vertical)
 
@@ -151,8 +160,8 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
     def dashboard(
         user_id: str,
         vertical: str = "skin",
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.dashboard, user_id, vertical)
 
@@ -160,8 +169,8 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
     def history(
         user_id: str,
         vertical: str = "skin",
-        authorization: Optional[str] = Header(default=None),
-    ) -> List[Dict[str, Any]]:
+        authorization: str | None = Header(default=None),
+    ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
         result = run_handler(service.history, user_id, vertical)
 
@@ -174,8 +183,8 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
 
     @router.get("/users/{user_id}/check-ins")
     def check_ins(
-        user_id: str, limit: int = 30, authorization: Optional[str] = Header(default=None)
-    ) -> List[Dict[str, Any]]:
+        user_id: str, limit: int = 30, authorization: str | None = Header(default=None)
+    ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
         return run_handler(service.check_ins, user_id, limit)
 
@@ -183,8 +192,8 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
     def create_check_in(
         user_id: str,
         payload: CheckInCreate,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.create_check_in, user_id, **payload.model_dump())
 
@@ -192,9 +201,9 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
     def weekly_recap(
         user_id: str,
         vertical: str = "skin",
-        as_of: Optional[str] = None,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        as_of: str | None = None,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.weekly_recap, user_id, vertical, as_of)
 
@@ -202,8 +211,8 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
     def measurement_feedback(
         user_id: str,
         payload: MeasurementFeedbackCreate,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(
             service.add_measurement_feedback,
@@ -214,7 +223,9 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
         )
 
     @router.get("/users/{user_id}/labels")
-    def labels(user_id: str, authorization: Optional[str] = Header(default=None)) -> List[Dict[str, Any]]:
+    def labels(
+        user_id: str, authorization: str | None = Header(default=None)
+    ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
         return run_handler(service.labels, user_id)
 
@@ -222,8 +233,8 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
     def add_label(
         user_id: str,
         payload: LabelCreate,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(
             service.add_label,
@@ -239,15 +250,15 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
     def reprocess(
         user_id: str,
         payload: ReprocessCreate,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.reprocess, user_id, payload.model_version)
 
     @router.get("/users/{user_id}/reprocess/{job_id}")
     def reprocess_status(
-        user_id: str, job_id: str, authorization: Optional[str] = Header(default=None)
-    ) -> Dict[str, Any]:
+        user_id: str, job_id: str, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.reprocess_status, user_id, job_id)
 
@@ -255,8 +266,8 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
     def shelf_scan(
         user_id: str,
         payload: ShelfScanCreate,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         try:
             image = base64.b64decode(payload.image_base64, validate=True)
@@ -268,8 +279,8 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
 
     @router.get("/users/{user_id}/shelf-scan/{job_id}")
     def shelf_scan_status(
-        user_id: str, job_id: str, authorization: Optional[str] = Header(default=None)
-    ) -> Dict[str, Any]:
+        user_id: str, job_id: str, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
         return run_handler(service.shelf_scan_status, user_id, job_id)
 
@@ -278,9 +289,11 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
         user_id: str,
         job_id: str,
         payload: ShelfScanConfirm,
-        authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.confirm_shelf_scan, user_id, job_id, payload.selections)
+        return run_handler(
+            service.confirm_shelf_scan, user_id, job_id, payload.selections
+        )
 
     return router

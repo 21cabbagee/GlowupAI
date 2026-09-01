@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import signal
-import sys
 from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
@@ -69,7 +68,8 @@ class GracefulShutdown:
 
 
 def create_shutdown_handler(
-    app, db_close_func: Callable | None = None,
+    app,
+    db_close_func: Callable | None = None,
 ) -> GracefulShutdown:
     """Create shutdown handler for the application.
 

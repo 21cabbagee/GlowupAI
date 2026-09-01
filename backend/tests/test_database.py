@@ -29,7 +29,7 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid, skin_type) VALUES (?, ?, ?)",
-            (user_id, "test_uid_123", "combination")
+            (user_id, "test_uid_123", "combination"),
         )
 
         user = self.db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
@@ -43,7 +43,7 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "test_uid_456")
+            (user_id, "test_uid_456"),
         )
 
         user = self.db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
@@ -58,10 +58,12 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, firebase_uid)
+            (user_id, firebase_uid),
         )
 
-        user = self.db.fetchone("SELECT * FROM users WHERE firebase_uid = ?", (firebase_uid,))
+        user = self.db.fetchone(
+            "SELECT * FROM users WHERE firebase_uid = ?", (firebase_uid,)
+        )
 
         self.assertIsNotNone(user)
         self.assertEqual(user["id"], user_id)
@@ -72,21 +74,23 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "consent_test")
+            (user_id, "consent_test"),
         )
 
         # Insert consent events
         self.db.execute(
             "INSERT INTO consent_events (user_id, consent_type, granted, policy_version) VALUES (?, ?, ?, ?)",
-            (user_id, "facial_data", 1, "1.0")
+            (user_id, "facial_data", 1, "1.0"),
         )
         self.db.execute(
             "INSERT INTO consent_events (user_id, consent_type, granted, policy_version) VALUES (?, ?, ?, ?)",
-            (user_id, "analytics", 1, "1.0")
+            (user_id, "analytics", 1, "1.0"),
         )
 
         # Verify consent events were recorded
-        consents = self.db.fetchall("SELECT * FROM consent_events WHERE user_id = ?", (user_id,))
+        consents = self.db.fetchall(
+            "SELECT * FROM consent_events WHERE user_id = ?", (user_id,)
+        )
         self.assertEqual(len(consents), 2)
         consent_types = {c["consent_type"]: c["granted"] for c in consents}
         self.assertEqual(consent_types["facial_data"], 1)
@@ -97,7 +101,7 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "capture_test")
+            (user_id, "capture_test"),
         )
 
         capture_id = str(uuid.uuid4())
@@ -106,10 +110,19 @@ class TestDatabaseOperations(unittest.TestCase):
 
         self.db.execute(
             "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json, is_baseline) VALUES (?, ?, ?, ?, ?, ?)",
-            (capture_id, user_id, captured_at, "https://example.com/image.jpg", capture_quality, 1)
+            (
+                capture_id,
+                user_id,
+                captured_at,
+                "https://example.com/image.jpg",
+                capture_quality,
+                1,
+            ),
         )
 
-        capture = self.db.fetchone("SELECT * FROM photo_captures WHERE id = ?", (capture_id,))
+        capture = self.db.fetchone(
+            "SELECT * FROM photo_captures WHERE id = ?", (capture_id,)
+        )
         self.assertIsNotNone(capture)
         self.assertEqual(capture["id"], capture_id)
         self.assertEqual(capture["is_baseline"], 1)
@@ -119,7 +132,7 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "get_capture_test")
+            (user_id, "get_capture_test"),
         )
 
         capture_id = str(uuid.uuid4())
@@ -128,10 +141,18 @@ class TestDatabaseOperations(unittest.TestCase):
 
         self.db.execute(
             "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json) VALUES (?, ?, ?, ?, ?)",
-            (capture_id, user_id, captured_at, "https://example.com/img.jpg", capture_quality)
+            (
+                capture_id,
+                user_id,
+                captured_at,
+                "https://example.com/img.jpg",
+                capture_quality,
+            ),
         )
 
-        capture = self.db.fetchone("SELECT * FROM photo_captures WHERE id = ?", (capture_id,))
+        capture = self.db.fetchone(
+            "SELECT * FROM photo_captures WHERE id = ?", (capture_id,)
+        )
 
         self.assertIsNotNone(capture)
         self.assertEqual(capture["id"], capture_id)
@@ -142,7 +163,7 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "list_captures_test")
+            (user_id, "list_captures_test"),
         )
 
         # Create multiple captures
@@ -152,10 +173,18 @@ class TestDatabaseOperations(unittest.TestCase):
             capture_quality = json.dumps({"sharpness": 0.9})
             self.db.execute(
                 "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json) VALUES (?, ?, ?, ?, ?)",
-                (capture_id, user_id, captured_at, f"https://example.com/img{i}.jpg", capture_quality)
+                (
+                    capture_id,
+                    user_id,
+                    captured_at,
+                    f"https://example.com/img{i}.jpg",
+                    capture_quality,
+                ),
             )
 
-        captures = self.db.fetchall("SELECT * FROM photo_captures WHERE user_id = ?", (user_id,))
+        captures = self.db.fetchall(
+            "SELECT * FROM photo_captures WHERE user_id = ?", (user_id,)
+        )
 
         self.assertEqual(len(captures), 3)
 
@@ -164,7 +193,7 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "limit_test")
+            (user_id, "limit_test"),
         )
 
         # Create 5 captures
@@ -174,10 +203,18 @@ class TestDatabaseOperations(unittest.TestCase):
             capture_quality = json.dumps({"sharpness": 0.9})
             self.db.execute(
                 "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json) VALUES (?, ?, ?, ?, ?)",
-                (capture_id, user_id, captured_at, f"https://example.com/img{i}.jpg", capture_quality)
+                (
+                    capture_id,
+                    user_id,
+                    captured_at,
+                    f"https://example.com/img{i}.jpg",
+                    capture_quality,
+                ),
             )
 
-        captures = self.db.fetchall("SELECT * FROM photo_captures WHERE user_id = ? LIMIT 3", (user_id,))
+        captures = self.db.fetchall(
+            "SELECT * FROM photo_captures WHERE user_id = ? LIMIT 3", (user_id,)
+        )
 
         self.assertEqual(len(captures), 3)
 
@@ -186,7 +223,7 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "baseline_test")
+            (user_id, "baseline_test"),
         )
 
         # Create non-baseline capture
@@ -195,17 +232,34 @@ class TestDatabaseOperations(unittest.TestCase):
         capture_quality = json.dumps({"sharpness": 0.9})
         self.db.execute(
             "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json, is_baseline) VALUES (?, ?, ?, ?, ?, ?)",
-            (capture_id_1, user_id, captured_at, "https://example.com/regular.jpg", capture_quality, 0)
+            (
+                capture_id_1,
+                user_id,
+                captured_at,
+                "https://example.com/regular.jpg",
+                capture_quality,
+                0,
+            ),
         )
 
         # Create baseline capture
         baseline_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json, is_baseline) VALUES (?, ?, ?, ?, ?, ?)",
-            (baseline_id, user_id, captured_at, "https://example.com/baseline.jpg", capture_quality, 1)
+            (
+                baseline_id,
+                user_id,
+                captured_at,
+                "https://example.com/baseline.jpg",
+                capture_quality,
+                1,
+            ),
         )
 
-        baseline = self.db.fetchone("SELECT * FROM photo_captures WHERE user_id = ? AND is_baseline = 1", (user_id,))
+        baseline = self.db.fetchone(
+            "SELECT * FROM photo_captures WHERE user_id = ? AND is_baseline = 1",
+            (user_id,),
+        )
 
         self.assertIsNotNone(baseline)
         self.assertEqual(baseline["id"], baseline_id)
@@ -218,7 +272,7 @@ class TestDatabaseOperations(unittest.TestCase):
 
         self.db.execute(
             "INSERT INTO products (id, name, ingredients_json, stabilization_days) VALUES (?, ?, ?, ?)",
-            (product_id, "Test Serum", ingredients, 14)
+            (product_id, "Test Serum", ingredients, 14),
         )
 
         product = self.db.fetchone("SELECT * FROM products WHERE id = ?", (product_id,))
@@ -233,7 +287,7 @@ class TestDatabaseOperations(unittest.TestCase):
 
         self.db.execute(
             "INSERT INTO products (id, name, ingredients_json) VALUES (?, ?, ?)",
-            (product_id, "Face Cream", ingredients)
+            (product_id, "Face Cream", ingredients),
         )
 
         product = self.db.fetchone("SELECT * FROM products WHERE id = ?", (product_id,))
@@ -246,24 +300,26 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "routine_test")
+            (user_id, "routine_test"),
         )
 
         product_id = str(uuid.uuid4())
         ingredients = json.dumps(["Water"])
         self.db.execute(
             "INSERT INTO products (id, name, ingredients_json) VALUES (?, ?, ?)",
-            (product_id, "Test Product", ingredients)
+            (product_id, "Test Product", ingredients),
         )
 
         event_id = str(uuid.uuid4())
         timestamp = datetime.now().isoformat()
         self.db.execute(
             "INSERT INTO routine_events (id, user_id, product_id, action, timestamp) VALUES (?, ?, ?, ?, ?)",
-            (event_id, user_id, product_id, "start", timestamp)
+            (event_id, user_id, product_id, "start", timestamp),
         )
 
-        event = self.db.fetchone("SELECT * FROM routine_events WHERE id = ?", (event_id,))
+        event = self.db.fetchone(
+            "SELECT * FROM routine_events WHERE id = ?", (event_id,)
+        )
         self.assertIsNotNone(event)
         self.assertEqual(event["action"], "start")
 
@@ -272,14 +328,14 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "events_test")
+            (user_id, "events_test"),
         )
 
         product_id = str(uuid.uuid4())
         ingredients = json.dumps(["Water"])
         self.db.execute(
             "INSERT INTO products (id, name, ingredients_json) VALUES (?, ?, ?)",
-            (product_id, "Test Product", ingredients)
+            (product_id, "Test Product", ingredients),
         )
 
         # Create multiple events
@@ -287,15 +343,17 @@ class TestDatabaseOperations(unittest.TestCase):
         event_id_1 = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO routine_events (id, user_id, product_id, action, timestamp) VALUES (?, ?, ?, ?, ?)",
-            (event_id_1, user_id, product_id, "start", timestamp)
+            (event_id_1, user_id, product_id, "start", timestamp),
         )
         event_id_2 = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO routine_events (id, user_id, product_id, action, timestamp) VALUES (?, ?, ?, ?, ?)",
-            (event_id_2, user_id, product_id, "stop", timestamp)
+            (event_id_2, user_id, product_id, "stop", timestamp),
         )
 
-        events = self.db.fetchall("SELECT * FROM routine_events WHERE user_id = ?", (user_id,))
+        events = self.db.fetchall(
+            "SELECT * FROM routine_events WHERE user_id = ?", (user_id,)
+        )
 
         self.assertGreaterEqual(len(events), 2)
 
@@ -304,7 +362,7 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "delete_test")
+            (user_id, "delete_test"),
         )
 
         # Create captures
@@ -314,14 +372,22 @@ class TestDatabaseOperations(unittest.TestCase):
             capture_quality = json.dumps({"sharpness": 0.9})
             self.db.execute(
                 "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json) VALUES (?, ?, ?, ?, ?)",
-                (capture_id, user_id, captured_at, f"https://example.com/img{i}.jpg", capture_quality)
+                (
+                    capture_id,
+                    user_id,
+                    captured_at,
+                    f"https://example.com/img{i}.jpg",
+                    capture_quality,
+                ),
             )
 
         # Delete captures
         self.db.execute("DELETE FROM photo_captures WHERE user_id = ?", (user_id,))
 
         # Verify deletion
-        captures = self.db.fetchall("SELECT * FROM photo_captures WHERE user_id = ?", (user_id,))
+        captures = self.db.fetchall(
+            "SELECT * FROM photo_captures WHERE user_id = ?", (user_id,)
+        )
         self.assertEqual(len(captures), 0)
 
     def test_database_connection_persistence(self):
@@ -329,13 +395,13 @@ class TestDatabaseOperations(unittest.TestCase):
         user_id = str(uuid.uuid4())
         self.db.execute(
             "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, "persist_test")
+            (user_id, "persist_test"),
         )
 
         # Multiple operations
         self.db.execute(
             "INSERT INTO consent_events (user_id, consent_type, granted, policy_version) VALUES (?, ?, ?, ?)",
-            (user_id, "facial_data", 1, "1.0")
+            (user_id, "facial_data", 1, "1.0"),
         )
         user = self.db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
 
@@ -349,7 +415,7 @@ class TestDatabaseOperations(unittest.TestCase):
             user_id = str(uuid.uuid4())
             self.db.execute(
                 "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-                (user_id, f"concurrent_test_{i}")
+                (user_id, f"concurrent_test_{i}"),
             )
             user_ids.append(user_id)
 
@@ -358,7 +424,9 @@ class TestDatabaseOperations(unittest.TestCase):
         self.assertEqual(len(set(user_ids)), 10)  # All unique
 
         # Verify all users exist in database
-        all_users = self.db.fetchall("SELECT * FROM users WHERE firebase_uid LIKE 'concurrent_test_%'")
+        all_users = self.db.fetchall(
+            "SELECT * FROM users WHERE firebase_uid LIKE 'concurrent_test_%'"
+        )
         self.assertEqual(len(all_users), 10)
 
 

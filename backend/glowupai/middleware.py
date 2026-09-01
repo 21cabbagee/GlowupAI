@@ -18,8 +18,6 @@ logger = logging.getLogger(__name__)
 class RateLimitExceeded(Exception):
     """Exception raised when rate limit is exceeded."""
 
-    pass
-
 
 class RateLimiter:
     """Token bucket rate limiter with different limits per endpoint type."""
@@ -50,7 +48,9 @@ class RateLimiter:
         else:
             return "api"
 
-    async def check_rate_limit(self, client_id: str, endpoint: str) -> tuple[int, int, int]:
+    async def check_rate_limit(
+        self, client_id: str, endpoint: str
+    ) -> tuple[int, int, int]:
         """Check if request is within rate limit.
 
         Args:
@@ -107,7 +107,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.enabled = enabled
 
     async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint,
+        self,
+        request: Request,
+        call_next: RequestResponseEndpoint,
     ) -> Response:
         """Apply rate limiting to requests."""
         if not self.enabled:
@@ -121,8 +123,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         client_id = request.client.host if request.client else "unknown"
 
         try:
-            max_requests, remaining, reset_timestamp = await self.limiter.check_rate_limit(
-                client_id, request.url.path,
+            max_requests, remaining, reset_timestamp = (
+                await self.limiter.check_rate_limit(
+                    client_id,
+                    request.url.path,
+                )
             )
 
             # Add rate limit headers to response
@@ -172,7 +177,9 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
         self.timeout_seconds = timeout_seconds
 
     async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint,
+        self,
+        request: Request,
+        call_next: RequestResponseEndpoint,
     ) -> Response:
         """Apply timeout to requests."""
         # Skip timeout for health check
@@ -181,7 +188,8 @@ class TimeoutMiddleware(BaseHTTPMiddleware):
 
         try:
             return await asyncio.wait_for(
-                call_next(request), timeout=self.timeout_seconds,
+                call_next(request),
+                timeout=self.timeout_seconds,
             )
         except TimeoutError:
             logger.error(
@@ -201,7 +209,9 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
     """Middleware for global error handling."""
 
     async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint,
+        self,
+        request: Request,
+        call_next: RequestResponseEndpoint,
     ) -> Response:
         """Catch and format all unhandled exceptions."""
         try:
@@ -244,8 +254,12 @@ def create_health_checker(db, settings) -> Callable:
 
         # Database check
         try:
-            db_healthy = await asyncio.get_event_loop().run_in_executor(None, db.healthcheck)
-            table_count = await asyncio.get_event_loop().run_in_executor(None, db.count_tables)
+            db_healthy = await asyncio.get_event_loop().run_in_executor(
+                None, db.healthcheck
+            )
+            table_count = await asyncio.get_event_loop().run_in_executor(
+                None, db.count_tables
+            )
             checks["checks"]["database"] = {
                 "status": "healthy" if db_healthy else "unhealthy",
                 "backend": getattr(settings, "database_url", None)
@@ -269,7 +283,7 @@ def create_health_checker(db, settings) -> Callable:
                     "status": "healthy" if free_gb > 1.0 else "warning",
                     "free_gb": round(free_gb, 2),
                 }
-        except (OSError, IOError) as exc:
+        except OSError as exc:
             logger.warning(f"Disk health check failed: {exc}")
             checks["checks"]["disk"] = {"status": "unknown", "error": str(exc)}
 

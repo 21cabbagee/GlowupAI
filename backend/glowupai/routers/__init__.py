@@ -7,9 +7,9 @@ from .subscriptions import setup_subscriptions_router
 from .users import setup_users_router
 
 __all__ = [
-    "setup_users_router",
-    "setup_captures_router",
-    "setup_analytics_router",
-    "setup_subscriptions_router",
     "setup_admin_router",
+    "setup_analytics_router",
+    "setup_captures_router",
+    "setup_subscriptions_router",
+    "setup_users_router",
 ]
