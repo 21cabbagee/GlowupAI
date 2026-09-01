@@ -58,12 +58,13 @@ fun ChatBubble(
                 text = text,
                 style = MaterialTheme.typography.bodySmall,
                 color = glow.danger,
-                modifier = Modifier
-                    .widthIn(max = 320.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(glow.danger.copy(alpha = 0.08f))
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                    .semantics { contentDescription = "Error: $text" },
+                modifier =
+                    Modifier
+                        .widthIn(max = 320.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(glow.danger.copy(alpha = 0.08f))
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .semantics { contentDescription = "Error: $text" },
             )
         }
         return
@@ -71,12 +72,13 @@ fun ChatBubble(
 
     if (isSafetyHandoff) {
         Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(glow.danger.copy(alpha = 0.10f))
-                .padding(GlowSpacing.md)
-                .semantics { contentDescription = "Dermatologist hand-off: $text" },
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(glow.danger.copy(alpha = 0.10f))
+                    .padding(GlowSpacing.md)
+                    .semantics { contentDescription = "Dermatologist hand-off: $text" },
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -107,15 +109,16 @@ fun ChatBubble(
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
     ) {
         Column(
-            modifier = Modifier
-                .widthIn(max = 320.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(if (isUser) glow.honey500 else glow.surfaceCard)
-                .padding(horizontal = 14.dp, vertical = 10.dp)
-                .semantics {
-                    contentDescription = (if (isUser) "You: " else "Assistant: ") +
-                        if (pending) "thinking" else text
-                },
+            modifier =
+                Modifier
+                    .widthIn(max = 320.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(if (isUser) glow.honey500 else glow.surfaceCard)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .semantics {
+                        contentDescription = (if (isUser) "You: " else "Assistant: ") +
+                            if (pending) "thinking" else text
+                    },
         ) {
             Text(
                 text = if (pending) "Thinking…" else text,
@@ -133,20 +136,25 @@ fun ChatBubble(
 
 /** One citation, rendered inline with its answer: `type`, `date`, `id`. */
 @Composable
-fun CitationRow(citation: Citation, modifier: Modifier = Modifier) {
+fun CitationRow(
+    citation: Citation,
+    modifier: Modifier = Modifier,
+) {
     val glow = LocalGlowColors.current
-    val label = buildString {
-        append(citation.type.replace('_', ' ').replaceFirstChar { it.uppercase() })
-        citation.date?.let { append(" · $it") }
-        citation.id?.let { append(" · #${it.take(8)}") }
-    }
+    val label =
+        buildString {
+            append(citation.type.replace('_', ' ').replaceFirstChar { it.uppercase() })
+            citation.date?.let { append(" · $it") }
+            citation.id?.let { append(" · #${it.take(8)}") }
+        }
     Text(
         text = label,
         style = MaterialTheme.typography.labelSmall,
         color = glow.ink600,
-        modifier = modifier
-            .padding(top = 2.dp)
-            .semantics { contentDescription = "Source: $label" },
+        modifier =
+            modifier
+                .padding(top = 2.dp)
+                .semantics { contentDescription = "Source: $label" },
     )
 }
 
@@ -168,10 +176,11 @@ fun LabelCard(
     GlowCard(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier
-                    .padding(end = GlowSpacing.sm)
-                    .background(glow.ink600.copy(alpha = 0.12f), CircleShape)
-                    .padding(6.dp),
+                modifier =
+                    Modifier
+                        .padding(end = GlowSpacing.sm)
+                        .background(glow.ink600.copy(alpha = 0.12f), CircleShape)
+                        .padding(6.dp),
             ) {
                 Icon(Icons.Filled.Person, contentDescription = null, tint = glow.ink600)
             }
@@ -232,6 +241,12 @@ private fun PreviewContent() {
             text = "This reads as something a dermatologist should look at directly.",
             isSafetyHandoff = true,
         )
-        LabelCard(labelType = "user_note", value = "New sunscreen started here", photoId = "cap_98765432", notes = "Felt drier than usual.", createdAt = "2026-08-20")
+        LabelCard(
+            labelType = "user_note",
+            value = "New sunscreen started here",
+            photoId = "cap_98765432",
+            notes = "Felt drier than usual.",
+            createdAt = "2026-08-20",
+        )
     }
 }

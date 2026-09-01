@@ -62,11 +62,12 @@ fun GlowAsyncImage(
     if (url.isNullOrBlank()) {
         // No URL provided - show placeholder box
         Box(
-            modifier = modifier
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .semantics {
-                    this.contentDescription = contentDescription
-                }
+            modifier =
+                modifier
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .semantics {
+                        this.contentDescription = contentDescription
+                    },
         )
         return
     }
@@ -76,29 +77,33 @@ fun GlowAsyncImage(
         Box(modifier = modifier) {
             ShimmerSkeleton(modifier = Modifier.matchParentSize())
             AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(url)
-                    .memoryCacheKey(url)
-                    .diskCacheKey(url)
-                    .build(),
+                model =
+                    ImageRequest
+                        .Builder(context)
+                        .data(url)
+                        .memoryCacheKey(url)
+                        .diskCacheKey(url)
+                        .build(),
                 contentDescription = contentDescription,
                 modifier = Modifier.matchParentSize(),
                 contentScale = contentScale,
-                error = error
+                error = error,
             )
         }
     } else {
         AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(url)
-                .memoryCacheKey(url)
-                .diskCacheKey(url)
-                .build(),
+            model =
+                ImageRequest
+                    .Builder(context)
+                    .data(url)
+                    .memoryCacheKey(url)
+                    .diskCacheKey(url)
+                    .build(),
             contentDescription = contentDescription,
             modifier = modifier,
             contentScale = contentScale,
             placeholder = placeholder,
-            error = error
+            error = error,
         )
     }
 }

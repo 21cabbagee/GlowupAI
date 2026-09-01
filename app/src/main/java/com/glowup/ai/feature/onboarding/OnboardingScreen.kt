@@ -5,11 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -49,52 +49,62 @@ import com.glowup.ai.core.ui.GlowTextField
 import com.glowup.ai.feature.shell.GlowDestination
 import kotlinx.coroutines.launch
 
-private data class CarouselPage(val title: String, val body: String)
-
-private val carouselPages = listOf(
-    CarouselPage(
-        title = "See real change, not guesses",
-        body = "Guided photo captures track redness, texture, and tone over weeks — with the " +
-            "same lighting checks every time.",
-    ),
-    CarouselPage(
-        title = "Test your routine like an experiment",
-        body = "Log what you use, then see which changes actually correlate with your results.",
-    ),
-    CarouselPage(
-        title = "We'll need a few permissions",
-        body = "• Camera: Take consistent photos to track your skin\n" +
-            "• Photo access: See your progress with before/after comparisons\n" +
-            "• Notifications: Optional reminders for your daily capture",
-    ),
-    CarouselPage(
-        title = "Your photos, your choice",
-        body = "Nothing is analyzed until you explicitly say yes on the next screen — and you " +
-            "can change your mind at any time.",
-    ),
+private data class CarouselPage(
+    val title: String,
+    val body: String,
 )
 
-private val skinTypeOptions = listOf(
-    "normal" to "Normal",
-    "dry" to "Dry",
-    "oily" to "Oily",
-    "combination" to "Combination",
-    "sensitive" to "Sensitive",
-)
+private val carouselPages =
+    listOf(
+        CarouselPage(
+            title = "See real change, not guesses",
+            body =
+                "Guided photo captures track redness, texture, and tone over weeks — with the " +
+                    "same lighting checks every time.",
+        ),
+        CarouselPage(
+            title = "Test your routine like an experiment",
+            body = "Log what you use, then see which changes actually correlate with your results.",
+        ),
+        CarouselPage(
+            title = "We'll need a few permissions",
+            body =
+                "• Camera: Take consistent photos to track your skin\n" +
+                    "• Photo access: See your progress with before/after comparisons\n" +
+                    "• Notifications: Optional reminders for your daily capture",
+        ),
+        CarouselPage(
+            title = "Your photos, your choice",
+            body =
+                "Nothing is analyzed until you explicitly say yes on the next screen — and you " +
+                    "can change your mind at any time.",
+        ),
+    )
 
-private val goalOptions = listOf(
-    "reduce_redness" to "Reduce redness",
-    "even_tone" to "Even out tone",
-    "improve_texture" to "Improve texture",
-    "test_routine" to "Test a routine change",
-    "general_tracking" to "Just track over time",
-)
+private val skinTypeOptions =
+    listOf(
+        "normal" to "Normal",
+        "dry" to "Dry",
+        "oily" to "Oily",
+        "combination" to "Combination",
+        "sensitive" to "Sensitive",
+    )
 
-private val experienceOptions = listOf(
-    "new_to_skincare" to "New to skincare",
-    "some_experience" to "Some experience",
-    "very_experienced" to "Very experienced",
-)
+private val goalOptions =
+    listOf(
+        "reduce_redness" to "Reduce redness",
+        "even_tone" to "Even out tone",
+        "improve_texture" to "Improve texture",
+        "test_routine" to "Test a routine change",
+        "general_tracking" to "Just track over time",
+    )
+
+private val experienceOptions =
+    listOf(
+        "new_to_skincare" to "New to skincare",
+        "some_experience" to "Some experience",
+        "very_experienced" to "Very experienced",
+    )
 
 /**
  * [GlowDestination.Onboarding]: a 3-card value-prop carousel with a working "Skip" (the previous
@@ -150,25 +160,36 @@ private fun OnboardingContent(
     Scaffold { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             when {
-                uiState is OnboardingUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        "Loading your profile…",
-                        modifier = Modifier.semantics { contentDescription = "Loading your profile" },
+                uiState is OnboardingUiState.Loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            "Loading your profile…",
+                            modifier = Modifier.semantics { contentDescription = "Loading your profile" },
+                        )
+                    }
+                }
+
+                uiState is OnboardingUiState.Error -> {
+                    Box(Modifier.fillMaxSize().padding(GlowSpacing.lg), contentAlignment = Alignment.Center) {
+                        ErrorState(message = uiState.message, onRetry = onRetry)
+                    }
+                }
+
+                step == 0 -> {
+                    ValueCarousel(onDone = { step = 1 })
+                }
+
+                else -> {
+                    ProfileForm(
+                        form = form,
+                        saving = uiState is OnboardingUiState.Saving,
+                        onDisplayNameChange = onDisplayNameChange,
+                        onSkinTypeSelected = onSkinTypeSelected,
+                        onGoalToggled = onGoalToggled,
+                        onExperienceSelected = onExperienceSelected,
+                        onSubmit = onSubmit,
                     )
                 }
-                uiState is OnboardingUiState.Error -> Box(Modifier.fillMaxSize().padding(GlowSpacing.lg), contentAlignment = Alignment.Center) {
-                    ErrorState(message = uiState.message, onRetry = onRetry)
-                }
-                step == 0 -> ValueCarousel(onDone = { step = 1 })
-                else -> ProfileForm(
-                    form = form,
-                    saving = uiState is OnboardingUiState.Saving,
-                    onDisplayNameChange = onDisplayNameChange,
-                    onSkinTypeSelected = onSkinTypeSelected,
-                    onGoalToggled = onGoalToggled,
-                    onExperienceSelected = onExperienceSelected,
-                    onSubmit = onSubmit,
-                )
             }
         }
     }
@@ -198,9 +219,10 @@ private fun ValueCarousel(onDone: () -> Unit) {
         ) { page ->
             val content = carouselPages[page]
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = GlowSpacing.xl, vertical = GlowSpacing.lg),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = GlowSpacing.xl, vertical = GlowSpacing.lg),
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
@@ -219,20 +241,22 @@ private fun ValueCarousel(onDone: () -> Unit) {
         }
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = GlowSpacing.sm)
-                .semantics { contentDescription = "Page ${pagerState.currentPage + 1} of ${carouselPages.size}" },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = GlowSpacing.sm)
+                    .semantics { contentDescription = "Page ${pagerState.currentPage + 1} of ${carouselPages.size}" },
             horizontalArrangement = Arrangement.Center,
         ) {
             repeat(carouselPages.size) { index ->
                 val active = index == pagerState.currentPage
                 Box(
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .size(if (active) 10.dp else 8.dp)
-                        .clip(CircleShape)
-                        .background(if (active) glow.honey500 else glow.ink600.copy(alpha = 0.25f)),
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(if (active) 10.dp else 8.dp)
+                            .clip(CircleShape)
+                            .background(if (active) glow.honey500 else glow.ink600.copy(alpha = 0.25f)),
                 )
             }
         }
@@ -263,10 +287,11 @@ private fun ProfileForm(
 ) {
     val glow = LocalGlowColors.current
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(GlowSpacing.lg),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(GlowSpacing.lg),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
         Column {
@@ -336,7 +361,10 @@ private fun ProfileForm(
 }
 
 @Composable
-private fun OptionSection(title: String, content: @Composable FlowRowScope.() -> Unit) {
+private fun OptionSection(
+    title: String,
+    content: @Composable FlowRowScope.() -> Unit,
+) {
     val glow = LocalGlowColors.current
     Column {
         Text(
@@ -367,13 +395,14 @@ private fun SelectableChip(
         enabled = enabled,
         onClick = onClick,
         label = { Text(label) },
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .semantics { contentDescription = if (selected) "$label, selected" else label },
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = glow.honey500,
-            selectedLabelColor = glow.ink900,
-        ),
+        modifier =
+            Modifier
+                .heightIn(min = 48.dp)
+                .semantics { contentDescription = if (selected) "$label, selected" else label },
+        colors =
+            FilterChipDefaults.filterChipColors(
+                selectedContainerColor = glow.honey500,
+                selectedLabelColor = glow.ink900,
+            ),
     )
 }
-

@@ -25,27 +25,35 @@ import javax.inject.Singleton
  * enforces this at the type boundary. Create and status-change are both non-idempotent mutations.
  */
 @Singleton
-class ExperimentRepository @Inject constructor(
-    private val api: GlowUpApi,
-    private val invalidationBus: CacheInvalidationBus,
-) {
+class ExperimentRepository
+    @Inject
+    constructor(
+        private val api: GlowUpApi,
+        private val invalidationBus: CacheInvalidationBus,
+    ) {
+        private val mutations = MutationLock<String>()
+        val pendingKeys: StateFlow<Set<String>> = mutations.pendingKeys
 
-    private val mutations = MutationLock<String>()
-    val pendingKeys: StateFlow<Set<String>> = mutations.pendingKeys
+        suspend fun createExperiment(request: ExperimentCreateRequest): GlowResult<Experiment> =
+            mutations
+                .run("create_experiment:${request.userId}:${request.productId}:${request.name}") {
+                    apiCall { api.createExperiment(request.toDto()).toDomain() }
+                }.onSuccess { invalidationBus.publish(InvalidationSignal.ExperimentChanged(request.userId)) }
 
-    suspend fun createExperiment(request: ExperimentCreateRequest): GlowResult<Experiment> =
-        mutations.run("create_experiment:${request.userId}:${request.productId}:${request.name}") {
-            apiCall { api.createExperiment(request.toDto()).toDomain() }
-        }.onSuccess { invalidationBus.publish(InvalidationSignal.ExperimentChanged(request.userId)) }
+        suspend fun listExperiments(userId: String): GlowResult<List<Experiment>> =
+            apiCall { api.listExperiments(userId).map { it.toDomain() } }
 
-    suspend fun listExperiments(userId: String): GlowResult<List<Experiment>> =
-        apiCall { api.listExperiments(userId).map { it.toDomain() } }
+        suspend fun getExperiment(
+            userId: String,
+            experimentId: String,
+        ): GlowResult<Experiment> = apiCall { api.getExperiment(userId, experimentId).toDomain() }
 
-    suspend fun getExperiment(userId: String, experimentId: String): GlowResult<Experiment> =
-        apiCall { api.getExperiment(userId, experimentId).toDomain() }
-
-    suspend fun setExperimentStatus(experimentId: String, request: ExperimentStatusRequest): GlowResult<Experiment> =
-        mutations.run("set_status:$experimentId") {
-            apiCall { api.setExperimentStatus(request.userId, experimentId, request.toDto()).toDomain() }
-        }.onSuccess { invalidationBus.publish(InvalidationSignal.ExperimentChanged(request.userId)) }
-}
+        suspend fun setExperimentStatus(
+            experimentId: String,
+            request: ExperimentStatusRequest,
+        ): GlowResult<Experiment> =
+            mutations
+                .run("set_status:$experimentId") {
+                    apiCall { api.setExperimentStatus(request.userId, experimentId, request.toDto()).toDomain() }
+                }.onSuccess { invalidationBus.publish(InvalidationSignal.ExperimentChanged(request.userId)) }
+    }

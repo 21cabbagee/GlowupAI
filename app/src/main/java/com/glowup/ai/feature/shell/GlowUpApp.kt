@@ -10,17 +10,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Insights
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Science
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,10 +67,13 @@ fun GlowUpApp(
     ) { sessionState, retry ->
         val isWorkspaceRoute = currentDestination.isWorkspaceDestination()
         val isAuthoritative = sessionState.isAuthoritative
-        val showWorkspaceChrome = isWorkspaceRoute && isAuthoritative &&
-            (sessionState is SessionState.BaselineNeeded ||
-                sessionState is SessionState.Ready ||
-                sessionState is SessionState.ConsentDeclined)
+        val showWorkspaceChrome =
+            isWorkspaceRoute && isAuthoritative &&
+                (
+                    sessionState is SessionState.BaselineNeeded ||
+                        sessionState is SessionState.Ready ||
+                        sessionState is SessionState.ConsentDeclined
+                )
         val selectedTab = currentDestination.selectedTabIndex()
 
         LaunchedEffect(Unit) {
@@ -108,11 +111,12 @@ fun GlowUpApp(
                             }
                         },
                         enabled = sessionState.canCapture,
-                        fabContentDescription = if (sessionState.canCapture) {
-                            "Capture a skin progress photo"
-                        } else {
-                            "Capture locked until facial-data consent is active"
-                        },
+                        fabContentDescription =
+                            if (sessionState.canCapture) {
+                                "Capture a skin progress photo"
+                            } else {
+                                "Capture locked until facial-data consent is active"
+                            },
                     )
                 }
             },
@@ -129,17 +133,21 @@ fun GlowUpApp(
 }
 
 @Composable
-private fun SessionBlockingSurface(sessionState: SessionState, onRetry: () -> Unit) {
+private fun SessionBlockingSurface(
+    sessionState: SessionState,
+    onRetry: () -> Unit,
+) {
     val glow = LocalGlowColors.current
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = glow.paper,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp)
-                .semantics { contentDescription = "Checking your GlowUp AI session" },
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+                    .semantics { contentDescription = "Checking your GlowUp AI session" },
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -155,12 +163,14 @@ private fun SessionBlockingSurface(sessionState: SessionState, onRetry: () -> Un
                         Text("Try again")
                     }
                 }
+
                 else -> {
                     CircularProgressIndicator(
                         color = glow.honey600,
-                        modifier = Modifier.semantics {
-                            contentDescription = "Loading your authoritative profile"
-                        },
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Loading your authoritative profile"
+                            },
                     )
                     Text(
                         "Checking your private profile…",
@@ -180,61 +190,60 @@ private data class ShellTab(
     val routes: Set<KClass<out GlowDestination>>,
 )
 
-private val tabs = listOf(
-    ShellTab(
-        GlowDestination.Home,
-        "Home",
-        Icons.Filled.Home,
-        setOf(GlowDestination.Home::class),
-    ),
-    ShellTab(
-        GlowDestination.Routine,
-        "Routine",
-        Icons.Filled.Science,
-        setOf(
-            GlowDestination.Routine::class,
-            GlowDestination.ProductDetail::class,
-            GlowDestination.ShelfScan::class,
-            GlowDestination.Experiments::class,
-            GlowDestination.ExperimentDetail::class,
+private val tabs =
+    listOf(
+        ShellTab(
+            GlowDestination.Home,
+            "Home",
+            Icons.Filled.Home,
+            setOf(GlowDestination.Home::class),
         ),
-    ),
-    ShellTab(
-        GlowDestination.Insights,
-        "Insights",
-        Icons.Filled.Insights,
-        setOf(
-            GlowDestination.Insights::class,
-            GlowDestination.QnaThread::class,
-            GlowDestination.ContextLog::class,
-            GlowDestination.RootCause::class,
-            GlowDestination.BudgetOptimizer::class,
-            GlowDestination.DermExport::class,
+        ShellTab(
+            GlowDestination.Routine,
+            "Routine",
+            Icons.Filled.Science,
+            setOf(
+                GlowDestination.Routine::class,
+                GlowDestination.ProductDetail::class,
+                GlowDestination.ShelfScan::class,
+                GlowDestination.Experiments::class,
+                GlowDestination.ExperimentDetail::class,
+            ),
         ),
-    ),
-    ShellTab(
-        GlowDestination.Account,
-        "You",
-        Icons.Filled.Person,
-        setOf(
-            GlowDestination.Account::class,
-            GlowDestination.Paywall::class,
-            GlowDestination.Settings::class,
-            GlowDestination.DataAndPrivacy::class,
+        ShellTab(
+            GlowDestination.Insights,
+            "Insights",
+            Icons.Filled.Insights,
+            setOf(
+                GlowDestination.Insights::class,
+                GlowDestination.QnaThread::class,
+                GlowDestination.ContextLog::class,
+                GlowDestination.RootCause::class,
+                GlowDestination.BudgetOptimizer::class,
+                GlowDestination.DermExport::class,
+            ),
         ),
-    ),
-)
+        ShellTab(
+            GlowDestination.Account,
+            "You",
+            Icons.Filled.Person,
+            setOf(
+                GlowDestination.Account::class,
+                GlowDestination.Paywall::class,
+                GlowDestination.Settings::class,
+                GlowDestination.DataAndPrivacy::class,
+            ),
+        ),
+    )
 
 private fun NavDestination?.selectedTabIndex(): Int =
     tabs.indexOfFirst { tab ->
         tab.routes.any { route -> this?.hierarchy?.any { it.matchesRoute(route) } == true }
     }
 
-private fun NavDestination?.isWorkspaceDestination(): Boolean =
-    this != null && WORKSPACE_ROUTE_CLASSES.any { matchesRoute(it) }
+private fun NavDestination?.isWorkspaceDestination(): Boolean = this != null && WORKSPACE_ROUTE_CLASSES.any { matchesRoute(it) }
 
-private fun NavDestination?.isHomeDestination(): Boolean =
-    this != null && matchesRoute(GlowDestination.Home::class)
+private fun NavDestination?.isHomeDestination(): Boolean = this != null && matchesRoute(GlowDestination.Home::class)
 
 private fun NavDestination.matchesRoute(routeClass: KClass<out GlowDestination>): Boolean {
     val actual = route?.substringBefore('?') ?: return false
@@ -242,27 +251,28 @@ private fun NavDestination.matchesRoute(routeClass: KClass<out GlowDestination>)
     return actual == expected || actual.startsWith("$expected/")
 }
 
-private val WORKSPACE_ROUTE_CLASSES = setOf(
-    GlowDestination.Home::class,
-    GlowDestination.Routine::class,
-    GlowDestination.Capture::class,
-    GlowDestination.CaptureResult::class,
-    GlowDestination.ProductDetail::class,
-    GlowDestination.ShelfScan::class,
-    GlowDestination.Experiments::class,
-    GlowDestination.ExperimentDetail::class,
-    GlowDestination.Insights::class,
-    GlowDestination.QnaThread::class,
-    GlowDestination.ContextLog::class,
-    GlowDestination.RootCause::class,
-    GlowDestination.BudgetOptimizer::class,
-    GlowDestination.DermExport::class,
-    GlowDestination.Discover::class,
-    GlowDestination.Account::class,
-    GlowDestination.Paywall::class,
-    GlowDestination.Settings::class,
-    GlowDestination.DataAndPrivacy::class,
-)
+private val WORKSPACE_ROUTE_CLASSES =
+    setOf(
+        GlowDestination.Home::class,
+        GlowDestination.Routine::class,
+        GlowDestination.Capture::class,
+        GlowDestination.CaptureResult::class,
+        GlowDestination.ProductDetail::class,
+        GlowDestination.ShelfScan::class,
+        GlowDestination.Experiments::class,
+        GlowDestination.ExperimentDetail::class,
+        GlowDestination.Insights::class,
+        GlowDestination.QnaThread::class,
+        GlowDestination.ContextLog::class,
+        GlowDestination.RootCause::class,
+        GlowDestination.BudgetOptimizer::class,
+        GlowDestination.DermExport::class,
+        GlowDestination.Discover::class,
+        GlowDestination.Account::class,
+        GlowDestination.Paywall::class,
+        GlowDestination.Settings::class,
+        GlowDestination.DataAndPrivacy::class,
+    )
 
 @Composable
 private fun DeepLinkEffect(
@@ -275,15 +285,23 @@ private fun DeepLinkEffect(
         val target = destination ?: return@LaunchedEffect
         if (!sessionState.isAuthoritative) return@LaunchedEffect
 
-        val admittedTarget = if (target == GlowDestination.Capture && !sessionState.canCapture) {
-            when (sessionState) {
-                is SessionState.ConsentRequired,
-                is SessionState.ConsentDeclined -> com.glowup.ai.feature.auth.destinationFor(sessionState) ?: GlowDestination.Home
-                else -> GlowDestination.Home
+        val admittedTarget =
+            if (target == GlowDestination.Capture && !sessionState.canCapture) {
+                when (sessionState) {
+                    is SessionState.ConsentRequired,
+                    is SessionState.ConsentDeclined,
+                    -> {
+                        com.glowup.ai.feature.auth
+                            .destinationFor(sessionState) ?: GlowDestination.Home
+                    }
+
+                    else -> {
+                        GlowDestination.Home
+                    }
+                }
+            } else {
+                target
             }
-        } else {
-            target
-        }
         navController.navigate(admittedTarget) { launchSingleTop = true }
         onConsumed(target)
     }
@@ -301,10 +319,11 @@ private fun NotificationPermissionEffect(
         .collectAsStateWithLifecycle(initialValue = false)
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     val isHome = currentDestination.isHomeDestination()
-    val alreadyGranted = ContextCompat.checkSelfPermission(
-        context,
-        Manifest.permission.POST_NOTIFICATIONS,
-    ) == PackageManager.PERMISSION_GRANTED
+    val alreadyGranted =
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS,
+        ) == PackageManager.PERMISSION_GRANTED
 
     LaunchedEffect(isHome, prompted, canEnterWorkspace, alreadyGranted) {
         if (isHome && canEnterWorkspace && !prompted && !alreadyGranted) {

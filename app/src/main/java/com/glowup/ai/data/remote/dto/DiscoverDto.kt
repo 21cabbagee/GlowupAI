@@ -22,10 +22,12 @@ data class DiscoverDto(
     val disclaimer: String = "",
 )
 
-fun DiscoverDto.toDomain(): Discover = Discover(
-    recommendations = recommendations.map {
-        DiscoverRecommendation(it.productId, it.name, it.category, it.sampleSize, it.averageEffect, it.reason)
-    },
-    minimumCohortSize = minimumCohortSize,
-    disclaimer = disclaimer,
-)
+fun DiscoverDto.toDomain(): Discover =
+    Discover(
+        recommendations =
+            recommendations.map {
+                DiscoverRecommendation(it.productId, it.name, it.category, it.sampleSize, it.averageEffect, it.reason)
+            },
+        minimumCohortSize = minimumCohortSize,
+        disclaimer = disclaimer,
+    )

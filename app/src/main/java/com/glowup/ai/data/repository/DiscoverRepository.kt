@@ -21,22 +21,27 @@ import javax.inject.Singleton
  * intent is still launching) can't double-record a click.
  */
 @Singleton
-class DiscoverRepository @Inject constructor(
-    private val api: GlowUpApi,
-) {
+class DiscoverRepository
+    @Inject
+    constructor(
+        private val api: GlowUpApi,
+    ) {
+        private val mutations = MutationLock<String>()
+        val pendingKeys: StateFlow<Set<String>> = mutations.pendingKeys
 
-    private val mutations = MutationLock<String>()
-    val pendingKeys: StateFlow<Set<String>> = mutations.pendingKeys
+        suspend fun getDiscover(userId: String): GlowResult<Discover> = apiCall { api.getDiscover(userId).toDomain() }
 
-    suspend fun getDiscover(userId: String): GlowResult<Discover> =
-        apiCall { api.getDiscover(userId).toDomain() }
+        /** Never gated on plan/entitlement — see class doc. */
+        suspend fun getOffers(
+            userId: String,
+            productId: String? = null,
+        ): GlowResult<List<Offer>> = apiCall { api.getOffers(userId, productId).map { it.toDomain() } }
 
-    /** Never gated on plan/entitlement — see class doc. */
-    suspend fun getOffers(userId: String, productId: String? = null): GlowResult<List<Offer>> =
-        apiCall { api.getOffers(userId, productId).map { it.toDomain() } }
-
-    suspend fun clickOffer(userId: String, offerId: String): GlowResult<Offer> =
-        mutations.run("click_offer:$offerId") {
-            apiCall { api.clickOffer(userId, offerId).toDomain() }
-        }
-}
+        suspend fun clickOffer(
+            userId: String,
+            offerId: String,
+        ): GlowResult<Offer> =
+            mutations.run("click_offer:$offerId") {
+                apiCall { api.clickOffer(userId, offerId).toDomain() }
+            }
+    }

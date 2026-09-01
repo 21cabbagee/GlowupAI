@@ -85,26 +85,42 @@ private fun ConsentContent(
     Scaffold { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             when (uiState) {
-                is ConsentUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        "Loading…",
-                        modifier = Modifier.semantics { contentDescription = "Loading consent status" },
+                is ConsentUiState.Loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            "Loading…",
+                            modifier = Modifier.semantics { contentDescription = "Loading consent status" },
+                        )
+                    }
+                }
+
+                is ConsentUiState.Error -> {
+                    Box(Modifier.fillMaxSize().padding(GlowSpacing.lg), contentAlignment = Alignment.Center) {
+                        ErrorState(message = uiState.message, onRetry = onRetry)
+                    }
+                }
+
+                is ConsentUiState.Saving -> {
+                    ConsentChoiceBody(
+                        saving = true,
+                        onAccept = onAccept,
+                        onDecline = onDecline,
                     )
                 }
-                is ConsentUiState.Error -> Box(Modifier.fillMaxSize().padding(GlowSpacing.lg), contentAlignment = Alignment.Center) {
-                    ErrorState(message = uiState.message, onRetry = onRetry)
-                }
-                is ConsentUiState.Saving -> ConsentChoiceBody(
-                    saving = true,
-                    onAccept = onAccept,
-                    onDecline = onDecline,
-                )
-                is ConsentUiState.Content -> when (val session = uiState.session) {
-                    is SessionState.ConsentDeclined -> ConsentDeclinedBody(
-                        onReconsider = onAccept,
-                        onContinueToApp = onContinueToApp,
-                    )
-                    else -> ConsentChoiceBody(saving = false, onAccept = onAccept, onDecline = onDecline)
+
+                is ConsentUiState.Content -> {
+                    when (val session = uiState.session) {
+                        is SessionState.ConsentDeclined -> {
+                            ConsentDeclinedBody(
+                                onReconsider = onAccept,
+                                onContinueToApp = onContinueToApp,
+                            )
+                        }
+
+                        else -> {
+                            ConsentChoiceBody(saving = false, onAccept = onAccept, onDecline = onDecline)
+                        }
+                    }
                 }
             }
         }
@@ -119,10 +135,11 @@ private fun ConsentChoiceBody(
 ) {
     val glow = LocalGlowColors.current
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(GlowSpacing.lg),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(GlowSpacing.lg),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
         Icon(
@@ -138,10 +155,11 @@ private fun ConsentChoiceBody(
             color = glow.ink900,
         )
         Text(
-            text = "To track your skin over time we need your explicit consent to process facial " +
-                "photos you capture in this app. We use them only to measure cosmetic appearance " +
-                "— redness, texture, tone — never to identify you, and never to diagnose a " +
-                "medical condition.",
+            text =
+                "To track your skin over time we need your explicit consent to process facial " +
+                    "photos you capture in this app. We use them only to measure cosmetic appearance " +
+                    "— redness, texture, tone — never to identify you, and never to diagnose a " +
+                    "medical condition.",
             style = MaterialTheme.typography.bodyMedium,
             color = glow.ink600,
         )
@@ -168,8 +186,9 @@ private fun ConsentChoiceBody(
         }
 
         DisclaimerNote(
-            text = "GlowUp AI tracks cosmetic skin appearance over time. It is not a diagnosis and " +
-                "does not replace a dermatologist.",
+            text =
+                "GlowUp AI tracks cosmetic skin appearance over time. It is not a diagnosis and " +
+                    "does not replace a dermatologist.",
         )
 
         Column(verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)) {
@@ -200,10 +219,11 @@ private fun ConsentDeclinedBody(
 ) {
     val glow = LocalGlowColors.current
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(GlowSpacing.lg),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(GlowSpacing.lg),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
         Text(
@@ -213,13 +233,15 @@ private fun ConsentDeclinedBody(
             color = glow.ink900,
         )
         Text(
-            text = "You previously chose not to let GlowUp AI analyze your photos. Capture stays " +
-                "locked, but routine tracking, insights, and Q&A remain fully available.",
+            text =
+                "You previously chose not to let GlowUp AI analyze your photos. Capture stays " +
+                    "locked, but routine tracking, insights, and Q&A remain fully available.",
             style = MaterialTheme.typography.bodyMedium,
             color = glow.ink600,
-            modifier = Modifier.semantics {
-                contentDescription = "Photo tracking is off. Capture is locked. Other features remain available."
-            },
+            modifier =
+                Modifier.semantics {
+                    contentDescription = "Photo tracking is off. Capture is locked. Other features remain available."
+                },
         )
 
         GlowButton(

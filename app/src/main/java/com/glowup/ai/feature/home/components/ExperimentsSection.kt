@@ -37,26 +37,34 @@ fun ExperimentsSection(
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(title = "Experiments")
         when {
-            !isPremium -> LockedCard(
-                modifier = Modifier.padding(top = 12.dp),
-                title = "Run controlled experiments",
-                body = "Premium experiments isolate one product change at a time so verdicts aren't confounded by everything else in your routine.",
-                ctaLabel = "See Premium",
-                onUnlock = onUnlockPremium,
-            )
-            experiments.isEmpty() -> EmptyState(
-                modifier = Modifier.padding(top = 12.dp),
-                title = "No experiments running",
-                body = "Start one to test whether a single product is really doing anything.",
-                ctaLabel = "Start an experiment",
-                onCtaClick = onStartExperiment,
-            )
-            else -> Column(
-                modifier = Modifier.padding(top = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                experiments.take(3).forEach { experiment ->
-                    ExperimentRow(experiment = experiment, onClick = { onOpenExperiment(experiment.id) })
+            !isPremium -> {
+                LockedCard(
+                    modifier = Modifier.padding(top = 12.dp),
+                    title = "Run controlled experiments",
+                    body = "Premium experiments isolate one product change at a time so verdicts aren't confounded by everything else in your routine.",
+                    ctaLabel = "See Premium",
+                    onUnlock = onUnlockPremium,
+                )
+            }
+
+            experiments.isEmpty() -> {
+                EmptyState(
+                    modifier = Modifier.padding(top = 12.dp),
+                    title = "No experiments running",
+                    body = "Start one to test whether a single product is really doing anything.",
+                    ctaLabel = "Start an experiment",
+                    onCtaClick = onStartExperiment,
+                )
+            }
+
+            else -> {
+                Column(
+                    modifier = Modifier.padding(top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    experiments.take(3).forEach { experiment ->
+                        ExperimentRow(experiment = experiment, onClick = { onOpenExperiment(experiment.id) })
+                    }
                 }
             }
         }
@@ -64,7 +72,10 @@ fun ExperimentsSection(
 }
 
 @Composable
-private fun ExperimentRow(experiment: Experiment, onClick: () -> Unit) {
+private fun ExperimentRow(
+    experiment: Experiment,
+    onClick: () -> Unit,
+) {
     val glow = LocalGlowColors.current
     GlowCard(
         modifier = Modifier.fillMaxWidth(),
@@ -101,11 +112,12 @@ private fun ExperimentRow(experiment: Experiment, onClick: () -> Unit) {
 
 /** `running`, never `active` — ANDROID_PLAN.md trap #11 / bug #1. Display copy only; never used
  * to filter. */
-private fun ExperimentStatus.displayLabel(): String = when (this) {
-    ExperimentStatus.PLANNED -> "Planned"
-    ExperimentStatus.RUNNING -> "Running"
-    ExperimentStatus.PAUSED -> "Paused"
-    ExperimentStatus.COMPLETED -> "Completed"
-    ExperimentStatus.CANCELLED -> "Cancelled"
-    ExperimentStatus.UNKNOWN -> "Unknown"
-}
+private fun ExperimentStatus.displayLabel(): String =
+    when (this) {
+        ExperimentStatus.PLANNED -> "Planned"
+        ExperimentStatus.RUNNING -> "Running"
+        ExperimentStatus.PAUSED -> "Paused"
+        ExperimentStatus.COMPLETED -> "Completed"
+        ExperimentStatus.CANCELLED -> "Cancelled"
+        ExperimentStatus.UNKNOWN -> "Unknown"
+    }

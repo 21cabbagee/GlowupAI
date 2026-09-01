@@ -22,7 +22,6 @@ class RetryPolicyInterceptor(
     private val maxRetries: Int = 2,
     private val initialBackoffMillis: Long = 300L,
 ) : Interceptor {
-
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         if (request.method != "GET") {

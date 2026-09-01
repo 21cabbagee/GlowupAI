@@ -32,7 +32,7 @@ fun MilestoneDialog(
     message: String,
     onDismiss: () -> Unit,
     onShare: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val glowColors = LocalGlowColors.current
     val reducedMotion = isReducedMotionEnabled()
@@ -44,11 +44,12 @@ fun MilestoneDialog(
         rememberInfiniteTransition(label = "milestoneScale").animateFloat(
             initialValue = 0.9f,
             targetValue = 1.1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(1000, easing = EaseInOut),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "scale"
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(1000, easing = EaseInOut),
+                    repeatMode = RepeatMode.Reverse,
+                ),
+            label = "scale",
         )
     }
 
@@ -58,14 +59,15 @@ fun MilestoneDialog(
         title = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Confetti canvas (only if not reduced motion)
                 if (!reducedMotion) {
                     ConfettiCanvas(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
                     )
                 }
 
@@ -73,7 +75,7 @@ fun MilestoneDialog(
                     text = "🎉 Milestone Reached! 🎉",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
         },
@@ -81,24 +83,25 @@ fun MilestoneDialog(
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.md)
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
             ) {
                 // Milestone badge
                 Box(
-                    modifier = Modifier
-                        .size(120.dp)
-                        .scale(scale)
-                        .background(
-                            color = glowColors.honey500.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(60.dp)
-                        ),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .size(120.dp)
+                            .scale(scale)
+                            .background(
+                                color = glowColors.honey500.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(60.dp),
+                            ),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "$milestone",
                         style = MaterialTheme.typography.displayLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = glowColors.honey700
+                        color = glowColors.honey700,
                     )
                 }
 
@@ -106,14 +109,14 @@ fun MilestoneDialog(
                     text = "Day Streak!",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
 
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
                 // Progress to next milestone
@@ -121,17 +124,17 @@ fun MilestoneDialog(
                 if (nextMilestone != null) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
                             text = "Next milestone: $nextMilestone days",
                             style = MaterialTheme.typography.labelMedium,
-                            color = glowColors.ink600
+                            color = glowColors.ink600,
                         )
                         Text(
                             text = "${nextMilestone - milestone} days to go!",
                             style = MaterialTheme.typography.labelSmall,
-                            color = glowColors.ink600
+                            color = glowColors.ink600,
                         )
                     }
                 }
@@ -139,7 +142,7 @@ fun MilestoneDialog(
         },
         confirmButton = {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
             ) {
                 if (onShare != null) {
                     OutlinedButton(onClick = onShare) {
@@ -148,17 +151,18 @@ fun MilestoneDialog(
                 }
                 FilledTonalButton(
                     onClick = onDismiss,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = glowColors.honey500,
-                        contentColor = glowColors.ink900
-                    )
+                    colors =
+                        ButtonDefaults.filledTonalButtonColors(
+                            containerColor = glowColors.honey500,
+                            contentColor = glowColors.ink900,
+                        ),
                 ) {
                     Text("Continue")
                 }
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(24.dp),
     )
 }
 
@@ -174,77 +178,80 @@ private fun getNextMilestone(current: Int): Int? {
  * Animated confetti canvas
  */
 @Composable
-private fun ConfettiCanvas(
-    modifier: Modifier = Modifier
-) {
+private fun ConfettiCanvas(modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "confetti")
 
     val animationProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "confettiProgress"
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+        label = "confettiProgress",
     )
 
     // Generate random confetti pieces
-    val confettiPieces = remember {
-        List(30) {
-            ConfettiPiece(
-                x = Random.nextFloat(),
-                y = Random.nextFloat() * -0.2f,
-                color = listOf(
-                    Color(0xFFFFD700), // Gold
-                    Color(0xFFFFA500), // Orange
-                    Color(0xFFFF69B4), // Pink
-                    Color(0xFF87CEEB), // Sky blue
-                    Color(0xFF90EE90)  // Light green
-                ).random(),
-                rotation = Random.nextFloat() * 360f,
-                size = Random.nextFloat() * 8f + 4f
-            )
+    val confettiPieces =
+        remember {
+            List(30) {
+                ConfettiPiece(
+                    x = Random.nextFloat(),
+                    y = Random.nextFloat() * -0.2f,
+                    color =
+                        listOf(
+                            Color(0xFFFFD700), // Gold
+                            Color(0xFFFFA500), // Orange
+                            Color(0xFFFF69B4), // Pink
+                            Color(0xFF87CEEB), // Sky blue
+                            Color(0xFF90EE90), // Light green
+                        ).random(),
+                    rotation = Random.nextFloat() * 360f,
+                    size = Random.nextFloat() * 8f + 4f,
+                )
+            }
         }
-    }
 
     Canvas(modifier = modifier) {
         confettiPieces.forEach { piece ->
             val yOffset = (animationProgress * size.height * 1.5f + piece.y * size.height)
-            val xOffset = piece.x * size.width +
-                sin(animationProgress * 4f + piece.x * 10f) * 20f
+            val xOffset =
+                piece.x * size.width +
+                    sin(animationProgress * 4f + piece.x * 10f) * 20f
 
             if (yOffset < size.height) {
                 val angle = (animationProgress * 360f + piece.rotation) % 360f
-                val path = Path().apply {
-                    val centerX = xOffset
-                    val centerY = yOffset
-                    val radius = piece.size
+                val path =
+                    Path().apply {
+                        val centerX = xOffset
+                        val centerY = yOffset
+                        val radius = piece.size
 
-                    // Draw a star shape
-                    for (i in 0 until 5) {
-                        val outerAngle = Math.toRadians((angle + i * 72).toDouble())
-                        val innerAngle = Math.toRadians((angle + i * 72 + 36).toDouble())
+                        // Draw a star shape
+                        for (i in 0 until 5) {
+                            val outerAngle = Math.toRadians((angle + i * 72).toDouble())
+                            val innerAngle = Math.toRadians((angle + i * 72 + 36).toDouble())
 
-                        val outerX = centerX + (radius * cos(outerAngle)).toFloat()
-                        val outerY = centerY + (radius * sin(outerAngle)).toFloat()
-                        val innerX = centerX + (radius * 0.5f * cos(innerAngle)).toFloat()
-                        val innerY = centerY + (radius * 0.5f * sin(innerAngle)).toFloat()
+                            val outerX = centerX + (radius * cos(outerAngle)).toFloat()
+                            val outerY = centerY + (radius * sin(outerAngle)).toFloat()
+                            val innerX = centerX + (radius * 0.5f * cos(innerAngle)).toFloat()
+                            val innerY = centerY + (radius * 0.5f * sin(innerAngle)).toFloat()
 
-                        if (i == 0) {
-                            moveTo(outerX, outerY)
-                        } else {
-                            lineTo(outerX, outerY)
+                            if (i == 0) {
+                                moveTo(outerX, outerY)
+                            } else {
+                                lineTo(outerX, outerY)
+                            }
+                            lineTo(innerX, innerY)
                         }
-                        lineTo(innerX, innerY)
+                        close()
                     }
-                    close()
-                }
 
                 drawPath(
                     path = path,
                     color = piece.color,
-                    style = Stroke(width = 2f)
+                    style = Stroke(width = 2f),
                 )
             }
         }
@@ -259,7 +266,7 @@ private data class ConfettiPiece(
     val y: Float,
     val color: Color,
     val rotation: Float,
-    val size: Float
+    val size: Float,
 )
 
 /**
@@ -270,7 +277,7 @@ private data class ConfettiPiece(
 fun MilestoneProgressCard(
     currentStreak: Int,
     nextMilestone: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val glowColors = LocalGlowColors.current
     val progress = currentStreak.toFloat() / nextMilestone.toFloat()
@@ -278,51 +285,54 @@ fun MilestoneProgressCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = glowColors.honey500.copy(alpha = 0.1f)
-        ),
-        shape = RoundedCornerShape(16.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = glowColors.honey500.copy(alpha = 0.1f),
+            ),
+        shape = RoundedCornerShape(16.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(GlowSpacing.md)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(GlowSpacing.md),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Next milestone",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = glowColors.ink900
+                    color = glowColors.ink900,
                 )
                 Text(
                     text = "$daysRemaining days to go",
                     style = MaterialTheme.typography.bodySmall,
-                    color = glowColors.ink600
+                    color = glowColors.ink600,
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(GlowSpacing.sm))
 
             LinearProgressIndicator(
                 progress = { progress.coerceIn(0f, 1f) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(12.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(12.dp),
                 color = glowColors.honey600,
-                trackColor = glowColors.ink300,
+                trackColor = glowColors.ink600.copy(alpha = 0.2f),
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(GlowSpacing.xs))
 
             Text(
                 text = "$currentStreak / $nextMilestone days",
                 style = MaterialTheme.typography.labelSmall,
-                color = glowColors.ink600
+                color = glowColors.ink600,
             )
         }
     }

@@ -90,10 +90,11 @@ private fun WelcomeContent(
     val isBusy = uiState is AuthUiState.Authenticating
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(glow.paper)
-            .padding(GlowSpacing.lg),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(glow.paper)
+                .padding(GlowSpacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // Top spacing - 80dp
@@ -204,62 +205,70 @@ private fun AnimatedGradientOrb() {
     val scale by infiniteTransition.animateFloat(
         initialValue = 0.95f,
         targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "orbScale"
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "orbScale",
     )
 
     // Opacity pulse for glow effect
     val glowAlpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
         targetValue = 0.6f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "orbGlow"
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+        label = "orbGlow",
     )
 
     Box(
         modifier = Modifier.size(120.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         // Outer glow layer
         Box(
-            modifier = Modifier
-                .size(120.dp)
-                .scale(scale)
-                .alpha(glowAlpha)
-                .blur(32.dp)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            glow.honey400.copy(alpha = 0.8f),
-                            glow.honey500.copy(alpha = 0.4f),
-                            Color.Transparent
-                        )
+            modifier =
+                Modifier
+                    .size(120.dp)
+                    .scale(scale)
+                    .alpha(glowAlpha)
+                    .blur(32.dp)
+                    .background(
+                        brush =
+                            Brush.radialGradient(
+                                colors =
+                                    listOf(
+                                        glow.honey400.copy(alpha = 0.8f),
+                                        glow.honey500.copy(alpha = 0.4f),
+                                        Color.Transparent,
+                                    ),
+                            ),
+                        shape = CircleShape,
                     ),
-                    shape = CircleShape
-                )
         )
 
         // Main gradient orb
         Box(
-            modifier = Modifier
-                .size(120.dp)
-                .scale(scale)
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            glow.honey400,
-                            glow.honey500,
-                            glow.honey600
-                        )
+            modifier =
+                Modifier
+                    .size(120.dp)
+                    .scale(scale)
+                    .background(
+                        brush =
+                            Brush.linearGradient(
+                                colors =
+                                    listOf(
+                                        glow.honey400,
+                                        glow.honey500,
+                                        glow.honey600,
+                                    ),
+                            ),
+                        shape = CircleShape,
                     ),
-                    shape = CircleShape
-                )
         )
     }
 }
@@ -314,13 +323,15 @@ private fun EnhancedDisclaimerNote(text: String) {
     val glow = LocalGlowColors.current
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = glow.surfaceCard,
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
-            )
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    color = glow.surfaceCard,
+                    shape =
+                        androidx.compose.foundation.shape
+                            .RoundedCornerShape(16.dp),
+                ).padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         Text(
             text = text,

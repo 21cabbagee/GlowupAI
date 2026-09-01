@@ -60,13 +60,22 @@ fun ExperimentsRoute(
     Scaffold(topBar = { GlowTopBar(title = "Experiments", onBack = onBack) }) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             when (val status = state.listStatus) {
-                is ExperimentsListStatus.Loading -> ShimmerSkeleton(height = 200.dp)
-                is ExperimentsListStatus.Error -> ErrorState(message = status.message, onRetry = viewModel::loadExperiments)
-                is ExperimentsListStatus.Locked -> LockedCard(
-                    title = "Measure one change at a time",
-                    body = "Experiments track a single product against your own before/after captures — a Premium feature.",
-                    onUnlock = onNavigateToPaywall,
-                )
+                is ExperimentsListStatus.Loading -> {
+                    ShimmerSkeleton(height = 200.dp)
+                }
+
+                is ExperimentsListStatus.Error -> {
+                    ErrorState(message = status.message, onRetry = viewModel::loadExperiments)
+                }
+
+                is ExperimentsListStatus.Locked -> {
+                    LockedCard(
+                        title = "Measure one change at a time",
+                        body = "Experiments track a single product against your own before/after captures — a Premium feature.",
+                        onUnlock = onNavigateToPaywall,
+                    )
+                }
+
                 is ExperimentsListStatus.Content -> {
                     if (status.experiments.isEmpty()) {
                         EmptyState(
@@ -111,19 +120,28 @@ fun ExperimentsRoute(
 }
 
 @Composable
-private fun ExperimentRow(experiment: Experiment, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun ExperimentRow(
+    experiment: Experiment,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val glow = LocalGlowColors.current
     // Each (surface, onSurface, label) triple is self-contained so its contrast never depends on
     // the surrounding card background — same discipline as VerdictChip.
-    val (statusColor, onStatusColor, statusText) = when (experiment.status) {
-        ExperimentStatus.RUNNING -> Triple(glow.honey500, glow.ink900, "Running")
-        ExperimentStatus.PLANNED -> Triple(glow.ink600, glow.paper, "Planned")
-        ExperimentStatus.PAUSED -> Triple(glow.warning, glow.onWarning, "Paused")
-        ExperimentStatus.COMPLETED -> Triple(glow.success, Color.White, "Completed")
-        ExperimentStatus.CANCELLED -> Triple(glow.danger, glow.paper, "Cancelled")
-        ExperimentStatus.UNKNOWN -> Triple(glow.ink600, glow.paper, "Unknown")
-    }
-    GlowCard(modifier = modifier.fillMaxWidth(), onClick = onClick, contentDescription = "Open experiment ${experiment.name}, $statusText") {
+    val (statusColor, onStatusColor, statusText) =
+        when (experiment.status) {
+            ExperimentStatus.RUNNING -> Triple(glow.honey500, glow.ink900, "Running")
+            ExperimentStatus.PLANNED -> Triple(glow.ink600, glow.paper, "Planned")
+            ExperimentStatus.PAUSED -> Triple(glow.warning, glow.onWarning, "Paused")
+            ExperimentStatus.COMPLETED -> Triple(glow.success, Color.White, "Completed")
+            ExperimentStatus.CANCELLED -> Triple(glow.danger, glow.paper, "Cancelled")
+            ExperimentStatus.UNKNOWN -> Triple(glow.ink600, glow.paper, "Unknown")
+        }
+    GlowCard(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick,
+        contentDescription = "Open experiment ${experiment.name}, $statusText",
+    ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(experiment.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = glow.ink900)
@@ -139,9 +157,10 @@ private fun ExperimentRow(experiment: Experiment, onClick: () -> Unit, modifier:
                 color = onStatusColor,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .background(statusColor, RoundedCornerShape(50))
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                modifier =
+                    Modifier
+                        .background(statusColor, RoundedCornerShape(50))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
             )
         }
     }

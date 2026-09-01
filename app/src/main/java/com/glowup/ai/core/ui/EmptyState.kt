@@ -15,10 +15,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.glowup.ai.core.design.GlowUpTheme
-import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.design.GlowShapes
 import com.glowup.ai.core.design.GlowSpacing
+import com.glowup.ai.core.design.GlowUpTheme
+import com.glowup.ai.core.design.LocalGlowColors
 
 /**
  * An empty state that ALWAYS names the next action. There is no overload without [ctaLabel] /
@@ -36,11 +36,12 @@ fun EmptyState(
 ) {
     val glow = LocalGlowColors.current
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(GlowShapes.md)
-            .background(glow.surfaceCard)
-            .padding(GlowSpacing.lg),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(GlowShapes.md)
+                .background(glow.surfaceCard)
+                .padding(GlowSpacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(

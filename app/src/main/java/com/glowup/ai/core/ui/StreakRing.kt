@@ -1,7 +1,7 @@
 package com.glowup.ai.core.ui
 
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -49,20 +49,22 @@ fun StreakRing(
     val trackColor = glow.ink600.copy(alpha = 0.18f)
 
     Box(
-        modifier = modifier
-            .size(size)
-            .semantics {
-                contentDescription = "$streak day streak, out of a $target day goal"
-            },
+        modifier =
+            modifier
+                .size(size)
+                .semantics {
+                    contentDescription = "$streak day streak, out of a $target day goal"
+                },
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.size(size)) {
             val strokeWidthPx = strokeWidthDp.toPx()
             val diameter = kotlin.math.min(this.size.width, this.size.height) - strokeWidthPx
-            val topLeft = androidx.compose.ui.geometry.Offset(
-                (this.size.width - diameter) / 2f,
-                (this.size.height - diameter) / 2f,
-            )
+            val topLeft =
+                androidx.compose.ui.geometry.Offset(
+                    (this.size.width - diameter) / 2f,
+                    (this.size.height - diameter) / 2f,
+                )
             val arcSize = Size(diameter, diameter)
 
             drawArc(

@@ -9,9 +9,10 @@ import kotlinx.serialization.json.Json
  * with extra columns by design (see frontend-api-map.md's contract
  * conventions).
  */
-val NetworkJson: Json = Json {
-    ignoreUnknownKeys = true
-    isLenient = true
-    coerceInputValues = true
-    explicitNulls = false
-}
+val NetworkJson: Json =
+    Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+        explicitNulls = false
+    }

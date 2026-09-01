@@ -71,9 +71,10 @@ fun RoutineTimelineSection(
     }
 }
 
-private fun RoutineAction.displayLabel(): String = when (this) {
-    RoutineAction.START -> "Started"
-    RoutineAction.STOP -> "Stopped"
-    RoutineAction.CHANGE -> "Changed"
-    RoutineAction.UNKNOWN -> "Logged"
-}
+private fun RoutineAction.displayLabel(): String =
+    when (this) {
+        RoutineAction.START -> "Started"
+        RoutineAction.STOP -> "Stopped"
+        RoutineAction.CHANGE -> "Changed"
+        RoutineAction.UNKNOWN -> "Logged"
+    }

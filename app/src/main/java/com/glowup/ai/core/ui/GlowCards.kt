@@ -57,7 +57,7 @@ import com.glowup.ai.core.design.LocalGlowColors
 enum class Trend {
     UP,
     DOWN,
-    STABLE
+    STABLE,
 }
 
 /**
@@ -87,17 +87,19 @@ fun MetricCard(
     Card(
         modifier = modifier,
         shape = GlowShapes.lg,
-        colors = CardDefaults.cardColors(
-            containerColor = glow.surfaceCard
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = glow.surfaceCard,
+            ),
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 2.dp,
+            ),
     ) {
         if (isLoading) {
             Column(
                 modifier = Modifier.padding(GlowSpacing.lg),
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
             ) {
                 ShimmerSkeleton(height = 14.dp, cornerRadius = 4.dp)
                 ShimmerSkeleton(height = 32.dp, cornerRadius = 8.dp)
@@ -106,12 +108,12 @@ fun MetricCard(
         } else {
             Column(
                 modifier = Modifier.padding(GlowSpacing.lg),
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
             ) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.labelMedium,
-                    color = glow.ink600
+                    color = glow.ink600,
                 )
 
                 Text(
@@ -119,36 +121,45 @@ fun MetricCard(
                     fontSize = 32.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = FontFamily.Monospace,
-                    color = glow.ink900
+                    color = glow.ink900,
                 )
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
                 ) {
-                    val (icon, trendColor) = when {
-                        trend == Trend.STABLE -> Pair(Icons.Default.Remove, glow.ink600)
-                        isImprovement -> Pair(
-                            if (trend == Trend.DOWN) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
-                            glow.success
-                        )
-                        else -> Pair(
-                            if (trend == Trend.UP) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
-                            glow.danger
-                        )
-                    }
+                    val (icon, trendColor) =
+                        when {
+                            trend == Trend.STABLE -> {
+                                Pair(Icons.Default.Remove, glow.ink600)
+                            }
+
+                            isImprovement -> {
+                                Pair(
+                                    if (trend == Trend.DOWN) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
+                                    glow.success,
+                                )
+                            }
+
+                            else -> {
+                                Pair(
+                                    if (trend == Trend.UP) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                    glow.danger,
+                                )
+                            }
+                        }
 
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
                         tint = trendColor,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
 
                     Text(
                         text = change,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = glow.ink600
+                        color = glow.ink600,
                     )
                 }
             }
@@ -178,32 +189,35 @@ fun StreakCard(
     val progress by animateFloatAsState(
         targetValue = (streakCount.toFloat() / nextMilestone.toFloat()).coerceIn(0f, 1f),
         animationSpec = tween(durationMillis = 800),
-        label = "streakProgress"
+        label = "streakProgress",
     )
 
     Card(
         modifier = modifier,
         shape = GlowShapes.lg,
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 2.dp,
+            ),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(
-                            glow.honey400.copy(alpha = 0.3f),
-                            glow.honey500.copy(alpha = 0.2f)
-                        )
-                    )
-                )
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors =
+                                listOf(
+                                    glow.honey400.copy(alpha = 0.3f),
+                                    glow.honey500.copy(alpha = 0.2f),
+                                ),
+                        ),
+                    ),
         ) {
             if (isLoading) {
                 Column(
                     modifier = Modifier.padding(GlowSpacing.lg),
-                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
                 ) {
                     ShimmerSkeleton(height = 32.dp, cornerRadius = 8.dp)
                     ShimmerSkeleton(height = 14.dp, cornerRadius = 4.dp)
@@ -212,44 +226,46 @@ fun StreakCard(
                 }
             } else {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(GlowSpacing.lg),
-                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(GlowSpacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
                     ) {
                         Text(
                             text = "🔥",
-                            fontSize = 32.sp
+                            fontSize = 32.sp,
                         )
                         Text(
                             text = "$streakCount Day Streak",
                             fontSize = 24.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = glow.ink900
+                            color = glow.ink900,
                         )
                     }
 
                     Text(
                         text = encouragementText,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = glow.ink600
+                        color = glow.ink600,
                     )
 
                     Spacer(modifier = Modifier.height(GlowSpacing.sm))
 
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
                     ) {
                         LinearProgressIndicator(
                             progress = { progress },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp)),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(RoundedCornerShape(4.dp)),
                             color = glow.honey600,
                             trackColor = glow.honey300.copy(alpha = 0.3f),
                         )
@@ -257,7 +273,7 @@ fun StreakCard(
                         Text(
                             text = "$streakCount/$nextMilestone to next milestone",
                             style = MaterialTheme.typography.labelSmall,
-                            color = glow.ink600
+                            color = glow.ink600,
                         )
                     }
                 }
@@ -297,28 +313,30 @@ fun ProductCard(
     Card(
         modifier = modifier,
         shape = GlowShapes.lg,
-        colors = CardDefaults.cardColors(
-            containerColor = glow.surfaceCard
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = glow.surfaceCard,
+            ),
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 2.dp,
+            ),
     ) {
         if (isLoading) {
             Column(
                 modifier = Modifier.padding(GlowSpacing.lg),
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.md)
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.md)
+                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.md),
                 ) {
                     ShimmerSkeleton(
                         height = 64.dp,
                         cornerRadius = 12.dp,
-                        modifier = Modifier.width(64.dp)
+                        modifier = Modifier.width(64.dp),
                     )
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
                     ) {
                         ShimmerSkeleton(height = 16.dp, cornerRadius = 4.dp, modifier = Modifier.width(120.dp))
                         ShimmerSkeleton(height = 14.dp, cornerRadius = 4.dp, modifier = Modifier.width(80.dp))
@@ -331,46 +349,47 @@ fun ProductCard(
         } else {
             Column(
                 modifier = Modifier.padding(GlowSpacing.lg),
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.md)
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(GlowSpacing.md),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     // Product image placeholder or actual image
                     Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(glow.honey300.copy(alpha = 0.3f)),
-                        contentAlignment = Alignment.Center
+                        modifier =
+                            Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(glow.honey300.copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center,
                     ) {
                         imageContent?.invoke() ?: Text(
                             text = productName.take(2).uppercase(),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = glow.ink900
+                            color = glow.ink900,
                         )
                     }
 
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
                     ) {
                         Text(
                             text = productName,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = glow.ink900
+                            color = glow.ink900,
                         )
                         Text(
                             text = productType,
                             style = MaterialTheme.typography.bodySmall,
-                            color = glow.ink600
+                            color = glow.ink600,
                         )
                         Text(
                             text = routineInfo,
                             style = MaterialTheme.typography.labelSmall,
-                            color = glow.ink600
+                            color = glow.ink600,
                         )
                     }
                 }
@@ -380,26 +399,27 @@ fun ProductCard(
                     MiniSparklineChart(
                         data = chartData,
                         color = if (isEffective) glow.success else glow.honey700,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(60.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(60.dp),
                     )
                 }
 
                 // Effectiveness verdict
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
                 ) {
                     Text(
                         text = if (isEffective) "✓" else "?",
                         fontSize = 14.sp,
-                        color = if (isEffective) glow.success else glow.ink600
+                        color = if (isEffective) glow.success else glow.ink600,
                     )
                     Text(
                         text = effectiveness,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (isEffective) glow.success else glow.ink600
+                        color = if (isEffective) glow.success else glow.ink600,
                     )
                 }
             }
@@ -424,9 +444,10 @@ private fun MiniSparklineChart(
     val glow = LocalGlowColors.current
 
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(glow.paper)
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(glow.paper),
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
             if (data.size < 2) return@Canvas
@@ -436,44 +457,50 @@ private fun MiniSparklineChart(
             val spacing = width / (data.size - 1)
 
             // Calculate points
-            val points = data.mapIndexed { index, value ->
-                val x = index * spacing
-                val y = height * (1 - value.coerceIn(0f, 1f))
-                Offset(x, y)
-            }
+            val points =
+                data.mapIndexed { index, value ->
+                    val x = index * spacing
+                    val y = height * (1 - value.coerceIn(0f, 1f))
+                    Offset(x, y)
+                }
 
             // Draw fill path
-            val fillPath = Path().apply {
-                moveTo(points.first().x, height)
-                points.forEach { lineTo(it.x, it.y) }
-                lineTo(points.last().x, height)
-                close()
-            }
+            val fillPath =
+                Path().apply {
+                    moveTo(points.first().x, height)
+                    points.forEach { lineTo(it.x, it.y) }
+                    lineTo(points.last().x, height)
+                    close()
+                }
 
             drawPath(
                 path = fillPath,
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        color.copy(alpha = 0.3f),
-                        color.copy(alpha = 0.05f)
-                    )
-                )
+                brush =
+                    Brush.verticalGradient(
+                        colors =
+                            listOf(
+                                color.copy(alpha = 0.3f),
+                                color.copy(alpha = 0.05f),
+                            ),
+                    ),
             )
 
             // Draw line path
-            val linePath = Path().apply {
-                moveTo(points.first().x, points.first().y)
-                points.drop(1).forEach { lineTo(it.x, it.y) }
-            }
+            val linePath =
+                Path().apply {
+                    moveTo(points.first().x, points.first().y)
+                    points.drop(1).forEach { lineTo(it.x, it.y) }
+                }
 
             drawPath(
                 path = linePath,
                 color = color,
-                style = Stroke(
-                    width = 2.5f,
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round
-                )
+                style =
+                    Stroke(
+                        width = 2.5f,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round,
+                    ),
             )
         }
     }
@@ -488,10 +515,11 @@ private fun MiniSparklineChart(
 private fun MetricCardPreviewLight() {
     GlowUpTheme(darkTheme = false) {
         Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             MetricCard(
                 title = "Redness",
@@ -499,7 +527,7 @@ private fun MetricCardPreviewLight() {
                 change = "12% improvement",
                 trend = Trend.DOWN,
                 isImprovement = true,
-                modifier = Modifier.width(160.dp)
+                modifier = Modifier.width(160.dp),
             )
             MetricCard(
                 title = "Texture",
@@ -507,7 +535,7 @@ private fun MetricCardPreviewLight() {
                 change = "8 points",
                 trend = Trend.UP,
                 isImprovement = false,
-                modifier = Modifier.width(160.dp)
+                modifier = Modifier.width(160.dp),
             )
             MetricCard(
                 title = "Clarity",
@@ -515,7 +543,7 @@ private fun MetricCardPreviewLight() {
                 change = "No change",
                 trend = Trend.STABLE,
                 isImprovement = true,
-                modifier = Modifier.width(160.dp)
+                modifier = Modifier.width(160.dp),
             )
             MetricCard(
                 title = "Loading",
@@ -524,7 +552,7 @@ private fun MetricCardPreviewLight() {
                 trend = Trend.STABLE,
                 isImprovement = true,
                 isLoading = true,
-                modifier = Modifier.width(160.dp)
+                modifier = Modifier.width(160.dp),
             )
         }
     }
@@ -535,10 +563,11 @@ private fun MetricCardPreviewLight() {
 private fun MetricCardPreviewDark() {
     GlowUpTheme(darkTheme = true) {
         Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             MetricCard(
                 title = "Redness",
@@ -546,7 +575,7 @@ private fun MetricCardPreviewDark() {
                 change = "12% improvement",
                 trend = Trend.DOWN,
                 isImprovement = true,
-                modifier = Modifier.width(160.dp)
+                modifier = Modifier.width(160.dp),
             )
         }
     }
@@ -558,17 +587,17 @@ private fun StreakCardPreviewLight() {
     GlowUpTheme(darkTheme = false) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             StreakCard(
                 streakCount = 8,
                 nextMilestone = 14,
-                encouragementText = "Keep it up! You're building momentum."
+                encouragementText = "Keep it up! You're building momentum.",
             )
             StreakCard(
                 streakCount = 0,
                 nextMilestone = 7,
-                isLoading = true
+                isLoading = true,
             )
         }
     }
@@ -579,11 +608,11 @@ private fun StreakCardPreviewLight() {
 private fun StreakCardPreviewDark() {
     GlowUpTheme(darkTheme = true) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             StreakCard(
                 streakCount = 8,
-                nextMilestone = 14
+                nextMilestone = 14,
             )
         }
     }
@@ -595,7 +624,7 @@ private fun ProductCardPreviewLight() {
     GlowUpTheme(darkTheme = false) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ProductCard(
                 productName = "CeraVe Moisturizer",
@@ -603,7 +632,7 @@ private fun ProductCardPreviewLight() {
                 routineInfo = "2× daily",
                 effectiveness = "Working well",
                 isEffective = true,
-                chartData = listOf(0.7f, 0.6f, 0.5f, 0.4f, 0.35f, 0.3f, 0.25f, 0.2f)
+                chartData = listOf(0.7f, 0.6f, 0.5f, 0.4f, 0.35f, 0.3f, 0.25f, 0.2f),
             )
             ProductCard(
                 productName = "Vitamin C Serum",
@@ -611,7 +640,7 @@ private fun ProductCardPreviewLight() {
                 routineInfo = "AM only",
                 effectiveness = "No clear effect",
                 isEffective = false,
-                chartData = listOf(0.5f, 0.55f, 0.5f, 0.52f, 0.48f, 0.5f, 0.51f, 0.49f)
+                chartData = listOf(0.5f, 0.55f, 0.5f, 0.52f, 0.48f, 0.5f, 0.51f, 0.49f),
             )
             ProductCard(
                 productName = "Loading Product",
@@ -620,7 +649,7 @@ private fun ProductCardPreviewLight() {
                 effectiveness = "",
                 isEffective = false,
                 chartData = emptyList(),
-                isLoading = true
+                isLoading = true,
             )
         }
     }
@@ -631,7 +660,7 @@ private fun ProductCardPreviewLight() {
 private fun ProductCardPreviewDark() {
     GlowUpTheme(darkTheme = true) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             ProductCard(
                 productName = "CeraVe Moisturizer",
@@ -639,7 +668,7 @@ private fun ProductCardPreviewDark() {
                 routineInfo = "2× daily",
                 effectiveness = "Working well",
                 isEffective = true,
-                chartData = listOf(0.7f, 0.6f, 0.5f, 0.4f, 0.35f, 0.3f, 0.25f, 0.2f)
+                chartData = listOf(0.7f, 0.6f, 0.5f, 0.4f, 0.35f, 0.3f, 0.25f, 0.2f),
             )
         }
     }

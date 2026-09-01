@@ -15,7 +15,9 @@ import java.util.concurrent.TimeUnit
 @InstallIn(SingletonComponent::class)
 interface ReminderWorkerEntryPoint {
     fun sessionStore(): SessionStore
+
     fun workScheduler(): WorkScheduler
+
     fun reminderNotifier(): ReminderNotifier
 }
 
@@ -29,8 +31,10 @@ interface ReminderWorkerEntryPoint {
  * user, or the app hasn't opened Home since), this worker has nothing to reschedule and stays
  * cancelled until `HomeRepository` populates one.
  */
-class ReminderWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
-
+class ReminderWorker(
+    context: Context,
+    params: WorkerParameters,
+) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val entryPoint = EntryPointAccessors.fromApplication(applicationContext, ReminderWorkerEntryPoint::class.java)
         val sessionStore = entryPoint.sessionStore()

@@ -56,18 +56,19 @@ fun RecentPhotosSection(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
     ) {
         // Header with "See All" button
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    onClick = onSeeAllClick,
-                    role = Role.Button
-                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClick = onSeeAllClick,
+                        role = Role.Button,
+                    ),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "Recent Photos",
@@ -78,7 +79,7 @@ fun RecentPhotosSection(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
                     text = "See all",
@@ -90,7 +91,7 @@ fun RecentPhotosSection(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = null,
                     tint = glowColors.honey700,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }
@@ -100,23 +101,25 @@ fun RecentPhotosSection(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = GlowShapes.md,
-                colors = CardDefaults.cardColors(
-                    containerColor = glowColors.honey500.copy(alpha = 0.1f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = glowColors.honey500.copy(alpha = 0.1f),
+                    ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(GlowSpacing.lg),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(GlowSpacing.lg),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
                 ) {
                     Icon(
                         imageVector = Icons.Default.CameraAlt,
                         contentDescription = null,
                         tint = glowColors.honey700,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(48.dp),
                     )
                     Text(
                         text = "No photos yet",
@@ -135,12 +138,12 @@ fun RecentPhotosSection(
             // Photo grid
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
-                contentPadding = PaddingValues(horizontal = 2.dp)
+                contentPadding = PaddingValues(horizontal = 2.dp),
             ) {
                 items(recentPhotos) { photo ->
                     PhotoCard(
                         photo = photo,
-                        onClick = { onPhotoClick(photo.id) }
+                        onClick = { onPhotoClick(photo.id) },
                     )
                 }
             }
@@ -155,54 +158,59 @@ private fun PhotoCard(
 ) {
     val glowColors = LocalGlowColors.current
 
-    val dateText = try {
-        photo.capturedAt.let { isoString ->
-            val instant = Instant.parse(isoString)
-            val localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate()
-            val today = java.time.LocalDate.now()
-            val yesterday = today.minusDays(1)
+    val dateText =
+        try {
+            photo.capturedAt.let { isoString ->
+                val instant = Instant.parse(isoString)
+                val localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate()
+                val today = java.time.LocalDate.now()
+                val yesterday = today.minusDays(1)
 
-            when (localDate) {
-                today -> "Today"
-                yesterday -> "Yesterday"
-                else -> localDate.format(DateTimeFormatter.ofPattern("MMM d"))
+                when (localDate) {
+                    today -> "Today"
+                    yesterday -> "Yesterday"
+                    else -> localDate.format(DateTimeFormatter.ofPattern("MMM d"))
+                }
             }
+        } catch (e: Exception) {
+            "Unknown"
         }
-    } catch (e: Exception) {
-        "Unknown"
-    }
 
     Card(
-        modifier = Modifier
-            .width(120.dp)
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .width(120.dp)
+                .clickable(onClick = onClick),
         shape = GlowShapes.md,
-        colors = CardDefaults.cardColors(
-            containerColor = glowColors.surfaceCard
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp,
-            pressedElevation = 4.dp
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = glowColors.surfaceCard,
+            ),
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 2.dp,
+                pressedElevation = 4.dp,
+            ),
     ) {
         Column(
             modifier = Modifier.padding(GlowSpacing.sm),
-            verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+            verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
         ) {
             // Placeholder for photo thumbnail
             // In a real implementation, you would load the actual image here
             Box(
-                modifier = Modifier
-                    .size(104.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(glowColors.honey500.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(104.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(glowColors.honey500.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.CameraAlt,
                     contentDescription = null,
                     tint = glowColors.honey700,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(32.dp),
                 )
             }
 
@@ -219,12 +227,12 @@ private fun PhotoCard(
                     text = "Baseline",
                     style = MaterialTheme.typography.labelSmall,
                     color = glowColors.honey700,
-                    modifier = Modifier
-                        .background(
-                            color = glowColors.honey500.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                    modifier =
+                        Modifier
+                            .background(
+                                color = glowColors.honey500.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(4.dp),
+                            ).padding(horizontal = 6.dp, vertical = 2.dp),
                 )
             }
         }

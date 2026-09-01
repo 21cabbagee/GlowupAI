@@ -1,7 +1,7 @@
 package com.glowup.ai.feature.analytics
 
-import com.glowup.ai.domain.model.HistoryItem
 import com.glowup.ai.domain.model.Experiment
+import com.glowup.ai.domain.model.HistoryItem
 import java.time.LocalDate
 
 data class AnalyticsUiState(
@@ -43,7 +43,10 @@ data class MetricPoint(
 )
 
 enum class MetricType {
-    REDNESS, BLEMISH, DARKSPOT, TEXTURE
+    REDNESS,
+    BLEMISH,
+    DARKSPOT,
+    TEXTURE,
 }
 
 data class ConsistencyData(
@@ -65,7 +68,11 @@ data class AiInsight(
 )
 
 enum class InsightType {
-    IMPROVEMENT, CONCERN, PATTERN, ACHIEVEMENT, RECOMMENDATION
+    IMPROVEMENT,
+    CONCERN,
+    PATTERN,
+    ACHIEVEMENT,
+    RECOMMENDATION,
 }
 
 data class ProductScore(
@@ -79,7 +86,14 @@ data class ProductScore(
 
 sealed interface ExportState {
     data object Idle : ExportState
+
     data object Exporting : ExportState
-    data class Success(val message: String) : ExportState
-    data class Error(val message: String) : ExportState
+
+    data class Success(
+        val message: String,
+    ) : ExportState
+
+    data class Error(
+        val message: String,
+    ) : ExportState
 }

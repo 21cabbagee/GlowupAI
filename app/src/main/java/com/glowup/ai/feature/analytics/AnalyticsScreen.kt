@@ -26,6 +26,7 @@ import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.ui.*
 import com.glowup.ai.feature.analytics.components.*
+import com.glowup.ai.feature.analytics.components.TrendDirection
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,41 +48,44 @@ fun AnalyticsScreen(
                         Icon(
                             imageVector = Icons.Filled.Refresh,
                             contentDescription = "Refresh",
-                            tint = glow.ink900
+                            tint = glow.ink900,
                         )
                     }
-                }
+                },
             )
         },
         floatingActionButton = {
             if (!uiState.isLoading && uiState.error == null) {
                 ExportFab(
                     onExportPdf = viewModel::exportPdf,
-                    onExportCsv = viewModel::exportCsv
+                    onExportCsv = viewModel::exportCsv,
                 )
             }
-        }
+        },
     ) { padding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
         ) {
             when {
                 uiState.isLoading -> {
                     LoadingState()
                 }
+
                 uiState.error != null -> {
                     ErrorState(
                         message = uiState.error ?: "Unknown error",
-                        onRetry = viewModel::refresh
+                        onRetry = viewModel::refresh,
                     )
                 }
+
                 else -> {
                     AnalyticsContent(
                         uiState = uiState,
                         onMetricSelected = viewModel::selectMetric,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
@@ -90,27 +94,30 @@ fun AnalyticsScreen(
             AnimatedVisibility(
                 visible = uiState.exportState is ExportState.Success || uiState.exportState is ExportState.Error,
                 enter = fadeIn(),
-                exit = fadeOut()
+                exit = fadeOut(),
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(GlowSpacing.md),
-                    contentAlignment = Alignment.BottomCenter
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(GlowSpacing.md),
+                    contentAlignment = Alignment.BottomCenter,
                 ) {
                     when (val state = uiState.exportState) {
                         is ExportState.Success -> {
                             SuccessState(
                                 message = state.message,
-                                onDismiss = viewModel::dismissExportState
+                                onDismiss = viewModel::dismissExportState,
                             )
                         }
+
                         is ExportState.Error -> {
                             ErrorState(
                                 message = state.message,
-                                onRetry = viewModel::dismissExportState
+                                onRetry = viewModel::dismissExportState,
                             )
                         }
+
                         else -> {}
                     }
                 }
@@ -130,54 +137,61 @@ private fun AnalyticsContent(
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(GlowSpacing.md),
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.md)
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
     ) {
         // Primary Metric - Hero Section
         item {
             uiState.trends?.let { trends ->
-                val points = when (trends.selectedMetric) {
-                    MetricType.REDNESS -> trends.rednessPoints
-                    MetricType.BLEMISH -> trends.blemishPoints
-                    MetricType.DARKSPOT -> trends.darkspotPoints
-                    MetricType.TEXTURE -> trends.texturePoints
-                }
+                val points =
+                    when (trends.selectedMetric) {
+                        MetricType.REDNESS -> trends.rednessPoints
+                        MetricType.BLEMISH -> trends.blemishPoints
+                        MetricType.DARKSPOT -> trends.darkspotPoints
+                        MetricType.TEXTURE -> trends.texturePoints
+                    }
 
                 if (points.isNotEmpty()) {
                     val currentValue = points.lastOrNull()?.value
-                    val trend = trends.changePercent?.let { change ->
-                        MetricTrend(
-                            direction = when {
-                                change > 0 -> TrendDirection.UP
-                                change < 0 -> TrendDirection.DOWN
-                                else -> TrendDirection.STABLE
-                            },
-                            changePercent = change,
-                            description = "vs last week"
-                        )
-                    }
+                    val trend =
+                        trends.changePercent?.let { change ->
+                            MetricTrend(
+                                direction =
+                                    when {
+                                        change > 0 -> TrendDirection.UP
+                                        change < 0 -> TrendDirection.DOWN
+                                        else -> TrendDirection.STABLE
+                                    },
+                                changePercent = change,
+                                description = "vs last week",
+                            )
+                        }
 
                     PrimaryMetricCard(
-                        title = trends.selectedMetric.name.lowercase().capitalize(),
+                        title =
+                            trends.selectedMetric.name
+                                .lowercase()
+                                .capitalize(),
                         value = currentValue?.let { String.format("%.2f", it) } ?: "—",
-                        trend = trend
+                        trend = trend,
                     ) {
                         LineChart(
                             points = points,
                             label = "",
-                            color = when (trends.selectedMetric) {
-                                MetricType.REDNESS -> glow.danger
-                                MetricType.BLEMISH -> glow.honey700
-                                MetricType.DARKSPOT -> Color(0xFF8B4513)
-                                MetricType.TEXTURE -> glow.success
-                            },
+                            color =
+                                when (trends.selectedMetric) {
+                                    MetricType.REDNESS -> glow.danger
+                                    MetricType.BLEMISH -> glow.honey700
+                                    MetricType.DARKSPOT -> Color(0xFF8B4513)
+                                    MetricType.TEXTURE -> glow.success
+                                },
                             showGrid = true,
-                            animated = true
+                            animated = true,
                         )
                     }
                 } else {
                     EmptyMetricCard(
                         title = "No data yet",
-                        description = "Take your first photo to start tracking"
+                        description = "Take your first photo to start tracking",
                     )
                 }
             }
@@ -188,7 +202,7 @@ private fun AnalyticsContent(
             uiState.trends?.let { trends ->
                 MetricSelector(
                     selectedMetric = trends.selectedMetric,
-                    onMetricSelected = onMetricSelected
+                    onMetricSelected = onMetricSelected,
                 )
             }
         }
@@ -208,7 +222,7 @@ private fun AnalyticsContent(
             } ?: run {
                 EmptyMetricCard(
                     title = "No overview data",
-                    description = "Start using the app to see your progress"
+                    description = "Start using the app to see your progress",
                 )
             }
         }
@@ -222,7 +236,10 @@ private fun AnalyticsContent(
                         beforeValue = trends.beforeValue,
                         afterValue = trends.afterValue,
                         changePercent = trends.changePercent,
-                        metric = trends.selectedMetric.name.lowercase().capitalize()
+                        metric =
+                            trends.selectedMetric.name
+                                .lowercase()
+                                .capitalize(),
                     )
                 }
             }
@@ -243,7 +260,7 @@ private fun AnalyticsContent(
             } ?: run {
                 EmptyMetricCard(
                     title = "Build your routine",
-                    description = "Capture daily to track consistency"
+                    description = "Capture daily to track consistency",
                 )
             }
         }
@@ -262,7 +279,7 @@ private fun AnalyticsContent(
                 EmptyState(
                     icon = Icons.Filled.Psychology,
                     title = "No insights yet",
-                    description = "Keep capturing regularly to unlock personalized insights"
+                    description = "Keep capturing regularly to unlock personalized insights",
                 )
             } else {
                 InsightsList(insights = uiState.insights)
@@ -282,7 +299,7 @@ private fun AnalyticsContent(
             if (uiState.productEffectiveness.isEmpty()) {
                 EmptyMetricCard(
                     title = "No product data",
-                    description = "Add products to your routine to track effectiveness"
+                    description = "Add products to your routine to track effectiveness",
                 )
             } else {
                 ProductEffectivenessList(products = uiState.productEffectiveness)
@@ -300,42 +317,51 @@ private fun AnalyticsContent(
 private fun OverviewMetricGrid(overview: OverviewStats) {
     val glow = LocalGlowColors.current
 
-    val metrics = buildList {
-        add(
-            MetricGridItem(
-                title = "Total Captures",
-                value = overview.totalCaptures.toString(),
-                trend = null
+    val metrics =
+        buildList {
+            add(
+                MetricGridItem(
+                    title = "Total Captures",
+                    value = overview.totalCaptures.toString(),
+                    trend = null,
+                ),
             )
-        )
-        add(
-            MetricGridItem(
-                title = "Current Streak",
-                value = "${overview.currentStreak}",
-                trend = overview.streakChange?.let {
-                    MetricTrend(
-                        direction = if (it > 0) TrendDirection.UP else if (it < 0) TrendDirection.DOWN else TrendDirection.STABLE,
-                        changePercent = it.toDouble(),
-                        description = "days"
-                    )
-                }
+            add(
+                MetricGridItem(
+                    title = "Current Streak",
+                    value = "${overview.currentStreak}",
+                    trend =
+                        overview.streakChange?.let {
+                            MetricTrend(
+                                direction =
+                                    if (it > 0) {
+                                        TrendDirection.UP
+                                    } else if (it < 0) {
+                                        TrendDirection.DOWN
+                                    } else {
+                                        TrendDirection.STABLE
+                                    },
+                                changePercent = it.toDouble(),
+                                description = "days",
+                            )
+                        },
+                ),
             )
-        )
-        add(
-            MetricGridItem(
-                title = "Days Active",
-                value = overview.daysUsingApp.toString(),
-                trend = null
+            add(
+                MetricGridItem(
+                    title = "Days Active",
+                    value = overview.daysUsingApp.toString(),
+                    trend = null,
+                ),
             )
-        )
-        add(
-            MetricGridItem(
-                title = "Experiments",
-                value = overview.activeExperiments.toString(),
-                trend = null
+            add(
+                MetricGridItem(
+                    title = "Experiments",
+                    value = overview.activeExperiments.toString(),
+                    trend = null,
+                ),
             )
-        )
-    }
+        }
 
     MetricGrid(metrics = metrics)
 }
@@ -349,7 +375,7 @@ private fun MetricSelector(
 
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
-        contentPadding = PaddingValues(vertical = GlowSpacing.xs)
+        contentPadding = PaddingValues(vertical = GlowSpacing.xs),
     ) {
         items(MetricType.values()) { metric ->
             FilterChip(
@@ -358,23 +384,25 @@ private fun MetricSelector(
                 label = {
                     Text(
                         text = metric.name.lowercase().capitalize(),
-                        fontWeight = if (metric == selectedMetric) FontWeight.SemiBold else FontWeight.Medium
+                        fontWeight = if (metric == selectedMetric) FontWeight.SemiBold else FontWeight.Medium,
                     )
                 },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = glow.honey500,
-                    selectedLabelColor = glow.ink900,
-                    containerColor = glow.surfaceCard,
-                    labelColor = glow.ink600
-                ),
-                border = FilterChipDefaults.filterChipBorder(
-                    enabled = true,
-                    selected = metric == selectedMetric,
-                    borderColor = if (metric == selectedMetric) glow.honey500 else glow.ink600.copy(alpha = 0.2f),
-                    selectedBorderColor = glow.honey500,
-                    borderWidth = 1.dp,
-                    selectedBorderWidth = 2.dp
-                )
+                colors =
+                    FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = glow.honey500,
+                        selectedLabelColor = glow.ink900,
+                        containerColor = glow.surfaceCard,
+                        labelColor = glow.ink600,
+                    ),
+                border =
+                    FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = metric == selectedMetric,
+                        borderColor = if (metric == selectedMetric) glow.honey500 else glow.ink600.copy(alpha = 0.2f),
+                        selectedBorderColor = glow.honey500,
+                        borderWidth = 1.dp,
+                        selectedBorderWidth = 2.dp,
+                    ),
             )
         }
     }
@@ -390,23 +418,24 @@ private fun BeforeAfterCard(
     val glow = LocalGlowColors.current
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(glow.surfaceCard, RoundedCornerShape(16.dp))
-            .padding(GlowSpacing.lg)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(glow.surfaceCard, RoundedCornerShape(16.dp))
+                .padding(GlowSpacing.lg),
     ) {
         Text(
             text = "Before & After",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = glow.ink900,
-            modifier = Modifier.padding(bottom = GlowSpacing.md)
+            modifier = Modifier.padding(bottom = GlowSpacing.md),
         )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -414,14 +443,14 @@ private fun BeforeAfterCard(
                     fontFamily = FontFamily.Monospace,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = glow.ink900
+                    color = glow.ink900,
                 )
                 Text(
                     text = "Before",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.SemiBold,
                     color = glow.ink600,
-                    modifier = Modifier.padding(top = GlowSpacing.xs)
+                    modifier = Modifier.padding(top = GlowSpacing.xs),
                 )
             }
 
@@ -429,7 +458,7 @@ private fun BeforeAfterCard(
                 imageVector = Icons.Filled.ArrowForward,
                 contentDescription = null,
                 tint = glow.honey700,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(32.dp),
             )
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -438,14 +467,14 @@ private fun BeforeAfterCard(
                     fontFamily = FontFamily.Monospace,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = glow.ink900
+                    color = glow.ink900,
                 )
                 Text(
                     text = "After",
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.SemiBold,
                     color = glow.ink600,
-                    modifier = Modifier.padding(top = GlowSpacing.xs)
+                    modifier = Modifier.padding(top = GlowSpacing.xs),
                 )
             }
         }
@@ -458,18 +487,19 @@ private fun BeforeAfterCard(
             val trendIcon = if (isImprovement) Icons.Filled.TrendingDown else Icons.Filled.TrendingUp
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(trendColor.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
-                    .padding(GlowSpacing.md),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(trendColor.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                        .padding(GlowSpacing.md),
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = trendIcon,
                     contentDescription = null,
                     tint = trendColor,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
                 Spacer(modifier = Modifier.width(GlowSpacing.xs))
                 Text(
@@ -477,13 +507,13 @@ private fun BeforeAfterCard(
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = trendColor
+                    color = trendColor,
                 )
                 Spacer(modifier = Modifier.width(GlowSpacing.xs))
                 Text(
                     text = "change in $metric",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = glow.ink900
+                    color = glow.ink900,
                 )
             }
         }
@@ -494,31 +524,32 @@ private fun BeforeAfterCard(
 private fun EmptyMetricCard(
     title: String,
     description: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val glow = LocalGlowColors.current
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(glow.surfaceCard, RoundedCornerShape(16.dp))
-            .padding(GlowSpacing.xl),
-        contentAlignment = Alignment.Center
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(glow.surfaceCard, RoundedCornerShape(16.dp))
+                .padding(GlowSpacing.xl),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+            verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = glow.ink900
+                color = glow.ink900,
             )
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = glow.ink600
+                color = glow.ink600,
             )
         }
     }
@@ -530,66 +561,68 @@ private fun ConsistencySection(consistency: ConsistencyData) {
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.md)
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
     ) {
         // Calendar Heatmap
         CalendarHeatmap(
             captureDates = consistency.captureDates,
-            currentMonth = java.time.YearMonth.now()
+            currentMonth = java.time.YearMonth.now(),
         )
 
         // Consistency Metrics Grid
-        val metrics = buildList {
-            add(
-                MetricGridItem(
-                    title = "Capture Rate",
-                    value = "${String.format("%.0f", consistency.captureRate)}%",
-                    trend = null
+        val metrics =
+            buildList {
+                add(
+                    MetricGridItem(
+                        title = "Capture Rate",
+                        value = "${String.format("%.0f", consistency.captureRate)}%",
+                        trend = null,
+                    ),
                 )
-            )
-            add(
-                MetricGridItem(
-                    title = "Longest Streak",
-                    value = "${consistency.longestStreak}",
-                    trend = null
+                add(
+                    MetricGridItem(
+                        title = "Longest Streak",
+                        value = "${consistency.longestStreak}",
+                        trend = null,
+                    ),
                 )
-            )
-        }
+            }
 
         MetricGrid(metrics = metrics)
 
         // Best Time of Day (if available)
         consistency.bestTimeOfDay?.let { time ->
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(glow.honey500.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
-                    .padding(GlowSpacing.md)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(glow.honey500.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+                        .padding(GlowSpacing.md),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         imageVector = Icons.Filled.WbSunny,
                         contentDescription = null,
                         tint = glow.honey700,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     )
                     Column {
                         Text(
                             text = "Best Time to Capture",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = glow.ink600
+                            color = glow.ink600,
                         )
                         Text(
                             text = time,
                             fontFamily = FontFamily.Monospace,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = glow.ink900
+                            color = glow.ink900,
                         )
                     }
                 }
@@ -607,22 +640,22 @@ private fun ExportFab(
 
     Column(
         horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AnimatedVisibility(visible = expanded) {
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 SmallFloatingActionButton(
                     onClick = {
                         onExportPdf()
                         expanded = false
-                    }
+                    },
                 ) {
                     Icon(
                         imageVector = Icons.Filled.PictureAsPdf,
-                        contentDescription = "Export PDF"
+                        contentDescription = "Export PDF",
                     )
                 }
 
@@ -630,22 +663,22 @@ private fun ExportFab(
                     onClick = {
                         onExportCsv()
                         expanded = false
-                    }
+                    },
                 ) {
                     Icon(
                         imageVector = Icons.Filled.TableChart,
-                        contentDescription = "Export CSV"
+                        contentDescription = "Export CSV",
                     )
                 }
             }
         }
 
         FloatingActionButton(
-            onClick = { expanded = !expanded }
+            onClick = { expanded = !expanded },
         ) {
             Icon(
                 imageVector = if (expanded) Icons.Filled.Close else Icons.Filled.FileDownload,
-                contentDescription = "Export options"
+                contentDescription = "Export options",
             )
         }
     }
@@ -655,17 +688,17 @@ private fun ExportFab(
 private fun LoadingState() {
     Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(GlowSpacing.md)
+            verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
         ) {
             CircularProgressIndicator()
             Text(
                 text = "Loading analytics...",
                 style = MaterialTheme.typography.bodyMedium,
-                color = LocalGlowColors.current.ink600
+                color = LocalGlowColors.current.ink600,
             )
         }
     }

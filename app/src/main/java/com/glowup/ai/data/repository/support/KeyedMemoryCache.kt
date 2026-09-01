@@ -12,9 +12,19 @@ import java.util.concurrent.ConcurrentHashMap
  * background refresh behind a stale value failed, so the UI can show BOTH the cached content and
  * a small "couldn't refresh" affordance instead of one hiding the other.
  */
-data class Cached<T>(val data: T, val stale: Boolean, val fetchedAtMillis: Long, val refreshError: ApiError? = null)
+data class Cached<T>(
+    val data: T,
+    val stale: Boolean,
+    val fetchedAtMillis: Long,
+    val refreshError: ApiError? = null,
+)
 
-private data class Entry<T>(val value: T, val plan: Plan, val fetchedAtMillis: Long, val valid: Boolean)
+private data class Entry<T>(
+    val value: T,
+    val plan: Plan,
+    val fetchedAtMillis: Long,
+    val valid: Boolean,
+)
 
 /**
  * In-memory cache keyed by an arbitrary string (repositories key it `"$userId:$vertical"` etc.)
@@ -29,24 +39,35 @@ private data class Entry<T>(val value: T, val plan: Plan, val fetchedAtMillis: L
  * it — see [Cached].
  */
 class KeyedMemoryCache<T> {
-
     private val map = ConcurrentHashMap<String, Entry<T>>()
 
     /** Returns the cached value for [key] if present, regardless of validity/plan — used to seed
      * the "stale" copy shown alongside a refresh. */
-    fun peek(key: String, currentPlan: Plan? = null): Cached<T>? = map[key]
-        ?.takeIf { currentPlan == null || it.plan == currentPlan }
-        ?.let { Cached(it.value, stale = true, fetchedAtMillis = it.fetchedAtMillis) }
+    fun peek(
+        key: String,
+        currentPlan: Plan? = null,
+    ): Cached<T>? =
+        map[key]
+            ?.takeIf { currentPlan == null || it.plan == currentPlan }
+            ?.let { Cached(it.value, stale = true, fetchedAtMillis = it.fetchedAtMillis) }
 
     /** Returns a FRESH (valid, plan-matching) cached value for [key], or `null` on any miss —
      * wrong plan, invalidated, or never populated. */
-    fun getFresh(key: String, currentPlan: Plan): Cached<T>? {
+    fun getFresh(
+        key: String,
+        currentPlan: Plan,
+    ): Cached<T>? {
         val entry = map[key] ?: return null
         if (!entry.valid || entry.plan != currentPlan) return null
         return Cached(entry.value, stale = false, fetchedAtMillis = entry.fetchedAtMillis)
     }
 
-    fun put(key: String, value: T, plan: Plan, fetchedAtMillis: Long = System.currentTimeMillis()) {
+    fun put(
+        key: String,
+        value: T,
+        plan: Plan,
+        fetchedAtMillis: Long = System.currentTimeMillis(),
+    ) {
         map[key] = Entry(value, plan, fetchedAtMillis, valid = true)
     }
 
@@ -59,7 +80,10 @@ class KeyedMemoryCache<T> {
         map.replaceAll { _, entry -> entry.copy(valid = false) }
     }
 
-    fun isValid(key: String, currentPlan: Plan): Boolean {
+    fun isValid(
+        key: String,
+        currentPlan: Plan,
+    ): Boolean {
         val entry = map[key] ?: return false
         return entry.valid && entry.plan == currentPlan
     }

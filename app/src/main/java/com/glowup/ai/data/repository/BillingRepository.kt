@@ -27,33 +27,39 @@ import javax.inject.Singleton
  * fresh `GET /dashboard`) already misses the old plan's entries.
  */
 @Singleton
-class BillingRepository @Inject constructor(
-    private val api: GlowUpApi,
-    private val sessionStore: SessionStore,
-    private val invalidationBus: CacheInvalidationBus,
-) {
+class BillingRepository
+    @Inject
+    constructor(
+        private val api: GlowUpApi,
+        private val sessionStore: SessionStore,
+        private val invalidationBus: CacheInvalidationBus,
+    ) {
+        private val mutations = MutationLock<String>()
+        val pendingKeys: StateFlow<Set<String>> = mutations.pendingKeys
 
-    private val mutations = MutationLock<String>()
-    val pendingKeys: StateFlow<Set<String>> = mutations.pendingKeys
+        suspend fun getSubscription(userId: String): GlowResult<Subscription> =
+            apiCall { api.getSubscription(userId).toDomain() }.onSuccess {
+                sessionStore.setEntitlement(it.plan, it.status)
+            }
 
-    suspend fun getSubscription(userId: String): GlowResult<Subscription> =
-        apiCall { api.getSubscription(userId).toDomain() }.onSuccess {
-            sessionStore.setEntitlement(it.plan, it.status)
-        }
+        suspend fun upgrade(
+            userId: String,
+            source: String = "local_checkout",
+        ): GlowResult<Subscription> =
+            mutations
+                .run("upgrade:$userId") {
+                    apiCall { api.upgradeSubscription(userId, UpgradeRequestDto(source)).toDomain() }
+                }.onSuccess {
+                    sessionStore.setEntitlement(it.plan, it.status)
+                    invalidationBus.publish(InvalidationSignal.SubscriptionChanged(userId))
+                }
 
-    suspend fun upgrade(userId: String, source: String = "local_checkout"): GlowResult<Subscription> =
-        mutations.run("upgrade:$userId") {
-            apiCall { api.upgradeSubscription(userId, UpgradeRequestDto(source)).toDomain() }
-        }.onSuccess {
-            sessionStore.setEntitlement(it.plan, it.status)
-            invalidationBus.publish(InvalidationSignal.SubscriptionChanged(userId))
-        }
-
-    suspend fun cancel(userId: String): GlowResult<Subscription> =
-        mutations.run("cancel:$userId") {
-            apiCall { api.cancelSubscription(userId).toDomain() }
-        }.onSuccess {
-            sessionStore.setEntitlement(it.plan, it.status)
-            invalidationBus.publish(InvalidationSignal.SubscriptionChanged(userId))
-        }
-}
+        suspend fun cancel(userId: String): GlowResult<Subscription> =
+            mutations
+                .run("cancel:$userId") {
+                    apiCall { api.cancelSubscription(userId).toDomain() }
+                }.onSuccess {
+                    sessionStore.setEntitlement(it.plan, it.status)
+                    invalidationBus.publish(InvalidationSignal.SubscriptionChanged(userId))
+                }
+    }

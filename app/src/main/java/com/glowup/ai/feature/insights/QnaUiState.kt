@@ -18,8 +18,12 @@ data class ChatMessage(
 
 sealed interface QnaUiState {
     data object Loading : QnaUiState
+
     data object Locked : QnaUiState
-    data class Error(val message: String) : QnaUiState
+
+    data class Error(
+        val message: String,
+    ) : QnaUiState
 
     /**
      * @param threadBlocked True once any turn in this thread has been triaged (locally or by the

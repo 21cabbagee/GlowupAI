@@ -20,45 +20,53 @@ import javax.inject.Inject
  * (ANDROID_PLAN.md §3.5 / frontend-api-map.md "Ideal UI state").
  */
 @HiltViewModel
-class DermExportViewModel @Inject constructor(
-    private val repository: InsightsRepository,
-    private val sessionStore: SessionStore,
-) : ViewModel() {
+class DermExportViewModel
+    @Inject
+    constructor(
+        private val repository: InsightsRepository,
+        private val sessionStore: SessionStore,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow<ScreenState<DermExport>>(ScreenState.Loading)
+        val uiState: StateFlow<ScreenState<DermExport>> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow<ScreenState<DermExport>>(ScreenState.Loading)
-    val uiState: StateFlow<ScreenState<DermExport>> = _uiState.asStateFlow()
+        init {
+            load()
+        }
 
-    init {
-        load()
-    }
-
-    fun load() {
-        viewModelScope.launch {
-            _uiState.value = ScreenState.Loading
-            if (!sessionStore.canUsePremiumFlow().first()) {
-                _uiState.value = ScreenState.Locked
-                return@launch
-            }
-            val userId = sessionStore.userId()
-            if (userId == null) {
-                _uiState.value = ScreenState.Error("Sign in to generate a dermatologist export.")
-                return@launch
-            }
-            when (val result = repository.getDermExport(userId)) {
-                is GlowResult.Success -> _uiState.value = if (result.data.captureCount == 0) {
-                    ScreenState.Empty(
-                        title = "Nothing to export yet",
-                        body = "Take a few captures first so there is tracked history to summarize.",
-                    )
-                } else {
-                    ScreenState.Content(result.data)
+        fun load() {
+            viewModelScope.launch {
+                _uiState.value = ScreenState.Loading
+                if (!sessionStore.canUsePremiumFlow().first()) {
+                    _uiState.value = ScreenState.Locked
+                    return@launch
                 }
-                is GlowResult.Failure -> _uiState.value = if (result.error.isPremiumGate) {
-                    ScreenState.Locked
-                } else {
-                    ScreenState.Error(result.error.toUserMessage())
+                val userId = sessionStore.userId()
+                if (userId == null) {
+                    _uiState.value = ScreenState.Error("Sign in to generate a dermatologist export.")
+                    return@launch
+                }
+                when (val result = repository.getDermExport(userId)) {
+                    is GlowResult.Success -> {
+                        _uiState.value =
+                            if (result.data.captureCount == 0) {
+                                ScreenState.Empty(
+                                    title = "Nothing to export yet",
+                                    body = "Take a few captures first so there is tracked history to summarize.",
+                                )
+                            } else {
+                                ScreenState.Content(result.data)
+                            }
+                    }
+
+                    is GlowResult.Failure -> {
+                        _uiState.value =
+                            if (result.error.isPremiumGate) {
+                                ScreenState.Locked
+                            } else {
+                                ScreenState.Error(result.error.toUserMessage())
+                            }
+                    }
                 }
             }
         }
     }
-}

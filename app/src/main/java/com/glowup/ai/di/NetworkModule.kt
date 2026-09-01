@@ -19,7 +19,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
     @Provides
     @Singleton
     fun provideJson(): Json = NetworkJson
@@ -34,13 +33,14 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideOkHttpClient(tokenProvider: TokenProvider): OkHttpClient =
-        NetworkFactory.okHttpClient(tokenProvider, BuildConfig.DEBUG)
+    fun provideOkHttpClient(tokenProvider: TokenProvider): OkHttpClient = NetworkFactory.okHttpClient(tokenProvider, BuildConfig.DEBUG)
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient, json: Json): Retrofit =
-        NetworkFactory.retrofit(okHttpClient, json)
+    fun provideRetrofit(
+        okHttpClient: OkHttpClient,
+        json: Json,
+    ): Retrofit = NetworkFactory.retrofit(okHttpClient, json)
 
     @Provides
     @Singleton

@@ -58,7 +58,12 @@ fun PredictSection(
                 CircularProgressIndicator(modifier = Modifier.padding(top = GlowSpacing.sm))
             }
             state.searchError?.let { error ->
-                Text(text = error, color = glow.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = GlowSpacing.sm))
+                Text(
+                    text = error,
+                    color = glow.danger,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = GlowSpacing.sm),
+                )
             }
             if (state.searchResults.isNotEmpty()) {
                 Column(
@@ -71,8 +76,17 @@ fun PredictSection(
                             onClick = { onProductSelected(product) },
                             contentDescription = "Select ${product.name} for prediction",
                         ) {
-                            Text(text = product.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = glow.ink900)
-                            Text(text = product.category.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelSmall, color = glow.ink600)
+                            Text(
+                                text = product.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = glow.ink900,
+                            )
+                            Text(
+                                text = product.category.replaceFirstChar { it.uppercase() },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = glow.ink600,
+                            )
                         }
                     }
                 }
@@ -92,27 +106,38 @@ fun PredictSection(
             )
 
             when (val result = state.result) {
-                null, is SectionState.Loading -> CircularProgressIndicator(modifier = Modifier.padding(top = GlowSpacing.md))
-                is SectionState.Locked -> LockedCard(
-                    modifier = Modifier.padding(top = GlowSpacing.md),
-                    title = "Predict before you buy",
-                    body = "See how this product's ingredients overlap with products your history flagged for investigation or found likely useful.",
-                    onUnlock = onUnlock,
-                )
+                null, is SectionState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.padding(top = GlowSpacing.md))
+                }
 
-                is SectionState.Error -> ErrorState(
-                    modifier = Modifier.padding(top = GlowSpacing.md),
-                    message = result.message,
-                    onRetry = onRetry,
-                )
+                is SectionState.Locked -> {
+                    LockedCard(
+                        modifier = Modifier.padding(top = GlowSpacing.md),
+                        title = "Predict before you buy",
+                        body = "See how this product's ingredients overlap with products your history flagged for investigation or found likely useful.",
+                        onUnlock = onUnlock,
+                    )
+                }
 
-                is SectionState.Empty -> Text(
-                    text = result.title,
-                    modifier = Modifier.padding(top = GlowSpacing.md),
-                    color = glow.ink600,
-                )
+                is SectionState.Error -> {
+                    ErrorState(
+                        modifier = Modifier.padding(top = GlowSpacing.md),
+                        message = result.message,
+                        onRetry = onRetry,
+                    )
+                }
 
-                is SectionState.Content -> PredictionResultCard(result.value)
+                is SectionState.Empty -> {
+                    Text(
+                        text = result.title,
+                        modifier = Modifier.padding(top = GlowSpacing.md),
+                        color = glow.ink600,
+                    )
+                }
+
+                is SectionState.Content -> {
+                    PredictionResultCard(result.value)
+                }
             }
         }
     }
@@ -134,7 +159,10 @@ private fun PredictionResultCard(prediction: ProductPrediction) {
 }
 
 @Composable
-private fun OverlapGroup(title: String, overlaps: List<ProductOverlap>) {
+private fun OverlapGroup(
+    title: String,
+    overlaps: List<ProductOverlap>,
+) {
     if (overlaps.isEmpty()) return
     val glow = LocalGlowColors.current
     Column(modifier = Modifier.padding(top = GlowSpacing.md)) {

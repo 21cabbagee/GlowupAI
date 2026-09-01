@@ -20,10 +20,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.ui.GlowButton
 import com.glowup.ai.core.ui.GlowTopBar
 import kotlin.math.abs
@@ -43,7 +43,7 @@ fun PhotoComparisonScreen(
     daysBetween: Int,
     onBackClick: () -> Unit,
     onShareClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
         topBar = {
@@ -54,49 +54,51 @@ fun PhotoComparisonScreen(
                     IconButton(onClick = onShareClick) {
                         Icon(
                             imageVector = Icons.Filled.Share,
-                            contentDescription = "Share"
+                            contentDescription = "Share",
                         )
                     }
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Date info card
             ComparisonInfoCard(
                 beforeDate = beforeDate,
                 afterDate = afterDate,
-                daysBetween = daysBetween
+                daysBetween = daysBetween,
             )
 
             // Interactive slider comparison
             PhotoComparisonSlider(
                 beforePhotoUrl = beforePhotoUrl,
                 afterPhotoUrl = afterPhotoUrl,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
             )
 
             // Action buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 OutlinedButton(
                     onClick = { /* Toggle zoom */ },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Icon(
                         imageVector = Icons.Filled.ZoomIn,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Zoom")
@@ -105,7 +107,7 @@ fun PhotoComparisonScreen(
                 GlowButton(
                     text = "Share",
                     onClick = onShareClick,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
             }
 
@@ -113,26 +115,28 @@ fun PhotoComparisonScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    ),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Info,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                     Text(
                         text = "Drag the slider to reveal before and after. Pinch to zoom.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -147,73 +151,75 @@ fun PhotoComparisonScreen(
 private fun ComparisonInfoCard(
     beforeDate: String,
     afterDate: String,
-    daysBetween: Int
+    daysBetween: Int,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             // Before
             Column(
-                horizontalAlignment = Alignment.Start
+                horizontalAlignment = Alignment.Start,
             ) {
                 Text(
                     text = "BEFORE",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = beforeDate,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
 
             // Arrow with days
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Icon(
                     imageVector = Icons.Filled.ArrowForward,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
                 Text(
                     text = "$daysBetween days",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
 
             // After
             Column(
-                horizontalAlignment = Alignment.End
+                horizontalAlignment = Alignment.End,
             ) {
                 Text(
                     text = "AFTER",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = afterDate,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
         }
@@ -228,31 +234,33 @@ private fun ComparisonInfoCard(
 fun PhotoComparisonSlider(
     beforePhotoUrl: String,
     afterPhotoUrl: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var sliderPosition by remember { mutableStateOf(0.5f) } // 0.0 to 1.0
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
     val density = LocalDensity.current
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .onSizeChanged { containerSize = it }
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .onSizeChanged { containerSize = it },
     ) {
         // Background: AFTER photo (right side)
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(16.dp))
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(16.dp)),
         ) {
             // TODO: Load actual image with Coil
             Surface(
                 modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.surfaceVariant
+                color = MaterialTheme.colorScheme.surfaceVariant,
             ) {
                 Box(
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text("AFTER", style = MaterialTheme.typography.headlineMedium)
                 }
@@ -260,30 +268,32 @@ fun PhotoComparisonSlider(
 
             // Label
             Surface(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp),
                 shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             ) {
                 Text(
                     text = "AFTER",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
         }
 
         // Foreground: BEFORE photo (left side) - clipped by slider position
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(16.dp))
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(16.dp)),
         ) {
             Canvas(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
             ) {
                 // Clip the before photo to slider position
                 val clipWidth = size.width * sliderPosition
@@ -292,12 +302,12 @@ fun PhotoComparisonSlider(
                     left = 0f,
                     top = 0f,
                     right = clipWidth,
-                    bottom = size.height
+                    bottom = size.height,
                 ) {
                     // TODO: Draw actual before image with Coil
                     drawRect(
                         color = Color(0xFFE8E8E8),
-                        size = Size(size.width, size.height)
+                        size = Size(size.width, size.height),
                     )
                 }
             }
@@ -305,18 +315,19 @@ fun PhotoComparisonSlider(
             // BEFORE label
             if (sliderPosition > 0.3f) {
                 Surface(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(12.dp),
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .padding(12.dp),
                     shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFF666666)
+                    color = Color(0xFF666666),
                 ) {
                     Text(
                         text = "BEFORE",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     )
                 }
             }
@@ -325,55 +336,57 @@ fun PhotoComparisonSlider(
         // Slider handle
         if (containerSize.width > 0) {
             Box(
-                modifier = Modifier
-                    .offset(x = with(density) { (containerSize.width * sliderPosition).toDp() })
-                    .fillMaxHeight()
-                    .width(60.dp)
-                    .pointerInput(Unit) {
-                        detectDragGestures { change, dragAmount ->
-                            change.consume()
-                            val newPosition = sliderPosition + (dragAmount.x / containerSize.width)
-                            sliderPosition = newPosition.coerceIn(0f, 1f)
-                        }
-                    },
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .offset(x = with(density) { (containerSize.width * sliderPosition).toDp() })
+                        .fillMaxHeight()
+                        .width(60.dp)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                val newPosition = sliderPosition + (dragAmount.x / containerSize.width)
+                                sliderPosition = newPosition.coerceIn(0f, 1f)
+                            }
+                        },
+                contentAlignment = Alignment.Center,
             ) {
                 // Vertical line
                 Canvas(
-                    modifier = Modifier.fillMaxHeight()
+                    modifier = Modifier.fillMaxHeight(),
                 ) {
                     drawLine(
                         color = Color.White,
                         start = Offset(size.width / 2, 0f),
                         end = Offset(size.width / 2, size.height),
-                        strokeWidth = 3.dp.toPx()
+                        strokeWidth = 3.dp.toPx(),
                     )
                 }
 
                 // Handle circle
                 Surface(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .align(Alignment.Center),
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .align(Alignment.Center),
                     shape = CircleShape,
                     color = Color.White,
-                    shadowElevation = 4.dp
+                    shadowElevation = 4.dp,
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.ChevronLeft,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(16.dp),
                             )
                             Icon(
                                 imageVector = Icons.Filled.ChevronRight,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(16.dp),
                             )
                         }
                     }
@@ -391,17 +404,18 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.clipRect(
     top: Float,
     right: Float,
     bottom: Float,
-    block: androidx.compose.ui.graphics.drawscope.DrawScope.() -> Unit
+    block: androidx.compose.ui.graphics.drawscope.DrawScope.() -> Unit,
 ) {
-    val path = Path().apply {
-        addRect(
-            androidx.compose.ui.geometry.Rect(
-                left = left,
-                top = top,
-                right = right,
-                bottom = bottom
+    val path =
+        Path().apply {
+            addRect(
+                androidx.compose.ui.geometry.Rect(
+                    left = left,
+                    top = top,
+                    right = right,
+                    bottom = bottom,
+                ),
             )
-        )
-    }
+        }
     clipPath(path, androidx.compose.ui.graphics.ClipOp.Intersect, block)
 }

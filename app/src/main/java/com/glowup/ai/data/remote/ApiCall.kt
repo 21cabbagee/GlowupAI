@@ -18,22 +18,26 @@ import java.io.IOException
  *     apiCall { api.getProfile(userId).toDomain() }
  * ```
  */
-suspend fun <T> apiCall(block: suspend () -> T): GlowResult<T> = try {
-    GlowResult.Success(block())
-} catch (exception: HttpException) {
-    GlowResult.Failure(ApiErrorMapper.map(exception))
-} catch (exception: IOException) {
-    GlowResult.Failure(ApiErrorMapper.map(exception))
-} catch (exception: CancellationException) {
-    throw exception
-} catch (exception: Exception) {
-    // Log the full exception details for debugging parsing errors
-    android.util.Log.e("ApiCall", "API call failed with exception: ${exception.message}", exception)
-    if (exception is kotlinx.serialization.SerializationException) {
-        android.util.Log.e("ApiCall", "JSON parsing error. This usually means a required field is missing or has wrong type in the API response.")
+suspend fun <T> apiCall(block: suspend () -> T): GlowResult<T> =
+    try {
+        GlowResult.Success(block())
+    } catch (exception: HttpException) {
+        GlowResult.Failure(ApiErrorMapper.map(exception))
+    } catch (exception: IOException) {
+        GlowResult.Failure(ApiErrorMapper.map(exception))
+    } catch (exception: CancellationException) {
+        throw exception
+    } catch (exception: Exception) {
+        // Log the full exception details for debugging parsing errors
+        android.util.Log.e("ApiCall", "API call failed with exception: ${exception.message}", exception)
+        if (exception is kotlinx.serialization.SerializationException) {
+            android.util.Log.e(
+                "ApiCall",
+                "JSON parsing error. This usually means a required field is missing or has wrong type in the API response.",
+            )
+        }
+        GlowResult.Failure(ApiErrorMapper.map(exception))
     }
-    GlowResult.Failure(ApiErrorMapper.map(exception))
-}
 
 /**
  * For the one true `204 No Content` route in this API (`DELETE
@@ -41,19 +45,20 @@ suspend fun <T> apiCall(block: suspend () -> T): GlowResult<T> = try {
  * block and never touches `.body()` — a 204 has no body to parse, and
  * Retrofit would throw if this tried to decode one.
  */
-suspend fun apiCallNoContent(block: suspend () -> Response<Unit>): GlowResult<Unit> = try {
-    val response = block()
-    if (response.isSuccessful) {
-        GlowResult.Success(Unit)
-    } else {
-        GlowResult.Failure(ApiErrorMapper.map(HttpException(response)))
+suspend fun apiCallNoContent(block: suspend () -> Response<Unit>): GlowResult<Unit> =
+    try {
+        val response = block()
+        if (response.isSuccessful) {
+            GlowResult.Success(Unit)
+        } else {
+            GlowResult.Failure(ApiErrorMapper.map(HttpException(response)))
+        }
+    } catch (exception: HttpException) {
+        GlowResult.Failure(ApiErrorMapper.map(exception))
+    } catch (exception: IOException) {
+        GlowResult.Failure(ApiErrorMapper.map(exception))
+    } catch (exception: CancellationException) {
+        throw exception
+    } catch (exception: Exception) {
+        GlowResult.Failure(ApiErrorMapper.map(exception))
     }
-} catch (exception: HttpException) {
-    GlowResult.Failure(ApiErrorMapper.map(exception))
-} catch (exception: IOException) {
-    GlowResult.Failure(ApiErrorMapper.map(exception))
-} catch (exception: CancellationException) {
-    throw exception
-} catch (exception: Exception) {
-    GlowResult.Failure(ApiErrorMapper.map(exception))
-}

@@ -21,11 +21,12 @@ internal val GlowEasing = CubicBezierEasing(0.2f, 0.8f, 0.2f, 1f)
 internal fun isReducedMotionEnabled(): Boolean {
     val context = LocalContext.current
     return remember(context) {
-        val scale = try {
-            Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
-        } catch (_: Exception) {
-            1f
-        }
+        val scale =
+            try {
+                Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+            } catch (_: Exception) {
+                1f
+            }
         scale == 0f
     }
 }

@@ -48,7 +48,7 @@ import kotlinx.coroutines.delay
 fun AnimatedListItem(
     index: Int,
     staggerDelayMs: Int = 50,
-    content: @Composable AnimatedVisibilityScope.() -> Unit
+    content: @Composable AnimatedVisibilityScope.() -> Unit,
 ) {
     val reducedMotion = rememberReducedMotion()
     var visible by remember { mutableStateOf(false) }
@@ -62,18 +62,20 @@ fun AnimatedListItem(
 
     AnimatedVisibility(
         visible = visible,
-        enter = if (reducedMotion) {
-            fadeIn(animationSpec = tween(0))
-        } else {
-            slideInVertically(
-                initialOffsetY = { it / 4 },
-                animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing)
-            ) + fadeIn(
-                animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing)
-            )
-        },
+        enter =
+            if (reducedMotion) {
+                fadeIn(animationSpec = tween(0))
+            } else {
+                slideInVertically(
+                    initialOffsetY = { it / 4 },
+                    animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing),
+                ) +
+                    fadeIn(
+                        animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing),
+                    )
+            },
         exit = fadeOut(animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing)),
-        content = content
+        content = content,
     )
 }
 
@@ -86,30 +88,32 @@ fun AnimatedListItem(
  */
 fun Modifier.listItemFadeIn(
     index: Int,
-    staggerDelayMs: Int = 50
-): Modifier = composed {
-    val reducedMotion = rememberReducedMotion()
-    var visible by remember { mutableStateOf(false) }
+    staggerDelayMs: Int = 50,
+): Modifier =
+    composed {
+        val reducedMotion = rememberReducedMotion()
+        var visible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        if (!reducedMotion) {
-            delay((index * staggerDelayMs).toLong())
+        LaunchedEffect(Unit) {
+            if (!reducedMotion) {
+                delay((index * staggerDelayMs).toLong())
+            }
+            visible = true
         }
-        visible = true
+
+        val alpha by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (visible) 1f else 0f,
+            animationSpec =
+                if (reducedMotion) {
+                    tween(0)
+                } else {
+                    tween(durationMillis = 220, easing = GlowMotion.easing)
+                },
+            label = "listItemFadeIn",
+        )
+
+        this.alpha(alpha)
     }
-
-    val alpha by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = if (reducedMotion) {
-            tween(0)
-        } else {
-            tween(durationMillis = 220, easing = GlowMotion.easing)
-        },
-        label = "listItemFadeIn"
-    )
-
-    this.alpha(alpha)
-}
 
 /**
  * Modifier for list items that scale in slightly as they appear.
@@ -120,42 +124,45 @@ fun Modifier.listItemFadeIn(
  */
 fun Modifier.listItemScaleIn(
     index: Int,
-    staggerDelayMs: Int = 50
-): Modifier = composed {
-    val reducedMotion = rememberReducedMotion()
-    var visible by remember { mutableStateOf(false) }
+    staggerDelayMs: Int = 50,
+): Modifier =
+    composed {
+        val reducedMotion = rememberReducedMotion()
+        var visible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        if (!reducedMotion) {
-            delay((index * staggerDelayMs).toLong())
+        LaunchedEffect(Unit) {
+            if (!reducedMotion) {
+                delay((index * staggerDelayMs).toLong())
+            }
+            visible = true
         }
-        visible = true
+
+        val scale by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (visible) 1f else 0.92f,
+            animationSpec =
+                if (reducedMotion) {
+                    tween(0)
+                } else {
+                    tween(durationMillis = 220, easing = GlowMotion.easing)
+                },
+            label = "listItemScaleIn",
+        )
+
+        val alpha by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (visible) 1f else 0f,
+            animationSpec =
+                if (reducedMotion) {
+                    tween(0)
+                } else {
+                    tween(durationMillis = 220, easing = GlowMotion.easing)
+                },
+            label = "listItemAlphaIn",
+        )
+
+        this
+            .scale(scale)
+            .alpha(alpha)
     }
-
-    val scale by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (visible) 1f else 0.92f,
-        animationSpec = if (reducedMotion) {
-            tween(0)
-        } else {
-            tween(durationMillis = 220, easing = GlowMotion.easing)
-        },
-        label = "listItemScaleIn"
-    )
-
-    val alpha by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = if (reducedMotion) {
-            tween(0)
-        } else {
-            tween(durationMillis = 220, easing = GlowMotion.easing)
-        },
-        label = "listItemAlphaIn"
-    )
-
-    this
-        .scale(scale)
-        .alpha(alpha)
-}
 
 /**
  * Animated removal for list items being deleted.
@@ -164,23 +171,25 @@ fun Modifier.listItemScaleIn(
 @Composable
 fun AnimatedListItemRemoval(
     visible: Boolean,
-    content: @Composable AnimatedVisibilityScope.() -> Unit
+    content: @Composable AnimatedVisibilityScope.() -> Unit,
 ) {
     val reducedMotion = rememberReducedMotion()
 
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn(),
-        exit = if (reducedMotion) {
-            fadeOut(animationSpec = tween(0))
-        } else {
-            slideOutVertically(
-                targetOffsetY = { -it / 4 },
-                animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing)
-            ) + fadeOut(
-                animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing)
-            )
-        },
-        content = content
+        exit =
+            if (reducedMotion) {
+                fadeOut(animationSpec = tween(0))
+            } else {
+                slideOutVertically(
+                    targetOffsetY = { -it / 4 },
+                    animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing),
+                ) +
+                    fadeOut(
+                        animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing),
+                    )
+            },
+        content = content,
     )
 }

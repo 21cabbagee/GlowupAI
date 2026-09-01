@@ -24,13 +24,15 @@ import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.LocalGlowColors
 
 enum class TrendDirection {
-    UP, DOWN, STABLE
+    UP,
+    DOWN,
+    STABLE,
 }
 
 data class MetricTrend(
     val direction: TrendDirection,
     val changePercent: Double,
-    val description: String
+    val description: String,
 )
 
 /**
@@ -43,15 +45,16 @@ fun PrimaryMetricCard(
     value: String,
     trend: MetricTrend?,
     modifier: Modifier = Modifier,
-    chartContent: @Composable () -> Unit
+    chartContent: @Composable () -> Unit,
 ) {
     val glow = LocalGlowColors.current
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(glow.surfaceCard, RoundedCornerShape(16.dp))
-            .padding(GlowSpacing.lg)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(glow.surfaceCard, RoundedCornerShape(16.dp))
+                .padding(GlowSpacing.lg),
     ) {
         // Title
         Text(
@@ -59,7 +62,7 @@ fun PrimaryMetricCard(
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             color = glow.ink600,
-            modifier = Modifier.padding(bottom = GlowSpacing.sm)
+            modifier = Modifier.padding(bottom = GlowSpacing.sm),
         )
 
         // Big number - monospace for trustworthiness
@@ -69,7 +72,7 @@ fun PrimaryMetricCard(
             fontSize = 48.sp,
             fontWeight = FontWeight.ExtraBold,
             color = glow.ink900,
-            modifier = Modifier.padding(bottom = GlowSpacing.xs)
+            modifier = Modifier.padding(bottom = GlowSpacing.xs),
         )
 
         // Trend indicator
@@ -94,15 +97,16 @@ fun SecondaryMetricCard(
     value: String,
     trend: MetricTrend?,
     modifier: Modifier = Modifier,
-    color: Color? = null
+    color: Color? = null,
 ) {
     val glow = LocalGlowColors.current
     val cardColor = color ?: glow.surfaceCard
 
     Column(
-        modifier = modifier
-            .background(cardColor, RoundedCornerShape(12.dp))
-            .padding(GlowSpacing.md)
+        modifier =
+            modifier
+                .background(cardColor, RoundedCornerShape(12.dp))
+                .padding(GlowSpacing.md),
     ) {
         // Title
         Text(
@@ -110,7 +114,7 @@ fun SecondaryMetricCard(
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = glow.ink600,
-            modifier = Modifier.padding(bottom = GlowSpacing.xs)
+            modifier = Modifier.padding(bottom = GlowSpacing.xs),
         )
 
         // Value - monospace
@@ -121,7 +125,7 @@ fun SecondaryMetricCard(
             fontWeight = FontWeight.ExtraBold,
             color = glow.ink900,
             lineHeight = 32.sp,
-            modifier = Modifier.padding(bottom = GlowSpacing.xs)
+            modifier = Modifier.padding(bottom = GlowSpacing.xs),
         )
 
         // Trend - compact version
@@ -134,28 +138,30 @@ fun SecondaryMetricCard(
 @Composable
 private fun TrendIndicator(
     trend: MetricTrend,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val glow = LocalGlowColors.current
 
-    val (icon, color) = when (trend.direction) {
-        TrendDirection.UP -> Icons.Filled.TrendingUp to glow.success
-        TrendDirection.DOWN -> Icons.Filled.TrendingDown to glow.danger
-        TrendDirection.STABLE -> Icons.Filled.TrendingFlat to glow.ink600
-    }
+    val (icon, color) =
+        when (trend.direction) {
+            TrendDirection.UP -> Icons.Filled.TrendingUp to glow.success
+            TrendDirection.DOWN -> Icons.Filled.TrendingDown to glow.danger
+            TrendDirection.STABLE -> Icons.Filled.TrendingFlat to glow.ink600
+        }
 
     Row(
-        modifier = modifier
-            .background(color.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
-            .padding(horizontal = GlowSpacing.sm, vertical = GlowSpacing.xs),
+        modifier =
+            modifier
+                .background(color.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                .padding(horizontal = GlowSpacing.sm, vertical = GlowSpacing.xs),
         horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = color,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp),
         )
 
         Text(
@@ -163,13 +169,13 @@ private fun TrendIndicator(
             fontFamily = FontFamily.Monospace,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = color
+            color = color,
         )
 
         Text(
             text = trend.description,
             style = MaterialTheme.typography.bodyMedium,
-            color = glow.ink900
+            color = glow.ink900,
         )
     }
 }
@@ -177,26 +183,27 @@ private fun TrendIndicator(
 @Composable
 private fun CompactTrendIndicator(
     trend: MetricTrend,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val glow = LocalGlowColors.current
 
-    val (icon, color) = when (trend.direction) {
-        TrendDirection.UP -> "↑" to glow.success
-        TrendDirection.DOWN -> "↓" to glow.danger
-        TrendDirection.STABLE -> "→" to glow.ink600
-    }
+    val (icon, color) =
+        when (trend.direction) {
+            TrendDirection.UP -> "↑" to glow.success
+            TrendDirection.DOWN -> "↓" to glow.danger
+            TrendDirection.STABLE -> "→" to glow.ink600
+        }
 
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = icon,
             fontSize = 16.sp,
             color = color,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
 
         Text(
@@ -204,7 +211,7 @@ private fun CompactTrendIndicator(
             fontFamily = FontFamily.Monospace,
             style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
-            color = color
+            color = color,
         )
     }
 }
@@ -215,23 +222,23 @@ private fun CompactTrendIndicator(
 @Composable
 fun MetricGrid(
     metrics: List<MetricGridItem>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
     ) {
         metrics.chunked(2).forEach { rowMetrics ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
             ) {
                 rowMetrics.forEach { metric ->
                     SecondaryMetricCard(
                         title = metric.title,
                         value = metric.value,
                         trend = metric.trend,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 }
 
@@ -247,5 +254,5 @@ fun MetricGrid(
 data class MetricGridItem(
     val title: String,
     val value: String,
-    val trend: MetricTrend?
+    val trend: MetricTrend?,
 )

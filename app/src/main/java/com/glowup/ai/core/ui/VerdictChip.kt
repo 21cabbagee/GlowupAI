@@ -18,14 +18,15 @@ import com.glowup.ai.core.design.GlowUpTheme
 import com.glowup.ai.core.design.LocalGlowColors
 
 /** Human-readable copy for the backend's verdict labels. Falls back to the raw label. */
-private fun verdictCopy(label: String): String = when (label) {
-    "keep" -> "Keep using"
-    "likely_useful" -> "Likely useful"
-    "evidence_unclear" -> "Evidence unclear"
-    "investigate" -> "Investigate"
-    "locked" -> "Locked"
-    else -> label.replace('_', ' ').replaceFirstChar { it.uppercase() }
-}
+private fun verdictCopy(label: String): String =
+    when (label) {
+        "keep" -> "Keep using"
+        "likely_useful" -> "Likely useful"
+        "evidence_unclear" -> "Evidence unclear"
+        "investigate" -> "Investigate"
+        "locked" -> "Locked"
+        else -> label.replace('_', ' ').replaceFirstChar { it.uppercase() }
+    }
 
 /**
  * Renders a backend verdict label (`keep`, `likely_useful`, `evidence_unclear`, `investigate`,
@@ -47,10 +48,11 @@ fun VerdictChip(
 
     Text(
         text = text,
-        modifier = modifier
-            .background(surface, RoundedCornerShape(50))
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-            .semantics { contentDescription = "Verdict: $text" },
+        modifier =
+            modifier
+                .background(surface, RoundedCornerShape(50))
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .semantics { contentDescription = "Verdict: $text" },
         color = content,
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Bold,
@@ -73,7 +75,9 @@ private fun VerdictChipPreviewDark() {
 private fun PreviewRow() {
     androidx.compose.foundation.layout.Row(
         modifier = Modifier.padding(16.dp),
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+        horizontalArrangement =
+            androidx.compose.foundation.layout.Arrangement
+                .spacedBy(8.dp),
     ) {
         VerdictChip(label = "keep")
         VerdictChip(label = "likely_useful")

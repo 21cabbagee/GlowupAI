@@ -11,7 +11,6 @@ import java.time.ZoneId
  * Implements behavioral psychology: loss aversion + streak freeze mechanics
  */
 object StreakCalculator {
-
     /**
      * Calculate current streak from list of captures
      * @param captures List of all captures, sorted by date (newest first)
@@ -20,22 +19,23 @@ object StreakCalculator {
      */
     fun calculateStreak(
         captures: List<Capture>,
-        freezeDayUsedThisWeek: Boolean = false
+        freezeDayUsedThisWeek: Boolean = false,
     ): Streak {
         if (captures.isEmpty()) {
             return Streak.EMPTY
         }
 
         // Convert captures to dates only (ignore time)
-        val captureDates = captures
-            .map { capture ->
-                // Parse captured_at timestamp to LocalDate
-                LocalDateTime.parse(capture.capturedAt.replace(" ", "T"))
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate()
-            }
-            .distinct()
-            .sortedDescending() // Newest first
+        val captureDates =
+            captures
+                .map { capture ->
+                    // Parse captured_at timestamp to LocalDate
+                    LocalDateTime
+                        .parse(capture.capturedAt.replace(" ", "T"))
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                }.distinct()
+                .sortedDescending() // Newest first
 
         val today = LocalDate.now()
         val lastCaptureDate = captureDates.firstOrNull() ?: return Streak.EMPTY
@@ -46,7 +46,10 @@ object StreakCalculator {
         var streakStartDate: LocalDate? = null
 
         for (date in captureDates) {
-            val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(date, checkDate).toInt()
+            val daysDiff =
+                java.time.temporal.ChronoUnit.DAYS
+                    .between(date, checkDate)
+                    .toInt()
 
             when {
                 daysDiff == 0 -> {
@@ -55,12 +58,14 @@ object StreakCalculator {
                     streakStartDate = date
                     checkDate = date.minusDays(1)
                 }
+
                 daysDiff == 1 -> {
                     // Previous day
                     currentStreak++
                     streakStartDate = date
                     checkDate = date.minusDays(1)
                 }
+
                 else -> {
                     // Gap in streak
                     break
@@ -81,7 +86,7 @@ object StreakCalculator {
             freezeDaysRemaining = freezeDaysRemaining,
             freezeDayUsedThisWeek = freezeDayUsedThisWeek,
             totalCaptures = captures.size,
-            streakStartDate = streakStartDate
+            streakStartDate = streakStartDate,
         )
     }
 
@@ -96,16 +101,19 @@ object StreakCalculator {
         var currentStreak = 1
 
         for (i in 1 until sortedDates.size) {
-            val daysDiff = java.time.temporal.ChronoUnit.DAYS.between(
-                sortedDates[i - 1],
-                sortedDates[i]
-            ).toInt()
+            val daysDiff =
+                java.time.temporal.ChronoUnit.DAYS
+                    .between(
+                        sortedDates[i - 1],
+                        sortedDates[i],
+                    ).toInt()
 
-            currentStreak = if (daysDiff == 1) {
-                currentStreak + 1
-            } else {
-                1
-            }
+            currentStreak =
+                if (daysDiff == 1) {
+                    currentStreak + 1
+                } else {
+                    1
+                }
 
             maxStreak = maxOf(maxStreak, currentStreak)
         }
@@ -126,8 +134,8 @@ object StreakCalculator {
     /**
      * Get motivational message based on streak state
      */
-    fun getStreakMessage(streak: Streak): String {
-        return when {
+    fun getStreakMessage(streak: Streak): String =
+        when {
             streak.currentStreak == 0 -> "Start your journey today!"
             streak.currentStreak == 1 -> "Great start! Come back tomorrow to build your streak."
             streak.currentStreak < 7 -> "${streak.currentStreak} day streak! Keep it going."
@@ -135,13 +143,12 @@ object StreakCalculator {
             streak.currentStreak < 90 -> "${streak.currentStreak} day streak! You're in the top 10%."
             else -> "${streak.currentStreak} days! You're a skincare scientist now."
         }
-    }
 
     /**
      * Get warning message if streak at risk
      */
-    fun getStreakWarning(streak: Streak): String? {
-        return when {
+    fun getStreakWarning(streak: Streak): String? =
+        when {
             !streak.isActive && streak.currentStreak > 0 -> {
                 if (streak.canUseFreeze) {
                     "Your ${streak.currentStreak}-day streak is at risk! Capture today or use a freeze day."
@@ -149,10 +156,13 @@ object StreakCalculator {
                     "Your ${streak.currentStreak}-day streak is at risk! Capture today to save it."
                 }
             }
+
             streak.needsCaptureToday && streak.currentStreak > 3 -> {
                 "Don't lose your ${streak.currentStreak}-day streak! Capture before midnight."
             }
-            else -> null
+
+            else -> {
+                null
+            }
         }
-    }
 }

@@ -55,7 +55,6 @@ data class GlowColors(
     val ink600: Color,
     val paper: Color,
     val surfaceCard: Color,
-
     // Verdict surfaces. Each is paired with its own dedicated `onVerdictX` foreground below —
     // these chips are self-contained (their contrast does not depend on page background).
     val verdictKeep: Color,
@@ -63,18 +62,15 @@ data class GlowColors(
     val verdictEvidenceUnclear: Color,
     val verdictInvestigate: Color,
     val verdictLocked: Color,
-
     val onVerdictKeep: Color,
     val onVerdictLikelyUseful: Color,
     val onVerdictEvidenceUnclear: Color,
     val onVerdictInvestigate: Color,
     val onVerdictLocked: Color,
-
     val success: Color,
     val warning: Color,
     val onWarning: Color,
     val danger: Color,
-
     val chartGrid: Color,
     val chartLine: Color,
     val chartFill: Color,
@@ -85,24 +81,26 @@ data class GlowColors(
      * whitespace, and unknown values (falls back to the neutral "locked" tone rather than a
      * yellow, so an unrecognised label never accidentally reads as "keep").
      */
-    fun verdictColor(label: String): Color = when (label.trim().lowercase()) {
-        "keep" -> verdictKeep
-        "likely_useful" -> verdictLikelyUseful
-        "evidence_unclear" -> verdictEvidenceUnclear
-        "investigate" -> verdictInvestigate
-        "locked" -> verdictLocked
-        else -> verdictLocked
-    }
+    fun verdictColor(label: String): Color =
+        when (label.trim().lowercase()) {
+            "keep" -> verdictKeep
+            "likely_useful" -> verdictLikelyUseful
+            "evidence_unclear" -> verdictEvidenceUnclear
+            "investigate" -> verdictInvestigate
+            "locked" -> verdictLocked
+            else -> verdictLocked
+        }
 
     /** The correct foreground color for text/icons drawn on top of [verdictColor]'s result. */
-    fun onVerdictColor(label: String): Color = when (label.trim().lowercase()) {
-        "keep" -> onVerdictKeep
-        "likely_useful" -> onVerdictLikelyUseful
-        "evidence_unclear" -> onVerdictEvidenceUnclear
-        "investigate" -> onVerdictInvestigate
-        "locked" -> onVerdictLocked
-        else -> onVerdictLocked
-    }
+    fun onVerdictColor(label: String): Color =
+        when (label.trim().lowercase()) {
+            "keep" -> onVerdictKeep
+            "likely_useful" -> onVerdictLikelyUseful
+            "evidence_unclear" -> onVerdictEvidenceUnclear
+            "investigate" -> onVerdictInvestigate
+            "locked" -> onVerdictLocked
+            else -> onVerdictLocked
+        }
 }
 
 /**
@@ -117,39 +115,36 @@ data class GlowColors(
  * | paper on ink600 (verdictLocked) | 7.87:1 |
  * | ink900 on honey600 (warning) | 8.98:1 |
  */
-val LightGlowColors = GlowColors(
-    honey300 = HoneyPalette.Honey300,
-    honey400 = HoneyPalette.Honey400,
-    honey500 = HoneyPalette.Honey500,
-    honey600 = HoneyPalette.Honey600,
-    honey700 = HoneyPalette.Honey700,
-    ink900 = HoneyPalette.Ink900,
-    ink600 = HoneyPalette.Ink600,
-    paper = HoneyPalette.Paper,
-    surfaceCard = HoneyPalette.Surface,
-
-    verdictKeep = HoneyPalette.Honey500,
-    verdictLikelyUseful = HoneyPalette.Sage,
-    verdictEvidenceUnclear = HoneyPalette.Honey700,
-    verdictInvestigate = HoneyPalette.Rust,
-    verdictLocked = HoneyPalette.Ink600,
-
-    onVerdictKeep = HoneyPalette.Ink900, // 11.35:1
-    onVerdictLikelyUseful = HoneyPalette.Paper, // 4.80:1
-    onVerdictEvidenceUnclear = HoneyPalette.Ink900, // 4.93:1
-    onVerdictInvestigate = HoneyPalette.Paper, // 4.90:1
-    onVerdictLocked = HoneyPalette.Paper, // 7.87:1
-
-    success = HoneyPalette.Sage,
-    warning = HoneyPalette.Honey600,
-    onWarning = HoneyPalette.Ink900, // 8.98:1
-    danger = HoneyPalette.Rust,
-
-    chartGrid = HoneyPalette.Ink600.copy(alpha = 0.15f), // decorative, non-text gridlines
-    chartLine = HoneyPalette.Honey700, // 3.76:1 vs paper — honey500 alone is only 1.63:1, too low
-    chartFill = HoneyPalette.Honey300.copy(alpha = 0.30f), // area fill, decorative
-    shimmer = Color(0xFFECE3CF),
-)
+val LightGlowColors =
+    GlowColors(
+        honey300 = HoneyPalette.Honey300,
+        honey400 = HoneyPalette.Honey400,
+        honey500 = HoneyPalette.Honey500,
+        honey600 = HoneyPalette.Honey600,
+        honey700 = HoneyPalette.Honey700,
+        ink900 = HoneyPalette.Ink900,
+        ink600 = HoneyPalette.Ink600,
+        paper = HoneyPalette.Paper,
+        surfaceCard = HoneyPalette.Surface,
+        verdictKeep = HoneyPalette.Honey500,
+        verdictLikelyUseful = HoneyPalette.Sage,
+        verdictEvidenceUnclear = HoneyPalette.Honey700,
+        verdictInvestigate = HoneyPalette.Rust,
+        verdictLocked = HoneyPalette.Ink600,
+        onVerdictKeep = HoneyPalette.Ink900, // 11.35:1
+        onVerdictLikelyUseful = HoneyPalette.Paper, // 4.80:1
+        onVerdictEvidenceUnclear = HoneyPalette.Ink900, // 4.93:1
+        onVerdictInvestigate = HoneyPalette.Paper, // 4.90:1
+        onVerdictLocked = HoneyPalette.Paper, // 7.87:1
+        success = HoneyPalette.Sage,
+        warning = HoneyPalette.Honey600,
+        onWarning = HoneyPalette.Ink900, // 8.98:1
+        danger = HoneyPalette.Rust,
+        chartGrid = HoneyPalette.Ink600.copy(alpha = 0.15f), // decorative, non-text gridlines
+        chartLine = HoneyPalette.Honey700, // 3.76:1 vs paper — honey500 alone is only 1.63:1, too low
+        chartFill = HoneyPalette.Honey300.copy(alpha = 0.30f), // area fill, decorative
+        shimmer = Color(0xFFECE3CF),
+    )
 
 /**
  * Dark theme extras — a warm redefinition on charcoal, never a grey inversion.
@@ -163,40 +158,37 @@ val LightGlowColors = GlowColors(
  * | paper on ink600 (verdictLocked) | 7.87:1 |
  * | ink900 on honey600 (warning) | 8.98:1 |
  */
-val DarkGlowColors = GlowColors(
-    honey300 = HoneyPalette.Honey300,
-    honey400 = HoneyPalette.Honey400,
-    honey500 = HoneyPalette.Honey500,
-    honey600 = HoneyPalette.Honey600,
-    honey700 = HoneyPalette.Honey700,
-    ink900 = HoneyPalette.WarmWhite, // "ink" role inverts to the light warm text color on dark
-    ink600 = HoneyPalette.WarmGrey,
-    paper = HoneyPalette.Charcoal900,
-    surfaceCard = HoneyPalette.Charcoal800,
-
-    // Verdict chips are self-contained brand chips — kept identical to light theme so their
-    // measured contrast ratios hold regardless of the surrounding page theme.
-    verdictKeep = HoneyPalette.Honey500,
-    verdictLikelyUseful = HoneyPalette.Sage,
-    verdictEvidenceUnclear = HoneyPalette.Honey700,
-    verdictInvestigate = HoneyPalette.Rust,
-    verdictLocked = HoneyPalette.Ink600,
-
-    onVerdictKeep = HoneyPalette.Ink900, // 11.35:1
-    onVerdictLikelyUseful = Color.White, // 4.88:1 (paper text on sage falls to 4.34:1, too low)
-    onVerdictEvidenceUnclear = HoneyPalette.Ink900, // 4.93:1
-    onVerdictInvestigate = HoneyPalette.Paper, // 4.90:1
-    onVerdictLocked = HoneyPalette.Paper, // 7.87:1
-
-    success = HoneyPalette.Sage,
-    warning = HoneyPalette.Honey600,
-    onWarning = HoneyPalette.Ink900, // 8.98:1
-    danger = HoneyPalette.Rust,
-
-    chartGrid = HoneyPalette.WarmWhite.copy(alpha = 0.12f),
-    chartLine = HoneyPalette.Honey400, // 13.46:1 vs charcoal — bright enough to read on dark
-    chartFill = HoneyPalette.Honey400.copy(alpha = 0.20f),
-    shimmer = Color(0xFF2A241A),
-)
+val DarkGlowColors =
+    GlowColors(
+        honey300 = HoneyPalette.Honey300,
+        honey400 = HoneyPalette.Honey400,
+        honey500 = HoneyPalette.Honey500,
+        honey600 = HoneyPalette.Honey600,
+        honey700 = HoneyPalette.Honey700,
+        ink900 = HoneyPalette.WarmWhite, // "ink" role inverts to the light warm text color on dark
+        ink600 = HoneyPalette.WarmGrey,
+        paper = HoneyPalette.Charcoal900,
+        surfaceCard = HoneyPalette.Charcoal800,
+        // Verdict chips are self-contained brand chips — kept identical to light theme so their
+        // measured contrast ratios hold regardless of the surrounding page theme.
+        verdictKeep = HoneyPalette.Honey500,
+        verdictLikelyUseful = HoneyPalette.Sage,
+        verdictEvidenceUnclear = HoneyPalette.Honey700,
+        verdictInvestigate = HoneyPalette.Rust,
+        verdictLocked = HoneyPalette.Ink600,
+        onVerdictKeep = HoneyPalette.Ink900, // 11.35:1
+        onVerdictLikelyUseful = Color.White, // 4.88:1 (paper text on sage falls to 4.34:1, too low)
+        onVerdictEvidenceUnclear = HoneyPalette.Ink900, // 4.93:1
+        onVerdictInvestigate = HoneyPalette.Paper, // 4.90:1
+        onVerdictLocked = HoneyPalette.Paper, // 7.87:1
+        success = HoneyPalette.Sage,
+        warning = HoneyPalette.Honey600,
+        onWarning = HoneyPalette.Ink900, // 8.98:1
+        danger = HoneyPalette.Rust,
+        chartGrid = HoneyPalette.WarmWhite.copy(alpha = 0.12f),
+        chartLine = HoneyPalette.Honey400, // 13.46:1 vs charcoal — bright enough to read on dark
+        chartFill = HoneyPalette.Honey400.copy(alpha = 0.20f),
+        shimmer = Color(0xFF2A241A),
+    )
 
 val LocalGlowColors = staticCompositionLocalOf { LightGlowColors }

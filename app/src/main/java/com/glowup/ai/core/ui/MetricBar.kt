@@ -1,7 +1,7 @@
 package com.glowup.ai.core.ui
 
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,10 +18,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,12 +51,13 @@ fun MetricBar(
     )
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics {
-                contentDescription = "$label: ${valueText ?: value}"
-                progressBarRangeInfo = ProgressBarRangeInfo(current = value, range = 0f..max)
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .semantics {
+                    contentDescription = "$label: ${valueText ?: value}"
+                    progressBarRangeInfo = ProgressBarRangeInfo(current = value, range = 0f..max)
+                },
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -76,19 +77,21 @@ fun MetricBar(
             )
         }
         Box(
-            modifier = Modifier
-                .padding(top = 6.dp)
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(50))
-                .background(glow.ink600.copy(alpha = 0.15f)),
+            modifier =
+                Modifier
+                    .padding(top = 6.dp)
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(glow.ink600.copy(alpha = 0.15f)),
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(animated.coerceIn(0f, 1f))
-                    .clip(RoundedCornerShape(50))
-                    .background(glow.honey500),
+                modifier =
+                    Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(animated.coerceIn(0f, 1f))
+                        .clip(RoundedCornerShape(50))
+                        .background(glow.honey500),
             )
         }
     }

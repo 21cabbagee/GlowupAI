@@ -6,10 +6,17 @@ import com.glowup.ai.domain.model.Product
 
 sealed interface ExperimentsListStatus {
     data object Loading : ExperimentsListStatus
-    data class Content(val experiments: List<Experiment>) : ExperimentsListStatus
+
+    data class Content(
+        val experiments: List<Experiment>,
+    ) : ExperimentsListStatus
+
     /** `403 Experiments requires Premium` — a distinct upsell, never rendered as an empty list. */
     data object Locked : ExperimentsListStatus
-    data class Error(val message: String) : ExperimentsListStatus
+
+    data class Error(
+        val message: String,
+    ) : ExperimentsListStatus
 }
 
 data class CreateExperimentState(

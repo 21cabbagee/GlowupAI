@@ -20,62 +20,68 @@ private val DisplayWeight = FontWeight.ExtraBold // 800
 private val EmphasisWeight = FontWeight.SemiBold // 600
 private val RegularWeight = FontWeight.Normal // 400
 
-private fun display(size: androidx.compose.ui.unit.TextUnit) = TextStyle(
-    fontFamily = FontFamily.Default,
-    fontWeight = DisplayWeight,
-    fontSize = size,
-    lineHeight = size * 1.02f,
-    letterSpacing = (-0.04).em,
-)
+private fun display(size: androidx.compose.ui.unit.TextUnit) =
+    TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = DisplayWeight,
+        fontSize = size,
+        lineHeight = size * 1.02f,
+        letterSpacing = (-0.04).em,
+    )
 
-private fun headline(size: androidx.compose.ui.unit.TextUnit) = TextStyle(
-    fontFamily = FontFamily.Default,
-    fontWeight = EmphasisWeight,
-    fontSize = size,
-    lineHeight = size * 1.2f,
-    letterSpacing = (-0.02).em,
-)
+private fun headline(size: androidx.compose.ui.unit.TextUnit) =
+    TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = EmphasisWeight,
+        fontSize = size,
+        lineHeight = size * 1.2f,
+        letterSpacing = (-0.02).em,
+    )
 
-private fun title(size: androidx.compose.ui.unit.TextUnit) = TextStyle(
-    fontFamily = FontFamily.Default,
-    fontWeight = EmphasisWeight,
-    fontSize = size,
-    lineHeight = size * 1.25f,
-    letterSpacing = 0.em,
-)
+private fun title(size: androidx.compose.ui.unit.TextUnit) =
+    TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = EmphasisWeight,
+        fontSize = size,
+        lineHeight = size * 1.25f,
+        letterSpacing = 0.em,
+    )
 
-private fun body(size: androidx.compose.ui.unit.TextUnit) = TextStyle(
-    fontFamily = FontFamily.Default,
-    fontWeight = RegularWeight,
-    fontSize = size,
-    lineHeight = size * 1.55f,
-    letterSpacing = 0.02.em,
-)
+private fun body(size: androidx.compose.ui.unit.TextUnit) =
+    TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = RegularWeight,
+        fontSize = size,
+        lineHeight = size * 1.55f,
+        letterSpacing = 0.02.em,
+    )
 
-private fun label(size: androidx.compose.ui.unit.TextUnit) = TextStyle(
-    fontFamily = FontFamily.Default,
-    fontWeight = EmphasisWeight,
-    fontSize = size,
-    lineHeight = size * 1.35f,
-    letterSpacing = 0.02.em,
-)
+private fun label(size: androidx.compose.ui.unit.TextUnit) =
+    TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = EmphasisWeight,
+        fontSize = size,
+        lineHeight = size * 1.35f,
+        letterSpacing = 0.02.em,
+    )
 
 // Legacy typography - replaced by GlowTypography.kt
 @Deprecated("Use GlowTypography from GlowTypography.kt instead")
-val LegacyTypography = Typography(
-    displayLarge = display(57.sp),
-    displayMedium = display(45.sp),
-    displaySmall = display(36.sp),
-    headlineLarge = headline(32.sp),
-    headlineMedium = headline(28.sp),
-    headlineSmall = headline(24.sp),
-    titleLarge = title(22.sp),
-    titleMedium = title(16.sp),
-    titleSmall = title(14.sp),
-    bodyLarge = body(16.sp),
-    bodyMedium = body(14.sp),
-    bodySmall = body(12.sp),
-    labelLarge = label(14.sp),
-    labelMedium = label(12.sp),
-    labelSmall = label(11.sp),
-)
+val LegacyTypography =
+    Typography(
+        displayLarge = display(57.sp),
+        displayMedium = display(45.sp),
+        displaySmall = display(36.sp),
+        headlineLarge = headline(32.sp),
+        headlineMedium = headline(28.sp),
+        headlineSmall = headline(24.sp),
+        titleLarge = title(22.sp),
+        titleMedium = title(16.sp),
+        titleSmall = title(14.sp),
+        bodyLarge = body(16.sp),
+        bodyMedium = body(14.sp),
+        bodySmall = body(12.sp),
+        labelLarge = label(14.sp),
+        labelMedium = label(12.sp),
+        labelSmall = label(11.sp),
+    )

@@ -20,45 +20,53 @@ import javax.inject.Inject
  * without a cost figure, per ANDROID_PLAN.md §3.5.
  */
 @HiltViewModel
-class BudgetOptimizerViewModel @Inject constructor(
-    private val repository: InsightsRepository,
-    private val sessionStore: SessionStore,
-) : ViewModel() {
+class BudgetOptimizerViewModel
+    @Inject
+    constructor(
+        private val repository: InsightsRepository,
+        private val sessionStore: SessionStore,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow<ScreenState<BudgetOptimizer>>(ScreenState.Loading)
+        val uiState: StateFlow<ScreenState<BudgetOptimizer>> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow<ScreenState<BudgetOptimizer>>(ScreenState.Loading)
-    val uiState: StateFlow<ScreenState<BudgetOptimizer>> = _uiState.asStateFlow()
+        init {
+            load()
+        }
 
-    init {
-        load()
-    }
-
-    fun load() {
-        viewModelScope.launch {
-            _uiState.value = ScreenState.Loading
-            if (!sessionStore.canUsePremiumFlow().first()) {
-                _uiState.value = ScreenState.Locked
-                return@launch
-            }
-            val userId = sessionStore.userId()
-            if (userId == null) {
-                _uiState.value = ScreenState.Error("Sign in to view your routine budget.")
-                return@launch
-            }
-            when (val result = repository.getBudgetOptimizer(userId)) {
-                is GlowResult.Success -> _uiState.value = if (result.data.flagged.isEmpty()) {
-                    ScreenState.Empty(
-                        title = "Nothing flagged",
-                        body = "We'll flag stable, unused-looking products here as your routine history grows.",
-                    )
-                } else {
-                    ScreenState.Content(result.data)
+        fun load() {
+            viewModelScope.launch {
+                _uiState.value = ScreenState.Loading
+                if (!sessionStore.canUsePremiumFlow().first()) {
+                    _uiState.value = ScreenState.Locked
+                    return@launch
                 }
-                is GlowResult.Failure -> _uiState.value = if (result.error.isPremiumGate) {
-                    ScreenState.Locked
-                } else {
-                    ScreenState.Error(result.error.toUserMessage())
+                val userId = sessionStore.userId()
+                if (userId == null) {
+                    _uiState.value = ScreenState.Error("Sign in to view your routine budget.")
+                    return@launch
+                }
+                when (val result = repository.getBudgetOptimizer(userId)) {
+                    is GlowResult.Success -> {
+                        _uiState.value =
+                            if (result.data.flagged.isEmpty()) {
+                                ScreenState.Empty(
+                                    title = "Nothing flagged",
+                                    body = "We'll flag stable, unused-looking products here as your routine history grows.",
+                                )
+                            } else {
+                                ScreenState.Content(result.data)
+                            }
+                    }
+
+                    is GlowResult.Failure -> {
+                        _uiState.value =
+                            if (result.error.isPremiumGate) {
+                                ScreenState.Locked
+                            } else {
+                                ScreenState.Error(result.error.toUserMessage())
+                            }
+                    }
                 }
             }
         }
     }
-}

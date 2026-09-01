@@ -20,11 +20,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.ui.EmptyState
@@ -37,6 +36,7 @@ import com.glowup.ai.core.ui.LockedCard
 import com.glowup.ai.core.ui.ShimmerSkeleton
 import com.glowup.ai.domain.model.ContextEvent
 import com.glowup.ai.domain.model.ContextEventType
+import kotlinx.coroutines.launch
 
 @Composable
 fun ContextLogScreen(
@@ -52,41 +52,55 @@ fun ContextLogScreen(
     Scaffold(topBar = { GlowTopBar(title = "Context log", onBack = onBack) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (val current = state) {
-                ScreenState.Loading -> Column(modifier = Modifier.padding(GlowSpacing.md)) {
-                    ShimmerSkeleton(height = 120.dp)
-                    ShimmerSkeleton(height = 64.dp, modifier = Modifier.padding(top = GlowSpacing.sm))
+                ScreenState.Loading -> {
+                    Column(modifier = Modifier.padding(GlowSpacing.md)) {
+                        ShimmerSkeleton(height = 120.dp)
+                        ShimmerSkeleton(height = 64.dp, modifier = Modifier.padding(top = GlowSpacing.sm))
+                    }
                 }
-                ScreenState.Locked -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    LockedCard(
-                        title = "Context log is Premium",
-                        body = "Track sleep, travel, stress, and other context alongside your metrics.",
-                        onUnlock = onUpgrade,
-                    )
-                }
-                is ScreenState.Error -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    ErrorState(message = current.message, onRetry = viewModel::load)
-                }
-                is ScreenState.Empty -> LazyColumn(state = listState, contentPadding = PaddingValues(GlowSpacing.md)) {
-                    item { ContextEventForm(form, viewModel) }
-                    item {
-                        EmptyState(
-                            modifier = Modifier.padding(top = GlowSpacing.md),
-                            title = current.title,
-                            body = current.body,
-                            ctaLabel = "Log the first event",
-                            onCtaClick = {
-                                coroutineScope.launch { listState.animateScrollToItem(index = 0) }
-                            },
+
+                ScreenState.Locked -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        LockedCard(
+                            title = "Context log is Premium",
+                            body = "Track sleep, travel, stress, and other context alongside your metrics.",
+                            onUnlock = onUpgrade,
                         )
                     }
                 }
-                is ScreenState.Content -> LazyColumn(
-                    state = listState,
-                    contentPadding = PaddingValues(GlowSpacing.md),
-                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
-                ) {
-                    item { ContextEventForm(form, viewModel) }
-                    items(current.value, key = { it.id }) { event -> ContextEventRow(event) }
+
+                is ScreenState.Error -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        ErrorState(message = current.message, onRetry = viewModel::load)
+                    }
+                }
+
+                is ScreenState.Empty -> {
+                    LazyColumn(state = listState, contentPadding = PaddingValues(GlowSpacing.md)) {
+                        item { ContextEventForm(form, viewModel) }
+                        item {
+                            EmptyState(
+                                modifier = Modifier.padding(top = GlowSpacing.md),
+                                title = current.title,
+                                body = current.body,
+                                ctaLabel = "Log the first event",
+                                onCtaClick = {
+                                    coroutineScope.launch { listState.animateScrollToItem(index = 0) }
+                                },
+                            )
+                        }
+                    }
+                }
+
+                is ScreenState.Content -> {
+                    LazyColumn(
+                        state = listState,
+                        contentPadding = PaddingValues(GlowSpacing.md),
+                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
+                    ) {
+                        item { ContextEventForm(form, viewModel) }
+                        items(current.value, key = { it.id }) { event -> ContextEventRow(event) }
+                    }
                 }
             }
         }
@@ -94,15 +108,19 @@ fun ContextLogScreen(
 }
 
 @Composable
-private fun ContextEventForm(form: ContextLogFormState, viewModel: ContextLogViewModel) {
+private fun ContextEventForm(
+    form: ContextLogFormState,
+    viewModel: ContextLogViewModel,
+) {
     val glow = LocalGlowColors.current
     GlowCard {
         Text("Log a context event", color = glow.ink900, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = GlowSpacing.sm)
-                .horizontalScroll(rememberScrollState()),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = GlowSpacing.sm)
+                    .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
         ) {
             ContextEventType.entries.filter { it != ContextEventType.UNKNOWN }.forEach { type ->
@@ -152,7 +170,10 @@ private fun ContextEventRow(event: ContextEvent) {
     val glow = LocalGlowColors.current
     GlowCard {
         Text(
-            text = event.eventType.name.lowercase().replaceFirstChar { it.uppercase() } + " · ${event.occurredAt}",
+            text =
+                event.eventType.name
+                    .lowercase()
+                    .replaceFirstChar { it.uppercase() } + " · ${event.occurredAt}",
             style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
             color = glow.ink600,
         )

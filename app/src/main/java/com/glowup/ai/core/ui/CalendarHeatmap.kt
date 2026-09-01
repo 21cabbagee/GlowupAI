@@ -35,7 +35,7 @@ fun CalendarHeatmap(
     captureDates: Set<LocalDate>,
     modifier: Modifier = Modifier,
     currentMonth: YearMonth = YearMonth.now(),
-    onDateClick: (LocalDate) -> Unit = {}
+    onDateClick: (LocalDate) -> Unit = {},
 ) {
     val glowColors = LocalGlowColors.current
     val honeyColor = glowColors.honey500
@@ -45,40 +45,44 @@ fun CalendarHeatmap(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             // Month selector
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault()) +
+                    text =
+                        currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault()) +
                             " ${currentMonth.year}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = inkColor
+                    color = inkColor,
                 )
 
                 // PERFORMANCE: Memoize month count (PERFORMANCE_OPTIMIZATIONS.md §2.3)
-                val capturesThisMonth = remember(captureDates, currentMonth) {
-                    captureDates.count {
-                        it.month == currentMonth.month && it.year == currentMonth.year
+                val capturesThisMonth =
+                    remember(captureDates, currentMonth) {
+                        captureDates.count {
+                            it.month == currentMonth.month && it.year == currentMonth.year
+                        }
                     }
-                }
                 Text(
                     text = "$capturesThisMonth captures",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = inkColor.copy(alpha = 0.6f)
+                    color = inkColor.copy(alpha = 0.6f),
                 )
             }
 
@@ -87,7 +91,7 @@ fun CalendarHeatmap(
             // Day of week headers
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 listOf("S", "M", "T", "W", "T", "F", "S").forEach { day ->
                     Text(
@@ -95,7 +99,7 @@ fun CalendarHeatmap(
                         style = MaterialTheme.typography.labelSmall,
                         color = inkColor.copy(alpha = 0.5f),
                         modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
                 }
             }
@@ -109,18 +113,19 @@ fun CalendarHeatmap(
             val firstDayOfWeek = remember(firstDayOfMonth) { firstDayOfMonth.dayOfWeek.value % 7 } // 0 = Sunday
 
             // Calculate weeks needed
-            val weeksNeeded = remember(firstDayOfWeek, daysInMonth) {
-                ((firstDayOfWeek + daysInMonth) / 7.0).toInt() + 1
-            }
+            val weeksNeeded =
+                remember(firstDayOfWeek, daysInMonth) {
+                    ((firstDayOfWeek + daysInMonth) / 7.0).toInt() + 1
+                }
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 repeat(weeksNeeded) { week ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         repeat(7) { dayOfWeek ->
                             val dayNumber = week * 7 + dayOfWeek - firstDayOfWeek + 1
@@ -137,20 +142,22 @@ fun CalendarHeatmap(
                                     isToday = isToday,
                                     isFuture = isFuture,
                                     honeyColor = honeyColor,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .aspectRatio(1f)
-                                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                                        .clickable(enabled = !isFuture) {
-                                            onDateClick(date)
-                                        }
+                                    modifier =
+                                        Modifier
+                                            .weight(1f)
+                                            .aspectRatio(1f)
+                                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                                            .clickable(enabled = !isFuture) {
+                                                onDateClick(date)
+                                            },
                                 )
                             } else {
                                 // Empty cell
                                 Spacer(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .aspectRatio(1f)
+                                    modifier =
+                                        Modifier
+                                            .weight(1f)
+                                            .aspectRatio(1f),
                                 )
                             }
                         }
@@ -164,20 +171,20 @@ fun CalendarHeatmap(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 LegendItem(
                     color = MaterialTheme.colorScheme.surfaceVariant,
-                    label = "No capture"
+                    label = "No capture",
                 )
                 LegendItem(
                     color = honeyColor,
-                    label = "Captured"
+                    label = "Captured",
                 )
                 LegendItem(
                     color = MaterialTheme.colorScheme.primary,
                     label = "Today",
-                    hasBorder = true
+                    hasBorder = true,
                 )
             }
         }
@@ -191,7 +198,7 @@ private fun CalendarDayCell(
     isToday: Boolean,
     isFuture: Boolean,
     honeyColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     // Fade-in animation with staggered delay
     val fadeAlpha = rememberFadeInAnimation(delay = day * 15)
@@ -199,54 +206,61 @@ private fun CalendarDayCell(
     // Highlight pulse animation for today
     val highlightAlpha = rememberHighlightAnimation(enabled = isToday)
 
-    val backgroundColor = when {
-        isFuture -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-        hasCapture -> honeyColor
-        else -> MaterialTheme.colorScheme.surfaceVariant
-    }
+    val backgroundColor =
+        when {
+            isFuture -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            hasCapture -> honeyColor
+            else -> MaterialTheme.colorScheme.surfaceVariant
+        }
 
-    val textColor = when {
-        hasCapture -> MaterialTheme.colorScheme.onPrimary
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val textColor =
+        when {
+            hasCapture -> MaterialTheme.colorScheme.onPrimary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
 
-    val cellDescription = buildString {
-        append("Day $day")
-        if (isToday) append(", today")
-        if (hasCapture) append(", captured")
-        else if (!isFuture) append(", no capture")
-        if (isFuture) append(", future date")
-    }
+    val cellDescription =
+        buildString {
+            append("Day $day")
+            if (isToday) append(", today")
+            if (hasCapture) {
+                append(", captured")
+            } else if (!isFuture) {
+                append(", no capture")
+            }
+            if (isFuture) append(", future date")
+        }
 
     Box(
-        modifier = modifier
-            .alpha(fadeAlpha)
-            .clip(RoundedCornerShape(8.dp))
-            .background(backgroundColor)
-            .then(
-                if (isToday) {
-                    Modifier
-                        .border(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = highlightAlpha),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .graphicsLayer {
-                            scaleX = 0.95f + (highlightAlpha * 0.05f)
-                            scaleY = 0.95f + (highlightAlpha * 0.05f)
-                        }
-                } else Modifier
-            )
-            .semantics {
-                contentDescription = cellDescription
-            },
-        contentAlignment = Alignment.Center
+        modifier =
+            modifier
+                .alpha(fadeAlpha)
+                .clip(RoundedCornerShape(8.dp))
+                .background(backgroundColor)
+                .then(
+                    if (isToday) {
+                        Modifier
+                            .border(
+                                width = 2.dp,
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = highlightAlpha),
+                                shape = RoundedCornerShape(8.dp),
+                            ).graphicsLayer {
+                                scaleX = 0.95f + (highlightAlpha * 0.05f)
+                                scaleY = 0.95f + (highlightAlpha * 0.05f)
+                            }
+                    } else {
+                        Modifier
+                    },
+                ).semantics {
+                    contentDescription = cellDescription
+                },
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = day.toString(),
             style = MaterialTheme.typography.bodySmall,
             color = textColor,
-            fontWeight = if (hasCapture) FontWeight.Bold else FontWeight.Normal
+            fontWeight = if (hasCapture) FontWeight.Bold else FontWeight.Normal,
         )
     }
 }
@@ -256,32 +270,35 @@ private fun LegendItem(
     color: Color,
     label: String,
     hasBorder: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(
-            modifier = Modifier
-                .size(16.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(color)
-                .then(
-                    if (hasBorder) {
-                        Modifier.border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                    } else Modifier
-                )
+            modifier =
+                Modifier
+                    .size(16.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(color)
+                    .then(
+                        if (hasBorder) {
+                            Modifier.border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = RoundedCornerShape(4.dp),
+                            )
+                        } else {
+                            Modifier
+                        },
+                    ),
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -293,7 +310,7 @@ private fun LegendItem(
 fun CompactCalendarHeatmap(
     captureDates: Set<LocalDate>,
     modifier: Modifier = Modifier,
-    onDateClick: (LocalDate) -> Unit = {}
+    onDateClick: (LocalDate) -> Unit = {},
 ) {
     val glowColors = LocalGlowColors.current
     val honeyColor = glowColors.honey500
@@ -306,17 +323,18 @@ fun CompactCalendarHeatmap(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // Calculate weeks
-        val weeksNeeded = remember(firstDayOfWeek, daysInMonth) {
-            minOf(5, ((firstDayOfWeek + daysInMonth) / 7.0).toInt() + 1)
-        }
+        val weeksNeeded =
+            remember(firstDayOfWeek, daysInMonth) {
+                minOf(5, ((firstDayOfWeek + daysInMonth) / 7.0).toInt() + 1)
+            }
 
         repeat(weeksNeeded) { week ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 repeat(7) { dayOfWeek ->
                     val dayNumber = week * 7 + dayOfWeek - firstDayOfWeek + 1
@@ -327,34 +345,35 @@ fun CompactCalendarHeatmap(
                         val isFuture = date.isAfter(LocalDate.now())
 
                         Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                                .defaultMinSize(minWidth = 40.dp, minHeight = 40.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(
-                                    when {
-                                        isFuture -> Color.Transparent
-                                        hasCapture -> honeyColor
-                                        else -> MaterialTheme.colorScheme.surfaceVariant
-                                    }
-                                )
-                                .clickable(enabled = hasCapture && !isFuture) {
-                                    onDateClick(date)
-                                }
-                                .semantics {
-                                    contentDescription = when {
-                                        isFuture -> "Future date"
-                                        hasCapture -> "Capture on day $dayNumber"
-                                        else -> "No capture on day $dayNumber"
-                                    }
-                                }
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1f)
+                                    .defaultMinSize(minWidth = 40.dp, minHeight = 40.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(
+                                        when {
+                                            isFuture -> Color.Transparent
+                                            hasCapture -> honeyColor
+                                            else -> MaterialTheme.colorScheme.surfaceVariant
+                                        },
+                                    ).clickable(enabled = hasCapture && !isFuture) {
+                                        onDateClick(date)
+                                    }.semantics {
+                                        contentDescription =
+                                            when {
+                                                isFuture -> "Future date"
+                                                hasCapture -> "Capture on day $dayNumber"
+                                                else -> "No capture on day $dayNumber"
+                                            }
+                                    },
                         )
                     } else {
                         Spacer(
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1f),
                         )
                     }
                 }

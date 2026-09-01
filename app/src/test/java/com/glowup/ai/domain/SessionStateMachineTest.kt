@@ -23,18 +23,21 @@ import org.junit.Test
  * ANDROID_PLAN.md's non-negotiable constraints / traps #1, #2, #3, #5.
  */
 class SessionStateMachineTest {
-
     // ---- test fixtures ------------------------------------------------
 
-    private fun user(consentState: ConsentState) = User(
-        id = "user-1",
-        skinType = "combination",
-        consentState = consentState,
-        createdAt = "2026-01-01T00:00:00Z",
-        firebaseUid = "firebase-uid-1",
-    )
+    private fun user(consentState: ConsentState) =
+        User(
+            id = "user-1",
+            skinType = "combination",
+            consentState = consentState,
+            createdAt = "2026-01-01T00:00:00Z",
+            firebaseUid = "firebase-uid-1",
+        )
 
-    private fun entitlement(plan: Plan, status: EntitlementStatus) = Entitlement(
+    private fun entitlement(
+        plan: Plan,
+        status: EntitlementStatus,
+    ) = Entitlement(
         plan = plan,
         status = status,
         startedAt = null,
@@ -42,7 +45,10 @@ class SessionStateMachineTest {
         source = null,
     )
 
-    private fun appearanceProfile(vertical: String, baselineCaptureId: String?) = AppearanceProfile(
+    private fun appearanceProfile(
+        vertical: String,
+        baselineCaptureId: String?,
+    ) = AppearanceProfile(
         id = "ap-$vertical",
         vertical = vertical,
         baselineCaptureId = baselineCaptureId,
@@ -88,14 +94,15 @@ class SessionStateMachineTest {
     @Test
     fun `sign-in requested is a no-op from every other state`() {
         val ready = SessionState.Ready(profile())
-        val states = listOf(
-            SessionState.Authenticating,
-            SessionState.ProfileLoading,
-            SessionState.ConsentRequired(profile(consentState = ConsentState.PENDING)),
-            SessionState.ConsentDeclined(profile(consentState = ConsentState.DECLINED)),
-            SessionState.BaselineNeeded(profile()),
-            ready,
-        )
+        val states =
+            listOf(
+                SessionState.Authenticating,
+                SessionState.ProfileLoading,
+                SessionState.ConsentRequired(profile(consentState = ConsentState.PENDING)),
+                SessionState.ConsentDeclined(profile(consentState = ConsentState.DECLINED)),
+                SessionState.BaselineNeeded(profile()),
+                ready,
+            )
         states.forEach { state ->
             assertEquals("no-op expected from $state", state, SessionStateMachine.onSignInRequested(state))
         }
@@ -170,11 +177,12 @@ class SessionStateMachineTest {
 
     @Test
     fun `declined consent still allows premium UI if entitled (consent and billing are independent gates)`() {
-        val p = profile(
-            consentState = ConsentState.DECLINED,
-            plan = Plan.PREMIUM,
-            status = EntitlementStatus.ACTIVE,
-        )
+        val p =
+            profile(
+                consentState = ConsentState.DECLINED,
+                plan = Plan.PREMIUM,
+                status = EntitlementStatus.ACTIVE,
+            )
         val result = SessionStateMachine.onProfileResult(GlowResult.Success(p)) as SessionState.ConsentDeclined
         assertTrue(result.canUsePremium)
         assertFalse(result.canCapture)
@@ -182,10 +190,11 @@ class SessionStateMachineTest {
 
     @Test
     fun `active consent with no baseline anywhere classifies as BaselineNeeded`() {
-        val p = profile(
-            consentState = ConsentState.ACTIVE,
-            appearanceProfiles = listOf(appearanceProfile("skin", null), appearanceProfile("hair", null)),
-        )
+        val p =
+            profile(
+                consentState = ConsentState.ACTIVE,
+                appearanceProfiles = listOf(appearanceProfile("skin", null), appearanceProfile("hair", null)),
+            )
         val result = SessionStateMachine.onProfileResult(GlowResult.Success(p))
         assertEquals(SessionState.BaselineNeeded(p), result)
         assertTrue((result as SessionState.BaselineNeeded).canCapture)
@@ -206,13 +215,15 @@ class SessionStateMachineTest {
         // baseline even if is_baseline is false" + ANDROID_PLAN trap #10: "the rule
         // counts captures across verticals" — so a baseline recorded for "hair"
         // must satisfy the gate even though "skin" itself has none.
-        val p = profile(
-            consentState = ConsentState.ACTIVE,
-            appearanceProfiles = listOf(
-                appearanceProfile("skin", null),
-                appearanceProfile("hair", "capture-42"),
-            ),
-        )
+        val p =
+            profile(
+                consentState = ConsentState.ACTIVE,
+                appearanceProfiles =
+                    listOf(
+                        appearanceProfile("skin", null),
+                        appearanceProfile("hair", "capture-42"),
+                    ),
+            )
         val result = SessionStateMachine.onProfileResult(GlowResult.Success(p))
         assertEquals(SessionState.Ready(p), result)
         assertTrue((result as SessionState.Ready).canCapture)
@@ -220,10 +231,11 @@ class SessionStateMachineTest {
 
     @Test
     fun `active consent with a baseline in the only vertical classifies as Ready`() {
-        val p = profile(
-            consentState = ConsentState.ACTIVE,
-            appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
-        )
+        val p =
+            profile(
+                consentState = ConsentState.ACTIVE,
+                appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
+            )
         assertEquals(SessionState.Ready(p), SessionStateMachine.onProfileResult(GlowResult.Success(p)))
     }
 
@@ -233,10 +245,11 @@ class SessionStateMachineTest {
         val afterDecline = SessionStateMachine.onProfileResult(GlowResult.Success(declined))
         assertTrue(afterDecline is SessionState.ConsentDeclined)
 
-        val acceptedWithBaseline = profile(
-            consentState = ConsentState.ACTIVE,
-            appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
-        )
+        val acceptedWithBaseline =
+            profile(
+                consentState = ConsentState.ACTIVE,
+                appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
+            )
         val afterAccept = SessionStateMachine.onProfileResult(GlowResult.Success(acceptedWithBaseline))
         assertEquals(SessionState.Ready(acceptedWithBaseline), afterAccept)
     }
@@ -245,11 +258,12 @@ class SessionStateMachineTest {
 
     @Test
     fun `400 user not found (ApiError NotFound) restarts at NoUser regardless of prior state`() {
-        val priorStates = listOf(
-            SessionState.ProfileLoading,
-            SessionState.Ready(profile()),
-            SessionState.ConsentDeclined(profile(consentState = ConsentState.DECLINED)),
-        )
+        val priorStates =
+            listOf(
+                SessionState.ProfileLoading,
+                SessionState.Ready(profile()),
+                SessionState.ConsentDeclined(profile(consentState = ConsentState.DECLINED)),
+            )
         val failure = GlowResult.Failure(ApiError.NotFound("user"))
         priorStates.forEach { prior ->
             // onProfileResult never consults `prior` — the assertion documents
@@ -325,11 +339,12 @@ class SessionStateMachineTest {
 
     @Test
     fun `premium plus active status enables canUsePremium`() {
-        val p = profile(
-            appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
-            plan = Plan.PREMIUM,
-            status = EntitlementStatus.ACTIVE,
-        )
+        val p =
+            profile(
+                appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
+                plan = Plan.PREMIUM,
+                status = EntitlementStatus.ACTIVE,
+            )
         val result = SessionStateMachine.onProfileResult(GlowResult.Success(p)) as SessionState.Ready
         assertTrue(result.canUsePremium)
     }
@@ -338,38 +353,42 @@ class SessionStateMachineTest {
     fun `premium plan with cancelled status is NOT premium`() {
         // The exact web-client bug (ANDROID_PLAN.md §3 bug #2 / trap #6): checking
         // plan alone would wrongly show Premium UI here.
-        val p = profile(
-            appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
-            plan = Plan.PREMIUM,
-            status = EntitlementStatus.CANCELLED,
-        )
+        val p =
+            profile(
+                appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
+                plan = Plan.PREMIUM,
+                status = EntitlementStatus.CANCELLED,
+            )
         val result = SessionStateMachine.onProfileResult(GlowResult.Success(p)) as SessionState.Ready
         assertFalse(result.canUsePremium)
     }
 
     @Test
     fun `free plan with active status is NOT premium`() {
-        val p = profile(
-            appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
-            plan = Plan.FREE,
-            status = EntitlementStatus.ACTIVE,
-        )
+        val p =
+            profile(
+                appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
+                plan = Plan.FREE,
+                status = EntitlementStatus.ACTIVE,
+            )
         val result = SessionStateMachine.onProfileResult(GlowResult.Success(p)) as SessionState.Ready
         assertFalse(result.canUsePremium)
     }
 
     @Test
     fun `unknown plan or status is NOT premium (fails closed)`() {
-        val unknownPlan = profile(
-            appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
-            plan = Plan.UNKNOWN,
-            status = EntitlementStatus.ACTIVE,
-        )
-        val unknownStatus = profile(
-            appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
-            plan = Plan.PREMIUM,
-            status = EntitlementStatus.UNKNOWN,
-        )
+        val unknownPlan =
+            profile(
+                appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
+                plan = Plan.UNKNOWN,
+                status = EntitlementStatus.ACTIVE,
+            )
+        val unknownStatus =
+            profile(
+                appearanceProfiles = listOf(appearanceProfile("skin", "capture-1")),
+                plan = Plan.PREMIUM,
+                status = EntitlementStatus.UNKNOWN,
+            )
         listOf(unknownPlan, unknownStatus).forEach { p ->
             val result = SessionStateMachine.onProfileResult(GlowResult.Success(p)) as SessionState.Ready
             assertFalse(result.canUsePremium)
@@ -380,14 +399,15 @@ class SessionStateMachineTest {
 
     @Test
     fun `only BaselineNeeded and Ready allow capture`() {
-        val gatedFalse = listOf(
-            SessionState.NoUser,
-            SessionState.Authenticating,
-            SessionState.ProfileLoading,
-            SessionState.ConsentRequired(profile(consentState = ConsentState.PENDING)),
-            SessionState.ConsentDeclined(profile(consentState = ConsentState.DECLINED)),
-            SessionState.Unrecoverable(ApiError.Server(500, "x")),
-        )
+        val gatedFalse =
+            listOf(
+                SessionState.NoUser,
+                SessionState.Authenticating,
+                SessionState.ProfileLoading,
+                SessionState.ConsentRequired(profile(consentState = ConsentState.PENDING)),
+                SessionState.ConsentDeclined(profile(consentState = ConsentState.DECLINED)),
+                SessionState.Unrecoverable(ApiError.Server(500, "x")),
+            )
         gatedFalse.forEach { assertFalse("$it should not allow capture", it.canCapture) }
 
         assertTrue(SessionState.BaselineNeeded(profile()).canCapture)
@@ -398,20 +418,22 @@ class SessionStateMachineTest {
 
     @Test
     fun `only ConsentRequired, ConsentDeclined, BaselineNeeded and Ready are authoritative`() {
-        val notAuthoritative = listOf(
-            SessionState.NoUser,
-            SessionState.Authenticating,
-            SessionState.ProfileLoading,
-            SessionState.Unrecoverable(ApiError.Network(RuntimeException())),
-        )
+        val notAuthoritative =
+            listOf(
+                SessionState.NoUser,
+                SessionState.Authenticating,
+                SessionState.ProfileLoading,
+                SessionState.Unrecoverable(ApiError.Network(RuntimeException())),
+            )
         notAuthoritative.forEach { assertFalse("$it should not be authoritative", it.isAuthoritative) }
 
-        val authoritative = listOf(
-            SessionState.ConsentRequired(profile(consentState = ConsentState.PENDING)),
-            SessionState.ConsentDeclined(profile(consentState = ConsentState.DECLINED)),
-            SessionState.BaselineNeeded(profile()),
-            SessionState.Ready(profile(appearanceProfiles = listOf(appearanceProfile("skin", "c1")))),
-        )
+        val authoritative =
+            listOf(
+                SessionState.ConsentRequired(profile(consentState = ConsentState.PENDING)),
+                SessionState.ConsentDeclined(profile(consentState = ConsentState.DECLINED)),
+                SessionState.BaselineNeeded(profile()),
+                SessionState.Ready(profile(appearanceProfiles = listOf(appearanceProfile("skin", "c1")))),
+            )
         authoritative.forEach { assertTrue("$it should be authoritative", it.isAuthoritative) }
     }
 

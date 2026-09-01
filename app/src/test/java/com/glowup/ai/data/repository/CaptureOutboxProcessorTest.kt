@@ -20,113 +20,153 @@ import org.junit.Test
  * ambiguous network failure.
  */
 class CaptureOutboxProcessorTest {
+    private fun entry(attemptCount: Int = 0) =
+        CaptureOutboxEntity(
+            id = 1,
+            userId = "user-1",
+            vertical = "skin",
+            imagePath = "/tmp/fake.b64",
+            qualityJson = null,
+            isBaseline = false,
+            experimentId = null,
+            capturedAt = "2026-08-24T10:00:00.000Z",
+            deviceMetaJson = null,
+            attemptCount = attemptCount,
+            createdAtMillis = 0,
+        )
 
-    private fun entry(attemptCount: Int = 0) = CaptureOutboxEntity(
-        id = 1,
-        userId = "user-1",
-        vertical = "skin",
-        imagePath = "/tmp/fake.b64",
-        qualityJson = null,
-        isBaseline = false,
-        experimentId = null,
-        capturedAt = "2026-08-24T10:00:00.000Z",
-        deviceMetaJson = null,
-        attemptCount = attemptCount,
-        createdAtMillis = 0,
-    )
-
-    private fun fakeCaptureResult() = CaptureResult(
-        id = "capture-1",
-        capturedAt = "2026-08-24T10:00:00.000Z",
-        isBaseline = false,
-        status = "accepted",
-        captureQuality = CaptureQuality(
-            facePresent = true, yawDegrees = 0.0, pitchDegrees = 0.0, brightness = 0.5,
-            sharpness = 0.5, distanceCm = 40.0, expressionNeutral = true, referenceCardPresent = false,
-            score = 0.9, accepted = true, failedChecks = emptyList(), coaching = emptyList(),
-        ),
-        analysisJobId = null,
-        metric = AppearanceMetric(null, null, null, null, null, null, null),
-        vertical = "skin",
-    )
+    private fun fakeCaptureResult() =
+        CaptureResult(
+            id = "capture-1",
+            capturedAt = "2026-08-24T10:00:00.000Z",
+            isBaseline = false,
+            status = "accepted",
+            captureQuality =
+                CaptureQuality(
+                    facePresent = true,
+                    yawDegrees = 0.0,
+                    pitchDegrees = 0.0,
+                    brightness = 0.5,
+                    sharpness = 0.5,
+                    distanceCm = 40.0,
+                    expressionNeutral = true,
+                    referenceCardPresent = false,
+                    score = 0.9,
+                    accepted = true,
+                    failedChecks = emptyList(),
+                    coaching = emptyList(),
+                ),
+            analysisJobId = null,
+            metric = AppearanceMetric(null, null, null, null, null, null, null),
+            vertical = "skin",
+        )
 
     @Test
-    fun `first attempt uploads directly without checking history`() = runTest {
-        var historyChecked = false
-        val processor = CaptureOutboxProcessor(
-            upload = { GlowResult.Success(fakeCaptureResult()) },
-            wasAlreadyAccepted = { _, _, _ -> historyChecked = true; false },
-            loadImageBase64 = { "base64==" },
-        )
+    fun `first attempt uploads directly without checking history`() =
+        runTest {
+            var historyChecked = false
+            val processor =
+                CaptureOutboxProcessor(
+                    upload = { GlowResult.Success(fakeCaptureResult()) },
+                    wasAlreadyAccepted = { _, _, _ ->
+                        historyChecked = true
+                        false
+                    },
+                    loadImageBase64 = { "base64==" },
+                )
 
-        val outcome = processor.process(entry(attemptCount = 0))
+            val outcome = processor.process(entry(attemptCount = 0))
 
-        assertTrue(outcome is OutboxOutcome.Uploaded)
-        assertTrue("first attempt must not pay for a reconciliation check", !historyChecked)
-    }
-
-    @Test
-    fun `a retry reconciles first and skips re-upload if already accepted`() = runTest {
-        var uploadCalled = false
-        val processor = CaptureOutboxProcessor(
-            upload = { uploadCalled = true; GlowResult.Success(fakeCaptureResult()) },
-            wasAlreadyAccepted = { userId, vertical, capturedAt ->
-                userId == "user-1" && vertical == "skin" && capturedAt == "2026-08-24T10:00:00.000Z"
-            },
-            loadImageBase64 = { "base64==" },
-        )
-
-        val outcome = processor.process(entry(attemptCount = 1))
-
-        assertEquals(OutboxOutcome.AlreadyAccepted, outcome)
-        assertTrue("must never re-upload a capture confirmed already accepted", !uploadCalled)
-    }
+            assertTrue(outcome is OutboxOutcome.Uploaded)
+            assertTrue("first attempt must not pay for a reconciliation check", !historyChecked)
+        }
 
     @Test
-    fun `a retry that reconciles as NOT accepted uploads again`() = runTest {
-        var uploadCalled = false
-        val processor = CaptureOutboxProcessor(
-            upload = { uploadCalled = true; GlowResult.Success(fakeCaptureResult()) },
-            wasAlreadyAccepted = { _, _, _ -> false },
-            loadImageBase64 = { "base64==" },
-        )
+    fun `a retry reconciles first and skips re-upload if already accepted`() =
+        runTest {
+            var uploadCalled = false
+            val processor =
+                CaptureOutboxProcessor(
+                    upload = {
+                        uploadCalled = true
+                        GlowResult.Success(fakeCaptureResult())
+                    },
+                    wasAlreadyAccepted = { userId, vertical, capturedAt ->
+                        userId == "user-1" && vertical == "skin" && capturedAt == "2026-08-24T10:00:00.000Z"
+                    },
+                    loadImageBase64 = { "base64==" },
+                )
 
-        val outcome = processor.process(entry(attemptCount = 2))
+            val outcome = processor.process(entry(attemptCount = 1))
 
-        assertTrue(outcome is OutboxOutcome.Uploaded)
-        assertTrue(uploadCalled)
-    }
-
-    @Test
-    fun `an ambiguous network failure is RetryLater, never a permanent failure`() = runTest {
-        val networkError = ApiError.Network(RuntimeException("timeout"))
-        val processor = CaptureOutboxProcessor(
-            upload = { GlowResult.Failure(networkError) },
-            wasAlreadyAccepted = { _, _, _ -> false },
-            loadImageBase64 = { "base64==" },
-        )
-
-        val outcome = processor.process(entry())
-
-        assertEquals(OutboxOutcome.RetryLater(networkError), outcome)
-    }
+            assertEquals(OutboxOutcome.AlreadyAccepted, outcome)
+            assertTrue("must never re-upload a capture confirmed already accepted", !uploadCalled)
+        }
 
     @Test
-    fun `an explicit quality rejection is a permanent failure, never retried`() = runTest {
-        val quality = CaptureQuality(
-            facePresent = false, yawDegrees = 20.0, pitchDegrees = 0.0, brightness = 0.1,
-            sharpness = 0.1, distanceCm = 80.0, expressionNeutral = true, referenceCardPresent = false,
-            score = 0.1, accepted = false, failedChecks = listOf("face_present"), coaching = emptyList(),
-        )
-        val rejection = ApiError.CaptureQualityRejected(quality, emptyList())
-        val processor = CaptureOutboxProcessor(
-            upload = { GlowResult.Failure(rejection) },
-            wasAlreadyAccepted = { _, _, _ -> false },
-            loadImageBase64 = { "base64==" },
-        )
+    fun `a retry that reconciles as NOT accepted uploads again`() =
+        runTest {
+            var uploadCalled = false
+            val processor =
+                CaptureOutboxProcessor(
+                    upload = {
+                        uploadCalled = true
+                        GlowResult.Success(fakeCaptureResult())
+                    },
+                    wasAlreadyAccepted = { _, _, _ -> false },
+                    loadImageBase64 = { "base64==" },
+                )
 
-        val outcome = processor.process(entry())
+            val outcome = processor.process(entry(attemptCount = 2))
 
-        assertEquals(OutboxOutcome.PermanentFailure(rejection), outcome)
-    }
+            assertTrue(outcome is OutboxOutcome.Uploaded)
+            assertTrue(uploadCalled)
+        }
+
+    @Test
+    fun `an ambiguous network failure is RetryLater, never a permanent failure`() =
+        runTest {
+            val networkError = ApiError.Network(RuntimeException("timeout"))
+            val processor =
+                CaptureOutboxProcessor(
+                    upload = { GlowResult.Failure(networkError) },
+                    wasAlreadyAccepted = { _, _, _ -> false },
+                    loadImageBase64 = { "base64==" },
+                )
+
+            val outcome = processor.process(entry())
+
+            assertEquals(OutboxOutcome.RetryLater(networkError), outcome)
+        }
+
+    @Test
+    fun `an explicit quality rejection is a permanent failure, never retried`() =
+        runTest {
+            val quality =
+                CaptureQuality(
+                    facePresent = false,
+                    yawDegrees = 20.0,
+                    pitchDegrees = 0.0,
+                    brightness = 0.1,
+                    sharpness = 0.1,
+                    distanceCm = 80.0,
+                    expressionNeutral = true,
+                    referenceCardPresent = false,
+                    score = 0.1,
+                    accepted = false,
+                    failedChecks = listOf("face_present"),
+                    coaching = emptyList(),
+                )
+            val rejection = ApiError.CaptureQualityRejected(quality, emptyList())
+            val processor =
+                CaptureOutboxProcessor(
+                    upload = { GlowResult.Failure(rejection) },
+                    wasAlreadyAccepted = { _, _, _ -> false },
+                    loadImageBase64 = { "base64==" },
+                )
+
+            val outcome = processor.process(entry())
+
+            assertEquals(OutboxOutcome.PermanentFailure(rejection), outcome)
+        }
 }

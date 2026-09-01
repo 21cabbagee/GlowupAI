@@ -67,33 +67,46 @@ fun PurchaseGuidanceSection(
         )
 
         when (val result = state.result) {
-            null -> Unit
-            is SectionState.Loading -> Text(
-                text = "Checking…",
-                modifier = Modifier.padding(top = GlowSpacing.sm),
-                color = glow.ink600,
-            )
+            null -> {
+                Unit
+            }
 
-            is SectionState.Locked -> LockedCard(
-                modifier = Modifier.padding(top = GlowSpacing.md),
-                title = "Purchase guidance",
-                body = "Get a similarity check against your own and cohort history before you buy a new product.",
-                onUnlock = onUnlock,
-            )
+            is SectionState.Loading -> {
+                Text(
+                    text = "Checking…",
+                    modifier = Modifier.padding(top = GlowSpacing.sm),
+                    color = glow.ink600,
+                )
+            }
 
-            is SectionState.Error -> ErrorState(
-                modifier = Modifier.padding(top = GlowSpacing.md),
-                message = result.message,
-                onRetry = onRetry,
-            )
+            is SectionState.Locked -> {
+                LockedCard(
+                    modifier = Modifier.padding(top = GlowSpacing.md),
+                    title = "Purchase guidance",
+                    body = "Get a similarity check against your own and cohort history before you buy a new product.",
+                    onUnlock = onUnlock,
+                )
+            }
 
-            is SectionState.Empty -> Text(
-                text = result.title,
-                modifier = Modifier.padding(top = GlowSpacing.md),
-                color = glow.ink600,
-            )
+            is SectionState.Error -> {
+                ErrorState(
+                    modifier = Modifier.padding(top = GlowSpacing.md),
+                    message = result.message,
+                    onRetry = onRetry,
+                )
+            }
 
-            is SectionState.Content -> GuidanceResultCard(result.value)
+            is SectionState.Empty -> {
+                Text(
+                    text = result.title,
+                    modifier = Modifier.padding(top = GlowSpacing.md),
+                    color = glow.ink600,
+                )
+            }
+
+            is SectionState.Content -> {
+                GuidanceResultCard(result.value)
+            }
         }
     }
 }
@@ -192,7 +205,10 @@ private fun GuidanceResultCard(guidance: PurchaseGuidance) {
 }
 
 @Composable
-private fun OverlapGroup(title: String, overlaps: List<ProductOverlap>) {
+private fun OverlapGroup(
+    title: String,
+    overlaps: List<ProductOverlap>,
+) {
     if (overlaps.isEmpty()) return
     val glow = LocalGlowColors.current
     Column(modifier = Modifier.padding(top = GlowSpacing.md)) {

@@ -35,12 +35,13 @@ fun DisclaimerNote(
 ) {
     val glow = LocalGlowColors.current
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(glow.ink600.copy(alpha = 0.06f))
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-            .semantics { contentDescription = "Disclaimer: $text" },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .background(glow.ink600.copy(alpha = 0.06f))
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .semantics { contentDescription = "Disclaimer: $text" },
         verticalAlignment = Alignment.Top,
     ) {
         Icon(

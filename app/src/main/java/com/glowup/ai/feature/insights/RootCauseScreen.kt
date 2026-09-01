@@ -47,38 +47,52 @@ fun RootCauseScreen(
     Scaffold(topBar = { GlowTopBar(title = "Root-cause correlations", onBack = onBack) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (val current = state) {
-                ScreenState.Loading -> Column(modifier = Modifier.padding(GlowSpacing.md)) {
-                    ShimmerSkeleton(height = 48.dp)
-                    ShimmerSkeleton(height = 96.dp, modifier = Modifier.padding(top = GlowSpacing.sm))
+                ScreenState.Loading -> {
+                    Column(modifier = Modifier.padding(GlowSpacing.md)) {
+                        ShimmerSkeleton(height = 48.dp)
+                        ShimmerSkeleton(height = 96.dp, modifier = Modifier.padding(top = GlowSpacing.sm))
+                    }
                 }
-                ScreenState.Locked -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    LockedCard(
-                        title = "Root-cause search is Premium",
-                        body = "See which logged context (sleep, travel, stress…) correlates with your metric changes.",
-                        onUnlock = onUpgrade,
-                    )
+
+                ScreenState.Locked -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        LockedCard(
+                            title = "Root-cause search is Premium",
+                            body = "See which logged context (sleep, travel, stress…) correlates with your metric changes.",
+                            onUnlock = onUpgrade,
+                        )
+                    }
                 }
-                is ScreenState.Error -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    ErrorState(message = current.message, onRetry = viewModel::load)
+
+                is ScreenState.Error -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        ErrorState(message = current.message, onRetry = viewModel::load)
+                    }
                 }
-                is ScreenState.Empty -> Column(modifier = Modifier.fillMaxSize()) {
-                    MetricSelector(metric, viewModel::onMetricChange)
-                    EmptyState(
-                        modifier = Modifier.padding(GlowSpacing.md),
-                        title = current.title,
-                        body = current.body,
-                        ctaLabel = "Log a context event",
-                        onCtaClick = onLogContext,
-                    )
+
+                is ScreenState.Empty -> {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        MetricSelector(metric, viewModel::onMetricChange)
+                        EmptyState(
+                            modifier = Modifier.padding(GlowSpacing.md),
+                            title = current.title,
+                            body = current.body,
+                            ctaLabel = "Log a context event",
+                            onCtaClick = onLogContext,
+                        )
+                    }
                 }
-                is ScreenState.Content -> Column(modifier = Modifier.fillMaxSize()) {
-                    MetricSelector(metric, viewModel::onMetricChange)
-                    LazyColumn(
-                        contentPadding = PaddingValues(GlowSpacing.md),
-                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
-                    ) {
-                        items(current.value, key = { "${it.eventType}-${it.metric}" }) { insight ->
-                            RootCauseCard(insight)
+
+                is ScreenState.Content -> {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        MetricSelector(metric, viewModel::onMetricChange)
+                        LazyColumn(
+                            contentPadding = PaddingValues(GlowSpacing.md),
+                            verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
+                        ) {
+                            items(current.value, key = { "${it.eventType}-${it.metric}" }) { insight ->
+                                RootCauseCard(insight)
+                            }
                         }
                     }
                 }
@@ -88,12 +102,16 @@ fun RootCauseScreen(
 }
 
 @Composable
-private fun MetricSelector(selected: PrimaryMetric, onSelect: (PrimaryMetric) -> Unit) {
+private fun MetricSelector(
+    selected: PrimaryMetric,
+    onSelect: (PrimaryMetric) -> Unit,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = GlowSpacing.md, vertical = GlowSpacing.sm)
-            .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = GlowSpacing.md, vertical = GlowSpacing.sm)
+                .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
     ) {
         listOf(
@@ -117,7 +135,10 @@ private fun RootCauseCard(insight: RootCauseInsight) {
     val glow = LocalGlowColors.current
     GlowCard {
         Text(
-            text = insight.eventType.name.lowercase().replaceFirstChar { it.uppercase() },
+            text =
+                insight.eventType.name
+                    .lowercase()
+                    .replaceFirstChar { it.uppercase() },
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = glow.ink900,

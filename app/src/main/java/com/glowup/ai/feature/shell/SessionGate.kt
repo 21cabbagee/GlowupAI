@@ -52,11 +52,12 @@ fun SessionGate(
         }
 
         sessionState = SessionState.ProfileLoading
-        val result = if (sessionStore.userId() == null) {
-            sessionRepository.authenticateWithFirebase()
-        } else {
-            sessionRepository.refreshProfile()
-        }
+        val result =
+            if (sessionStore.userId() == null) {
+                sessionRepository.authenticateWithFirebase()
+            } else {
+                sessionRepository.refreshProfile()
+            }
         val resolved = SessionStateMachine.onProfileResult(result)
         sessionState = resolved
         completedRequest = retryNonce

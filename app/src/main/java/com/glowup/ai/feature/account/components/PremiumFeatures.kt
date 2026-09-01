@@ -22,19 +22,23 @@ import com.glowup.ai.core.design.LocalGlowColors
  * frontend-api-map.md — not an aspirational marketing list. Every entry here corresponds to a
  * route this app calls that returns `PremiumRequired` for a free plan.
  */
-data class PremiumFeature(val title: String, val description: String)
-
-val PREMIUM_FEATURES: List<PremiumFeature> = listOf(
-    PremiumFeature("Experiments", "Run structured before/after tests on a product or routine change."),
-    PremiumFeature("Data Q&A", "Ask questions about your own history and get cited, threaded answers."),
-    PremiumFeature("Discover recommendations", "Personalized product discovery beyond manual search."),
-    PremiumFeature("Ingredient explainer", "See why an ingredient earned its verdict, with cited sources."),
-    PremiumFeature("Root-cause search", "Trace a metric change back to the routine events around it."),
-    PremiumFeature("Budget optimizer", "Get a lower-cost routine that keeps the same active ingredients."),
-    PremiumFeature("Derm export", "A clinician-ready summary of your appearance history."),
-    PremiumFeature("Historical reprocessing", "Re-run past captures through the latest measurement model."),
-    PremiumFeature("Pre-purchase prediction", "A similarity-based read on a product before you buy it."),
+data class PremiumFeature(
+    val title: String,
+    val description: String,
 )
+
+val PREMIUM_FEATURES: List<PremiumFeature> =
+    listOf(
+        PremiumFeature("Experiments", "Run structured before/after tests on a product or routine change."),
+        PremiumFeature("Data Q&A", "Ask questions about your own history and get cited, threaded answers."),
+        PremiumFeature("Discover recommendations", "Personalized product discovery beyond manual search."),
+        PremiumFeature("Ingredient explainer", "See why an ingredient earned its verdict, with cited sources."),
+        PremiumFeature("Root-cause search", "Trace a metric change back to the routine events around it."),
+        PremiumFeature("Budget optimizer", "Get a lower-cost routine that keeps the same active ingredients."),
+        PremiumFeature("Derm export", "A clinician-ready summary of your appearance history."),
+        PremiumFeature("Historical reprocessing", "Re-run past captures through the latest measurement model."),
+        PremiumFeature("Pre-purchase prediction", "A similarity-based read on a product before you buy it."),
+    )
 
 /**
  * Lists [PREMIUM_FEATURES]. Framed strictly as a similarity/analytics upsell — never phrased as

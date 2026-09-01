@@ -17,7 +17,9 @@ sealed class ApiError {
     object ConsentRequired : ApiError()
 
     /** 403 whose message reads "<feature> requires Premium...". */
-    data class PremiumRequired(val feature: String) : ApiError()
+    data class PremiumRequired(
+        val feature: String,
+    ) : ApiError()
 
     /** 400 capture-quality rejection: `detail` was a structured object with
      * a `quality` sub-object (and, since the coaching growth feature,
@@ -28,20 +30,33 @@ sealed class ApiError {
     ) : ApiError()
 
     /** 422 (FastAPI body/query validation) or an otherwise field-shaped 400. */
-    data class Validation(val fields: Map<String, String>) : ApiError()
+    data class Validation(
+        val fields: Map<String, String>,
+    ) : ApiError()
 
     /** 400 "<entity> not found" — the backend uses 400, not 404, for this. */
-    data class NotFound(val what: String) : ApiError()
+    data class NotFound(
+        val what: String,
+    ) : ApiError()
 
     /** 400 "already exists" / duplicate-style conflicts (e.g. barcode reuse). */
-    data class Conflict(val message: String) : ApiError()
+    data class Conflict(
+        val message: String,
+    ) : ApiError()
 
     /** No HTTP response at all (timeout, DNS, offline, etc). */
-    data class Network(val cause: Throwable) : ApiError()
+    data class Network(
+        val cause: Throwable,
+    ) : ApiError()
 
     /** Any other non-2xx status, including 5xx. */
-    data class Server(val code: Int, val message: String) : ApiError()
+    data class Server(
+        val code: Int,
+        val message: String,
+    ) : ApiError()
 
     /** Anything that doesn't fit the above (unexpected body shape, etc). */
-    data class Unknown(val cause: Throwable) : ApiError()
+    data class Unknown(
+        val cause: Throwable,
+    ) : ApiError()
 }

@@ -46,25 +46,29 @@ fun GlowTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .defaultMinSize(minHeight = 48.dp)
-                .semantics {
-                    contentDescription = label
-                    if (isError) error(errorText ?: "Invalid value")
-                },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 48.dp)
+                    .semantics {
+                        contentDescription = label
+                        if (isError) error(errorText ?: "Invalid value")
+                    },
             enabled = enabled,
             singleLine = singleLine,
             isError = isError,
             label = { Text(label) },
             placeholder = placeholder?.let { { Text(it) } },
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = keyboardType),
+            keyboardOptions =
+                androidx.compose.foundation.text
+                    .KeyboardOptions(keyboardType = keyboardType),
             visualTransformation = visualTransformation,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = glow.honey600,
-                cursorColor = glow.honey600,
-                errorBorderColor = glow.danger,
-            ),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = glow.honey600,
+                    cursorColor = glow.honey600,
+                    errorBorderColor = glow.danger,
+                ),
         )
         val caption = errorText ?: supportingText
         if (caption != null) {

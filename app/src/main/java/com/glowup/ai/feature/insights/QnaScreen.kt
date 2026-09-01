@@ -50,18 +50,29 @@ fun QnaScreen(
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (val current = state) {
-                QnaUiState.Loading -> QnaLoading()
-                QnaUiState.Locked -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    LockedCard(
-                        title = "Data Q&A is Premium",
-                        body = "Ask questions about your own tracked history and get cited, grounded answers.",
-                        onUnlock = onUpgrade,
-                    )
+                QnaUiState.Loading -> {
+                    QnaLoading()
                 }
-                is QnaUiState.Error -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    ErrorState(message = current.message, onRetry = viewModel::load)
+
+                QnaUiState.Locked -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        LockedCard(
+                            title = "Data Q&A is Premium",
+                            body = "Ask questions about your own tracked history and get cited, grounded answers.",
+                            onUnlock = onUpgrade,
+                        )
+                    }
                 }
-                is QnaUiState.Content -> QnaContent(current, viewModel)
+
+                is QnaUiState.Error -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        ErrorState(message = current.message, onRetry = viewModel::load)
+                    }
+                }
+
+                is QnaUiState.Content -> {
+                    QnaContent(current, viewModel)
+                }
             }
         }
     }
@@ -77,7 +88,10 @@ private fun QnaLoading() {
 }
 
 @Composable
-private fun QnaContent(state: QnaUiState.Content, viewModel: QnaViewModel) {
+private fun QnaContent(
+    state: QnaUiState.Content,
+    viewModel: QnaViewModel,
+) {
     val glow = LocalGlowColors.current
     val listState = rememberLazyListState()
 
@@ -98,7 +112,9 @@ private fun QnaContent(state: QnaUiState.Content, viewModel: QnaViewModel) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(GlowSpacing.md),
+                contentPadding =
+                    androidx.compose.foundation.layout
+                        .PaddingValues(GlowSpacing.md),
                 verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
             ) {
                 items(state.messages, key = { it.id }) { message ->
@@ -132,10 +148,11 @@ private fun QnaContent(state: QnaUiState.Content, viewModel: QnaViewModel) {
             }
         } else {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .imePadding()
-                    .padding(GlowSpacing.md),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .imePadding()
+                        .padding(GlowSpacing.md),
                 verticalAlignment = Alignment.Bottom,
             ) {
                 GlowTextField(

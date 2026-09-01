@@ -100,7 +100,10 @@ data class MetricSummary(
     val sentence: String?,
 )
 
-data class WeeklyRecapPeriod(val start: String?, val end: String?)
+data class WeeklyRecapPeriod(
+    val start: String?,
+    val end: String?,
+)
 
 data class WeeklyRecap(
     val status: String,

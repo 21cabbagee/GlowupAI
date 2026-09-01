@@ -35,9 +35,10 @@ fun DiscoverScreen(
     val pendingOfferKeys by viewModel.pendingOfferClicks.collectAsState()
     // [DiscoverRepository.pendingKeys] tracks mutation-lock keys of the form
     // "click_offer:{offerId}" — unwrap to the bare offer id the offer cards compare against.
-    val pendingOfferIds = pendingOfferKeys.mapNotNullTo(mutableSetOf()) { key ->
-        key.removePrefix("click_offer:").takeIf { key.startsWith("click_offer:") }
-    }
+    val pendingOfferIds =
+        pendingOfferKeys.mapNotNullTo(mutableSetOf()) { key ->
+            key.removePrefix("click_offer:").takeIf { key.startsWith("click_offer:") }
+        }
     val uriHandler = LocalUriHandler.current
 
     // Click-then-open: once a click is recorded and the backend hands back a URL, attempt to open

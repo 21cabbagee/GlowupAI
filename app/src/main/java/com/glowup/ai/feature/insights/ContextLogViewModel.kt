@@ -30,92 +30,102 @@ data class ContextLogFormState(
  * correlations panel (frontend-api-map.md "Context events + root-cause search").
  */
 @HiltViewModel
-class ContextLogViewModel @Inject constructor(
-    private val repository: InsightsRepository,
-    private val sessionStore: SessionStore,
-) : ViewModel() {
+class ContextLogViewModel
+    @Inject
+    constructor(
+        private val repository: InsightsRepository,
+        private val sessionStore: SessionStore,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow<ScreenState<List<ContextEvent>>>(ScreenState.Loading)
+        val uiState: StateFlow<ScreenState<List<ContextEvent>>> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow<ScreenState<List<ContextEvent>>>(ScreenState.Loading)
-    val uiState: StateFlow<ScreenState<List<ContextEvent>>> = _uiState.asStateFlow()
+        private val _form = MutableStateFlow(ContextLogFormState())
+        val form: StateFlow<ContextLogFormState> = _form.asStateFlow()
 
-    private val _form = MutableStateFlow(ContextLogFormState())
-    val form: StateFlow<ContextLogFormState> = _form.asStateFlow()
+        init {
+            load()
+        }
 
-    init {
-        load()
-    }
+        fun load() {
+            viewModelScope.launch {
+                _uiState.value = ScreenState.Loading
+                if (!sessionStore.canUsePremiumFlow().first()) {
+                    _uiState.value = ScreenState.Locked
+                    return@launch
+                }
+                val userId = sessionStore.userId()
+                if (userId == null) {
+                    _uiState.value = ScreenState.Error("Sign in to view your context log.")
+                    return@launch
+                }
+                when (val result = repository.getContextEvents(userId)) {
+                    is GlowResult.Success -> {
+                        _uiState.value =
+                            if (result.data.isEmpty()) {
+                                ScreenState.Empty(
+                                    title = "No context events yet",
+                                    body = "Log sleep, travel, stress, or other context to see if it correlates with your metrics.",
+                                )
+                            } else {
+                                ScreenState.Content(result.data.sortedByDescending { it.occurredAt })
+                            }
+                    }
 
-    fun load() {
-        viewModelScope.launch {
-            _uiState.value = ScreenState.Loading
-            if (!sessionStore.canUsePremiumFlow().first()) {
-                _uiState.value = ScreenState.Locked
-                return@launch
+                    is GlowResult.Failure -> {
+                        _uiState.value =
+                            if (result.error.isPremiumGate) {
+                                ScreenState.Locked
+                            } else {
+                                ScreenState.Error(result.error.toUserMessage())
+                            }
+                    }
+                }
             }
-            val userId = sessionStore.userId()
-            if (userId == null) {
-                _uiState.value = ScreenState.Error("Sign in to view your context log.")
-                return@launch
-            }
-            when (val result = repository.getContextEvents(userId)) {
-                is GlowResult.Success -> _uiState.value = if (result.data.isEmpty()) {
-                    ScreenState.Empty(
-                        title = "No context events yet",
-                        body = "Log sleep, travel, stress, or other context to see if it correlates with your metrics.",
+        }
+
+        fun onTypeChange(type: ContextEventType) {
+            _form.value = _form.value.copy(eventType = type)
+        }
+
+        fun onValueChange(value: String) {
+            _form.value = _form.value.copy(value = value)
+        }
+
+        fun onDateChange(date: String) {
+            _form.value = _form.value.copy(occurredAt = date)
+        }
+
+        fun onNotesChange(notes: String) {
+            _form.value = _form.value.copy(notes = notes)
+        }
+
+        fun submit() {
+            val form = _form.value
+            if (form.submitting) return
+            viewModelScope.launch {
+                _form.value = form.copy(submitting = true, error = null)
+                val userId = sessionStore.userId()
+                if (userId == null) {
+                    _form.value = form.copy(submitting = false, error = "Sign in to continue.")
+                    return@launch
+                }
+                val request =
+                    ContextEventCreateRequest(
+                        eventType = form.eventType,
+                        value = form.value.trim().ifBlank { null },
+                        occurredAt = form.occurredAt.trim().ifBlank { null },
+                        notes = form.notes.trim().ifBlank { null },
                     )
-                } else {
-                    ScreenState.Content(result.data.sortedByDescending { it.occurredAt })
-                }
-                is GlowResult.Failure -> _uiState.value = if (result.error.isPremiumGate) {
-                    ScreenState.Locked
-                } else {
-                    ScreenState.Error(result.error.toUserMessage())
-                }
-            }
-        }
-    }
+                when (val result = repository.addContextEvent(userId, request)) {
+                    is GlowResult.Success -> {
+                        _form.value = ContextLogFormState()
+                        load()
+                    }
 
-    fun onTypeChange(type: ContextEventType) {
-        _form.value = _form.value.copy(eventType = type)
-    }
-
-    fun onValueChange(value: String) {
-        _form.value = _form.value.copy(value = value)
-    }
-
-    fun onDateChange(date: String) {
-        _form.value = _form.value.copy(occurredAt = date)
-    }
-
-    fun onNotesChange(notes: String) {
-        _form.value = _form.value.copy(notes = notes)
-    }
-
-    fun submit() {
-        val form = _form.value
-        if (form.submitting) return
-        viewModelScope.launch {
-            _form.value = form.copy(submitting = true, error = null)
-            val userId = sessionStore.userId()
-            if (userId == null) {
-                _form.value = form.copy(submitting = false, error = "Sign in to continue.")
-                return@launch
-            }
-            val request = ContextEventCreateRequest(
-                eventType = form.eventType,
-                value = form.value.trim().ifBlank { null },
-                occurredAt = form.occurredAt.trim().ifBlank { null },
-                notes = form.notes.trim().ifBlank { null },
-            )
-            when (val result = repository.addContextEvent(userId, request)) {
-                is GlowResult.Success -> {
-                    _form.value = ContextLogFormState()
-                    load()
-                }
-                is GlowResult.Failure -> {
-                    _form.value = form.copy(submitting = false, error = result.error.toUserMessage())
+                    is GlowResult.Failure -> {
+                        _form.value = form.copy(submitting = false, error = result.error.toUserMessage())
+                    }
                 }
             }
         }
     }
-}

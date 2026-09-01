@@ -17,10 +17,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.glowup.ai.core.design.GlowUpTheme
-import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.design.GlowShapes
 import com.glowup.ai.core.design.GlowSpacing
+import com.glowup.ai.core.design.GlowUpTheme
+import com.glowup.ai.core.design.LocalGlowColors
 
 /** Direction of change for a [StatTile] delta. Color is derived unless a caller overrides it. */
 enum class StatDeltaDirection { Up, Down, Flat }
@@ -47,30 +47,33 @@ fun StatTile(
     val contentColor = glow.ink900
     val labelColor = if (accent) glow.ink900.copy(alpha = 0.7f) else glow.ink600
 
-    val deltaColor = delta?.let {
-        when (it.direction) {
-            StatDeltaDirection.Up -> glow.success
-            StatDeltaDirection.Down -> glow.danger
-            StatDeltaDirection.Flat -> glow.ink600
+    val deltaColor =
+        delta?.let {
+            when (it.direction) {
+                StatDeltaDirection.Up -> glow.success
+                StatDeltaDirection.Down -> glow.danger
+                StatDeltaDirection.Flat -> glow.ink600
+            }
         }
-    }
 
     Column(
-        modifier = modifier
-            .defaultMinSize(minHeight = 48.dp)
-            .background(background, GlowShapes.md)
-            .padding(GlowSpacing.md)
-            .semantics {
-                contentDescription = buildString {
-                    append(label)
-                    append(": ")
-                    append(value)
-                    if (delta != null) {
-                        append(", ")
-                        append(delta.text)
-                    }
-                }
-            },
+        modifier =
+            modifier
+                .defaultMinSize(minHeight = 48.dp)
+                .background(background, GlowShapes.md)
+                .padding(GlowSpacing.md)
+                .semantics {
+                    contentDescription =
+                        buildString {
+                            append(label)
+                            append(": ")
+                            append(value)
+                            if (delta != null) {
+                                append(", ")
+                                append(delta.text)
+                            }
+                        }
+                },
     ) {
         Text(
             text = value,
@@ -92,11 +95,12 @@ fun StatTile(
                 modifier = Modifier.padding(top = 8.dp),
             ) {
                 Text(
-                    text = when (delta.direction) {
-                        StatDeltaDirection.Up -> "↑"
-                        StatDeltaDirection.Down -> "↓"
-                        StatDeltaDirection.Flat -> "→"
-                    },
+                    text =
+                        when (delta.direction) {
+                            StatDeltaDirection.Up -> "↑"
+                            StatDeltaDirection.Down -> "↓"
+                            StatDeltaDirection.Flat -> "→"
+                        },
                     color = deltaColor,
                     fontWeight = FontWeight.Bold,
                 )

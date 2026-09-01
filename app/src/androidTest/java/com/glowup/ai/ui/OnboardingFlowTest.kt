@@ -23,7 +23,6 @@ import org.junit.runner.RunWith
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class OnboardingFlowTest {
-
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
@@ -172,7 +171,8 @@ class OnboardingFlowTest {
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule
                 .onAllNodesWithText("Skip", ignoreCase = true)
-                .fetchSemanticsNodes().isNotEmpty()
+                .fetchSemanticsNodes()
+                .isNotEmpty()
         }
 
         composeTestRule
@@ -211,10 +211,6 @@ class OnboardingFlowTest {
 }
 
 // Extension functions
-fun SemanticsNodeInteraction.assertIsNotChecked(): SemanticsNodeInteraction {
-    return assert(isNotOn())
-}
+fun SemanticsNodeInteraction.assertIsNotChecked(): SemanticsNodeInteraction = assert(isNotOn())
 
-fun SemanticsNodeInteraction.assertIsChecked(): SemanticsNodeInteraction {
-    return assert(isOn())
-}
+fun SemanticsNodeInteraction.assertIsChecked(): SemanticsNodeInteraction = assert(isOn())

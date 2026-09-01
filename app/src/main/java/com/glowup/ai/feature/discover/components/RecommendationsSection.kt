@@ -46,20 +46,26 @@ fun RecommendationsSection(
                 ShimmerSkeleton(height = 96.dp, modifier = Modifier.padding(top = GlowSpacing.sm))
             }
 
-            is SectionState.Locked -> LockedCard(
-                title = "Cohort recommendations",
-                body = "See which products a consenting cohort of users found likely useful, with sample size and effect — never a personal verdict.",
-                onUnlock = onUnlock,
-            )
+            is SectionState.Locked -> {
+                LockedCard(
+                    title = "Cohort recommendations",
+                    body = "See which products a consenting cohort of users found likely useful, with sample size and effect — never a personal verdict.",
+                    onUnlock = onUnlock,
+                )
+            }
 
-            is SectionState.Error -> ErrorState(message = state.message, onRetry = onRetry)
+            is SectionState.Error -> {
+                ErrorState(message = state.message, onRetry = onRetry)
+            }
 
-            is SectionState.Empty -> EmptyState(
-                title = state.title,
-                body = state.body,
-                ctaLabel = "Refresh",
-                onCtaClick = onRetry,
-            )
+            is SectionState.Empty -> {
+                EmptyState(
+                    title = state.title,
+                    body = state.body,
+                    ctaLabel = "Refresh",
+                    onCtaClick = onRetry,
+                )
+            }
 
             is SectionState.Content -> {
                 val discover = state.value
@@ -106,9 +112,10 @@ private fun RecommendationCard(recommendation: DiscoverRecommendation) {
             )
         }
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = GlowSpacing.sm),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = GlowSpacing.sm),
             horizontalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
         ) {
             LabelledValue(label = "Sample size", value = "${recommendation.sampleSize} users")
@@ -125,7 +132,10 @@ private fun RecommendationCard(recommendation: DiscoverRecommendation) {
 }
 
 @Composable
-private fun LabelledValue(label: String, value: String) {
+private fun LabelledValue(
+    label: String,
+    value: String,
+) {
     val glow = LocalGlowColors.current
     Column {
         Text(text = value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = glow.ink900)

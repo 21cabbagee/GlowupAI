@@ -25,17 +25,18 @@ internal fun SessionStore.canUsePremiumFlow(): Flow<Boolean> =
 
 /** Human-readable copy for [ApiError], reused by every screen ViewModel in this package. Premium
  * gates are branched to a distinct Locked state before this is ever called for that case. */
-internal fun ApiError.toUserMessage(): String = when (this) {
-    is ApiError.Unauthorized -> "Please sign in again to continue."
-    is ApiError.ConsentRequired -> "Facial-data consent is required before using this feature."
-    is ApiError.PremiumRequired -> "$feature requires Premium."
-    is ApiError.CaptureQualityRejected -> "That capture didn't pass the quality check."
-    is ApiError.Validation -> fields.values.firstOrNull() ?: "Check your input and try again."
-    is ApiError.NotFound -> "We couldn't find that."
-    is ApiError.Conflict -> message
-    is ApiError.Network -> "You're offline. Check your connection and try again."
-    is ApiError.Server -> "Something went wrong on our end. Try again shortly."
-    is ApiError.Unknown -> "Something unexpected happened."
-}
+internal fun ApiError.toUserMessage(): String =
+    when (this) {
+        is ApiError.Unauthorized -> "Please sign in again to continue."
+        is ApiError.ConsentRequired -> "Facial-data consent is required before using this feature."
+        is ApiError.PremiumRequired -> "$feature requires Premium."
+        is ApiError.CaptureQualityRejected -> "That capture didn't pass the quality check."
+        is ApiError.Validation -> fields.values.firstOrNull() ?: "Check your input and try again."
+        is ApiError.NotFound -> "We couldn't find that."
+        is ApiError.Conflict -> message
+        is ApiError.Network -> "You're offline. Check your connection and try again."
+        is ApiError.Server -> "Something went wrong on our end. Try again shortly."
+        is ApiError.Unknown -> "Something unexpected happened."
+    }
 
 internal val ApiError.isPremiumGate: Boolean get() = this is ApiError.PremiumRequired

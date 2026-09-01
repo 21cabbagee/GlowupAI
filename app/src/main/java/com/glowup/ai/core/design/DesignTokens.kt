@@ -126,31 +126,31 @@ object GlowDarkColors {
 object GlowSpacing {
     /** Extra small - 4dp */
     val XS: Dp = 4.dp
-    val xs get() = XS  // Lowercase alias for backwards compatibility
+    val xs get() = XS // Lowercase alias for backwards compatibility
 
     /** Small - 8dp (base unit) */
     val S: Dp = 8.dp
-    val sm get() = S  // Lowercase alias for backwards compatibility
+    val sm get() = S // Lowercase alias for backwards compatibility
 
     /** Medium - 16dp */
     val M: Dp = 16.dp
-    val md get() = M  // Lowercase alias for backwards compatibility
+    val md get() = M // Lowercase alias for backwards compatibility
 
     /** Large - 24dp */
     val L: Dp = 24.dp
-    val lg get() = L  // Lowercase alias for backwards compatibility
+    val lg get() = L // Lowercase alias for backwards compatibility
 
     /** Extra large - 32dp */
     val XL: Dp = 32.dp
-    val xl get() = XL  // Lowercase alias for backwards compatibility
+    val xl get() = XL // Lowercase alias for backwards compatibility
 
     /** 2X large - 48dp */
     val XXL: Dp = 48.dp
-    val xxl get() = XXL  // Lowercase alias for backwards compatibility
+    val xxl get() = XXL // Lowercase alias for backwards compatibility
 
     /** 3X large - 64dp */
     val XXXL: Dp = 64.dp
-    val xxxl get() = XXXL  // Lowercase alias for backwards compatibility
+    val xxxl get() = XXXL // Lowercase alias for backwards compatibility
 
     /** 4X large - 80dp */
     val XXXXL: Dp = 80.dp
@@ -203,30 +203,33 @@ object GlowElevation {
 data class ShadowConfig(
     val offsetY: Dp,
     val blurRadius: Dp,
-    val color: Color
+    val color: Color,
 )
 
 object GlowShadows {
     /** Small shadow - (0dp, 2dp, 8dp, rgba(0,0,0,0.04)) */
-    val Small = ShadowConfig(
-        offsetY = 2.dp,
-        blurRadius = 8.dp,
-        color = Color(0x0A000000) // 4% black
-    )
+    val Small =
+        ShadowConfig(
+            offsetY = 2.dp,
+            blurRadius = 8.dp,
+            color = Color(0x0A000000), // 4% black
+        )
 
     /** Medium shadow - (0dp, 4dp, 16dp, rgba(0,0,0,0.06)) */
-    val Medium = ShadowConfig(
-        offsetY = 4.dp,
-        blurRadius = 16.dp,
-        color = Color(0x0F000000) // 6% black
-    )
+    val Medium =
+        ShadowConfig(
+            offsetY = 4.dp,
+            blurRadius = 16.dp,
+            color = Color(0x0F000000), // 6% black
+        )
 
     /** Large shadow - (0dp, 8dp, 24dp, rgba(0,0,0,0.08)) */
-    val Large = ShadowConfig(
-        offsetY = 8.dp,
-        blurRadius = 24.dp,
-        color = Color(0x14000000) // 8% black
-    )
+    val Large =
+        ShadowConfig(
+            offsetY = 8.dp,
+            blurRadius = 24.dp,
+            color = Color(0x14000000), // 8% black
+        )
 }
 
 // ================================================================================================
@@ -270,12 +273,10 @@ data class GlowColorScheme(
     val background: Color,
     val surface: Color,
     val elevated: Color,
-
     // Secondary (30%)
     val textPrimary: Color,
     val textSecondary: Color,
     val textTertiary: Color,
-
     // Accent (10%)
     val primaryStart: Color,
     val primaryEnd: Color,
@@ -284,50 +285,51 @@ data class GlowColorScheme(
     val success: Color,
     val error: Color,
     val info: Color,
-
     // Health/Wellness
     val softGreen: Color,
     val calmPurple: Color,
     val warmPink: Color,
 )
 
-val LightColorScheme = GlowColorScheme(
-    background = GlowPrimaryColors.Background,
-    surface = GlowPrimaryColors.Surface,
-    elevated = GlowPrimaryColors.Elevated,
-    textPrimary = GlowSecondaryColors.TextPrimary,
-    textSecondary = GlowSecondaryColors.TextSecondary,
-    textTertiary = GlowSecondaryColors.TextTertiary,
-    primaryStart = GlowAccentColors.PrimaryStart,
-    primaryEnd = GlowAccentColors.PrimaryEnd,
-    primaryHover = GlowAccentColors.PrimaryHover,
-    primaryLight = GlowAccentColors.PrimaryLight,
-    success = GlowAccentColors.Success,
-    error = GlowAccentColors.Error,
-    info = GlowAccentColors.Info,
-    softGreen = GlowHealthColors.SoftGreen,
-    calmPurple = GlowHealthColors.CalmPurple,
-    warmPink = GlowHealthColors.WarmPink,
-)
+val LightColorScheme =
+    GlowColorScheme(
+        background = GlowPrimaryColors.Background,
+        surface = GlowPrimaryColors.Surface,
+        elevated = GlowPrimaryColors.Elevated,
+        textPrimary = GlowSecondaryColors.TextPrimary,
+        textSecondary = GlowSecondaryColors.TextSecondary,
+        textTertiary = GlowSecondaryColors.TextTertiary,
+        primaryStart = GlowAccentColors.PrimaryStart,
+        primaryEnd = GlowAccentColors.PrimaryEnd,
+        primaryHover = GlowAccentColors.PrimaryHover,
+        primaryLight = GlowAccentColors.PrimaryLight,
+        success = GlowAccentColors.Success,
+        error = GlowAccentColors.Error,
+        info = GlowAccentColors.Info,
+        softGreen = GlowHealthColors.SoftGreen,
+        calmPurple = GlowHealthColors.CalmPurple,
+        warmPink = GlowHealthColors.WarmPink,
+    )
 
-val DarkColorScheme = GlowColorScheme(
-    background = GlowDarkColors.Background,
-    surface = GlowDarkColors.Surface,
-    elevated = GlowDarkColors.Elevated,
-    textPrimary = GlowDarkColors.TextPrimary,
-    textSecondary = GlowDarkColors.TextSecondary,
-    textTertiary = GlowDarkColors.TextTertiary,
-    primaryStart = GlowAccentColors.PrimaryStart,
-    primaryEnd = GlowAccentColors.PrimaryEnd,
-    primaryHover = GlowAccentColors.PrimaryHover,
-    primaryLight = GlowAccentColors.PrimaryLight,
-    success = GlowAccentColors.Success,
-    error = GlowAccentColors.Error,
-    info = GlowAccentColors.Info,
-    softGreen = GlowHealthColors.SoftGreen,
-    calmPurple = GlowHealthColors.CalmPurple,
-    warmPink = GlowHealthColors.WarmPink,
-)
+val DarkColorScheme =
+    GlowColorScheme(
+        background = GlowDarkColors.Background,
+        surface = GlowDarkColors.Surface,
+        elevated = GlowDarkColors.Elevated,
+        textPrimary = GlowDarkColors.TextPrimary,
+        textSecondary = GlowDarkColors.TextSecondary,
+        textTertiary = GlowDarkColors.TextTertiary,
+        primaryStart = GlowAccentColors.PrimaryStart,
+        primaryEnd = GlowAccentColors.PrimaryEnd,
+        primaryHover = GlowAccentColors.PrimaryHover,
+        primaryLight = GlowAccentColors.PrimaryLight,
+        success = GlowAccentColors.Success,
+        error = GlowAccentColors.Error,
+        info = GlowAccentColors.Info,
+        softGreen = GlowHealthColors.SoftGreen,
+        calmPurple = GlowHealthColors.CalmPurple,
+        warmPink = GlowHealthColors.WarmPink,
+    )
 
 /**
  * Composition local for accessing color tokens in composables.

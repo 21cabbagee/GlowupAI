@@ -49,7 +49,9 @@ data class Streak(
         get() {
             if (lastCaptureDate == null) return null
             val today = LocalDate.now()
-            return java.time.temporal.ChronoUnit.DAYS.between(lastCaptureDate, today).toInt()
+            return java.time.temporal.ChronoUnit.DAYS
+                .between(lastCaptureDate, today)
+                .toInt()
         }
 
     companion object {

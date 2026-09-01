@@ -50,29 +50,37 @@ fun ProductDetailRoute(
     Scaffold(topBar = { GlowTopBar(title = "Product", onBack = onBack) }) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (val s = state) {
-                is ProductDetailUiState.Loading -> ShimmerSkeleton(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    height = 200.dp,
-                )
-                is ProductDetailUiState.Error -> ErrorState(
-                    modifier = Modifier.padding(16.dp),
-                    message = s.message,
-                    onRetry = viewModel::load,
-                )
-                is ProductDetailUiState.Content -> ProductDetailContent(
-                    state = s,
-                    onStart = { viewModel.openEventSheet(RoutineAction.START) },
-                    onStop = { viewModel.openEventSheet(RoutineAction.STOP) },
-                    onChange = { viewModel.openEventSheet(RoutineAction.CHANGE) },
-                    onDismissSheet = viewModel::dismissEventSheet,
-                    onEventActionChanged = viewModel::onEventActionChanged,
-                    onDismissConfound = viewModel::dismissConfoundBanner,
-                    onDismissPostSubmitWarning = viewModel::dismissPostSubmitWarning,
-                    onSubmitEvent = viewModel::submitEvent,
-                    onLoadExplainer = viewModel::loadIngredientExplainer,
-                    onUnlockExplainer = onNavigateToPaywall,
-                    onConsumeSuccess = viewModel::consumeSuccessMessage,
-                )
+                is ProductDetailUiState.Loading -> {
+                    ShimmerSkeleton(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        height = 200.dp,
+                    )
+                }
+
+                is ProductDetailUiState.Error -> {
+                    ErrorState(
+                        modifier = Modifier.padding(16.dp),
+                        message = s.message,
+                        onRetry = viewModel::load,
+                    )
+                }
+
+                is ProductDetailUiState.Content -> {
+                    ProductDetailContent(
+                        state = s,
+                        onStart = { viewModel.openEventSheet(RoutineAction.START) },
+                        onStop = { viewModel.openEventSheet(RoutineAction.STOP) },
+                        onChange = { viewModel.openEventSheet(RoutineAction.CHANGE) },
+                        onDismissSheet = viewModel::dismissEventSheet,
+                        onEventActionChanged = viewModel::onEventActionChanged,
+                        onDismissConfound = viewModel::dismissConfoundBanner,
+                        onDismissPostSubmitWarning = viewModel::dismissPostSubmitWarning,
+                        onSubmitEvent = viewModel::submitEvent,
+                        onLoadExplainer = viewModel::loadIngredientExplainer,
+                        onUnlockExplainer = onNavigateToPaywall,
+                        onConsumeSuccess = viewModel::consumeSuccessMessage,
+                    )
+                }
             }
         }
     }
@@ -141,10 +149,11 @@ private fun ProductDetailContent(
                         ingredient,
                         style = MaterialTheme.typography.bodySmall,
                         color = glow.ink900,
-                        modifier = Modifier
-                            .padding(bottom = 8.dp)
-                            .background(glow.surfaceCard, RoundedCornerShape(50))
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        modifier =
+                            Modifier
+                                .padding(bottom = 8.dp)
+                                .background(glow.surfaceCard, RoundedCornerShape(50))
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
                     )
                 }
             }
@@ -191,33 +200,62 @@ private fun IngredientExplainerSection(
     LaunchedEffect(Unit) { onLoad() }
 
     when {
-        loading -> ShimmerSkeleton(height = 100.dp)
-        locked -> LockedCard(
-            title = "See why each ingredient earned its verdict",
-            body = "Ingredient explainers with reviewed purpose and caution notes are a Premium feature.",
-            onUnlock = onUnlock,
-        )
-        error != null -> ErrorState(message = error, onRetry = onLoad)
-        explainer != null -> Column {
-            explainer.reviewed.forEach { reviewed ->
-                GlowCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                    Text(reviewed.ingredient, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = glow.ink900)
-                    reviewed.purpose?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, color = glow.ink600, modifier = Modifier.padding(top = 4.dp))
-                    }
-                    reviewed.caution?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, color = glow.danger, modifier = Modifier.padding(top = 4.dp))
+        loading -> {
+            ShimmerSkeleton(height = 100.dp)
+        }
+
+        locked -> {
+            LockedCard(
+                title = "See why each ingredient earned its verdict",
+                body = "Ingredient explainers with reviewed purpose and caution notes are a Premium feature.",
+                onUnlock = onUnlock,
+            )
+        }
+
+        error != null -> {
+            ErrorState(message = error, onRetry = onLoad)
+        }
+
+        explainer != null -> {
+            Column {
+                explainer.reviewed.forEach { reviewed ->
+                    GlowCard(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
+                        Text(
+                            reviewed.ingredient,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = glow.ink900,
+                        )
+                        reviewed.purpose?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = glow.ink600,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
+                        reviewed.caution?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = glow.danger,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
                     }
                 }
-            }
-            if (explainer.unknown.isNotEmpty()) {
-                Text(
-                    "Not yet reviewed (neither safe nor unsafe — just no catalog entry): ${explainer.unknown.joinToString(", ")}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = glow.ink600,
-                )
+                if (explainer.unknown.isNotEmpty()) {
+                    Text(
+                        "Not yet reviewed (neither safe nor unsafe — just no catalog entry): ${explainer.unknown.joinToString(", ")}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = glow.ink600,
+                    )
+                }
             }
         }
-        else -> ShimmerSkeleton(height = 100.dp)
+
+        else -> {
+            ShimmerSkeleton(height = 100.dp)
+        }
     }
 }

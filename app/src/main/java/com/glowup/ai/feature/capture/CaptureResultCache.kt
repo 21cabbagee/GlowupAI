@@ -20,12 +20,14 @@ import javax.inject.Singleton
  * fabricated re-hydration of numbers that must always come from the server.
  */
 @Singleton
-class CaptureResultCache @Inject constructor() {
-    private val results = mutableMapOf<String, CaptureResult>()
+class CaptureResultCache
+    @Inject
+    constructor() {
+        private val results = mutableMapOf<String, CaptureResult>()
 
-    fun put(result: CaptureResult) {
-        results[result.id] = result
+        fun put(result: CaptureResult) {
+            results[result.id] = result
+        }
+
+        fun get(captureId: String): CaptureResult? = results[captureId]
     }
-
-    fun get(captureId: String): CaptureResult? = results[captureId]
-}

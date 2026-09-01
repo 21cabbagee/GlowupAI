@@ -39,24 +39,26 @@ data class CaptureCreateRequestDto(
     @SerialName("experiment_id") val experimentId: String? = null,
 )
 
-fun CaptureCreateRequest.toDto(): CaptureCreateRequestDto = CaptureCreateRequestDto(
-    userId = userId,
-    imageBase64 = imageBase64,
-    quality = pose?.let {
-        CaptureQualityInputDto(
-            facePresent = it.facePresent,
-            yawDegrees = it.yawDegrees,
-            pitchDegrees = it.pitchDegrees,
-            distanceCm = it.distanceCm,
-            expressionNeutral = it.expressionNeutral,
-        )
-    },
-    capturedAt = capturedAt,
-    deviceMeta = deviceMeta,
-    isBaseline = isBaseline,
-    vertical = vertical,
-    experimentId = experimentId,
-)
+fun CaptureCreateRequest.toDto(): CaptureCreateRequestDto =
+    CaptureCreateRequestDto(
+        userId = userId,
+        imageBase64 = imageBase64,
+        quality =
+            pose?.let {
+                CaptureQualityInputDto(
+                    facePresent = it.facePresent,
+                    yawDegrees = it.yawDegrees,
+                    pitchDegrees = it.pitchDegrees,
+                    distanceCm = it.distanceCm,
+                    expressionNeutral = it.expressionNeutral,
+                )
+            },
+        capturedAt = capturedAt,
+        deviceMeta = deviceMeta,
+        isBaseline = isBaseline,
+        vertical = vertical,
+        experimentId = experimentId,
+    )
 
 @Serializable
 data class CoachingTipDto(
@@ -84,20 +86,21 @@ data class CaptureQualityDto(
     val coaching: List<CoachingTipDto> = emptyList(),
 )
 
-fun CaptureQualityDto.toDomain(): CaptureQuality = CaptureQuality(
-    facePresent = facePresent,
-    yawDegrees = yawDegrees,
-    pitchDegrees = pitchDegrees,
-    brightness = brightness,
-    sharpness = sharpness,
-    distanceCm = distanceCm,
-    expressionNeutral = expressionNeutral,
-    referenceCardPresent = referenceCardPresent,
-    score = score,
-    accepted = accepted,
-    failedChecks = failedChecks,
-    coaching = coaching.map { it.toDomain() },
-)
+fun CaptureQualityDto.toDomain(): CaptureQuality =
+    CaptureQuality(
+        facePresent = facePresent,
+        yawDegrees = yawDegrees,
+        pitchDegrees = pitchDegrees,
+        brightness = brightness,
+        sharpness = sharpness,
+        distanceCm = distanceCm,
+        expressionNeutral = expressionNeutral,
+        referenceCardPresent = referenceCardPresent,
+        score = score,
+        accepted = accepted,
+        failedChecks = failedChecks,
+        coaching = coaching.map { it.toDomain() },
+    )
 
 @Serializable
 data class MetricDto(
@@ -109,15 +112,16 @@ data class MetricDto(
     @SerialName("model_version") val modelVersion: String? = null,
 )
 
-fun MetricDto?.toDomain(confidenceLabel: String? = null): AppearanceMetric = AppearanceMetric(
-    confidence = this?.confidence,
-    rednessScore = this?.rednessScore,
-    blemishCount = this?.blemishCount,
-    darkspotArea = this?.darkspotArea,
-    textureScore = this?.textureScore,
-    modelVersion = this?.modelVersion,
-    confidenceLabel = confidenceLabel,
-)
+fun MetricDto?.toDomain(confidenceLabel: String? = null): AppearanceMetric =
+    AppearanceMetric(
+        confidence = this?.confidence,
+        rednessScore = this?.rednessScore,
+        blemishCount = this?.blemishCount,
+        darkspotArea = this?.darkspotArea,
+        textureScore = this?.textureScore,
+        modelVersion = this?.modelVersion,
+        confidenceLabel = confidenceLabel,
+    )
 
 @Serializable
 data class MeasurementExplanationDto(
@@ -133,15 +137,16 @@ data class BaselineComparisonDto(
     @SerialName("texture_change_pct") val textureChangePct: Double? = null,
 )
 
-fun BaselineComparisonDto?.toDomain(): BaselineComparison? = this?.let {
-    BaselineComparison(
-        hasBaseline = hasBaseline,
-        rednessChangePct = rednessChangePct,
-        blemishChangePct = blemishChangePct,
-        darkspotChangePct = darkspotChangePct,
-        textureChangePct = textureChangePct,
-    )
-}
+fun BaselineComparisonDto?.toDomain(): BaselineComparison? =
+    this?.let {
+        BaselineComparison(
+            hasBaseline = hasBaseline,
+            rednessChangePct = rednessChangePct,
+            blemishChangePct = blemishChangePct,
+            darkspotChangePct = darkspotChangePct,
+            textureChangePct = textureChangePct,
+        )
+    }
 
 @Serializable
 data class CaptureResponseDto(
@@ -157,17 +162,18 @@ data class CaptureResponseDto(
     @SerialName("baseline_comparison") val baselineComparison: BaselineComparisonDto? = null,
 )
 
-fun CaptureResponseDto.toDomain(): CaptureResult = CaptureResult(
-    id = id,
-    capturedAt = capturedAt,
-    isBaseline = isBaseline,
-    status = status,
-    captureQuality = captureQuality.toDomain(),
-    analysisJobId = analysisJobId,
-    metric = metric.toDomain(measurement?.confidenceLabel),
-    vertical = vertical,
-    baselineComparison = baselineComparison.toDomain(),
-)
+fun CaptureResponseDto.toDomain(): CaptureResult =
+    CaptureResult(
+        id = id,
+        capturedAt = capturedAt,
+        isBaseline = isBaseline,
+        status = status,
+        captureQuality = captureQuality.toDomain(),
+        analysisJobId = analysisJobId,
+        metric = metric.toDomain(measurement?.confidenceLabel),
+        vertical = vertical,
+        baselineComparison = baselineComparison.toDomain(),
+    )
 
 @Serializable
 data class HistoryItemDto(
@@ -188,23 +194,24 @@ data class HistoryItemDto(
     @SerialName("baseline_comparison") val baselineComparison: BaselineComparisonDto? = null,
 )
 
-fun HistoryItemDto.toDomain(): HistoryItem = HistoryItem(
-    id = id,
-    capturedAt = capturedAt,
-    isBaseline = isBaseline,
-    rednessScore = rednessScore,
-    blemishCount = blemishCount,
-    rednessDelta = rednessDelta,
-    darkspotArea = darkspotArea,
-    textureScore = textureScore,
-    confidence = confidence,
-    modelVersion = modelVersion,
-    captureQuality = captureQuality?.toDomain(),
-    noiseFloor = noiseFloor ?: emptyMap(),
-    appearanceMetrics = appearanceMetrics ?: emptyMap(),
-    confidenceLabel = confidenceLabel,
-    baselineComparison = baselineComparison.toDomain(),
-)
+fun HistoryItemDto.toDomain(): HistoryItem =
+    HistoryItem(
+        id = id,
+        capturedAt = capturedAt,
+        isBaseline = isBaseline,
+        rednessScore = rednessScore,
+        blemishCount = blemishCount,
+        rednessDelta = rednessDelta,
+        darkspotArea = darkspotArea,
+        textureScore = textureScore,
+        confidence = confidence,
+        modelVersion = modelVersion,
+        captureQuality = captureQuality?.toDomain(),
+        noiseFloor = noiseFloor ?: emptyMap(),
+        appearanceMetrics = appearanceMetrics ?: emptyMap(),
+        confidenceLabel = confidenceLabel,
+        baselineComparison = baselineComparison.toDomain(),
+    )
 
 @Serializable
 data class CaptureGuideDto(
@@ -216,14 +223,15 @@ data class CaptureGuideDto(
     @SerialName("last_capture") val lastCapture: String? = null,
 )
 
-fun CaptureGuideDto.toDomain(): CaptureGuide = CaptureGuide(
-    vertical = vertical,
-    state = CaptureGuideState.fromRaw(state),
-    message = message,
-    nextWindowStart = nextWindowStart,
-    nextWindowEnd = nextWindowEnd,
-    lastCapture = lastCapture,
-)
+fun CaptureGuideDto.toDomain(): CaptureGuide =
+    CaptureGuide(
+        vertical = vertical,
+        state = CaptureGuideState.fromRaw(state),
+        message = message,
+        nextWindowStart = nextWindowStart,
+        nextWindowEnd = nextWindowEnd,
+        lastCapture = lastCapture,
+    )
 
 @Serializable
 data class MeasurementFeedbackCreateRequestDto(
@@ -232,11 +240,12 @@ data class MeasurementFeedbackCreateRequestDto(
     val note: String? = null,
 )
 
-fun MeasurementFeedbackRequest.toDto(): MeasurementFeedbackCreateRequestDto = MeasurementFeedbackCreateRequestDto(
-    captureId = captureId,
-    agreement = agreement.toWire(),
-    note = note,
-)
+fun MeasurementFeedbackRequest.toDto(): MeasurementFeedbackCreateRequestDto =
+    MeasurementFeedbackCreateRequestDto(
+        captureId = captureId,
+        agreement = agreement.toWire(),
+        note = note,
+    )
 
 @Serializable
 data class MeasurementFeedbackDto(
@@ -247,10 +256,11 @@ data class MeasurementFeedbackDto(
     @SerialName("created_at") val createdAt: String? = null,
 )
 
-fun MeasurementFeedbackDto.toDomain(): MeasurementFeedback = MeasurementFeedback(
-    id = id,
-    captureId = captureId,
-    agreement = MeasurementAgreement.fromRaw(agreement),
-    note = note,
-    createdAt = createdAt,
-)
+fun MeasurementFeedbackDto.toDomain(): MeasurementFeedback =
+    MeasurementFeedback(
+        id = id,
+        captureId = captureId,
+        agreement = MeasurementAgreement.fromRaw(agreement),
+        note = note,
+        createdAt = createdAt,
+    )

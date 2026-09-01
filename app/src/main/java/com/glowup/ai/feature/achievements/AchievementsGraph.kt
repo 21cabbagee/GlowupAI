@@ -14,7 +14,7 @@ import com.glowup.ai.feature.shell.GlowDestination
 fun NavGraphBuilder.achievementsGraph(navController: NavController) {
     composable<GlowDestination.Achievements> {
         AchievementsRoute(
-            onBack = { navController.popBackStack() }
+            onBack = { navController.popBackStack() },
         )
     }
 }

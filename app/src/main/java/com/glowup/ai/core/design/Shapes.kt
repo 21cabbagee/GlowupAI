@@ -16,10 +16,11 @@ object GlowShapes {
     val pill: CornerBasedShape = RoundedCornerShape(percent = 50)
 }
 
-val GlowMaterialShapes = Shapes(
-    extraSmall = GlowShapes.sm,
-    small = GlowShapes.sm,
-    medium = GlowShapes.md,
-    large = GlowShapes.lg,
-    extraLarge = GlowShapes.xl,
-)
+val GlowMaterialShapes =
+    Shapes(
+        extraSmall = GlowShapes.sm,
+        small = GlowShapes.sm,
+        medium = GlowShapes.md,
+        large = GlowShapes.lg,
+        extraLarge = GlowShapes.xl,
+    )

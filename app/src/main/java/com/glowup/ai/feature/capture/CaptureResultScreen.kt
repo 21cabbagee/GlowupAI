@@ -2,10 +2,10 @@ package com.glowup.ai.feature.capture
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -71,29 +71,35 @@ private fun CaptureResultScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         GlowTopBar(title = "Capture result")
         when (uiState) {
-            is CaptureResultUiState.Loading -> Column(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("Loading…", style = MaterialTheme.typography.bodyMedium)
+            is CaptureResultUiState.Loading -> {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text("Loading…", style = MaterialTheme.typography.bodyMedium)
+                }
             }
 
-            is CaptureResultUiState.Unavailable -> Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
-                EmptyState(
-                    title = "Result no longer available",
-                    body = "This can happen after the app restarts. Your capture was saved — check it from your history on Home.",
-                    ctaLabel = "Back to Home",
-                    onCtaClick = onDone,
+            is CaptureResultUiState.Unavailable -> {
+                Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
+                    EmptyState(
+                        title = "Result no longer available",
+                        body = "This can happen after the app restarts. Your capture was saved — check it from your history on Home.",
+                        ctaLabel = "Back to Home",
+                        onCtaClick = onDone,
+                    )
+                }
+            }
+
+            is CaptureResultUiState.Content -> {
+                CaptureResultContent(
+                    result = uiState.captureResult,
+                    feedbackState = feedbackState,
+                    onSubmitFeedback = onSubmitFeedback,
+                    onDone = onDone,
                 )
             }
-
-            is CaptureResultUiState.Content -> CaptureResultContent(
-                result = uiState.captureResult,
-                feedbackState = feedbackState,
-                onSubmitFeedback = onSubmitFeedback,
-                onDone = onDone,
-            )
         }
     }
 }
@@ -107,10 +113,11 @@ private fun CaptureResultContent(
 ) {
     val glow = LocalGlowColors.current
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
     ) {
         val statusLabel = if (result.captureQuality.accepted) "Accepted" else "Needs review"
         Text(
@@ -128,13 +135,14 @@ private fun CaptureResultContent(
 
         MetricsGrid(
             metric = result.metric,
-            baselineComparison = result.baselineComparison
+            baselineComparison = result.baselineComparison,
         )
 
         DisclaimerNote(
             modifier = Modifier.padding(top = 16.dp),
-            text = "GlowUp AI tracks cosmetic skin appearance over time. This is not a diagnosis and " +
-                "does not replace a dermatologist.",
+            text =
+                "GlowUp AI tracks cosmetic skin appearance over time. This is not a diagnosis and " +
+                    "does not replace a dermatologist.",
         )
 
         result.metric.modelVersion?.let { version ->
@@ -164,7 +172,7 @@ private fun CaptureResultContent(
 @Composable
 private fun MetricsGrid(
     metric: AppearanceMetric,
-    baselineComparison: BaselineComparison?
+    baselineComparison: BaselineComparison?,
 ) {
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -172,13 +180,13 @@ private fun MetricsGrid(
                 modifier = Modifier.weight(1f),
                 label = "Redness",
                 value = metric.rednessScore.formatOrPending(),
-                delta = baselineComparison?.rednessChangePct?.let { createDelta(it, isLowerBetter = true) }
+                delta = baselineComparison?.rednessChangePct?.let { createDelta(it, isLowerBetter = true) },
             )
             StatTile(
                 modifier = Modifier.weight(1f),
                 label = "Blemishes",
                 value = metric.blemishCount?.let { formatWhole(it) } ?: "Pending",
-                delta = baselineComparison?.blemishChangePct?.let { createDelta(it, isLowerBetter = true) }
+                delta = baselineComparison?.blemishChangePct?.let { createDelta(it, isLowerBetter = true) },
             )
         }
         Row(
@@ -189,13 +197,13 @@ private fun MetricsGrid(
                 modifier = Modifier.weight(1f),
                 label = "Dark spots",
                 value = metric.darkspotArea.formatOrPending(),
-                delta = baselineComparison?.darkspotChangePct?.let { createDelta(it, isLowerBetter = true) }
+                delta = baselineComparison?.darkspotChangePct?.let { createDelta(it, isLowerBetter = true) },
             )
             StatTile(
                 modifier = Modifier.weight(1f),
                 label = "Texture",
                 value = metric.textureScore.formatOrPending(),
-                delta = baselineComparison?.textureChangePct?.let { createDelta(it, isLowerBetter = false) }
+                delta = baselineComparison?.textureChangePct?.let { createDelta(it, isLowerBetter = false) },
             )
         }
 
@@ -218,20 +226,23 @@ private fun MetricsGrid(
     }
 }
 
-private fun Double?.formatOrPending(): String =
-    this?.let { String.format(Locale.US, "%.2f", it) } ?: "Pending"
+private fun Double?.formatOrPending(): String = this?.let { String.format(Locale.US, "%.2f", it) } ?: "Pending"
 
 private fun formatWhole(value: Double): String = value.toInt().toString()
 
-private fun createDelta(changePct: Double, isLowerBetter: Boolean): StatDelta {
+private fun createDelta(
+    changePct: Double,
+    isLowerBetter: Boolean,
+): StatDelta {
     val sign = if (changePct > 0) "+" else ""
     val text = String.format(Locale.US, "%s%.1f%%", sign, changePct)
 
-    val direction = when {
-        changePct == 0.0 -> StatDeltaDirection.Flat
-        changePct < 0 -> if (isLowerBetter) StatDeltaDirection.Down else StatDeltaDirection.Up
-        else -> if (isLowerBetter) StatDeltaDirection.Up else StatDeltaDirection.Down
-    }
+    val direction =
+        when {
+            changePct == 0.0 -> StatDeltaDirection.Flat
+            changePct < 0 -> if (isLowerBetter) StatDeltaDirection.Down else StatDeltaDirection.Up
+            else -> if (isLowerBetter) StatDeltaDirection.Up else StatDeltaDirection.Down
+        }
 
     return StatDelta(text = text, direction = direction)
 }
@@ -253,12 +264,15 @@ private fun MeasurementFeedbackSection(
             color = glow.ink900,
         )
         when (feedbackState) {
-            is MeasurementFeedbackUiState.Submitted -> Text(
-                text = "Thanks — your feedback was recorded.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = glow.success,
-                modifier = Modifier.padding(top = 8.dp),
-            )
+            is MeasurementFeedbackUiState.Submitted -> {
+                Text(
+                    text = "Thanks — your feedback was recorded.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = glow.success,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+
             else -> {
                 GlowTextField(
                     modifier = Modifier.padding(top = 12.dp),

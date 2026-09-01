@@ -22,22 +22,25 @@ import kotlinx.coroutines.sync.withLock
  * than calling [run] again with the same intent.
  */
 class MutationLock<K> {
-
     private val _pendingKeys = MutableStateFlow<Set<K>>(emptySet())
     private val mutex = Mutex()
     val pendingKeys: StateFlow<Set<K>> = _pendingKeys.asStateFlow()
 
     fun isPending(key: K): Boolean = key in _pendingKeys.value
 
-    suspend fun <T> run(key: K, block: suspend () -> GlowResult<T>): GlowResult<T> {
-        val acquired = mutex.withLock {
-            if (key in _pendingKeys.value) {
-                false
-            } else {
-                _pendingKeys.update { it + key }
-                true
+    suspend fun <T> run(
+        key: K,
+        block: suspend () -> GlowResult<T>,
+    ): GlowResult<T> {
+        val acquired =
+            mutex.withLock {
+                if (key in _pendingKeys.value) {
+                    false
+                } else {
+                    _pendingKeys.update { it + key }
+                    true
+                }
             }
-        }
         if (!acquired) {
             return GlowResult.Failure(
                 // Do not include the key: callers commonly key mutations by

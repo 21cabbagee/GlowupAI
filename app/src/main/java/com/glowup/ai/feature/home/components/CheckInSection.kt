@@ -129,12 +129,13 @@ fun CheckInSheet(
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
             )
             ChoiceRow(
-                options = listOf(
-                    CheckInRoutineState.STEADY,
-                    CheckInRoutineState.CHANGED,
-                    CheckInRoutineState.MISSED,
-                    CheckInRoutineState.NOT_SURE,
-                ),
+                options =
+                    listOf(
+                        CheckInRoutineState.STEADY,
+                        CheckInRoutineState.CHANGED,
+                        CheckInRoutineState.MISSED,
+                        CheckInRoutineState.NOT_SURE,
+                    ),
                 selected = routineState,
                 labelOf = { it.compactLabel() },
                 onSelected = { routineState = it },
@@ -148,12 +149,13 @@ fun CheckInSheet(
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
             )
             ChoiceRow(
-                options = listOf(
-                    CheckInSkinFeel.BETTER,
-                    CheckInSkinFeel.SAME,
-                    CheckInSkinFeel.WORSE,
-                    CheckInSkinFeel.NOT_SURE,
-                ),
+                options =
+                    listOf(
+                        CheckInSkinFeel.BETTER,
+                        CheckInSkinFeel.SAME,
+                        CheckInSkinFeel.WORSE,
+                        CheckInSkinFeel.NOT_SURE,
+                    ),
                 selected = skinFeel,
                 labelOf = { it.compactLabel() },
                 onSelected = { skinFeel = it },
@@ -210,18 +212,20 @@ private fun <T> ChoiceRow(
     }
 }
 
-private fun CheckInRoutineState.compactLabel(): String = when (this) {
-    CheckInRoutineState.STEADY -> "Steady"
-    CheckInRoutineState.CHANGED -> "Changed"
-    CheckInRoutineState.MISSED -> "Missed"
-    CheckInRoutineState.NOT_SURE -> "Not sure"
-    CheckInRoutineState.UNKNOWN -> "Unknown"
-}
+private fun CheckInRoutineState.compactLabel(): String =
+    when (this) {
+        CheckInRoutineState.STEADY -> "Steady"
+        CheckInRoutineState.CHANGED -> "Changed"
+        CheckInRoutineState.MISSED -> "Missed"
+        CheckInRoutineState.NOT_SURE -> "Not sure"
+        CheckInRoutineState.UNKNOWN -> "Unknown"
+    }
 
-private fun CheckInSkinFeel.compactLabel(): String = when (this) {
-    CheckInSkinFeel.BETTER -> "Better"
-    CheckInSkinFeel.SAME -> "Same"
-    CheckInSkinFeel.WORSE -> "Worse"
-    CheckInSkinFeel.NOT_SURE -> "Not sure"
-    CheckInSkinFeel.UNKNOWN -> "Unknown"
-}
+private fun CheckInSkinFeel.compactLabel(): String =
+    when (this) {
+        CheckInSkinFeel.BETTER -> "Better"
+        CheckInSkinFeel.SAME -> "Same"
+        CheckInSkinFeel.WORSE -> "Worse"
+        CheckInSkinFeel.NOT_SURE -> "Not sure"
+        CheckInSkinFeel.UNKNOWN -> "Unknown"
+    }

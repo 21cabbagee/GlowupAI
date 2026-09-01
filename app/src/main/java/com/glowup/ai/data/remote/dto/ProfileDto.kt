@@ -96,55 +96,62 @@ data class UpgradeRequestDto(
     val source: String = "local_checkout",
 )
 
-fun EntitlementDto.toDomain(): Entitlement = Entitlement(
-    plan = Plan.fromRaw(plan),
-    status = EntitlementStatus.fromRaw(status),
-    startedAt = startedAt,
-    renewsAt = renewsAt,
-    source = source,
-)
+fun EntitlementDto.toDomain(): Entitlement =
+    Entitlement(
+        plan = Plan.fromRaw(plan),
+        status = EntitlementStatus.fromRaw(status),
+        startedAt = startedAt,
+        renewsAt = renewsAt,
+        source = source,
+    )
 
-fun UserDto.toDomain(): User = User(
-    id = id,
-    skinType = skinType,
-    consentState = ConsentState.fromRaw(consentState),
-    createdAt = createdAt,
-    firebaseUid = firebaseUid,
-)
+fun UserDto.toDomain(): User =
+    User(
+        id = id,
+        skinType = skinType,
+        consentState = ConsentState.fromRaw(consentState),
+        createdAt = createdAt,
+        firebaseUid = firebaseUid,
+    )
 
-fun ExperienceProfileDto.toDomain(): ExperienceProfile = ExperienceProfile(
-    displayName = displayName,
-    skinType = skinType,
-    focusVertical = focusVertical,
-    goals = goals,
-    experienceLevel = experienceLevel,
-    onboardingComplete = onboardingComplete || onboardingCompletedAt != null,
-)
+fun ExperienceProfileDto.toDomain(): ExperienceProfile =
+    ExperienceProfile(
+        displayName = displayName,
+        skinType = skinType,
+        focusVertical = focusVertical,
+        goals = goals,
+        experienceLevel = experienceLevel,
+        onboardingComplete = onboardingComplete || onboardingCompletedAt != null,
+    )
 
-fun ProfileResponseDto.toDomain(): Profile = Profile(
-    user = user.toDomain(),
-    appearanceProfiles = appearanceProfiles.map {
-        AppearanceProfile(id = it.id, vertical = it.vertical, baselineCaptureId = it.baselineCaptureId)
-    },
-    entitlement = entitlement.toDomain(),
-    verticals = verticals,
-    experienceProfile = experienceProfile?.toDomain(),
-)
+fun ProfileResponseDto.toDomain(): Profile =
+    Profile(
+        user = user.toDomain(),
+        appearanceProfiles =
+            appearanceProfiles.map {
+                AppearanceProfile(id = it.id, vertical = it.vertical, baselineCaptureId = it.baselineCaptureId)
+            },
+        entitlement = entitlement.toDomain(),
+        verticals = verticals,
+        experienceProfile = experienceProfile?.toDomain(),
+    )
 
-fun SubscriptionDto.toDomain(): Subscription = Subscription(
-    userId = userId,
-    plan = Plan.fromRaw(plan),
-    status = EntitlementStatus.fromRaw(status),
-    startedAt = startedAt,
-    renewsAt = renewsAt,
-    source = source,
-)
+fun SubscriptionDto.toDomain(): Subscription =
+    Subscription(
+        userId = userId,
+        plan = Plan.fromRaw(plan),
+        status = EntitlementStatus.fromRaw(status),
+        startedAt = startedAt,
+        renewsAt = renewsAt,
+        source = source,
+    )
 
-fun ProfileUpdateRequest.toDto(): ExperienceProfileUpdateRequestDto = ExperienceProfileUpdateRequestDto(
-    displayName = displayName,
-    skinType = skinType,
-    focusVertical = focusVertical,
-    goals = goals,
-    experienceLevel = experienceLevel,
-    onboardingComplete = onboardingComplete,
-)
+fun ProfileUpdateRequest.toDto(): ExperienceProfileUpdateRequestDto =
+    ExperienceProfileUpdateRequestDto(
+        displayName = displayName,
+        skinType = skinType,
+        focusVertical = focusVertical,
+        goals = goals,
+        experienceLevel = experienceLevel,
+        onboardingComplete = onboardingComplete,
+    )

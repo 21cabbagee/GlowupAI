@@ -14,7 +14,7 @@ import com.glowup.ai.feature.shell.GlowDestination
 fun NavGraphBuilder.comparisonGraph(navController: NavController) {
     composable<GlowDestination.Comparison> {
         ComparisonRoute(
-            onBack = { navController.popBackStack() }
+            onBack = { navController.popBackStack() },
         )
     }
 }

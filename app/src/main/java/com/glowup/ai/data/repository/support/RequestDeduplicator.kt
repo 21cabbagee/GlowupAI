@@ -19,15 +19,20 @@ import kotlinx.coroutines.sync.withLock
  * ViewModel scope torn down on navigation), every OTHER caller still waiting on the same key still
  * gets a result instead of the request being cancelled out from under them.
  */
-class RequestDeduplicator<T>(private val scope: CoroutineScope) {
-
+class RequestDeduplicator<T>(
+    private val scope: CoroutineScope,
+) {
     private val mutex = Mutex()
     private val inFlight = mutableMapOf<String, Deferred<GlowResult<T>>>()
 
-    suspend fun run(key: String, block: suspend () -> GlowResult<T>): GlowResult<T> {
-        val deferred = mutex.withLock {
-            inFlight[key] ?: scope.async { block() }.also { inFlight[key] = it }
-        }
+    suspend fun run(
+        key: String,
+        block: suspend () -> GlowResult<T>,
+    ): GlowResult<T> {
+        val deferred =
+            mutex.withLock {
+                inFlight[key] ?: scope.async { block() }.also { inFlight[key] = it }
+            }
         return try {
             deferred.await()
         } finally {

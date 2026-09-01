@@ -42,12 +42,13 @@ fun ShimmerSkeleton(
 
     if (reducedMotion) {
         androidx.compose.foundation.layout.Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(height)
-                .clip(RoundedCornerShape(cornerRadius))
-                .background(glow.shimmer.copy(alpha = 0.4f))
-                .semantics { invisibleToUser() },
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .height(height)
+                    .clip(RoundedCornerShape(cornerRadius))
+                    .background(glow.shimmer.copy(alpha = 0.4f))
+                    .semantics { invisibleToUser() },
         )
         return
     }
@@ -56,30 +57,38 @@ fun ShimmerSkeleton(
     val translate by transition.animateFloat(
         initialValue = -1f,
         targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1100, easing = GlowEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 1100, easing = GlowEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
         label = "shimmerTranslate",
     )
 
-    val brush = Brush.linearGradient(
-        colors = listOf(
-            glow.shimmer.copy(alpha = 0.25f),
-            glow.shimmer.copy(alpha = 0.6f),
-            glow.shimmer.copy(alpha = 0.25f),
-        ),
-        start = androidx.compose.ui.geometry.Offset(translate * 300f, 0f),
-        end = androidx.compose.ui.geometry.Offset(translate * 300f + 300f, 0f),
-    )
+    val brush =
+        Brush.linearGradient(
+            colors =
+                listOf(
+                    glow.shimmer.copy(alpha = 0.25f),
+                    glow.shimmer.copy(alpha = 0.6f),
+                    glow.shimmer.copy(alpha = 0.25f),
+                ),
+            start =
+                androidx.compose.ui.geometry
+                    .Offset(translate * 300f, 0f),
+            end =
+                androidx.compose.ui.geometry
+                    .Offset(translate * 300f + 300f, 0f),
+        )
 
     androidx.compose.foundation.layout.Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(height)
-            .clip(RoundedCornerShape(cornerRadius))
-            .background(brush)
-            .semantics { invisibleToUser() },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(height)
+                .clip(RoundedCornerShape(cornerRadius))
+                .background(brush)
+                .semantics { invisibleToUser() },
     )
 }
 

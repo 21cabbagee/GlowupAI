@@ -55,32 +55,44 @@ fun SplashRoute(
 }
 
 @Composable
-private fun SplashContent(uiState: AuthUiState, onRetry: () -> Unit) {
+private fun SplashContent(
+    uiState: AuthUiState,
+    onRetry: () -> Unit,
+) {
     val glow = LocalGlowColors.current
     Box(
         modifier = Modifier.fillMaxSize().padding(GlowSpacing.lg),
         contentAlignment = Alignment.Center,
     ) {
         when (uiState) {
-            is AuthUiState.Offline -> ErrorState(
-                message = "GlowUp AI can't reach the server right now. Check your connection and try again.",
-                onRetry = onRetry,
-            )
-            is AuthUiState.Error -> ErrorState(message = uiState.message, onRetry = onRetry)
-            AuthUiState.CheckingSession, AuthUiState.Idle, AuthUiState.Authenticating -> Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
-                modifier = Modifier.semantics {
-                    contentDescription = "Loading your GlowUp AI session"
-                },
-            ) {
-                Text(
-                    text = "GlowUp AI",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = glow.ink900,
+            is AuthUiState.Offline -> {
+                ErrorState(
+                    message = "GlowUp AI can't reach the server right now. Check your connection and try again.",
+                    onRetry = onRetry,
                 )
-                CircularProgressIndicator(color = glow.honey600, modifier = Modifier.padding(top = 4.dp))
+            }
+
+            is AuthUiState.Error -> {
+                ErrorState(message = uiState.message, onRetry = onRetry)
+            }
+
+            AuthUiState.CheckingSession, AuthUiState.Idle, AuthUiState.Authenticating -> {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
+                    modifier =
+                        Modifier.semantics {
+                            contentDescription = "Loading your GlowUp AI session"
+                        },
+                ) {
+                    Text(
+                        text = "GlowUp AI",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = glow.ink900,
+                    )
+                    CircularProgressIndicator(color = glow.honey600, modifier = Modifier.padding(top = 4.dp))
+                }
             }
         }
     }

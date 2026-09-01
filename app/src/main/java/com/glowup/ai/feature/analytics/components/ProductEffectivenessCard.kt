@@ -39,57 +39,60 @@ fun ProductEffectivenessCard(
     val animatedProgress by animateFloatAsState(
         targetValue = productScore.effectivenessScore.toFloat(),
         animationSpec = tween(1000, easing = EaseOutCubic),
-        label = "effectiveness"
+        label = "effectiveness",
     )
 
-    val trendIcon = when (productScore.trend) {
-        "improving" -> Icons.Filled.TrendingUp
-        "declining" -> Icons.Filled.TrendingDown
-        else -> Icons.Filled.TrendingFlat
-    }
+    val trendIcon =
+        when (productScore.trend) {
+            "improving" -> Icons.Filled.TrendingUp
+            "declining" -> Icons.Filled.TrendingDown
+            else -> Icons.Filled.TrendingFlat
+        }
 
-    val trendColor = when (productScore.trend) {
-        "improving" -> glow.success
-        "declining" -> glow.danger
-        else -> glow.ink600
-    }
+    val trendColor =
+        when (productScore.trend) {
+            "improving" -> glow.success
+            "declining" -> glow.danger
+            else -> glow.ink600
+        }
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(glow.surfaceCard, RoundedCornerShape(12.dp))
-            .padding(GlowSpacing.md)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(glow.surfaceCard, RoundedCornerShape(12.dp))
+                .padding(GlowSpacing.md),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.Top,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = productScore.productName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = glow.ink900
+                    color = glow.ink900,
                 )
 
                 Text(
                     text = "${productScore.dataPoints} captures tracked",
                     style = MaterialTheme.typography.bodySmall,
                     color = glow.ink600,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
 
             // Circular progress indicator
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.size(80.dp)
+                modifier = Modifier.size(80.dp),
             ) {
                 CircularProgressIndicator(
                     progress = animatedProgress,
                     color = glow.honey700,
-                    modifier = Modifier.size(80.dp)
+                    modifier = Modifier.size(80.dp),
                 )
 
                 Text(
@@ -97,7 +100,7 @@ fun ProductEffectivenessCard(
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = glow.ink900
+                    color = glow.ink900,
                 )
             }
         }
@@ -106,28 +109,28 @@ fun ProductEffectivenessCard(
 
         // Metric and trend
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    trendColor.copy(alpha = 0.1f),
-                    RoundedCornerShape(8.dp)
-                )
-                .padding(GlowSpacing.sm),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        trendColor.copy(alpha = 0.1f),
+                        RoundedCornerShape(8.dp),
+                    ).padding(GlowSpacing.sm),
             horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = trendIcon,
                 contentDescription = null,
                 tint = trendColor,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
 
             Text(
                 text = productScore.primaryMetric,
                 style = MaterialTheme.typography.bodyMedium,
                 color = glow.ink900,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
 
             productScore.changePercent?.let { change ->
@@ -136,7 +139,7 @@ fun ProductEffectivenessCard(
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = trendColor
+                    color = trendColor,
                 )
             }
         }
@@ -158,7 +161,7 @@ private fun CircularProgressIndicator(
         drawCircle(
             color = color.copy(alpha = 0.2f),
             radius = radius,
-            style = Stroke(width = strokeWidth)
+            style = Stroke(width = strokeWidth),
         )
 
         // Progress arc
@@ -170,7 +173,7 @@ private fun CircularProgressIndicator(
             useCenter = false,
             topLeft = Offset(strokeWidth / 2, strokeWidth / 2),
             size = Size(canvasSize - strokeWidth, canvasSize - strokeWidth),
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+            style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
         )
     }
 }
@@ -182,23 +185,23 @@ fun ProductEffectivenessList(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
     ) {
         if (products.isEmpty()) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        LocalGlowColors.current.surfaceCard,
-                        RoundedCornerShape(12.dp)
-                    )
-                    .padding(GlowSpacing.lg),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(
+                            LocalGlowColors.current.surfaceCard,
+                            RoundedCornerShape(12.dp),
+                        ).padding(GlowSpacing.lg),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = "No product data available yet.\nStart tracking your routine to see effectiveness scores.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = LocalGlowColors.current.ink600
+                    color = LocalGlowColors.current.ink600,
                 )
             }
         } else {

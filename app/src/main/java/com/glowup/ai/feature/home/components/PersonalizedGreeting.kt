@@ -35,29 +35,31 @@ fun PersonalizedGreeting(
     val alpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         animationSpec = tween(durationMillis = 600),
-        label = "greetingFade"
+        label = "greetingFade",
     )
 
     LaunchedEffect(Unit) {
         visible = true
     }
 
-    val timeBasedGreeting = remember {
-        when (LocalTime.now().hour) {
-            in 0..4 -> "Still up"
-            in 5..11 -> "Good morning"
-            in 12..16 -> "Good afternoon"
-            in 17..20 -> "Good evening"
-            else -> "Good night"
+    val timeBasedGreeting =
+        remember {
+            when (LocalTime.now().hour) {
+                in 0..4 -> "Still up"
+                in 5..11 -> "Good morning"
+                in 12..16 -> "Good afternoon"
+                in 17..20 -> "Good evening"
+                else -> "Good night"
+            }
         }
-    }
 
     val name = displayName?.split(" ")?.firstOrNull() ?: "there"
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .alpha(alpha)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .alpha(alpha),
     ) {
         Text(
             text = "$timeBasedGreeting, $name 👋",

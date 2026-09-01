@@ -88,16 +88,23 @@ private fun AccountContent(
     Scaffold(topBar = { GlowTopBar(title = "Account") }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (uiState) {
-                AccountUiState.Loading -> LoadingBody()
-                is AccountUiState.Error -> Box(Modifier.fillMaxSize().padding(GlowSpacing.lg), contentAlignment = Alignment.Center) {
-                    ErrorState(message = uiState.message, onRetry = onRetry)
+                AccountUiState.Loading -> {
+                    LoadingBody()
                 }
+
+                is AccountUiState.Error -> {
+                    Box(Modifier.fillMaxSize().padding(GlowSpacing.lg), contentAlignment = Alignment.Center) {
+                        ErrorState(message = uiState.message, onRetry = onRetry)
+                    }
+                }
+
                 is AccountUiState.Content -> {
                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(GlowSpacing.lg),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(GlowSpacing.lg),
                         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
                     ) {
                         ProfileSummaryCard(uiState.profile)
@@ -169,17 +176,19 @@ private fun ProfileSummaryCard(profile: Profile) {
 @Composable
 private fun ConsentSummaryRow(consentState: ConsentState) {
     val glow = LocalGlowColors.current
-    val (label, description) = when (consentState) {
-        ConsentState.ACTIVE -> "Consent: Active" to "You've allowed facial-photo tracking. Manage this in Data & Privacy."
-        ConsentState.PENDING -> "Consent: Not yet given" to "Photo capture is locked until you grant consent in Data & Privacy."
-        ConsentState.DECLINED -> "Consent: Declined" to "Photo capture is locked. You can change this any time in Data & Privacy."
-        ConsentState.UNKNOWN -> "Consent: Unknown" to "We couldn't read your consent state. Check Data & Privacy."
-    }
+    val (label, description) =
+        when (consentState) {
+            ConsentState.ACTIVE -> "Consent: Active" to "You've allowed facial-photo tracking. Manage this in Data & Privacy."
+            ConsentState.PENDING -> "Consent: Not yet given" to "Photo capture is locked until you grant consent in Data & Privacy."
+            ConsentState.DECLINED -> "Consent: Declined" to "Photo capture is locked. You can change this any time in Data & Privacy."
+            ConsentState.UNKNOWN -> "Consent: Unknown" to "We couldn't read your consent state. Check Data & Privacy."
+        }
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = GlowSpacing.md)
-            .semantics { contentDescription = "$label. $description" },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = GlowSpacing.md)
+                .semantics { contentDescription = "$label. $description" },
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = glow.ink900)
         Text(text = description, style = MaterialTheme.typography.bodySmall, color = glow.ink600)
@@ -237,7 +246,10 @@ private fun SubscriptionCard(
 }
 
 @Composable
-private fun AccountLinksCard(onSettingsClick: () -> Unit, onPrivacyClick: () -> Unit) {
+private fun AccountLinksCard(
+    onSettingsClick: () -> Unit,
+    onPrivacyClick: () -> Unit,
+) {
     GlowCard(modifier = Modifier.fillMaxWidth()) {
         AccountLinkRow(label = "Settings", onClick = onSettingsClick)
         AccountLinkRow(label = "Data & Privacy", onClick = onPrivacyClick, isLast = true)
@@ -245,14 +257,19 @@ private fun AccountLinksCard(onSettingsClick: () -> Unit, onPrivacyClick: () -> 
 }
 
 @Composable
-private fun AccountLinkRow(label: String, onClick: () -> Unit, isLast: Boolean = false) {
+private fun AccountLinkRow(
+    label: String,
+    onClick: () -> Unit,
+    isLast: Boolean = false,
+) {
     val glow = LocalGlowColors.current
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = GlowSpacing.sm)
-            .then(if (!isLast) Modifier.padding(bottom = GlowSpacing.xs) else Modifier)
-            .semantics { contentDescription = label },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = GlowSpacing.sm)
+                .then(if (!isLast) Modifier.padding(bottom = GlowSpacing.xs) else Modifier)
+                .semantics { contentDescription = label },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {

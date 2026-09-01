@@ -91,28 +91,31 @@ fun EnhancedOnboardingRoute(
         is EnhancedOnboardingUiState.Loading -> {
             Box(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 Text("Loading...")
             }
         }
+
         is EnhancedOnboardingUiState.Error -> {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(GlowSpacing.lg),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(GlowSpacing.lg),
+                contentAlignment = Alignment.Center,
             ) {
                 ErrorState(
                     message = (uiState as EnhancedOnboardingUiState.Error).message,
-                    onRetry = viewModel::retry
+                    onRetry = viewModel::retry,
                 )
             }
         }
+
         is EnhancedOnboardingUiState.Content -> {
             EnhancedOnboardingContent(
                 onComplete = viewModel::completeOnboarding,
-                onSkip = viewModel::skipOnboarding
+                onSkip = viewModel::skipOnboarding,
             )
         }
     }
@@ -150,55 +153,60 @@ private fun EnhancedOnboardingContent(
 
         // Page indicators
         Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 120.dp)
-                .semantics {
-                    contentDescription = "Page ${pagerState.currentPage + 1} of ${pagerState.pageCount}"
-                },
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 120.dp)
+                    .semantics {
+                        contentDescription = "Page ${pagerState.currentPage + 1} of ${pagerState.pageCount}"
+                    },
             horizontalArrangement = Arrangement.Center,
         ) {
             repeat(pagerState.pageCount) { index ->
                 val active = index == pagerState.currentPage
                 val width by animateDpAsState(
                     targetValue = if (active) 24.dp else 8.dp,
-                    animationSpec = GlowMotion.respectingReducedMotion(
-                        GlowMotion.standard,
-                        reducedMotion
-                    ) as androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.unit.Dp>,
-                    label = "indicatorWidth"
+                    animationSpec =
+                        GlowMotion.respectingReducedMotion(
+                            GlowMotion.standard,
+                            reducedMotion,
+                        ) as androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.unit.Dp>,
+                    label = "indicatorWidth",
                 )
                 Box(
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .height(8.dp)
-                        .width(width)
-                        .clip(CircleShape)
-                        .background(
-                            if (active) glow.honey500 else glow.ink600.copy(alpha = 0.25f)
-                        ),
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 4.dp)
+                            .height(8.dp)
+                            .width(width)
+                            .clip(CircleShape)
+                            .background(
+                                if (active) glow.honey500 else glow.ink600.copy(alpha = 0.25f),
+                            ),
                 )
             }
         }
 
         // Navigation buttons
         Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(GlowSpacing.lg)
-                .padding(bottom = GlowSpacing.md)
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(GlowSpacing.lg)
+                    .padding(bottom = GlowSpacing.md),
         ) {
             val isFirstPage = pagerState.currentPage == 0
             val isLastPage = pagerState.currentPage == pagerState.pageCount - 1
 
             GlowButton(
                 modifier = Modifier.fillMaxWidth(),
-                text = when {
-                    isLastPage -> "Get Started"
-                    isFirstPage -> "Start Tour"
-                    else -> "Continue"
-                },
+                text =
+                    when {
+                        isLastPage -> "Get Started"
+                        isFirstPage -> "Start Tour"
+                        else -> "Continue"
+                    },
                 onClick = {
                     if (isLastPage) {
                         onComplete()
@@ -214,18 +222,19 @@ private fun EnhancedOnboardingContent(
             AnimatedVisibility(
                 visible = !isLastPage,
                 enter = fadeIn(),
-                exit = fadeOut()
+                exit = fadeOut(),
             ) {
                 TextButton(
                     onClick = onSkip,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = GlowSpacing.sm)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = GlowSpacing.sm),
                 ) {
                     Text(
                         "Skip for now",
                         color = glow.ink600,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
             }
@@ -241,27 +250,29 @@ private fun EnhancedOnboardingContent(
 private fun WelcomeScreen() {
     val glow = LocalGlowColors.current
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(GlowSpacing.xl)
-            .padding(bottom = 180.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(GlowSpacing.xl)
+                .padding(bottom = 180.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // Hero icon
         Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .background(glow.honey500.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(96.dp)
+                    .clip(CircleShape)
+                    .background(glow.honey500.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = Icons.Filled.CheckCircle,
                 contentDescription = null,
                 tint = glow.honey600,
-                modifier = Modifier.size(56.dp)
+                modifier = Modifier.size(56.dp),
             )
         }
 
@@ -290,25 +301,25 @@ private fun WelcomeScreen() {
         ValuePropItem(
             icon = Icons.Filled.CameraAlt,
             title = "Consistent photo tracking",
-            description = "Guided captures with same lighting every time"
+            description = "Guided captures with same lighting every time",
         )
 
         ValuePropItem(
             icon = Icons.Filled.LocalFireDepartment,
             title = "Build your streak",
-            description = "Daily check-ins keep you accountable"
+            description = "Daily check-ins keep you accountable",
         )
 
         ValuePropItem(
             icon = Icons.Filled.Science,
             title = "Test what works",
-            description = "Experiment with your routine scientifically"
+            description = "Experiment with your routine scientifically",
         )
 
         ValuePropItem(
             icon = Icons.Filled.Timeline,
             title = "See real changes",
-            description = "Track redness, texture, and tone over time"
+            description = "Track redness, texture, and tone over time",
         )
     }
 }
@@ -321,24 +332,26 @@ private fun ValuePropItem(
 ) {
     val glow = LocalGlowColors.current
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = GlowSpacing.sm),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = GlowSpacing.sm),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(glow.honey500.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(glow.honey500.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = glow.honey700,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
         }
 
@@ -366,20 +379,21 @@ private fun TutorialStreaksScreen() {
         icon = Icons.Filled.LocalFireDepartment,
         title = "Build your streak",
         subtitle = "Consistency is key to tracking change",
-        contentSections = listOf(
-            TutorialSection(
-                "Daily check-ins",
-                "Take a photo or log how your skin feels each day to maintain your streak"
+        contentSections =
+            listOf(
+                TutorialSection(
+                    "Daily check-ins",
+                    "Take a photo or log how your skin feels each day to maintain your streak",
+                ),
+                TutorialSection(
+                    "Freeze days",
+                    "Premium users get freeze days to protect their streak when life gets busy",
+                ),
+                TutorialSection(
+                    "Track your progress",
+                    "See your capture calendar fill up as you build the habit",
+                ),
             ),
-            TutorialSection(
-                "Freeze days",
-                "Premium users get freeze days to protect their streak when life gets busy"
-            ),
-            TutorialSection(
-                "Track your progress",
-                "See your capture calendar fill up as you build the habit"
-            ),
-        )
     )
 }
 
@@ -389,24 +403,25 @@ private fun TutorialPhotosScreen() {
         icon = Icons.Filled.CameraAlt,
         title = "How to take good photos",
         subtitle = "Consistent conditions = accurate tracking",
-        contentSections = listOf(
-            TutorialSection(
-                "Same lighting",
-                "Natural daylight near a window works best. Avoid direct sun or harsh shadows"
+        contentSections =
+            listOf(
+                TutorialSection(
+                    "Same lighting",
+                    "Natural daylight near a window works best. Avoid direct sun or harsh shadows",
+                ),
+                TutorialSection(
+                    "Clean face",
+                    "No makeup, filters, or products. Capture your baseline skin",
+                ),
+                TutorialSection(
+                    "Same position",
+                    "Use the guide overlay to match your face position each time",
+                ),
+                TutorialSection(
+                    "Same time of day",
+                    "Morning captures show your skin most consistently",
+                ),
             ),
-            TutorialSection(
-                "Clean face",
-                "No makeup, filters, or products. Capture your baseline skin"
-            ),
-            TutorialSection(
-                "Same position",
-                "Use the guide overlay to match your face position each time"
-            ),
-            TutorialSection(
-                "Same time of day",
-                "Morning captures show your skin most consistently"
-            ),
-        )
     )
 }
 
@@ -416,24 +431,25 @@ private fun TutorialMetricsScreen() {
         icon = Icons.Filled.Timeline,
         title = "Understanding your metrics",
         subtitle = "What we measure and why",
-        contentSections = listOf(
-            TutorialSection(
-                "Redness Score",
-                "Tracks inflammatory redness, not natural pigmentation"
+        contentSections =
+            listOf(
+                TutorialSection(
+                    "Redness Score",
+                    "Tracks inflammatory redness, not natural pigmentation",
+                ),
+                TutorialSection(
+                    "Texture Score",
+                    "Measures smoothness and visible pores or bumps",
+                ),
+                TutorialSection(
+                    "Tone Evenness",
+                    "Tracks overall uniformity and dark spots",
+                ),
+                TutorialSection(
+                    "Trends over time",
+                    "Weekly comparisons show real change better than day-to-day",
+                ),
             ),
-            TutorialSection(
-                "Texture Score",
-                "Measures smoothness and visible pores or bumps"
-            ),
-            TutorialSection(
-                "Tone Evenness",
-                "Tracks overall uniformity and dark spots"
-            ),
-            TutorialSection(
-                "Trends over time",
-                "Weekly comparisons show real change better than day-to-day"
-            ),
-        )
     )
 }
 
@@ -443,24 +459,25 @@ private fun TutorialExperimentsScreen() {
         icon = Icons.Filled.Science,
         title = "Test your routine",
         subtitle = "Scientific approach to skincare",
-        contentSections = listOf(
-            TutorialSection(
-                "One change at a time",
-                "Change only one product to see what really works"
+        contentSections =
+            listOf(
+                TutorialSection(
+                    "One change at a time",
+                    "Change only one product to see what really works",
+                ),
+                TutorialSection(
+                    "Give it time",
+                    "Most changes need 4-6 weeks to show results",
+                ),
+                TutorialSection(
+                    "Track everything",
+                    "Log products, sleep, stress, and diet for complete context",
+                ),
+                TutorialSection(
+                    "Get verdicts",
+                    "We'll analyze correlations and give honest assessments",
+                ),
             ),
-            TutorialSection(
-                "Give it time",
-                "Most changes need 4-6 weeks to show results"
-            ),
-            TutorialSection(
-                "Track everything",
-                "Log products, sleep, stress, and diet for complete context"
-            ),
-            TutorialSection(
-                "Get verdicts",
-                "We'll analyze correlations and give honest assessments"
-            ),
-        )
     )
 }
 
@@ -473,29 +490,31 @@ private fun TutorialScreenTemplate(
 ) {
     val glow = LocalGlowColors.current
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(GlowSpacing.xl)
-            .padding(bottom = 180.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(GlowSpacing.xl)
+                .padding(bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
         Spacer(modifier = Modifier.height(GlowSpacing.xl))
 
         // Icon
         Box(
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .background(glow.honey500.copy(alpha = 0.15f))
-                .align(Alignment.CenterHorizontally),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(glow.honey500.copy(alpha = 0.15f))
+                    .align(Alignment.CenterHorizontally),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = glow.honey600,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
             )
         }
 
@@ -507,7 +526,7 @@ private fun TutorialScreenTemplate(
             fontWeight = FontWeight.Bold,
             color = glow.ink900,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Text(
@@ -515,7 +534,7 @@ private fun TutorialScreenTemplate(
             style = MaterialTheme.typography.bodyLarge,
             color = glow.ink600,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Spacer(modifier = Modifier.height(GlowSpacing.md))
@@ -524,23 +543,29 @@ private fun TutorialScreenTemplate(
         contentSections.forEach { section ->
             TutorialSectionItem(
                 title = section.title,
-                description = section.description
+                description = section.description,
             )
         }
     }
 }
 
-private data class TutorialSection(val title: String, val description: String)
+private data class TutorialSection(
+    val title: String,
+    val description: String,
+)
 
 @Composable
-private fun TutorialSectionItem(title: String, description: String) {
+private fun TutorialSectionItem(
+    title: String,
+    description: String,
+) {
     val glow = LocalGlowColors.current
     GlowCard(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier.padding(GlowSpacing.md),
-            verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+            verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
         ) {
             Text(
                 text = title,
@@ -563,14 +588,16 @@ private fun CameraPermissionScreen() {
         icon = Icons.Filled.CameraAlt,
         title = "Camera access",
         subtitle = "Take consistent tracking photos",
-        description = "GlowUp needs camera access to capture your skin photos. " +
-            "Photos are stored securely on your device and only sent to our " +
-            "servers when you explicitly request analysis.",
-        reasonItems = listOf(
-            "Capture guided selfies",
-            "Use overlay guides for consistency",
-            "Store photos locally until you consent"
-        )
+        description =
+            "GlowUp needs camera access to capture your skin photos. " +
+                "Photos are stored securely on your device and only sent to our " +
+                "servers when you explicitly request analysis.",
+        reasonItems =
+            listOf(
+                "Capture guided selfies",
+                "Use overlay guides for consistency",
+                "Store photos locally until you consent",
+            ),
     )
 }
 
@@ -580,14 +607,16 @@ private fun NotificationPermissionScreen() {
         icon = Icons.Filled.Notifications,
         title = "Stay on track",
         subtitle = "Gentle reminders for your routine",
-        description = "Optional reminders help you maintain your streak and " +
-            "remember to take photos at the same time each day. You can " +
-            "customize or disable these anytime.",
-        reasonItems = listOf(
-            "Daily capture reminders",
-            "Streak protection alerts",
-            "Weekly progress updates"
-        )
+        description =
+            "Optional reminders help you maintain your streak and " +
+                "remember to take photos at the same time each day. You can " +
+                "customize or disable these anytime.",
+        reasonItems =
+            listOf(
+                "Daily capture reminders",
+                "Streak protection alerts",
+                "Weekly progress updates",
+            ),
     )
 }
 
@@ -601,28 +630,30 @@ private fun PermissionScreenTemplate(
 ) {
     val glow = LocalGlowColors.current
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(GlowSpacing.xl)
-            .padding(bottom = 180.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(GlowSpacing.xl)
+                .padding(bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
         Spacer(modifier = Modifier.height(GlowSpacing.xl))
 
         Box(
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .background(glow.honey500.copy(alpha = 0.15f))
-                .align(Alignment.CenterHorizontally),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(glow.honey500.copy(alpha = 0.15f))
+                    .align(Alignment.CenterHorizontally),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = glow.honey600,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
             )
         }
 
@@ -632,7 +663,7 @@ private fun PermissionScreenTemplate(
             fontWeight = FontWeight.Bold,
             color = glow.ink900,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Text(
@@ -641,7 +672,7 @@ private fun PermissionScreenTemplate(
             color = glow.honey700,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Text(
@@ -649,13 +680,13 @@ private fun PermissionScreenTemplate(
             style = MaterialTheme.typography.bodyLarge,
             color = glow.ink600,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         GlowCard {
             Column(
                 modifier = Modifier.padding(GlowSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
             ) {
                 Text(
                     text = "We'll use this to:",
@@ -666,13 +697,13 @@ private fun PermissionScreenTemplate(
                 reasonItems.forEach { reason ->
                     Row(
                         modifier = Modifier.padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
                     ) {
                         Text(
                             text = "•",
                             style = MaterialTheme.typography.bodyMedium,
                             color = glow.honey700,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                         Text(
                             text = reason,
@@ -690,28 +721,30 @@ private fun PermissionScreenTemplate(
 private fun BaselinePhotoScreen() {
     val glow = LocalGlowColors.current
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(GlowSpacing.xl)
-            .padding(bottom = 180.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(GlowSpacing.xl)
+                .padding(bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
         Spacer(modifier = Modifier.height(GlowSpacing.xl))
 
         Box(
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .background(glow.honey500.copy(alpha = 0.15f))
-                .align(Alignment.CenterHorizontally),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(glow.honey500.copy(alpha = 0.15f))
+                    .align(Alignment.CenterHorizontally),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = Icons.Filled.CameraAlt,
                 contentDescription = null,
                 tint = glow.honey600,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
             )
         }
 
@@ -721,7 +754,7 @@ private fun BaselinePhotoScreen() {
             fontWeight = FontWeight.Bold,
             color = glow.ink900,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Text(
@@ -730,13 +763,13 @@ private fun BaselinePhotoScreen() {
             color = glow.honey700,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         GlowCard {
             Column(
                 modifier = Modifier.padding(GlowSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
             ) {
                 Text(
                     text = "Before you capture:",
@@ -754,7 +787,7 @@ private fun BaselinePhotoScreen() {
         GlowCard {
             Column(
                 modifier = Modifier.padding(GlowSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
             ) {
                 Text(
                     text = "💡 Pro tip",
@@ -763,8 +796,9 @@ private fun BaselinePhotoScreen() {
                     color = glow.ink900,
                 )
                 Text(
-                    text = "Try to take photos at the same time each day — " +
-                        "morning light is most consistent!",
+                    text =
+                        "Try to take photos at the same time each day — " +
+                            "morning light is most consistent!",
                     style = MaterialTheme.typography.bodyMedium,
                     color = glow.ink600,
                 )
@@ -778,13 +812,13 @@ private fun ChecklistItem(text: String) {
     val glow = LocalGlowColors.current
     Row(
         modifier = Modifier.padding(top = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
     ) {
         Icon(
             imageVector = Icons.Filled.CheckCircle,
             contentDescription = null,
             tint = glow.success,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp),
         )
         Text(
             text = text,
@@ -798,28 +832,30 @@ private fun ChecklistItem(text: String) {
 private fun RoutineSetupScreen() {
     val glow = LocalGlowColors.current
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(GlowSpacing.xl)
-            .padding(bottom = 180.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(GlowSpacing.xl)
+                .padding(bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
         Spacer(modifier = Modifier.height(GlowSpacing.xl))
 
         Box(
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .background(glow.honey500.copy(alpha = 0.15f))
-                .align(Alignment.CenterHorizontally),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(glow.honey500.copy(alpha = 0.15f))
+                    .align(Alignment.CenterHorizontally),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = Icons.Filled.Science,
                 contentDescription = null,
                 tint = glow.honey600,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(48.dp),
             )
         }
 
@@ -829,7 +865,7 @@ private fun RoutineSetupScreen() {
             fontWeight = FontWeight.Bold,
             color = glow.ink900,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Text(
@@ -838,22 +874,23 @@ private fun RoutineSetupScreen() {
             color = glow.honey700,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Text(
-            text = "Track what products you're using so we can help you " +
-                "understand which changes actually make a difference.",
+            text =
+                "Track what products you're using so we can help you " +
+                    "understand which changes actually make a difference.",
             style = MaterialTheme.typography.bodyLarge,
             color = glow.ink600,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         GlowCard {
             Column(
                 modifier = Modifier.padding(GlowSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
             ) {
                 Text(
                     text = "What you can track:",
@@ -871,7 +908,7 @@ private fun RoutineSetupScreen() {
         GlowCard {
             Column(
                 modifier = Modifier.padding(GlowSpacing.md),
-                verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
             ) {
                 Text(
                     text = "You can skip this",
@@ -880,8 +917,9 @@ private fun RoutineSetupScreen() {
                     color = glow.ink900,
                 )
                 Text(
-                    text = "Add products anytime from your routine tab. " +
-                        "Start simple and build your tracking over time.",
+                    text =
+                        "Add products anytime from your routine tab. " +
+                            "Start simple and build your tracking over time.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = glow.ink600,
                 )

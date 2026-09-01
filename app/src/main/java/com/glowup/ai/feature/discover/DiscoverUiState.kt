@@ -18,9 +18,19 @@ import com.glowup.ai.domain.model.PurchaseGuidance
  */
 sealed interface SectionState<out T> {
     data object Loading : SectionState<Nothing>
-    data class Content<T>(val value: T) : SectionState<T>
-    data class Empty(val title: String, val body: String? = null) : SectionState<Nothing>
-    data class Error(val message: String) : SectionState<Nothing>
+
+    data class Content<T>(
+        val value: T,
+    ) : SectionState<T>
+
+    data class Empty(
+        val title: String,
+        val body: String? = null,
+    ) : SectionState<Nothing>
+
+    data class Error(
+        val message: String,
+    ) : SectionState<Nothing>
 
     /** The backend 403'd this call as Premium-only. Rendered as [com.glowup.ai.core.ui.LockedCard],
      * never folded into [Error]. Offers/click are NEVER put in this state — see class docs on

@@ -7,12 +7,12 @@ import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.spring as composeSpring
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.animation.core.spring as composeSpring
 
 /**
  * Motion communicates state, never decorates: 140-220ms, cubic-bezier(0.2, 0.8, 0.2, 1). Every
@@ -39,8 +39,10 @@ object GlowMotion {
      * wrap any [fast]/[standard]/[slow]/[spring] value before handing it to `animate*AsState`,
      * `AnimatedVisibility`, etc.
      */
-    fun <T> respectingReducedMotion(spec: AnimationSpec<T>, reducedMotion: Boolean): AnimationSpec<T> =
-        if (reducedMotion) snap() else spec
+    fun <T> respectingReducedMotion(
+        spec: AnimationSpec<T>,
+        reducedMotion: Boolean,
+    ): AnimationSpec<T> = if (reducedMotion) snap() else spec
 }
 
 /**

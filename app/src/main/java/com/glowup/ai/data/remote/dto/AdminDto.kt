@@ -42,5 +42,4 @@ data class AdminMeasurementFeedbackSummaryDto(
     val note: String = "",
 )
 
-fun AdminMeasurementFeedbackSummaryDto.toDomain(): AdminMeasurementFeedbackSummary =
-    AdminMeasurementFeedbackSummary(counts, total, note)
+fun AdminMeasurementFeedbackSummaryDto.toDomain(): AdminMeasurementFeedbackSummary = AdminMeasurementFeedbackSummary(counts, total, note)

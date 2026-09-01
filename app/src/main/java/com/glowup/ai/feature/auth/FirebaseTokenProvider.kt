@@ -15,13 +15,15 @@ import javax.inject.Singleton
  * unauthenticated in either case rather than crashing the network layer.
  */
 @Singleton
-class FirebaseTokenProvider @Inject constructor() : TokenProvider {
-    override suspend fun idToken(forceRefresh: Boolean): String? {
-        val user = FirebaseAuthGateway.currentUser() ?: return null
-        return try {
-            user.getIdToken(forceRefresh).await().token
-        } catch (t: Throwable) {
-            null
+class FirebaseTokenProvider
+    @Inject
+    constructor() : TokenProvider {
+        override suspend fun idToken(forceRefresh: Boolean): String? {
+            val user = FirebaseAuthGateway.currentUser() ?: return null
+            return try {
+                user.getIdToken(forceRefresh).await().token
+            } catch (t: Throwable) {
+                null
+            }
         }
     }
-}

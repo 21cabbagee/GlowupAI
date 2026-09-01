@@ -36,13 +36,14 @@ data class EngagementDto(
     val reminders: List<ReminderDto> = emptyList(),
 )
 
-fun EngagementDto.toDomain(): Engagement = Engagement(
-    captureStreak = captureStreak,
-    captureCount = captureCount,
-    captureDays = captureDays,
-    guide = guide?.toDomain(),
-    reminders = reminders.map { it.toDomain() },
-)
+fun EngagementDto.toDomain(): Engagement =
+    Engagement(
+        captureStreak = captureStreak,
+        captureCount = captureCount,
+        captureDays = captureDays,
+        guide = guide?.toDomain(),
+        reminders = reminders.map { it.toDomain() },
+    )
 
 @Serializable
 data class EngagementEventRequestDto(
@@ -64,7 +65,10 @@ data class MetricSummaryDto(
 )
 
 @Serializable
-data class WeeklyRecapPeriodDto(val start: String? = null, val end: String? = null)
+data class WeeklyRecapPeriodDto(
+    val start: String? = null,
+    val end: String? = null,
+)
 
 @Serializable
 data class WeeklyRecapDto(
@@ -82,20 +86,21 @@ data class WeeklyRecapDto(
     val disclaimer: String = "",
 )
 
-fun WeeklyRecapDto.toDomain(): WeeklyRecap = WeeklyRecap(
-    status = status,
-    headline = headline,
-    body = body,
-    nextAction = nextAction,
-    captureCount = captureCount,
-    totalCaptureCount = totalCaptureCount,
-    checkInCount = checkInCount,
-    comparisonMode = comparisonMode,
-    confidenceLabel = confidenceLabel,
-    metricSummaries = metricSummaries.map { MetricSummary(it.metric, it.label, it.direction, it.delta, it.noiseFloor, it.sentence) },
-    period = WeeklyRecapPeriod(period.start, period.end),
-    disclaimer = disclaimer,
-)
+fun WeeklyRecapDto.toDomain(): WeeklyRecap =
+    WeeklyRecap(
+        status = status,
+        headline = headline,
+        body = body,
+        nextAction = nextAction,
+        captureCount = captureCount,
+        totalCaptureCount = totalCaptureCount,
+        checkInCount = checkInCount,
+        comparisonMode = comparisonMode,
+        confidenceLabel = confidenceLabel,
+        metricSummaries = metricSummaries.map { MetricSummary(it.metric, it.label, it.direction, it.delta, it.noiseFloor, it.sentence) },
+        period = WeeklyRecapPeriod(period.start, period.end),
+        disclaimer = disclaimer,
+    )
 
 @Serializable
 data class AnalyticsDto(
@@ -111,21 +116,23 @@ data class AnalyticsDto(
     @SerialName("raw_events") val rawEvents: JsonElement? = null,
 )
 
-fun AnalyticsDto.toDomain(): Analytics = Analytics(
-    activation = activation?.toString(),
-    baselineCapture = baselineCapture,
-    firstThreeCaptures = firstThreeCaptures,
-    medianHistoryDays = medianHistoryDays,
-    weeklyVerdictOpenRate = weeklyVerdictOpenRate,
-    verdictActionRate = verdictActionRate,
-    evidenceUnclearEngagementRate = evidenceUnclearEngagementRate,
-    rawEvents = rawEvents.asEventRows(),
-    rawEventCount = when (val value = rawEvents) {
-        is JsonPrimitive -> value.contentOrNull?.toIntOrNull()
-        is JsonArray -> value.size
-        else -> null
-    },
-)
+fun AnalyticsDto.toDomain(): Analytics =
+    Analytics(
+        activation = activation?.toString(),
+        baselineCapture = baselineCapture,
+        firstThreeCaptures = firstThreeCaptures,
+        medianHistoryDays = medianHistoryDays,
+        weeklyVerdictOpenRate = weeklyVerdictOpenRate,
+        verdictActionRate = verdictActionRate,
+        evidenceUnclearEngagementRate = evidenceUnclearEngagementRate,
+        rawEvents = rawEvents.asEventRows(),
+        rawEventCount =
+            when (val value = rawEvents) {
+                is JsonPrimitive -> value.contentOrNull?.toIntOrNull()
+                is JsonArray -> value.size
+                else -> null
+            },
+    )
 
 private fun JsonElement?.asEventRows(): List<Map<String, String>> =
     (this as? JsonArray)?.mapNotNull { element ->

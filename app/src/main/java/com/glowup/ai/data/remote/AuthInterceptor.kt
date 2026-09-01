@@ -28,8 +28,9 @@ interface TokenProvider {
  * three `/api/admin` routes, which use a static admin bearer token instead
  * of a Firebase ID token) is left untouched.
  */
-class AuthInterceptor(private val tokenProvider: TokenProvider) : Interceptor {
-
+class AuthInterceptor(
+    private val tokenProvider: TokenProvider,
+) : Interceptor {
     private val refreshLock = Any()
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -39,11 +40,12 @@ class AuthInterceptor(private val tokenProvider: TokenProvider) : Interceptor {
         }
 
         val token = runBlockingIo { tokenProvider.idToken(forceRefresh = false) }
-        val requestWithAuth = if (token != null) {
-            original.newBuilder().addHeader("Authorization", "Bearer $token").build()
-        } else {
-            original
-        }
+        val requestWithAuth =
+            if (token != null) {
+                original.newBuilder().addHeader("Authorization", "Bearer $token").build()
+            } else {
+                original
+            }
 
         val response = chain.proceed(requestWithAuth)
         if (response.code != 401) {
@@ -53,17 +55,20 @@ class AuthInterceptor(private val tokenProvider: TokenProvider) : Interceptor {
         // Refresh once and retry. If the refreshed token is the same or
         // still absent, return the original 401 rather than issuing a second
         // request with the same expired credential.
-        val refreshed = synchronized(refreshLock) {
-            runBlockingIo { tokenProvider.idToken(forceRefresh = true) }
-        }
+        val refreshed =
+            synchronized(refreshLock) {
+                runBlockingIo { tokenProvider.idToken(forceRefresh = true) }
+            }
         if (refreshed == null || refreshed == token) {
             return response
         }
         response.close()
-        val retried = requestWithAuth.newBuilder()
-            .removeHeader("Authorization")
-            .addHeader("Authorization", "Bearer $refreshed")
-            .build()
+        val retried =
+            requestWithAuth
+                .newBuilder()
+                .removeHeader("Authorization")
+                .addHeader("Authorization", "Bearer $refreshed")
+                .build()
         return chain.proceed(retried)
     }
 }
@@ -75,5 +80,4 @@ class AuthInterceptor(private val tokenProvider: TokenProvider) : Interceptor {
  * interceptor's constructor — OkHttp already runs interceptors off the
  * caller's thread for suspend Retrofit calls.
  */
-private fun <T> runBlockingIo(block: suspend () -> T): T =
-    kotlinx.coroutines.runBlocking { block() }
+private fun <T> runBlockingIo(block: suspend () -> T): T = kotlinx.coroutines.runBlocking { block() }

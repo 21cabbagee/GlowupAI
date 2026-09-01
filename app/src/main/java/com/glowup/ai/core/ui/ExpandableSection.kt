@@ -64,28 +64,29 @@ fun ExpandableSection(
     // Rotate chevron icon
     val rotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
-        animationSpec = if (reducedMotion) {
-            tween(0)
-        } else {
-            tween(durationMillis = 220, easing = GlowMotion.easing)
-        },
-        label = "chevronRotation"
+        animationSpec =
+            if (reducedMotion) {
+                tween(0)
+            } else {
+                tween(durationMillis = 220, easing = GlowMotion.easing)
+            },
+        label = "chevronRotation",
     )
 
     Column(modifier = modifier.fillMaxWidth()) {
         // Header (always visible)
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    onClick = { expanded = !expanded },
-                    onClickLabel = if (expanded) "Collapse $title" else "Expand $title"
-                )
-                .padding(GlowSpacing.md)
-                .semantics {
-                    contentDescription = "$title, ${if (expanded) "expanded" else "collapsed"}"
-                },
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClick = { expanded = !expanded },
+                        onClickLabel = if (expanded) "Collapse $title" else "Expand $title",
+                    ).padding(GlowSpacing.md)
+                    .semantics {
+                        contentDescription = "$title, ${if (expanded) "expanded" else "collapsed"}"
+                    },
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (icon != null) {
                 icon()
@@ -97,45 +98,51 @@ fun ExpandableSection(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = glow.ink900,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
 
             Icon(
                 imageVector = Icons.Filled.ExpandMore,
                 contentDescription = null,
                 tint = glow.ink600,
-                modifier = Modifier
-                    .size(24.dp)
-                    .rotate(rotation)
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .rotate(rotation),
             )
         }
 
         // Content (animated)
         AnimatedVisibility(
             visible = expanded,
-            enter = if (reducedMotion) {
-                fadeIn(animationSpec = tween(0))
-            } else {
-                expandVertically(
-                    animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing)
-                ) + fadeIn(
-                    animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing)
-                )
-            },
-            exit = if (reducedMotion) {
-                fadeOut(animationSpec = tween(0))
-            } else {
-                shrinkVertically(
-                    animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing)
-                ) + fadeOut(
-                    animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing)
-                )
-            }
+            enter =
+                if (reducedMotion) {
+                    fadeIn(animationSpec = tween(0))
+                } else {
+                    expandVertically(
+                        animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing),
+                    ) +
+                        fadeIn(
+                            animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing),
+                        )
+                },
+            exit =
+                if (reducedMotion) {
+                    fadeOut(animationSpec = tween(0))
+                } else {
+                    shrinkVertically(
+                        animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing),
+                    ) +
+                        fadeOut(
+                            animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing),
+                        )
+                },
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = GlowSpacing.md, vertical = GlowSpacing.sm)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = GlowSpacing.md, vertical = GlowSpacing.sm),
             ) {
                 content()
             }
@@ -160,27 +167,28 @@ fun ExpandableSection(
 
     val rotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
-        animationSpec = if (reducedMotion) {
-            tween(0)
-        } else {
-            tween(durationMillis = 220, easing = GlowMotion.easing)
-        },
-        label = "chevronRotation"
+        animationSpec =
+            if (reducedMotion) {
+                tween(0)
+            } else {
+                tween(durationMillis = 220, easing = GlowMotion.easing)
+            },
+        label = "chevronRotation",
     )
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    onClick = { onExpandChange(!expanded) },
-                    onClickLabel = if (expanded) "Collapse $title" else "Expand $title"
-                )
-                .padding(GlowSpacing.md)
-                .semantics {
-                    contentDescription = "$title, ${if (expanded) "expanded" else "collapsed"}"
-                },
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClick = { onExpandChange(!expanded) },
+                        onClickLabel = if (expanded) "Collapse $title" else "Expand $title",
+                    ).padding(GlowSpacing.md)
+                    .semantics {
+                        contentDescription = "$title, ${if (expanded) "expanded" else "collapsed"}"
+                    },
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (icon != null) {
                 icon()
@@ -192,44 +200,50 @@ fun ExpandableSection(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = glow.ink900,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
 
             Icon(
                 imageVector = Icons.Filled.ExpandMore,
                 contentDescription = null,
                 tint = glow.ink600,
-                modifier = Modifier
-                    .size(24.dp)
-                    .rotate(rotation)
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .rotate(rotation),
             )
         }
 
         AnimatedVisibility(
             visible = expanded,
-            enter = if (reducedMotion) {
-                fadeIn(animationSpec = tween(0))
-            } else {
-                expandVertically(
-                    animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing)
-                ) + fadeIn(
-                    animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing)
-                )
-            },
-            exit = if (reducedMotion) {
-                fadeOut(animationSpec = tween(0))
-            } else {
-                shrinkVertically(
-                    animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing)
-                ) + fadeOut(
-                    animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing)
-                )
-            }
+            enter =
+                if (reducedMotion) {
+                    fadeIn(animationSpec = tween(0))
+                } else {
+                    expandVertically(
+                        animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing),
+                    ) +
+                        fadeIn(
+                            animationSpec = tween(durationMillis = 220, easing = GlowMotion.easing),
+                        )
+                },
+            exit =
+                if (reducedMotion) {
+                    fadeOut(animationSpec = tween(0))
+                } else {
+                    shrinkVertically(
+                        animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing),
+                    ) +
+                        fadeOut(
+                            animationSpec = tween(durationMillis = 180, easing = GlowMotion.easing),
+                        )
+                },
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = GlowSpacing.md, vertical = GlowSpacing.sm)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = GlowSpacing.md, vertical = GlowSpacing.sm),
             ) {
                 content()
             }
@@ -244,11 +258,11 @@ private fun ExpandableSectionPreviewLight() {
         Column(modifier = Modifier.padding(16.dp)) {
             ExpandableSection(
                 title = "What is GlowUp AI?",
-                initiallyExpanded = true
+                initiallyExpanded = true,
             ) {
                 Text(
                     "GlowUp AI is your personal skincare companion that tracks your progress, " +
-                            "analyzes your routine, and provides personalized recommendations."
+                        "analyzes your routine, and provides personalized recommendations.",
                 )
             }
         }
@@ -262,11 +276,11 @@ private fun ExpandableSectionPreviewDark() {
         Column(modifier = Modifier.padding(16.dp)) {
             ExpandableSection(
                 title = "What is GlowUp AI?",
-                initiallyExpanded = false
+                initiallyExpanded = false,
             ) {
                 Text(
                     "GlowUp AI is your personal skincare companion that tracks your progress, " +
-                            "analyzes your routine, and provides personalized recommendations."
+                        "analyzes your routine, and provides personalized recommendations.",
                 )
             }
         }

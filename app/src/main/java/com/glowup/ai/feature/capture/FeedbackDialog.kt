@@ -1,5 +1,7 @@
 package com.glowup.ai.feature.capture
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
@@ -11,14 +13,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.ui.GlowButton
 import com.glowup.ai.core.ui.GlowButtonVariant
 import com.glowup.ai.core.ui.GlowCard
+import com.glowup.ai.core.ui.GlowEasing
 import com.glowup.ai.core.ui.GlowTextField
+import com.glowup.ai.core.ui.isReducedMotionEnabled
 
 /**
  * Feedback dialog shown after capture to collect user feedback on analysis accuracy.
@@ -29,80 +36,89 @@ fun FeedbackDialog(
     captureId: String,
     onDismiss: () -> Unit,
     onSubmit: (FeedbackData) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var feedbackType by remember { mutableStateOf<FeedbackType?>(null) }
     var selectedIssues by remember { mutableStateOf(setOf<String>()) }
     var comment by remember { mutableStateOf("") }
     var isSubmitting by remember { mutableStateOf(false) }
+    val reducedMotion = isReducedMotionEnabled()
+
+    // Animate dialog appearance
+    val alpha by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = if (reducedMotion) tween(0) else tween(durationMillis = 300, easing = GlowEasing),
+        label = "dialogAlpha",
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = if (reducedMotion) tween(0) else tween(durationMillis = 300, easing = GlowEasing),
+        label = "dialogScale",
+    )
 
     Dialog(onDismissRequest = onDismiss) {
         GlowCard(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .padding(GlowSpacing.md)
+                    .alpha(alpha)
+                    .scale(scale),
         ) {
             Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                modifier =
+                    Modifier
+                        .verticalScroll(rememberScrollState())
+                        .padding(GlowSpacing.lg),
+                verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
             ) {
                 // Title
                 Text(
                     text = "Was this analysis accurate?",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
 
                 Text(
                     text = "Your feedback helps us improve our AI model",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = LocalGlowColors.current.textSecondary
+                    color = LocalGlowColors.current.ink600,
                 )
 
                 // Thumbs up/down selection
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .selectableGroup(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .selectableGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.md),
                 ) {
                     // Thumbs Up
                     GlowButton(
+                        text = "👍 Accurate",
                         onClick = { feedbackType = FeedbackType.ACCURATE },
-                        variant = if (feedbackType == FeedbackType.ACCURATE)
-                            GlowButtonVariant.Primary
-                        else
-                            GlowButtonVariant.Secondary,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ThumbUp,
-                            contentDescription = "Accurate",
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Accurate")
-                    }
+                        variant =
+                            if (feedbackType == FeedbackType.ACCURATE) {
+                                GlowButtonVariant.Primary
+                            } else {
+                                GlowButtonVariant.Secondary
+                            },
+                        modifier = Modifier.weight(1f),
+                    )
 
                     // Thumbs Down
                     GlowButton(
+                        text = "👎 Inaccurate",
                         onClick = { feedbackType = FeedbackType.INACCURATE },
-                        variant = if (feedbackType == FeedbackType.INACCURATE)
-                            GlowButtonVariant.Primary
-                        else
-                            GlowButtonVariant.Secondary,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ThumbDown,
-                            contentDescription = "Inaccurate",
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Inaccurate")
-                    }
+                        variant =
+                            if (feedbackType == FeedbackType.INACCURATE) {
+                                GlowButtonVariant.Primary
+                            } else {
+                                GlowButtonVariant.Secondary
+                            },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
 
                 // Show issue selection if inaccurate
@@ -110,23 +126,24 @@ fun FeedbackDialog(
                     Text(
                         text = "What seems wrong?",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
                     )
 
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
                     ) {
                         IssueOption(
                             issue = "blemishes_too_high",
                             label = "Blemish count too high",
                             selected = "blemishes_too_high" in selectedIssues,
                             onToggle = { selected ->
-                                selectedIssues = if (selected) {
-                                    selectedIssues + "blemishes_too_high"
-                                } else {
-                                    selectedIssues - "blemishes_too_high"
-                                }
-                            }
+                                selectedIssues =
+                                    if (selected) {
+                                        selectedIssues + "blemishes_too_high"
+                                    } else {
+                                        selectedIssues - "blemishes_too_high"
+                                    }
+                            },
                         )
 
                         IssueOption(
@@ -134,12 +151,13 @@ fun FeedbackDialog(
                             label = "Blemish count too low",
                             selected = "blemishes_too_low" in selectedIssues,
                             onToggle = { selected ->
-                                selectedIssues = if (selected) {
-                                    selectedIssues + "blemishes_too_low"
-                                } else {
-                                    selectedIssues - "blemishes_too_low"
-                                }
-                            }
+                                selectedIssues =
+                                    if (selected) {
+                                        selectedIssues + "blemishes_too_low"
+                                    } else {
+                                        selectedIssues - "blemishes_too_low"
+                                    }
+                            },
                         )
 
                         IssueOption(
@@ -147,12 +165,13 @@ fun FeedbackDialog(
                             label = "Redness score too high",
                             selected = "redness_too_high" in selectedIssues,
                             onToggle = { selected ->
-                                selectedIssues = if (selected) {
-                                    selectedIssues + "redness_too_high"
-                                } else {
-                                    selectedIssues - "redness_too_high"
-                                }
-                            }
+                                selectedIssues =
+                                    if (selected) {
+                                        selectedIssues + "redness_too_high"
+                                    } else {
+                                        selectedIssues - "redness_too_high"
+                                    }
+                            },
                         )
 
                         IssueOption(
@@ -160,12 +179,13 @@ fun FeedbackDialog(
                             label = "Redness score too low",
                             selected = "redness_too_low" in selectedIssues,
                             onToggle = { selected ->
-                                selectedIssues = if (selected) {
-                                    selectedIssues + "redness_too_low"
-                                } else {
-                                    selectedIssues - "redness_too_low"
-                                }
-                            }
+                                selectedIssues =
+                                    if (selected) {
+                                        selectedIssues + "redness_too_low"
+                                    } else {
+                                        selectedIssues - "redness_too_low"
+                                    }
+                            },
                         )
 
                         IssueOption(
@@ -173,12 +193,13 @@ fun FeedbackDialog(
                             label = "Texture analysis seems off",
                             selected = "texture_wrong" in selectedIssues,
                             onToggle = { selected ->
-                                selectedIssues = if (selected) {
-                                    selectedIssues + "texture_wrong"
-                                } else {
-                                    selectedIssues - "texture_wrong"
-                                }
-                            }
+                                selectedIssues =
+                                    if (selected) {
+                                        selectedIssues + "texture_wrong"
+                                    } else {
+                                        selectedIssues - "texture_wrong"
+                                    }
+                            },
                         )
 
                         IssueOption(
@@ -186,42 +207,43 @@ fun FeedbackDialog(
                             label = "Dark spots detection incorrect",
                             selected = "darkspots_wrong" in selectedIssues,
                             onToggle = { selected ->
-                                selectedIssues = if (selected) {
-                                    selectedIssues + "darkspots_wrong"
-                                } else {
-                                    selectedIssues - "darkspots_wrong"
-                                }
-                            }
+                                selectedIssues =
+                                    if (selected) {
+                                        selectedIssues + "darkspots_wrong"
+                                    } else {
+                                        selectedIssues - "darkspots_wrong"
+                                    }
+                            },
                         )
                     }
 
                     // Optional comment field
-                    GlowTextField(
+                    OutlinedTextField(
                         value = comment,
                         onValueChange = { comment = it },
                         label = { Text("Additional details (optional)") },
                         placeholder = { Text("Tell us more about what's wrong...") },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
-                        maxLines = 5
+                        maxLines = 5,
                     )
                 }
 
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.md),
                 ) {
                     GlowButton(
+                        text = "Skip",
                         onClick = onDismiss,
-                        variant = GlowButtonVariant.Tertiary,
+                        variant = GlowButtonVariant.Ghost,
                         modifier = Modifier.weight(1f),
-                        enabled = !isSubmitting
-                    ) {
-                        Text("Skip")
-                    }
+                        enabled = !isSubmitting,
+                    )
 
                     GlowButton(
+                        text = "Submit",
                         onClick = {
                             feedbackType?.let { type ->
                                 isSubmitting = true
@@ -229,28 +251,22 @@ fun FeedbackDialog(
                                     FeedbackData(
                                         captureId = captureId,
                                         feedbackType = type,
-                                        issues = if (type == FeedbackType.INACCURATE)
-                                            selectedIssues.toList()
-                                        else
-                                            emptyList(),
-                                        comment = comment.takeIf { it.isNotBlank() }
-                                    )
+                                        issues =
+                                            if (type == FeedbackType.INACCURATE) {
+                                                selectedIssues.toList()
+                                            } else {
+                                                emptyList()
+                                            },
+                                        comment = comment.takeIf { it.isNotBlank() },
+                                    ),
                                 )
                             }
                         },
                         variant = GlowButtonVariant.Primary,
                         modifier = Modifier.weight(1f),
-                        enabled = feedbackType != null && !isSubmitting
-                    ) {
-                        if (isSubmitting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text("Submit")
-                        }
-                    }
+                        enabled = feedbackType != null && !isSubmitting,
+                        loading = isSubmitting,
+                    )
                 }
             }
         }
@@ -263,34 +279,35 @@ private fun IssueOption(
     label: String,
     selected: Boolean,
     onToggle: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(vertical = GlowSpacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(
             checked = selected,
-            onCheckedChange = onToggle
+            onCheckedChange = onToggle,
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(GlowSpacing.md))
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
         )
     }
 }
 
 enum class FeedbackType {
     ACCURATE,
-    INACCURATE
+    INACCURATE,
 }
 
 data class FeedbackData(
     val captureId: String,
     val feedbackType: FeedbackType,
     val issues: List<String>,
-    val comment: String?
+    val comment: String?,
 )

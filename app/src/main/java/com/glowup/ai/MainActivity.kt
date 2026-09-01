@@ -5,10 +5,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.glowup.ai.core.design.GlowUpTheme
@@ -17,8 +17,8 @@ import com.glowup.ai.data.repository.SessionRepository
 import com.glowup.ai.data.telemetry.Telemetry
 import com.glowup.ai.feature.account.ThemePreference
 import com.glowup.ai.feature.shell.GlowDestination
-import com.glowup.ai.feature.shell.destinationFromIntent
 import com.glowup.ai.feature.shell.GlowUpApp
+import com.glowup.ai.feature.shell.destinationFromIntent
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -29,7 +29,9 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject lateinit var sessionStore: SessionStore
+
     @Inject lateinit var sessionRepository: SessionRepository
+
     @Inject lateinit var telemetry: Telemetry
 
     private var pendingDestination by mutableStateOf<GlowDestination?>(null)
@@ -39,20 +41,22 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        pendingDestination = if (savedInstanceState?.getBoolean(STATE_OPEN_CAPTURE) == true) {
-            GlowDestination.Capture
-        } else {
-            destinationFromIntent(intent)
-        }
+        pendingDestination =
+            if (savedInstanceState?.getBoolean(STATE_OPEN_CAPTURE) == true) {
+                GlowDestination.Capture
+            } else {
+                destinationFromIntent(intent)
+            }
 
         setContent {
             val themePreference by sessionStore.themePreferenceFlow
                 .collectAsStateWithLifecycle(initialValue = ThemePreference.SYSTEM.storageValue)
-            val darkTheme = when (ThemePreference.fromStorage(themePreference)) {
-                ThemePreference.LIGHT -> false
-                ThemePreference.DARK -> true
-                ThemePreference.SYSTEM -> isSystemInDarkTheme()
-            }
+            val darkTheme =
+                when (ThemePreference.fromStorage(themePreference)) {
+                    ThemePreference.LIGHT -> false
+                    ThemePreference.DARK -> true
+                    ThemePreference.SYSTEM -> isSystemInDarkTheme()
+                }
             GlowUpTheme(darkTheme = darkTheme) {
                 GlowUpApp(
                     sessionStore = sessionStore,

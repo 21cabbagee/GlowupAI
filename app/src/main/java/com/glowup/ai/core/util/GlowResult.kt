@@ -10,20 +10,27 @@ import com.glowup.ai.data.remote.ApiError
  * `ApiErrorMapper` in `data.remote`.
  */
 sealed class GlowResult<out T> {
-    data class Success<T>(val data: T) : GlowResult<T>()
-    data class Failure(val error: ApiError) : GlowResult<Nothing>()
+    data class Success<T>(
+        val data: T,
+    ) : GlowResult<T>()
+
+    data class Failure(
+        val error: ApiError,
+    ) : GlowResult<Nothing>()
 }
 
 /** Returns the success value or `null` if this is a [GlowResult.Failure]. */
-fun <T> GlowResult<T>.dataOrNull(): T? = when (this) {
-    is GlowResult.Success -> data
-    is GlowResult.Failure -> null
-}
+fun <T> GlowResult<T>.dataOrNull(): T? =
+    when (this) {
+        is GlowResult.Success -> data
+        is GlowResult.Failure -> null
+    }
 
-inline fun <T, R> GlowResult<T>.map(transform: (T) -> R): GlowResult<R> = when (this) {
-    is GlowResult.Success -> GlowResult.Success(transform(data))
-    is GlowResult.Failure -> this
-}
+inline fun <T, R> GlowResult<T>.map(transform: (T) -> R): GlowResult<R> =
+    when (this) {
+        is GlowResult.Success -> GlowResult.Success(transform(data))
+        is GlowResult.Failure -> this
+    }
 
 inline fun <T> GlowResult<T>.onSuccess(block: (T) -> Unit): GlowResult<T> {
     if (this is GlowResult.Success) block(data)

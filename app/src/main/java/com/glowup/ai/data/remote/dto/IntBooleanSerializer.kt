@@ -16,11 +16,12 @@ object IntBooleanSerializer : KSerializer<Boolean> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("IntBoolean", PrimitiveKind.INT)
 
-    override fun deserialize(decoder: Decoder): Boolean {
-        return decoder.decodeInt() != 0
-    }
+    override fun deserialize(decoder: Decoder): Boolean = decoder.decodeInt() != 0
 
-    override fun serialize(encoder: Encoder, value: Boolean) {
+    override fun serialize(
+        encoder: Encoder,
+        value: Boolean,
+    ) {
         encoder.encodeInt(if (value) 1 else 0)
     }
 }

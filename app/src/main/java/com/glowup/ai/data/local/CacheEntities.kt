@@ -30,8 +30,8 @@ import kotlinx.coroutines.flow.Flow
     tableName = "dashboard_cache",
     indices = [
         Index(value = ["userId", "plan"]),
-        Index(value = ["cacheKey"])
-    ]
+        Index(value = ["cacheKey"]),
+    ],
 )
 data class DashboardCacheEntity(
     /** "<userId>:<plan>:<vertical>" */
@@ -56,7 +56,10 @@ interface DashboardCacheDao {
     suspend fun invalidateForUser(userId: String)
 
     @Query("DELETE FROM dashboard_cache WHERE userId = :userId AND plan != :currentPlan")
-    suspend fun dropOtherPlans(userId: String, currentPlan: String)
+    suspend fun dropOtherPlans(
+        userId: String,
+        currentPlan: String,
+    )
 
     @Query("DELETE FROM dashboard_cache WHERE userId = :userId")
     suspend fun clearForUser(userId: String)
@@ -66,8 +69,8 @@ interface DashboardCacheDao {
     tableName = "history_cache",
     indices = [
         Index(value = ["userId", "vertical"]),
-        Index(value = ["capturedAt"])
-    ]
+        Index(value = ["capturedAt"]),
+    ],
 )
 data class HistoryCacheEntity(
     @PrimaryKey val id: String,
@@ -85,13 +88,22 @@ interface HistoryCacheDao {
     suspend fun upsertAll(entities: List<HistoryCacheEntity>)
 
     @Query("SELECT * FROM history_cache WHERE userId = :userId AND vertical = :vertical ORDER BY capturedAt DESC")
-    suspend fun forUser(userId: String, vertical: String): List<HistoryCacheEntity>
+    suspend fun forUser(
+        userId: String,
+        vertical: String,
+    ): List<HistoryCacheEntity>
 
     @Query("UPDATE history_cache SET valid = 0 WHERE userId = :userId AND vertical = :vertical")
-    suspend fun invalidateForUser(userId: String, vertical: String)
+    suspend fun invalidateForUser(
+        userId: String,
+        vertical: String,
+    )
 
     @Query("DELETE FROM history_cache WHERE userId = :userId AND vertical = :vertical")
-    suspend fun clearForUser(userId: String, vertical: String)
+    suspend fun clearForUser(
+        userId: String,
+        vertical: String,
+    )
 
     @Query("DELETE FROM history_cache WHERE userId = :userId")
     suspend fun clearAllForUser(userId: String)
@@ -103,8 +115,8 @@ interface HistoryCacheDao {
     tableName = "product_cache",
     indices = [
         Index(value = ["name"]),
-        Index(value = ["barcode"])
-    ]
+        Index(value = ["barcode"]),
+    ],
 )
 data class ProductCacheEntity(
     @PrimaryKey val id: String,
@@ -164,8 +176,8 @@ interface ProductDetailCacheDao {
     tableName = "routine_event_cache",
     indices = [
         Index(value = ["userId"]),
-        Index(value = ["productId"])
-    ]
+        Index(value = ["productId"]),
+    ],
 )
 data class RoutineEventCacheEntity(
     @PrimaryKey val id: String,
@@ -190,8 +202,8 @@ interface RoutineEventCacheDao {
 @Entity(
     tableName = "experiment_cache",
     indices = [
-        Index(value = ["userId", "plan", "valid"])
-    ]
+        Index(value = ["userId", "plan", "valid"]),
+    ],
 )
 data class ExperimentCacheEntity(
     @PrimaryKey val id: String,
@@ -212,13 +224,19 @@ interface ExperimentCacheDao {
     suspend fun upsertAll(entities: List<ExperimentCacheEntity>)
 
     @Query("SELECT * FROM experiment_cache WHERE userId = :userId AND plan = :plan AND valid = 1")
-    suspend fun forUser(userId: String, plan: String): List<ExperimentCacheEntity>
+    suspend fun forUser(
+        userId: String,
+        plan: String,
+    ): List<ExperimentCacheEntity>
 
     @Query("SELECT * FROM experiment_cache WHERE id = :id")
     suspend fun get(id: String): ExperimentCacheEntity?
 
     @Query("SELECT * FROM experiment_cache WHERE id = :id AND plan = :plan AND valid = 1")
-    suspend fun getForPlan(id: String, plan: String): ExperimentCacheEntity?
+    suspend fun getForPlan(
+        id: String,
+        plan: String,
+    ): ExperimentCacheEntity?
 
     @Query("UPDATE experiment_cache SET valid = 0 WHERE userId = :userId")
     suspend fun invalidateForUser(userId: String)
@@ -246,10 +264,17 @@ interface VerdictCacheDao {
     suspend fun insertAll(entities: List<VerdictCacheEntity>)
 
     @Query("SELECT * FROM verdict_cache WHERE userId = :userId AND plan = :plan AND vertical = :vertical AND valid = 1")
-    suspend fun current(userId: String, plan: String, vertical: String): List<VerdictCacheEntity>
+    suspend fun current(
+        userId: String,
+        plan: String,
+        vertical: String,
+    ): List<VerdictCacheEntity>
 
     @Query("DELETE FROM verdict_cache WHERE userId = :userId AND vertical = :vertical")
-    suspend fun clearForUser(userId: String, vertical: String)
+    suspend fun clearForUser(
+        userId: String,
+        vertical: String,
+    )
 
     @Query("UPDATE verdict_cache SET valid = 0 WHERE userId = :userId")
     suspend fun invalidateForUser(userId: String)
@@ -350,8 +375,8 @@ interface LabelCacheDao {
     tableName = "context_event_cache",
     indices = [
         Index(value = ["userId"]),
-        Index(value = ["occurredAt"])
-    ]
+        Index(value = ["occurredAt"]),
+    ],
 )
 data class ContextEventCacheEntity(
     @PrimaryKey val id: String,

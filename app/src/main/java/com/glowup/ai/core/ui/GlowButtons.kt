@@ -112,90 +112,96 @@ fun GlowPrimaryButton(
     // Press scale animation: 96% scale when pressed, 80% alpha
     val scale by animateFloatAsState(
         targetValue = if (isPressed && isInteractive) 0.96f else 1f,
-        animationSpec = GlowMotion.respectingReducedMotion(
-            GlowMotion.fast,
-            reducedMotion
-        ) as androidx.compose.animation.core.AnimationSpec<Float>,
-        label = "primaryButtonPressScale"
+        animationSpec =
+            GlowMotion.respectingReducedMotion(
+                GlowMotion.fast,
+                reducedMotion,
+            ) as androidx.compose.animation.core.AnimationSpec<Float>,
+        label = "primaryButtonPressScale",
     )
 
     val alpha by animateFloatAsState(
         targetValue = if (isPressed && isInteractive) 0.8f else 1f,
-        animationSpec = GlowMotion.respectingReducedMotion(
-            GlowMotion.fast,
-            reducedMotion
-        ) as androidx.compose.animation.core.AnimationSpec<Float>,
-        label = "primaryButtonPressAlpha"
+        animationSpec =
+            GlowMotion.respectingReducedMotion(
+                GlowMotion.fast,
+                reducedMotion,
+            ) as androidx.compose.animation.core.AnimationSpec<Float>,
+        label = "primaryButtonPressAlpha",
     )
 
     Button(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .scale(scale)
-            .alpha(alpha)
-            .shadow(
-                elevation = if (isPressed) 0.dp else 2.dp,
-                shape = GlowShapes.md,
-                clip = false
-            )
-            .semantics {
-                this.contentDescription = contentDescription ?: text
-                if (!isInteractive) disabled()
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .scale(scale)
+                .alpha(alpha)
+                .shadow(
+                    elevation = if (isPressed) 0.dp else 2.dp,
+                    shape = GlowShapes.md,
+                    clip = false,
+                ).semantics {
+                    this.contentDescription = contentDescription ?: text
+                    if (!isInteractive) disabled()
+                },
         enabled = isInteractive,
         shape = GlowShapes.md,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = TextPrimary,
-            disabledContainerColor = Color.Transparent,
-            disabledContentColor = TextPrimary.copy(alpha = 0.5f)
-        ),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                contentColor = TextPrimary,
+                disabledContainerColor = Color.Transparent,
+                disabledContentColor = TextPrimary.copy(alpha = 0.5f),
+            ),
         contentPadding = PaddingValues(horizontal = GlowSpacing.lg, vertical = 20.dp),
         interactionSource = interactionSource,
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp,
-            disabledElevation = 0.dp
-        )
+        elevation =
+            ButtonDefaults.buttonElevation(
+                defaultElevation = 0.dp,
+                pressedElevation = 0.dp,
+                disabledElevation = 0.dp,
+            ),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(GradientAmber, GradientOrange)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush =
+                            Brush.horizontalGradient(
+                                colors = listOf(GradientAmber, GradientOrange),
+                            ),
+                        shape = GlowShapes.md,
+                        alpha = if (enabled) 1f else 0.5f,
                     ),
-                    shape = GlowShapes.md,
-                    alpha = if (enabled) 1f else 0.5f
-                ),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             if (loading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(20.dp),
                     color = TextPrimary,
-                    strokeWidth = 2.5.dp
+                    strokeWidth = 2.5.dp,
                 )
             } else {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     icon?.let {
                         Icon(
                             imageVector = it,
                             contentDescription = null,
                             modifier = Modifier.size(20.dp),
-                            tint = if (enabled) TextPrimary else TextPrimary.copy(alpha = 0.5f)
+                            tint = if (enabled) TextPrimary else TextPrimary.copy(alpha = 0.5f),
                         )
                     }
                     Text(
                         text = text,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (enabled) TextPrimary else TextPrimary.copy(alpha = 0.5f)
+                        color = if (enabled) TextPrimary else TextPrimary.copy(alpha = 0.5f),
                     )
                 }
             }
@@ -251,70 +257,75 @@ fun GlowSecondaryButton(
     // Press scale animation: 96% scale when pressed, 80% alpha
     val scale by animateFloatAsState(
         targetValue = if (isPressed && isInteractive) 0.96f else 1f,
-        animationSpec = GlowMotion.respectingReducedMotion(
-            GlowMotion.fast,
-            reducedMotion
-        ) as androidx.compose.animation.core.AnimationSpec<Float>,
-        label = "secondaryButtonPressScale"
+        animationSpec =
+            GlowMotion.respectingReducedMotion(
+                GlowMotion.fast,
+                reducedMotion,
+            ) as androidx.compose.animation.core.AnimationSpec<Float>,
+        label = "secondaryButtonPressScale",
     )
 
     val alpha by animateFloatAsState(
         targetValue = if (isPressed && isInteractive) 0.8f else 1f,
-        animationSpec = GlowMotion.respectingReducedMotion(
-            GlowMotion.fast,
-            reducedMotion
-        ) as androidx.compose.animation.core.AnimationSpec<Float>,
-        label = "secondaryButtonPressAlpha"
+        animationSpec =
+            GlowMotion.respectingReducedMotion(
+                GlowMotion.fast,
+                reducedMotion,
+            ) as androidx.compose.animation.core.AnimationSpec<Float>,
+        label = "secondaryButtonPressAlpha",
     )
 
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .scale(scale)
-            .alpha(alpha)
-            .semantics {
-                this.contentDescription = contentDescription ?: text
-                if (!isInteractive) disabled()
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .scale(scale)
+                .alpha(alpha)
+                .semantics {
+                    this.contentDescription = contentDescription ?: text
+                    if (!isInteractive) disabled()
+                },
         enabled = isInteractive,
         shape = GlowShapes.md,
-        border = BorderStroke(
-            width = 1.5.dp,
-            color = if (enabled) BorderSecondary else BorderSecondary.copy(alpha = 0.5f)
-        ),
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Color.White,
-            contentColor = TextPrimary,
-            disabledContainerColor = Color.White.copy(alpha = 0.5f),
-            disabledContentColor = TextPrimary.copy(alpha = 0.5f)
-        ),
+        border =
+            BorderStroke(
+                width = 1.5.dp,
+                color = if (enabled) BorderSecondary else BorderSecondary.copy(alpha = 0.5f),
+            ),
+        colors =
+            ButtonDefaults.outlinedButtonColors(
+                containerColor = Color.White,
+                contentColor = TextPrimary,
+                disabledContainerColor = Color.White.copy(alpha = 0.5f),
+                disabledContentColor = TextPrimary.copy(alpha = 0.5f),
+            ),
         contentPadding = PaddingValues(horizontal = GlowSpacing.lg, vertical = 20.dp),
-        interactionSource = interactionSource
+        interactionSource = interactionSource,
     ) {
         if (loading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(20.dp),
                 color = TextPrimary,
-                strokeWidth = 2.5.dp
+                strokeWidth = 2.5.dp,
             )
         } else {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 icon?.let {
                     Icon(
                         imageVector = it,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                 }
                 Text(
                     text = text,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
             }
         }
@@ -370,69 +381,74 @@ fun GlowFloatingActionButton(
     // Press scale animation: 96% scale when pressed
     val scale by animateFloatAsState(
         targetValue = if (isPressed && isInteractive) 0.96f else 1f,
-        animationSpec = GlowMotion.respectingReducedMotion(
-            GlowMotion.fast,
-            reducedMotion
-        ) as androidx.compose.animation.core.AnimationSpec<Float>,
-        label = "fabPressScale"
+        animationSpec =
+            GlowMotion.respectingReducedMotion(
+                GlowMotion.fast,
+                reducedMotion,
+            ) as androidx.compose.animation.core.AnimationSpec<Float>,
+        label = "fabPressScale",
     )
 
     // Subtle rotation on press (2 degrees)
     val rotation by animateFloatAsState(
         targetValue = if (isPressed && isInteractive) 2f else 0f,
-        animationSpec = GlowMotion.respectingReducedMotion(
-            GlowMotion.fast,
-            reducedMotion
-        ) as androidx.compose.animation.core.AnimationSpec<Float>,
-        label = "fabPressRotation"
+        animationSpec =
+            GlowMotion.respectingReducedMotion(
+                GlowMotion.fast,
+                reducedMotion,
+            ) as androidx.compose.animation.core.AnimationSpec<Float>,
+        label = "fabPressRotation",
     )
 
     FloatingActionButton(
         onClick = onClick,
-        modifier = modifier
-            .size(56.dp)
-            .scale(scale)
-            .graphicsLayer {
-                rotationZ = rotation
-            }
-            .semantics {
-                this.contentDescription = contentDescription ?: "Add"
-                if (!isInteractive) disabled()
-            },
+        modifier =
+            modifier
+                .size(56.dp)
+                .scale(scale)
+                .graphicsLayer {
+                    rotationZ = rotation
+                }.semantics {
+                    this.contentDescription = contentDescription ?: "Add"
+                    if (!isInteractive) disabled()
+                },
         shape = RoundedCornerShape(16.dp),
         containerColor = Color.Transparent,
         contentColor = TextPrimary,
-        elevation = FloatingActionButtonDefaults.elevation(
-            defaultElevation = if (enabled) 6.dp else 2.dp,
-            pressedElevation = if (enabled) 8.dp else 2.dp,
-            hoveredElevation = if (enabled) 8.dp else 2.dp
-        ),
-        interactionSource = interactionSource
+        elevation =
+            FloatingActionButtonDefaults.elevation(
+                defaultElevation = if (enabled) 6.dp else 2.dp,
+                pressedElevation = if (enabled) 8.dp else 2.dp,
+                hoveredElevation = if (enabled) 8.dp else 2.dp,
+            ),
+        interactionSource = interactionSource,
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(GradientAmber, GradientOrange)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush =
+                            Brush.horizontalGradient(
+                                colors = listOf(GradientAmber, GradientOrange),
+                            ),
+                        shape = RoundedCornerShape(16.dp),
+                        alpha = if (enabled) 1f else 0.5f,
                     ),
-                    shape = RoundedCornerShape(16.dp),
-                    alpha = if (enabled) 1f else 0.5f
-                ),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             if (loading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     color = TextPrimary,
-                    strokeWidth = 2.5.dp
+                    strokeWidth = 2.5.dp,
                 )
             } else {
                 Icon(
                     imageVector = icon,
                     contentDescription = contentDescription,
                     modifier = Modifier.size(24.dp),
-                    tint = if (enabled) TextPrimary else TextPrimary.copy(alpha = 0.5f)
+                    tint = if (enabled) TextPrimary else TextPrimary.copy(alpha = 0.5f),
                 )
             }
         }
@@ -446,34 +462,35 @@ fun GlowFloatingActionButton(
 private fun GlowButtonsPreviewLight() {
     GlowUpTheme(darkTheme = false) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
                 text = "Primary Buttons",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF52525B)
+                color = Color(0xFF52525B),
             )
 
             GlowPrimaryButton(
                 text = "Continue with Google",
                 onClick = {},
-                icon = Icons.Default.Star
+                icon = Icons.Default.Star,
             )
 
             GlowPrimaryButton(
                 text = "Loading",
                 onClick = {},
-                loading = true
+                loading = true,
             )
 
             GlowPrimaryButton(
                 text = "Disabled",
                 onClick = {},
-                enabled = false
+                enabled = false,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -482,18 +499,18 @@ private fun GlowButtonsPreviewLight() {
                 text = "Secondary Buttons",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF52525B)
+                color = Color(0xFF52525B),
             )
 
             GlowSecondaryButton(
                 text = "Continue with email",
-                onClick = {}
+                onClick = {},
             )
 
             GlowSecondaryButton(
                 text = "Cancel",
                 onClick = {},
-                icon = Icons.Default.Close
+                icon = Icons.Default.Close,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -502,30 +519,30 @@ private fun GlowButtonsPreviewLight() {
                 text = "Floating Action Button",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF52525B)
+                color = Color(0xFF52525B),
             )
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 GlowFloatingActionButton(
                     onClick = {},
                     icon = Icons.Default.Add,
-                    contentDescription = "Add product"
+                    contentDescription = "Add product",
                 )
 
                 GlowFloatingActionButton(
                     onClick = {},
                     icon = Icons.Default.Edit,
                     loading = true,
-                    contentDescription = "Edit"
+                    contentDescription = "Edit",
                 )
 
                 GlowFloatingActionButton(
                     onClick = {},
                     icon = Icons.Default.Add,
                     enabled = false,
-                    contentDescription = "Add (disabled)"
+                    contentDescription = "Add (disabled)",
                 )
             }
         }
@@ -537,46 +554,47 @@ private fun GlowButtonsPreviewLight() {
 private fun GlowButtonsPreviewDark() {
     GlowUpTheme(darkTheme = true) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
                 text = "Primary Button",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFFC9BFA9)
+                color = Color(0xFFC9BFA9),
             )
 
             GlowPrimaryButton(
                 text = "Continue",
-                onClick = {}
+                onClick = {},
             )
 
             Text(
                 text = "Secondary Button",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFFC9BFA9)
+                color = Color(0xFFC9BFA9),
             )
 
             GlowSecondaryButton(
                 text = "Cancel",
-                onClick = {}
+                onClick = {},
             )
 
             Text(
                 text = "Floating Action Button",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFFC9BFA9)
+                color = Color(0xFFC9BFA9),
             )
 
             GlowFloatingActionButton(
                 onClick = {},
                 icon = Icons.Default.Add,
-                contentDescription = "Add"
+                contentDescription = "Add",
             )
         }
     }

@@ -12,7 +12,6 @@ import java.nio.charset.Charset
 class RedactingLoggingInterceptor(
     private val logger: (String) -> Unit,
 ) : Interceptor {
-
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         logger("--> ${request.method} ${redactUrl(request.url.toString())}")
@@ -29,8 +28,7 @@ class RedactingLoggingInterceptor(
         return response
     }
 
-    private fun redactUrl(url: String): String =
-        url.replace(Regex("(?i)(user_id|userid|firebase_uid|token)=[^&]+"), "$1=<redacted>")
+    private fun redactUrl(url: String): String = url.replace(Regex("(?i)(user_id|userid|firebase_uid|token)=[^&]+"), "$1=<redacted>")
 
     private fun redactedRequestBody(body: okhttp3.RequestBody): String {
         val length = body.contentLength()
@@ -44,17 +42,22 @@ class RedactingLoggingInterceptor(
         return redactBody(buffer.readString(charset))
     }
 
-    private fun redactBody(body: String, truncated: Boolean = false): String {
+    private fun redactBody(
+        body: String,
+        truncated: Boolean = false,
+    ): String {
         var redacted = body
-        redacted = redacted.replace(
-            Regex("\"([a-zA-Z_]*base64)\"\\\\s*:\\\\s*\"[^\"]*\"", RegexOption.IGNORE_CASE),
-            "\"$1\":\"<redacted-image-bytes>\"",
-        )
+        redacted =
+            redacted.replace(
+                Regex("\"([a-zA-Z_]*base64)\"\\\\s*:\\\\s*\"[^\"]*\"", RegexOption.IGNORE_CASE),
+                "\"$1\":\"<redacted-image-bytes>\"",
+            )
         redacted = redacted.replace(Regex("(?i)bearer\\\\s+[A-Za-z0-9\\\\-_.=]+"), "Bearer <redacted>")
-        redacted = redacted.replace(
-            Regex("\"(id_?token|access_?token|user_?id|firebase_?uid|authorization)\"\\\\s*:\\\\s*\"[^\"]*\"", RegexOption.IGNORE_CASE),
-            "\"$1\":\"<redacted>\"",
-        )
+        redacted =
+            redacted.replace(
+                Regex("\"(id_?token|access_?token|user_?id|firebase_?uid|authorization)\"\\\\s*:\\\\s*\"[^\"]*\"", RegexOption.IGNORE_CASE),
+                "\"$1\":\"<redacted>\"",
+            )
         return if (truncated) "$redacted…<truncated>" else redacted
     }
 

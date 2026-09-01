@@ -127,11 +127,12 @@ private fun SettingsContent(
 
     Scaffold(topBar = { GlowTopBar(title = "Settings", onBack = onBack) }) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(GlowSpacing.lg),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(GlowSpacing.lg),
             verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
         ) {
             // Account Section
@@ -237,10 +238,11 @@ private fun AccountSection(
         ) {
             // Profile Photo Placeholder
             Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(glow.honey300),
+                modifier =
+                    Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(glow.honey300),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -587,10 +589,11 @@ private fun AboutSection() {
         SettingsClickableRow(
             title = "Send feedback",
             onClick = {
-                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                    data = Uri.parse("mailto:support@glowup.ai")
-                    putExtra(Intent.EXTRA_SUBJECT, "GlowUp AI Feedback")
-                }
+                val intent =
+                    Intent(Intent.ACTION_SENDTO).apply {
+                        data = Uri.parse("mailto:support@glowup.ai")
+                        putExtra(Intent.EXTRA_SUBJECT, "GlowUp AI Feedback")
+                    }
                 context.startActivity(intent)
             },
             showArrow = true,
@@ -632,9 +635,10 @@ private fun DebugSection(
         ) {
             SectionHeader(title = "Debug")
             Box(
-                modifier = Modifier
-                    .background(glow.danger.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small)
-                    .padding(horizontal = GlowSpacing.xs, vertical = 2.dp),
+                modifier =
+                    Modifier
+                        .background(glow.danger.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small)
+                        .padding(horizontal = GlowSpacing.xs, vertical = 2.dp),
             ) {
                 Text(
                     text = "DEV ONLY",
@@ -718,9 +722,10 @@ private fun SettingsToggleRow(
     val glow = LocalGlowColors.current
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics { contentDescription = "$title, ${if (checked) "on" else "off"}" },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = "$title, ${if (checked) "on" else "off"}" },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -745,10 +750,11 @@ private fun SettingsToggleRow(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = glow.honey600,
-                checkedTrackColor = glow.honey300,
-            ),
+            colors =
+                SwitchDefaults.colors(
+                    checkedThumbColor = glow.honey600,
+                    checkedTrackColor = glow.honey300,
+                ),
         )
     }
 }
@@ -765,10 +771,11 @@ private fun SettingsClickableRow(
     val glow = LocalGlowColors.current
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick, enabled = !loading)
-            .semantics { contentDescription = title },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick, enabled = !loading)
+                .semantics { contentDescription = title },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -847,7 +854,7 @@ private fun DeleteAccountDialog(
         text = {
             Text(
                 "This will permanently delete your account and all associated data. " +
-                    "This action cannot be undone."
+                    "This action cannot be undone.",
             )
         },
         confirmButton = {

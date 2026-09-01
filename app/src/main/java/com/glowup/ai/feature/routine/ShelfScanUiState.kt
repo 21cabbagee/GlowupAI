@@ -12,10 +12,13 @@ data class ShelfScanCandidateUi(
 sealed interface ShelfScanUiState {
     /** Nothing submitted yet — waiting for the user to pick a shelf photo. */
     data object Idle : ShelfScanUiState
+
     data object Uploading : ShelfScanUiState
 
     /** `~1.5s` poll of `GET /shelf-scan/{jobId}` while `status` is `queued`/`running`. */
-    data class Polling(val message: String) : ShelfScanUiState
+    data class Polling(
+        val message: String,
+    ) : ShelfScanUiState
 
     /**
      * Job completed. [candidates] is empty (with [message] explaining why — the vision provider
@@ -33,6 +36,11 @@ sealed interface ShelfScanUiState {
         val manualAddError: String? = null,
     ) : ShelfScanUiState
 
-    data class Done(val createdProducts: List<Product>) : ShelfScanUiState
-    data class Error(val message: String) : ShelfScanUiState
+    data class Done(
+        val createdProducts: List<Product>,
+    ) : ShelfScanUiState
+
+    data class Error(
+        val message: String,
+    ) : ShelfScanUiState
 }

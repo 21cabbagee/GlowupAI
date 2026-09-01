@@ -37,16 +37,17 @@ fun LineChart(
 
     if (points.isEmpty()) {
         Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(glow.surfaceCard, RoundedCornerShape(12.dp)),
-            contentAlignment = Alignment.Center
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .background(glow.surfaceCard, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = "No data available",
                 style = MaterialTheme.typography.bodyMedium,
-                color = glow.ink600
+                color = glow.ink600,
             )
         }
         return
@@ -55,28 +56,30 @@ fun LineChart(
     var selectedPoint by remember { mutableStateOf<MetricPoint?>(null) }
 
     // Animation progress
-    val animationProgress = if (animated) {
-        val infiniteTransition = rememberInfiniteTransition(label = "chart")
-        var targetProgress by remember { mutableStateOf(0f) }
+    val animationProgress =
+        if (animated) {
+            val infiniteTransition = rememberInfiniteTransition(label = "chart")
+            var targetProgress by remember { mutableStateOf(0f) }
 
-        LaunchedEffect(Unit) {
-            targetProgress = 1f
+            LaunchedEffect(Unit) {
+                targetProgress = 1f
+            }
+
+            animateFloatAsState(
+                targetValue = targetProgress,
+                animationSpec = tween(1000, easing = EaseOutCubic),
+                label = "progress",
+            ).value
+        } else {
+            1f
         }
 
-        animateFloatAsState(
-            targetValue = targetProgress,
-            animationSpec = tween(1000, easing = EaseOutCubic),
-            label = "progress"
-        ).value
-    } else {
-        1f
-    }
-
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(glow.surfaceCard, RoundedCornerShape(12.dp))
-            .padding(GlowSpacing.md)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(glow.surfaceCard, RoundedCornerShape(12.dp))
+                .padding(GlowSpacing.md),
     ) {
         if (label.isNotEmpty()) {
             Text(
@@ -84,50 +87,52 @@ fun LineChart(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = glow.ink900,
-                modifier = Modifier.padding(bottom = GlowSpacing.sm)
+                modifier = Modifier.padding(bottom = GlowSpacing.sm),
             )
         }
 
         // Selected point info
         selectedPoint?.let { point ->
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(color.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
-                    .padding(GlowSpacing.sm),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(color.copy(alpha = 0.12f), RoundedCornerShape(8.dp))
+                        .padding(GlowSpacing.sm),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = point.date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = glow.ink900
+                    color = glow.ink900,
                 )
                 Text(
                     text = String.format("%.2f", point.value),
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = glow.ink900
+                    color = glow.ink900,
                 )
             }
             Spacer(modifier = Modifier.height(GlowSpacing.sm))
         }
 
         Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                        // Find nearest point
-                        val chartWidth = size.width.toFloat()
-                        val spacing = chartWidth / (points.size - 1).coerceAtLeast(1)
-                        val index = (offset.x / spacing).toInt().coerceIn(0, points.lastIndex)
-                        selectedPoint = points.getOrNull(index)
-                    }
-                }
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .pointerInput(Unit) {
+                        detectTapGestures { offset ->
+                            // Find nearest point
+                            val chartWidth = size.width.toFloat()
+                            val spacing = chartWidth / (points.size - 1).coerceAtLeast(1)
+                            val index = (offset.x / spacing).toInt().coerceIn(0, points.lastIndex)
+                            selectedPoint = points.getOrNull(index)
+                        }
+                    },
         ) {
             val width = size.width
             val height = size.height
@@ -150,84 +155,93 @@ fun LineChart(
                         start = Offset(padding, y),
                         end = Offset(width - padding, y),
                         strokeWidth = 1f,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f)),
                     )
                 }
             }
 
             // Calculate points positions
-            val pointPositions = points.mapIndexed { index, point ->
-                val x = padding + (chartWidth * index / (points.size - 1).coerceAtLeast(1))
-                val normalizedValue = ((point.value - minValue) / valueRange).toFloat()
-                val y = padding + chartHeight * (1 - normalizedValue)
-                Offset(x, y)
-            }
+            val pointPositions =
+                points.mapIndexed { index, point ->
+                    val x = padding + (chartWidth * index / (points.size - 1).coerceAtLeast(1))
+                    val normalizedValue = ((point.value - minValue) / valueRange).toFloat()
+                    val y = padding + chartHeight * (1 - normalizedValue)
+                    Offset(x, y)
+                }
 
             // Draw smooth curved line with animation
             if (pointPositions.size > 1) {
-                val path = Path().apply {
-                    val visiblePoints = (pointPositions.size * animationProgress).toInt().coerceAtLeast(2)
-                    moveTo(pointPositions[0].x, pointPositions[0].y)
+                val path =
+                    Path().apply {
+                        val visiblePoints = (pointPositions.size * animationProgress).toInt().coerceAtLeast(2)
+                        moveTo(pointPositions[0].x, pointPositions[0].y)
 
-                    // Use cubic bezier curves for smooth transitions
-                    for (i in 1 until visiblePoints) {
-                        val prev = pointPositions[i - 1]
-                        val current = pointPositions[i]
+                        // Use cubic bezier curves for smooth transitions
+                        for (i in 1 until visiblePoints) {
+                            val prev = pointPositions[i - 1]
+                            val current = pointPositions[i]
 
-                        if (i < visiblePoints - 1) {
-                            val next = pointPositions[i + 1]
+                            if (i < visiblePoints - 1) {
+                                val next = pointPositions[i + 1]
 
-                            // Calculate control points for smooth curve
-                            val controlX1 = prev.x + (current.x - prev.x) * 0.5f
-                            val controlY1 = prev.y
-                            val controlX2 = current.x - (next.x - current.x) * 0.5f
-                            val controlY2 = current.y
+                                // Calculate control points for smooth curve
+                                val controlX1 = prev.x + (current.x - prev.x) * 0.5f
+                                val controlY1 = prev.y
+                                val controlX2 = current.x - (next.x - current.x) * 0.5f
+                                val controlY2 = current.y
 
-                            cubicTo(
-                                controlX1, controlY1,
-                                controlX2, controlY2,
-                                current.x, current.y
-                            )
-                        } else {
-                            // Last segment uses simpler curve
-                            val controlX = prev.x + (current.x - prev.x) * 0.5f
-                            quadraticBezierTo(controlX, prev.y, current.x, current.y)
+                                cubicTo(
+                                    controlX1,
+                                    controlY1,
+                                    controlX2,
+                                    controlY2,
+                                    current.x,
+                                    current.y,
+                                )
+                            } else {
+                                // Last segment uses simpler curve
+                                val controlX = prev.x + (current.x - prev.x) * 0.5f
+                                quadraticBezierTo(controlX, prev.y, current.x, current.y)
+                            }
                         }
                     }
-                }
 
                 // Draw gradient fill
-                val gradient = Brush.verticalGradient(
-                    colors = listOf(
-                        color.copy(alpha = 0.3f),
-                        color.copy(alpha = 0.05f)
-                    ),
-                    startY = padding,
-                    endY = height - padding
-                )
+                val gradient =
+                    Brush.verticalGradient(
+                        colors =
+                            listOf(
+                                color.copy(alpha = 0.3f),
+                                color.copy(alpha = 0.05f),
+                            ),
+                        startY = padding,
+                        endY = height - padding,
+                    )
 
-                val fillPath = Path().apply {
-                    addPath(path)
-                    val lastVisibleIndex = (pointPositions.size * animationProgress).toInt().coerceIn(1, pointPositions.lastIndex)
-                    lineTo(pointPositions[lastVisibleIndex].x, height - padding)
-                    lineTo(pointPositions[0].x, height - padding)
-                    close()
-                }
+                val fillPath =
+                    Path().apply {
+                        addPath(path)
+                        val lastVisibleIndex = (pointPositions.size * animationProgress).toInt().coerceIn(1, pointPositions.lastIndex)
+                        lineTo(pointPositions[lastVisibleIndex].x, height - padding)
+                        lineTo(pointPositions[0].x, height - padding)
+                        close()
+                    }
 
                 drawPath(
                     path = fillPath,
-                    brush = gradient
+                    brush = gradient,
                 )
 
                 // Draw line
                 drawPath(
                     path = path,
                     color = color,
-                    style = Stroke(
-                        width = 3f,
-                        cap = StrokeCap.Round,
-                        join = StrokeJoin.Round
-                    )
+                    style =
+                        Stroke(
+                            width = 3f,
+                            cap = StrokeCap.Round,
+                            join = StrokeJoin.Round,
+                        ),
                 )
             }
 
@@ -240,21 +254,22 @@ fun LineChart(
                 drawCircle(
                     color = Color.White,
                     radius = radius + 2f,
-                    center = position
+                    center = position,
                 )
                 drawCircle(
                     color = color,
                     radius = radius,
-                    center = position
+                    center = position,
                 )
             }
 
             // Draw axis labels
-            val textPaint = android.graphics.Paint().apply {
-                textSize = 24f
-                this.color = android.graphics.Color.GRAY
-                textAlign = android.graphics.Paint.Align.CENTER
-            }
+            val textPaint =
+                android.graphics.Paint().apply {
+                    textSize = 24f
+                    this.color = android.graphics.Color.GRAY
+                    textAlign = android.graphics.Paint.Align.CENTER
+                }
 
             // Y-axis labels
             for (i in 0..4) {
@@ -264,7 +279,7 @@ fun LineChart(
                     String.format("%.1f", value),
                     padding / 2,
                     y + 8f,
-                    textPaint
+                    textPaint,
                 )
             }
 
@@ -278,7 +293,7 @@ fun LineChart(
                         point.date.format(formatter),
                         position.x,
                         height - padding / 3,
-                        textPaint
+                        textPaint,
                     )
                 }
             }
@@ -296,23 +311,24 @@ fun ComparisonChart(
     val glow = LocalGlowColors.current
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(glow.surfaceCard, RoundedCornerShape(12.dp))
-            .padding(GlowSpacing.md)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(glow.surfaceCard, RoundedCornerShape(12.dp))
+                .padding(GlowSpacing.md),
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = glow.ink900,
-            modifier = Modifier.padding(bottom = GlowSpacing.sm)
+            modifier = Modifier.padding(bottom = GlowSpacing.sm),
         )
 
         // Legend
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(GlowSpacing.md)
+            horizontalArrangement = Arrangement.spacedBy(GlowSpacing.md),
         ) {
             LegendItem(color = glow.honey700, label = "Before")
             LegendItem(color = glow.success, label = "After")
@@ -326,7 +342,7 @@ fun ComparisonChart(
                     points = beforePoints,
                     color = glow.honey700,
                     showGrid = true,
-                    animated = false
+                    animated = false,
                 )
             }
             if (afterPoints.isNotEmpty()) {
@@ -334,7 +350,7 @@ fun ComparisonChart(
                     points = afterPoints,
                     color = glow.success,
                     showGrid = false,
-                    animated = false
+                    animated = false,
                 )
             }
         }
@@ -342,20 +358,24 @@ fun ComparisonChart(
 }
 
 @Composable
-private fun LegendItem(color: Color, label: String) {
+private fun LegendItem(
+    color: Color,
+    label: String,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(
-            modifier = Modifier
-                .size(12.dp)
-                .background(color, RoundedCornerShape(2.dp))
+            modifier =
+                Modifier
+                    .size(12.dp)
+                    .background(color, RoundedCornerShape(2.dp)),
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = LocalGlowColors.current.ink600
+            color = LocalGlowColors.current.ink600,
         )
     }
 }

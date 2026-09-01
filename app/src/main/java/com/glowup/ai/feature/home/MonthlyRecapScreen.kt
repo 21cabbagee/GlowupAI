@@ -40,7 +40,7 @@ fun MonthlyRecapScreen(
     stats: MonthlyStats,
     onShareClick: () -> Unit,
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val glowColors = LocalGlowColors.current
     val honeyColor = glowColors.honey500
@@ -50,17 +50,18 @@ fun MonthlyRecapScreen(
         topBar = {
             GlowTopBar(
                 title = "Your ${month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} Journey",
-                onBack = onBackClick
+                onBack = onBackClick,
             )
-        }
+        },
     ) { padding ->
         Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             // Hero card - main achievement
             HeroCard(stats, honeyColor, inkColor)
@@ -73,7 +74,7 @@ fun MonthlyRecapScreen(
                 BeforeAfterComparison(
                     beforeUrl = stats.firstCaptureUrl,
                     afterUrl = stats.lastCaptureUrl,
-                    daysBetween = stats.daysBetween
+                    daysBetween = stats.daysBetween,
                 )
             }
 
@@ -101,7 +102,7 @@ fun MonthlyRecapScreen(
             GlowButton(
                 text = "Share Your Progress",
                 onClick = onShareClick,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -116,21 +117,23 @@ fun MonthlyRecapScreen(
 private fun HeroCard(
     stats: MonthlyStats,
     honeyColor: Color,
-    inkColor: Color
+    inkColor: Color,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = honeyColor
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = honeyColor,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // Main number with animation
             var animatedCaptures by remember { mutableStateOf(0) }
@@ -138,7 +141,7 @@ private fun HeroCard(
                 animate(
                     initialValue = 0f,
                     targetValue = stats.totalCaptures.toFloat(),
-                    animationSpec = tween(1500, easing = EaseOutCubic)
+                    animationSpec = tween(1500, easing = EaseOutCubic),
                 ) { value, _ ->
                     animatedCaptures = value.toInt()
                 }
@@ -146,17 +149,18 @@ private fun HeroCard(
 
             Text(
                 text = "$animatedCaptures",
-                style = MaterialTheme.typography.displayLarge.copy(
-                    fontSize = MaterialTheme.typography.displayLarge.fontSize * 1.5f
-                ),
+                style =
+                    MaterialTheme.typography.displayLarge.copy(
+                        fontSize = MaterialTheme.typography.displayLarge.fontSize * 1.5f,
+                    ),
                 fontWeight = FontWeight.ExtraBold,
-                color = inkColor
+                color = inkColor,
             )
 
             Text(
                 text = "Captures This Month",
                 style = MaterialTheme.typography.titleLarge,
-                color = inkColor.copy(alpha = 0.9f)
+                color = inkColor.copy(alpha = 0.9f),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -165,19 +169,19 @@ private fun HeroCard(
             if (stats.streakMaintained) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Filled.LocalFireDepartment,
                         contentDescription = null,
                         tint = inkColor,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     )
                     Text(
                         text = "Streak maintained all month!",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = inkColor
+                        color = inkColor,
                     )
                 }
             }
@@ -191,39 +195,39 @@ private fun HeroCard(
 @Composable
 private fun StatsGrid(stats: MonthlyStats) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             StatCard(
                 icon = Icons.Filled.CheckCircle,
                 value = "${stats.daysActive}",
                 label = "Active Days",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             StatCard(
                 icon = Icons.Filled.Percent,
                 value = "${stats.consistencyPercent}%",
                 label = "Consistency",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
         }
 
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             StatCard(
                 icon = Icons.Filled.TrendingUp,
                 value = "${stats.improvementMetrics.size}",
                 label = "Metrics Improved",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
             StatCard(
                 icon = Icons.Filled.Science,
                 value = "${stats.experimentsCompleted}",
                 label = "Experiments Done",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
         }
     }
@@ -234,38 +238,40 @@ private fun StatCard(
     icon: ImageVector,
     value: String,
     label: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(32.dp),
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
         }
     }
@@ -278,81 +284,85 @@ private fun StatCard(
 private fun BeforeAfterComparison(
     beforeUrl: String,
     afterUrl: String,
-    daysBetween: Int
+    daysBetween: Int,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Text(
                 text = "Your Progress",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 // Before
                 Column(
                     modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(0.75f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(0.75f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
                     ) {
                         // TODO: Load actual image with Coil
                         Text(
                             text = "Before",
-                            modifier = Modifier.align(Alignment.Center)
+                            modifier = Modifier.align(Alignment.Center),
                         )
                     }
                     Text(
                         text = "Start of Month",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
                     )
                 }
 
                 // After
                 Column(
                     modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(0.75f)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(0.75f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
                     ) {
                         // TODO: Load actual image with Coil
                         Text(
                             text = "After",
-                            modifier = Modifier.align(Alignment.Center)
+                            modifier = Modifier.align(Alignment.Center),
                         )
                     }
                     Text(
                         text = "End of Month",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
                     )
                 }
             }
@@ -365,7 +375,7 @@ private fun BeforeAfterComparison(
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -379,28 +389,30 @@ private fun KeyInsights(stats: MonthlyStats) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Lightbulb,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
                 Text(
                     text = "Key Insights",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
 
@@ -408,22 +420,24 @@ private fun KeyInsights(stats: MonthlyStats) {
 
             stats.insights.forEach { insight ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                            .align(Alignment.CenterVertically)
+                        modifier =
+                            Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                                .align(Alignment.CenterVertically),
                     )
                     Text(
                         text = insight,
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -439,19 +453,21 @@ private fun AchievementsSection(achievements: List<String>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Text(
                 text = "🏆 Achievements Unlocked",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -460,7 +476,7 @@ private fun AchievementsSection(achievements: List<String>) {
                 Text(
                     text = "✨ $achievement",
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(vertical = 4.dp)
+                    modifier = Modifier.padding(vertical = 4.dp),
                 )
             }
         }
@@ -475,32 +491,34 @@ private fun ProductsSection(stats: MonthlyStats) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Text(
                 text = "🧴 Skincare Journey",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = "Added ${stats.productsAdded} new products to your routine",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
 
             Text(
                 text = "Logged ${stats.routineEvents} routine events",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
     }
@@ -514,26 +532,28 @@ private fun ExperimentsSection(stats: MonthlyStats) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Text(
                 text = "🔬 Skin Science",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = "Completed ${stats.experimentsCompleted} A/B tests",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
 
             if (stats.experimentsCompleted > 0) {
@@ -542,7 +562,7 @@ private fun ExperimentsSection(stats: MonthlyStats) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 8.dp),
                 )
             }
         }
@@ -565,5 +585,5 @@ data class MonthlyStats(
     val insights: List<String>,
     val firstCaptureUrl: String? = null,
     val lastCaptureUrl: String? = null,
-    val daysBetween: Int = 0
+    val daysBetween: Int = 0,
 )

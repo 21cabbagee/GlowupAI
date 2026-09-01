@@ -21,9 +21,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -39,7 +39,10 @@ import com.glowup.ai.core.ui.GlowTextField
 import com.glowup.ai.core.ui.GlowTopBar
 import com.glowup.ai.feature.shell.GlowDestination
 
-private enum class AuthMode(val title: String, val ctaLabel: String) {
+private enum class AuthMode(
+    val title: String,
+    val ctaLabel: String,
+) {
     SIGN_IN(title = "Sign in", ctaLabel = "Sign in"),
     CREATE_ACCOUNT(title = "Create your account", ctaLabel = "Create account"),
 }
@@ -95,12 +98,13 @@ private fun SignInContent(
 
     fun validateAndSubmit() {
         val trimmedEmail = email.trim()
-        validationError = when {
-            trimmedEmail.isEmpty() -> "Enter your email address."
-            !Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches() -> "Enter a valid email address."
-            password.length < 6 -> "Password must be at least 6 characters."
-            else -> null
-        }
+        validationError =
+            when {
+                trimmedEmail.isEmpty() -> "Enter your email address."
+                !Patterns.EMAIL_ADDRESS.matcher(trimmedEmail).matches() -> "Enter a valid email address."
+                password.length < 6 -> "Password must be at least 6 characters."
+                else -> null
+            }
         if (validationError != null) return
         when (mode) {
             AuthMode.SIGN_IN -> onSignIn(trimmedEmail, password)
@@ -112,11 +116,12 @@ private fun SignInContent(
         topBar = { GlowTopBar(title = mode.title, onBack = onBack) },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(GlowSpacing.lg),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(GlowSpacing.lg),
             verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
         ) {
             Row(
@@ -139,14 +144,20 @@ private fun SignInContent(
 
             GlowTextField(
                 value = email,
-                onValueChange = { email = it; validationError = null },
+                onValueChange = {
+                    email = it
+                    validationError = null
+                },
                 label = "Email",
                 keyboardType = KeyboardType.Email,
                 enabled = !isBusy,
             )
             GlowTextField(
                 value = password,
-                onValueChange = { password = it; validationError = null },
+                onValueChange = {
+                    password = it
+                    validationError = null
+                },
                 label = "Password",
                 supportingText = if (mode == AuthMode.CREATE_ACCOUNT) "At least 6 characters." else null,
                 errorText = validationError,
@@ -165,26 +176,38 @@ private fun SignInContent(
             }
 
             when (resetState) {
-                is PasswordResetState.Sent -> Text(
-                    text = "Password reset email sent — check your inbox.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = glow.success,
-                    modifier = Modifier.semantics {
-                        contentDescription = "Password reset email sent"
-                        liveRegion = LiveRegionMode.Polite
-                    },
-                )
-                is PasswordResetState.Failed -> Text(
-                    text = resetState.message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = glow.danger,
-                )
-                is PasswordResetState.Sending -> Text(
-                    text = "Sending reset email…",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = glow.ink600,
-                )
-                PasswordResetState.Idle -> Unit
+                is PasswordResetState.Sent -> {
+                    Text(
+                        text = "Password reset email sent — check your inbox.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = glow.success,
+                        modifier =
+                            Modifier.semantics {
+                                contentDescription = "Password reset email sent"
+                                liveRegion = LiveRegionMode.Polite
+                            },
+                    )
+                }
+
+                is PasswordResetState.Failed -> {
+                    Text(
+                        text = resetState.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = glow.danger,
+                    )
+                }
+
+                is PasswordResetState.Sending -> {
+                    Text(
+                        text = "Sending reset email…",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = glow.ink600,
+                    )
+                }
+
+                PasswordResetState.Idle -> {
+                    Unit
+                }
             }
 
             if (uiState is AuthUiState.Error) {

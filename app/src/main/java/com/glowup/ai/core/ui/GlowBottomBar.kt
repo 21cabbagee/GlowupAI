@@ -6,14 +6,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
@@ -31,7 +32,6 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.glowup.ai.core.design.GlowUpTheme
 import com.glowup.ai.core.design.LocalGlowColors
 
@@ -63,15 +63,17 @@ fun GlowBottomBar(
     val right = items.drop(2).take(2)
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.navigationBars),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.navigationBars),
     ) {
         androidx.compose.foundation.layout.Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp)
-                .background(glow.surfaceCard),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .background(glow.surfaceCard),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             androidx.compose.foundation.layout.Row(
@@ -96,22 +98,22 @@ fun GlowBottomBar(
         }
 
         Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .offset(y = (-24).dp)
-                .size(56.dp)
-                .background(glow.honey500, CircleShape)
-                .alpha(if (enabled) 1f else 0.45f)
-                .clickable(
-                    enabled = enabled,
-                    onClickLabel = fabContentDescription,
-                    role = Role.Button,
-                    onClick = onFabClick,
-                )
-                .semantics {
-                    contentDescription = fabContentDescription
-                    if (!enabled) disabled()
-                },
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = (-24).dp)
+                    .size(56.dp)
+                    .background(glow.honey500, CircleShape)
+                    .alpha(if (enabled) 1f else 0.45f)
+                    .clickable(
+                        enabled = enabled,
+                        onClickLabel = fabContentDescription,
+                        role = Role.Button,
+                        onClick = onFabClick,
+                    ).semantics {
+                        contentDescription = fabContentDescription
+                        if (!enabled) disabled()
+                    },
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -134,24 +136,25 @@ private fun BottomBarTab(
     val tint = if (isSelected) glow.honey600 else glow.ink600
     val interactionSource = remember { MutableInteractionSource() }
 
-    val tabDescription = buildString {
-        append(item.contentDescription)
-        if (isSelected) append(", selected")
-    }
+    val tabDescription =
+        buildString {
+            append(item.contentDescription)
+            if (isSelected) append(", selected")
+        }
 
     Column(
-        modifier = Modifier
-            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                role = Role.Tab,
-                onClick = onClick,
-            )
-            .semantics {
-                contentDescription = tabDescription
-                this.selected = isSelected
-            },
+        modifier =
+            Modifier
+                .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    role = Role.Tab,
+                    onClick = onClick,
+                ).semantics {
+                    contentDescription = tabDescription
+                    this.selected = isSelected
+                },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -173,11 +176,12 @@ private fun GlowBottomBarPreviewDark() {
 
 @Composable
 private fun PreviewContent() {
-    val items = listOf(
-        GlowBottomBarItem("Home", Icons.Filled.CameraAlt),
-        GlowBottomBarItem("Routine", Icons.Filled.CameraAlt),
-        GlowBottomBarItem("Insights", Icons.Filled.CameraAlt),
-        GlowBottomBarItem("You", Icons.Filled.CameraAlt),
-    )
+    val items =
+        listOf(
+            GlowBottomBarItem("Home", Icons.Filled.CameraAlt),
+            GlowBottomBarItem("Routine", Icons.Filled.CameraAlt),
+            GlowBottomBarItem("Insights", Icons.Filled.CameraAlt),
+            GlowBottomBarItem("You", Icons.Filled.CameraAlt),
+        )
     GlowBottomBar(items = items, selectedIndex = 0, onItemSelected = {}, onFabClick = {})
 }

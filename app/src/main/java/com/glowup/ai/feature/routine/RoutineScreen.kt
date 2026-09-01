@@ -17,12 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.ui.DisclaimerNote
 import com.glowup.ai.core.ui.EmptyState
@@ -38,6 +37,7 @@ import com.glowup.ai.core.ui.ShimmerSkeleton
 import com.glowup.ai.domain.model.DashboardRoutineEvent
 import com.glowup.ai.domain.model.Product
 import com.glowup.ai.feature.routine.components.AddProductSheet
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +94,9 @@ private fun RoutineScreen(
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp),
+            contentPadding =
+                androidx.compose.foundation.layout
+                    .PaddingValues(vertical = 16.dp),
         ) {
             item {
                 DisclaimerNote(
@@ -192,23 +194,34 @@ private fun RoutineScreen(
                 SectionHeader(title = "Recent routine changes", modifier = Modifier.padding(bottom = 12.dp))
             }
             when {
-                state.timelineLoading -> item {
-                    ShimmerSkeleton(modifier = Modifier.padding(bottom = 8.dp), height = 56.dp)
+                state.timelineLoading -> {
+                    item {
+                        ShimmerSkeleton(modifier = Modifier.padding(bottom = 8.dp), height = 56.dp)
+                    }
                 }
-                state.timelineError != null -> item {
-                    ErrorState(message = state.timelineError, onRetry = onRetryTimeline)
+
+                state.timelineError != null -> {
+                    item {
+                        ErrorState(message = state.timelineError, onRetry = onRetryTimeline)
+                    }
                 }
-                state.timeline.isEmpty() -> item {
-                    EmptyState(
-                        title = "No routine changes logged yet",
-                        body = "Log when you start, stop or change a product to build a causal timeline.",
-                        ctaLabel = "Search for a product",
-                        onCtaClick = {
-                            coroutineScope.launch { listState.animateScrollToItem(index = 2) }
-                        },
-                    )
+
+                state.timeline.isEmpty() -> {
+                    item {
+                        EmptyState(
+                            title = "No routine changes logged yet",
+                            body = "Log when you start, stop or change a product to build a causal timeline.",
+                            ctaLabel = "Search for a product",
+                            onCtaClick = {
+                                coroutineScope.launch { listState.animateScrollToItem(index = 2) }
+                            },
+                        )
+                    }
                 }
-                else -> items(state.timeline) { event -> TimelineRow(event = event, modifier = Modifier.padding(bottom = 8.dp)) }
+
+                else -> {
+                    items(state.timeline) { event -> TimelineRow(event = event, modifier = Modifier.padding(bottom = 8.dp)) }
+                }
             }
         }
     }
@@ -226,7 +239,11 @@ private fun RoutineScreen(
 }
 
 @Composable
-private fun ProductRow(product: Product, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun ProductRow(
+    product: Product,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val glow = LocalGlowColors.current
     GlowCard(modifier = modifier.fillMaxWidth(), onClick = onClick, contentDescription = "Open ${product.name}") {
         Text(product.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = glow.ink900)
@@ -240,7 +257,10 @@ private fun ProductRow(product: Product, onClick: () -> Unit, modifier: Modifier
 }
 
 @Composable
-private fun TimelineRow(event: DashboardRoutineEvent, modifier: Modifier = Modifier) {
+private fun TimelineRow(
+    event: DashboardRoutineEvent,
+    modifier: Modifier = Modifier,
+) {
     val glow = LocalGlowColors.current
     GlowCard(modifier = modifier.fillMaxWidth()) {
         Text(

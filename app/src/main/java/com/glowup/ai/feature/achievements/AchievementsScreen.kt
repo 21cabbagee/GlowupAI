@@ -28,7 +28,7 @@ import com.glowup.ai.domain.model.UserAchievement
 @Composable
 fun AchievementsRoute(
     onBack: () -> Unit,
-    viewModel: AchievementsViewModel = hiltViewModel()
+    viewModel: AchievementsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -38,7 +38,7 @@ fun AchievementsRoute(
         onRetry = viewModel::onRetryRequested,
         onAchievementClick = { achievement ->
             // Could add detail view in the future
-        }
+        },
     )
 }
 
@@ -47,41 +47,45 @@ fun AchievementsScreen(
     state: AchievementsUiState,
     onBack: () -> Unit,
     onRetry: () -> Unit,
-    onAchievementClick: (UserAchievement) -> Unit
+    onAchievementClick: (UserAchievement) -> Unit,
 ) {
     Scaffold(
         topBar = {
             GlowTopBar(
                 title = "Achievements",
-                onBack = onBack
+                onBack = onBack,
             )
-        }
+        },
     ) { padding ->
         when (state) {
             is AchievementsUiState.Loading -> {
                 AchievementsLoadingSkeleton(padding)
             }
+
             is AchievementsUiState.Error -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(24.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(24.dp),
                 ) {
                     ErrorState(
                         message = state.message,
-                        onRetry = onRetry
+                        onRetry = onRetry,
                     )
                 }
             }
+
             is AchievementsUiState.Content -> {
                 AchievementGrid(
                     achievements = state.achievements,
                     onAchievementClick = onAchievementClick,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
                 )
             }
         }
@@ -91,11 +95,14 @@ fun AchievementsScreen(
 @Composable
 private fun AchievementsLoadingSkeleton(padding: PaddingValues) {
     androidx.compose.foundation.layout.Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-            .padding(20.dp),
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(20.dp),
+        verticalArrangement =
+            androidx.compose.foundation.layout.Arrangement
+                .spacedBy(16.dp),
     ) {
         ShimmerSkeleton(height = 120.dp, cornerRadius = 16.dp)
         ShimmerSkeleton(height = 60.dp, cornerRadius = 12.dp)

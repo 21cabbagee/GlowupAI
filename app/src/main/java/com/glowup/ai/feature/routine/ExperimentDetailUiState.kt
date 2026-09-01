@@ -5,7 +5,11 @@ import com.glowup.ai.domain.model.ExperimentStatus
 
 sealed interface ExperimentDetailUiState {
     data object Loading : ExperimentDetailUiState
-    data class Error(val message: String) : ExperimentDetailUiState
+
+    data class Error(
+        val message: String,
+    ) : ExperimentDetailUiState
+
     data class Content(
         val experiment: Experiment,
         /** Status the user tapped, pending an explicit confirm dialog — never applied optimistically. */

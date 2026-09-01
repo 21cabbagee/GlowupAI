@@ -21,18 +21,21 @@ private val Context.glowUpSessionDataStore: DataStore<Preferences> by preference
 @Module
 @InstallIn(SingletonComponent::class)
 object LocalModule {
-
     @Provides
     @Singleton
-    fun provideSessionDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
-        context.glowUpSessionDataStore
+    fun provideSessionDataStore(
+        @ApplicationContext context: Context,
+    ): DataStore<Preferences> = context.glowUpSessionDataStore
 
     // -- Cache database (destructive fallback OK — see GlowUpDatabase doc) ----------------------
 
     @Provides
     @Singleton
-    fun provideGlowUpDatabase(@ApplicationContext context: Context): GlowUpDatabase =
-        Room.databaseBuilder(context, GlowUpDatabase::class.java, "glowup_cache.db")
+    fun provideGlowUpDatabase(
+        @ApplicationContext context: Context,
+    ): GlowUpDatabase =
+        Room
+            .databaseBuilder(context, GlowUpDatabase::class.java, "glowup_cache.db")
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
 
@@ -76,8 +79,11 @@ object LocalModule {
 
     @Provides
     @Singleton
-    fun provideGlowUpOutboxDatabase(@ApplicationContext context: Context): GlowUpOutboxDatabase =
-        Room.databaseBuilder(context, GlowUpOutboxDatabase::class.java, "glowup_outbox.db")
+    fun provideGlowUpOutboxDatabase(
+        @ApplicationContext context: Context,
+    ): GlowUpOutboxDatabase =
+        Room
+            .databaseBuilder(context, GlowUpOutboxDatabase::class.java, "glowup_outbox.db")
             // Deliberately no fallbackToDestructiveMigration() and no addMigrations() yet:
             // version 1 has nothing to migrate from. The next schema bump MUST add a real
             // Migration here instead of reaching for a destructive fallback.

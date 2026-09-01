@@ -17,19 +17,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.glowup.ai.core.design.GlowUpTheme
-import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.design.GlowShapes
 import com.glowup.ai.core.design.GlowSpacing
+import com.glowup.ai.core.design.GlowUpTheme
+import com.glowup.ai.core.design.LocalGlowColors
 
 /**
  * Something failed and the user can retry. There is no spinner-only failure state in this app —
@@ -55,16 +55,17 @@ fun ErrorState(
     val shakeOffset = rememberShakeAnimation(trigger = shakeKey > 0)
 
     Column(
-        modifier = modifier
-            .offset { IntOffset(shakeOffset.toInt(), 0) }
-            .fillMaxWidth()
-            .clip(GlowShapes.md)
-            .background(glow.danger.copy(alpha = 0.08f))
-            .padding(GlowSpacing.lg)
-            .semantics {
-                contentDescription = "Error: $message"
-                liveRegion = LiveRegionMode.Assertive
-            },
+        modifier =
+            modifier
+                .offset { IntOffset(shakeOffset.toInt(), 0) }
+                .fillMaxWidth()
+                .clip(GlowShapes.md)
+                .background(glow.danger.copy(alpha = 0.08f))
+                .padding(GlowSpacing.lg)
+                .semantics {
+                    contentDescription = "Error: $message"
+                    liveRegion = LiveRegionMode.Assertive
+                },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(

@@ -9,7 +9,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class WorkModule {
-
     /** Real Android notifications are permission-gated inside AndroidReminderNotifier. */
     @Binds
     @Singleton

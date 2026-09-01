@@ -44,25 +44,28 @@ fun LockedCard(
     val glow = LocalGlowColors.current
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(glow.surfaceCard, RoundedCornerShape(18.dp))
-            .semantics {
-                contentDescription = "Premium required. $title. $body"
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(glow.surfaceCard, RoundedCornerShape(18.dp))
+                .semantics {
+                    contentDescription = "Premium required. $title. $body"
+                },
     ) {
         // A single flat honey band — no gradient wash.
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp)
-                .background(glow.honey500),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .background(glow.honey500),
         )
         Column(modifier = Modifier.padding(20.dp)) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(glow.honey500, CircleShape),
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .background(glow.honey500, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

@@ -32,13 +32,14 @@ data class ProductCreateRequestDto(
     @SerialName("stabilization_days") val stabilizationDays: Int = 14,
 )
 
-fun ProductCreateRequest.toDto(): ProductCreateRequestDto = ProductCreateRequestDto(
-    name = name,
-    barcode = barcode,
-    category = category,
-    ingredients = ingredients.takeIf { it.isNotEmpty() }?.joinToString(","),
-    stabilizationDays = stabilizationDays,
-)
+fun ProductCreateRequest.toDto(): ProductCreateRequestDto =
+    ProductCreateRequestDto(
+        name = name,
+        barcode = barcode,
+        category = category,
+        ingredients = ingredients.takeIf { it.isNotEmpty() }?.joinToString(","),
+        stabilizationDays = stabilizationDays,
+    )
 
 @Serializable
 data class ProductDto(
@@ -63,15 +64,16 @@ fun parseIngredientsJson(raw: String?): List<String> {
     }
 }
 
-fun ProductDto.toDomain(): Product = Product(
-    id = id,
-    name = name,
-    category = category,
-    barcode = barcode,
-    ingredients = parseIngredientsJson(ingredientsJson),
-    stabilizationDays = stabilizationDays,
-    createdAt = createdAt,
-)
+fun ProductDto.toDomain(): Product =
+    Product(
+        id = id,
+        name = name,
+        category = category,
+        barcode = barcode,
+        ingredients = parseIngredientsJson(ingredientsJson),
+        stabilizationDays = stabilizationDays,
+        createdAt = createdAt,
+    )
 
 @Serializable
 data class OfferDto(
@@ -86,17 +88,18 @@ data class OfferDto(
     val active: Boolean = true,
 )
 
-fun OfferDto.toDomain(): Offer = Offer(
-    id = id,
-    productId = productId,
-    productName = productName,
-    merchant = merchant,
-    url = url,
-    priceCents = priceCents,
-    currency = currency,
-    disclosed = disclosed,
-    active = active,
-)
+fun OfferDto.toDomain(): Offer =
+    Offer(
+        id = id,
+        productId = productId,
+        productName = productName,
+        merchant = merchant,
+        url = url,
+        priceCents = priceCents,
+        currency = currency,
+        disclosed = disclosed,
+        active = active,
+    )
 
 @Serializable
 data class ReviewedIngredientDto(
@@ -112,11 +115,12 @@ data class IngredientExplainerDto(
     val unknown: List<String> = emptyList(),
 )
 
-fun IngredientExplainerDto.toDomain(): IngredientExplainer = IngredientExplainer(
-    productName = productName,
-    reviewed = reviewed.map { ReviewedIngredient(it.ingredient, it.purpose, it.caution) },
-    unknown = unknown,
-)
+fun IngredientExplainerDto.toDomain(): IngredientExplainer =
+    IngredientExplainer(
+        productName = productName,
+        reviewed = reviewed.map { ReviewedIngredient(it.ingredient, it.purpose, it.caution) },
+        unknown = unknown,
+    )
 
 @Serializable
 data class ProductDetailDto(
@@ -131,19 +135,21 @@ data class ProductDetailDto(
     @SerialName("ingredient_analysis") val ingredientAnalysis: IngredientExplainerDto? = null,
 )
 
-fun ProductDetailDto.toDomain(): ProductDetail = ProductDetail(
-    product = Product(
-        id = id,
-        name = name,
-        category = category,
-        barcode = barcode,
-        ingredients = parseIngredientsJson(ingredientsJson),
-        stabilizationDays = stabilizationDays,
-        createdAt = createdAt,
-    ),
-    offers = offers.map { it.toDomain() },
-    ingredientAnalysis = ingredientAnalysis?.toDomain(),
-)
+fun ProductDetailDto.toDomain(): ProductDetail =
+    ProductDetail(
+        product =
+            Product(
+                id = id,
+                name = name,
+                category = category,
+                barcode = barcode,
+                ingredients = parseIngredientsJson(ingredientsJson),
+                stabilizationDays = stabilizationDays,
+                createdAt = createdAt,
+            ),
+        offers = offers.map { it.toDomain() },
+        ingredientAnalysis = ingredientAnalysis?.toDomain(),
+    )
 
 @Serializable
 data class ProductOverlapDto(
@@ -165,16 +171,17 @@ data class ProductPredictionDto(
     val disclaimer: String,
 )
 
-fun ProductPredictionDto.toDomain(): ProductPrediction = ProductPrediction(
-    productId = productId,
-    productName = productName,
-    ingredients = ingredients,
-    overlapWithInvestigate = overlapWithInvestigate.map { it.toDomain() },
-    overlapWithLikelyUseful = overlapWithLikelyUseful.map { it.toDomain() },
-    cohortOverlap = cohortOverlap.map { it.toDomain() },
-    headline = headline,
-    disclaimer = disclaimer,
-)
+fun ProductPredictionDto.toDomain(): ProductPrediction =
+    ProductPrediction(
+        productId = productId,
+        productName = productName,
+        ingredients = ingredients,
+        overlapWithInvestigate = overlapWithInvestigate.map { it.toDomain() },
+        overlapWithLikelyUseful = overlapWithLikelyUseful.map { it.toDomain() },
+        cohortOverlap = cohortOverlap.map { it.toDomain() },
+        headline = headline,
+        disclaimer = disclaimer,
+    )
 
 @Serializable
 data class PurchaseGuidanceRequestDto(
@@ -186,14 +193,15 @@ data class PurchaseGuidanceRequestDto(
     val currency: String = "INR",
 )
 
-fun PurchaseGuidanceRequest.toDto(): PurchaseGuidanceRequestDto = PurchaseGuidanceRequestDto(
-    name = name,
-    barcode = barcode,
-    category = category,
-    ingredients = ingredients.takeIf { it.isNotEmpty() }?.joinToString(","),
-    priceCents = priceCents,
-    currency = currency,
-)
+fun PurchaseGuidanceRequest.toDto(): PurchaseGuidanceRequestDto =
+    PurchaseGuidanceRequestDto(
+        name = name,
+        barcode = barcode,
+        category = category,
+        ingredients = ingredients.takeIf { it.isNotEmpty() }?.joinToString(","),
+        priceCents = priceCents,
+        currency = currency,
+    )
 
 @Serializable
 data class PurchaseGuidanceDto(
@@ -212,18 +220,19 @@ data class PurchaseGuidanceDto(
     val disclaimer: String,
 )
 
-fun PurchaseGuidanceDto.toDomain(): PurchaseGuidance = PurchaseGuidance(
-    productId = productId,
-    productName = productName,
-    barcode = barcode,
-    ingredients = ingredients,
-    signal = signal,
-    headline = headline,
-    nextAction = nextAction,
-    overlapWithInvestigate = overlapWithInvestigate.map { it.toDomain() },
-    overlapWithLikelyUseful = overlapWithLikelyUseful.map { it.toDomain() },
-    cohortOverlap = cohortOverlap.map { it.toDomain() },
-    estimatedAnnualCostCents = estimatedAnnualCostCents,
-    currency = currency,
-    disclaimer = disclaimer,
-)
+fun PurchaseGuidanceDto.toDomain(): PurchaseGuidance =
+    PurchaseGuidance(
+        productId = productId,
+        productName = productName,
+        barcode = barcode,
+        ingredients = ingredients,
+        signal = signal,
+        headline = headline,
+        nextAction = nextAction,
+        overlapWithInvestigate = overlapWithInvestigate.map { it.toDomain() },
+        overlapWithLikelyUseful = overlapWithLikelyUseful.map { it.toDomain() },
+        cohortOverlap = cohortOverlap.map { it.toDomain() },
+        estimatedAnnualCostCents = estimatedAnnualCostCents,
+        currency = currency,
+        disclaimer = disclaimer,
+    )

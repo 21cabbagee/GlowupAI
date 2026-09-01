@@ -30,7 +30,10 @@ import javax.inject.Inject
  */
 sealed interface CaptureResultUiState {
     data object Loading : CaptureResultUiState
-    data class Content(val captureResult: CaptureResult) : CaptureResultUiState
+
+    data class Content(
+        val captureResult: CaptureResult,
+    ) : CaptureResultUiState
 
     /** No `GET /captures/{id}` exists on the backend, so if the in-memory
      * [CaptureResultCache] misses (process death between accept and viewing this screen), there is
@@ -40,54 +43,65 @@ sealed interface CaptureResultUiState {
 
 sealed interface MeasurementFeedbackUiState {
     data object Idle : MeasurementFeedbackUiState
+
     data object Submitting : MeasurementFeedbackUiState
+
     data object Submitted : MeasurementFeedbackUiState
-    data class Failed(val message: String) : MeasurementFeedbackUiState
+
+    data class Failed(
+        val message: String,
+    ) : MeasurementFeedbackUiState
 }
 
 @HiltViewModel
-class CaptureResultViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
-    private val captureRepository: CaptureRepository,
-    private val sessionRepository: SessionRepository,
-    private val resultCache: CaptureResultCache,
-) : ViewModel() {
+class CaptureResultViewModel
+    @Inject
+    constructor(
+        savedStateHandle: SavedStateHandle,
+        private val captureRepository: CaptureRepository,
+        private val sessionRepository: SessionRepository,
+        private val resultCache: CaptureResultCache,
+    ) : ViewModel() {
+        private val captureId: String = savedStateHandle.toRoute<GlowDestination.CaptureResult>().captureId
 
-    private val captureId: String = savedStateHandle.toRoute<GlowDestination.CaptureResult>().captureId
+        private val _uiState = MutableStateFlow<CaptureResultUiState>(CaptureResultUiState.Loading)
+        val uiState: StateFlow<CaptureResultUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow<CaptureResultUiState>(CaptureResultUiState.Loading)
-    val uiState: StateFlow<CaptureResultUiState> = _uiState.asStateFlow()
+        private val _feedbackState = MutableStateFlow<MeasurementFeedbackUiState>(MeasurementFeedbackUiState.Idle)
+        val feedbackState: StateFlow<MeasurementFeedbackUiState> = _feedbackState.asStateFlow()
 
-    private val _feedbackState = MutableStateFlow<MeasurementFeedbackUiState>(MeasurementFeedbackUiState.Idle)
-    val feedbackState: StateFlow<MeasurementFeedbackUiState> = _feedbackState.asStateFlow()
+        init {
+            val cached = resultCache.get(captureId)
+            _uiState.value = if (cached != null) CaptureResultUiState.Content(cached) else CaptureResultUiState.Unavailable
+        }
 
-    init {
-        val cached = resultCache.get(captureId)
-        _uiState.value = if (cached != null) CaptureResultUiState.Content(cached) else CaptureResultUiState.Unavailable
-    }
-
-    /** `POST /measurement-feedback` — "does this reading look fair?" */
-    fun submitFeedback(agreement: MeasurementAgreement, note: String?) {
-        if (_feedbackState.value == MeasurementFeedbackUiState.Submitting) return
-        viewModelScope.launch {
-            _feedbackState.value = MeasurementFeedbackUiState.Submitting
-            val userId = sessionRepository.userIdFlow.first()
-            if (userId == null) {
-                _feedbackState.value = MeasurementFeedbackUiState.Failed("Please sign in again to continue.")
-                return@launch
-            }
-            val request = MeasurementFeedbackRequest(captureId = captureId, agreement = agreement, note = note)
-            _feedbackState.value = when (val result = captureRepository.addMeasurementFeedback(userId, request)) {
-                is GlowResult.Success -> MeasurementFeedbackUiState.Submitted
-                is GlowResult.Failure -> MeasurementFeedbackUiState.Failed(messageFor(result.error))
+        /** `POST /measurement-feedback` — "does this reading look fair?" */
+        fun submitFeedback(
+            agreement: MeasurementAgreement,
+            note: String?,
+        ) {
+            if (_feedbackState.value == MeasurementFeedbackUiState.Submitting) return
+            viewModelScope.launch {
+                _feedbackState.value = MeasurementFeedbackUiState.Submitting
+                val userId = sessionRepository.userIdFlow.first()
+                if (userId == null) {
+                    _feedbackState.value = MeasurementFeedbackUiState.Failed("Please sign in again to continue.")
+                    return@launch
+                }
+                val request = MeasurementFeedbackRequest(captureId = captureId, agreement = agreement, note = note)
+                _feedbackState.value =
+                    when (val result = captureRepository.addMeasurementFeedback(userId, request)) {
+                        is GlowResult.Success -> MeasurementFeedbackUiState.Submitted
+                        is GlowResult.Failure -> MeasurementFeedbackUiState.Failed(messageFor(result.error))
+                    }
             }
         }
-    }
 
-    private fun messageFor(error: ApiError): String = when (error) {
-        is ApiError.Validation -> error.fields.values.firstOrNull() ?: "Please check your feedback and try again."
-        is ApiError.NotFound -> "That capture couldn't be found."
-        is ApiError.Network -> "You appear to be offline. Please try again once connected."
-        else -> "Couldn't submit feedback right now. Please try again."
+        private fun messageFor(error: ApiError): String =
+            when (error) {
+                is ApiError.Validation -> error.fields.values.firstOrNull() ?: "Please check your feedback and try again."
+                is ApiError.NotFound -> "That capture couldn't be found."
+                is ApiError.Network -> "You appear to be offline. Please try again once connected."
+                else -> "Couldn't submit feedback right now. Please try again."
+            }
     }
-}

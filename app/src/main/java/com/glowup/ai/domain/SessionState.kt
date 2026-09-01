@@ -18,7 +18,6 @@ import com.glowup.ai.domain.model.Profile
  * [ProfileLoading] are all pre-authoritative and must show a gate, not tabs.
  */
 sealed class SessionState {
-
     /** True while nothing derived from `GET /profile` says otherwise: the
      * shell must keep the workspace hidden. */
     abstract val isAuthoritative: Boolean
@@ -75,7 +74,9 @@ sealed class SessionState {
      * ([com.glowup.ai.domain.model.ConsentState.UNKNOWN]) — fail closed into
      * requiring consent rather than ever opening capture on a value the
      * client doesn't recognise. */
-    data class ConsentRequired(val profile: Profile) : SessionState() {
+    data class ConsentRequired(
+        val profile: Profile,
+    ) : SessionState() {
         override val isAuthoritative = true
         override val canCapture = false
         override val canUsePremium = profile.entitlement.isPremium
@@ -88,7 +89,9 @@ sealed class SessionState {
      * features but keep capture visibly locked. Never silently grant
      * consent." Only escape is re-opening the consent screen (Account/privacy),
      * exactly as trap #1 specifies. */
-    data class ConsentDeclined(val profile: Profile) : SessionState() {
+    data class ConsentDeclined(
+        val profile: Profile,
+    ) : SessionState() {
         override val isAuthoritative = true
         override val canCapture = false
         override val canUsePremium = profile.entitlement.isPremium
@@ -97,7 +100,9 @@ sealed class SessionState {
 
     /** Consent is active but no vertical has a `baseline_capture_id` yet.
      * Capture is unlocked (needed to *take* the baseline). */
-    data class BaselineNeeded(val profile: Profile) : SessionState() {
+    data class BaselineNeeded(
+        val profile: Profile,
+    ) : SessionState() {
         override val isAuthoritative = true
         override val canCapture = true
         override val canUsePremium = profile.entitlement.isPremium
@@ -106,7 +111,9 @@ sealed class SessionState {
 
     /** Consent is active and a baseline exists. The full workspace shell may
      * render. */
-    data class Ready(val profile: Profile) : SessionState() {
+    data class Ready(
+        val profile: Profile,
+    ) : SessionState() {
         override val isAuthoritative = true
         override val canCapture = true
         override val canUsePremium = profile.entitlement.isPremium
@@ -119,7 +126,9 @@ sealed class SessionState {
      * route back to [NoUser] instead — see [SessionStateMachine]). Carries
      * the [ApiError] so the UI can render a real error/retry state instead of
      * a dead end. Not authoritative: the shell must keep gating here. */
-    data class Unrecoverable(val reason: ApiError) : SessionState() {
+    data class Unrecoverable(
+        val reason: ApiError,
+    ) : SessionState() {
         override val isAuthoritative = false
         override val canCapture = false
         override val canUsePremium = false
@@ -136,6 +145,7 @@ enum class NextAction {
     ReviewConsent,
     CaptureBaseline,
     Retry,
+
     /** Authoritative and ready: no gate action needed, render the workspace. */
     None,
 }

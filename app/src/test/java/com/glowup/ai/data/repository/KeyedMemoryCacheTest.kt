@@ -15,7 +15,6 @@ import org.junit.Test
  * experiment, consent, and subscription mutations", offline-first staleness marker).
  */
 class KeyedMemoryCacheTest {
-
     @Test
     fun `a fresh put is returned by getFresh for the same plan`() {
         val cache = KeyedMemoryCache<String>()

@@ -24,13 +24,17 @@ interface CaptureUploadWorkerEntryPoint {
  * `BackoffPolicy.EXPONENTIAL`; [androidx.work.Result.retry] here is what makes WorkManager apply
  * that backoff between attempts.
  */
-class CaptureUploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
-
+class CaptureUploadWorker(
+    context: Context,
+    params: WorkerParameters,
+) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        val repository = EntryPointAccessors.fromApplication(
-            applicationContext,
-            CaptureUploadWorkerEntryPoint::class.java,
-        ).captureRepository()
+        val repository =
+            EntryPointAccessors
+                .fromApplication(
+                    applicationContext,
+                    CaptureUploadWorkerEntryPoint::class.java,
+                ).captureRepository()
 
         val allSettled = repository.drainOutboxOnce()
         return if (allSettled) Result.success() else Result.retry()

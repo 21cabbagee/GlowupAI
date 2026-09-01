@@ -28,16 +28,22 @@ import androidx.compose.ui.unit.dp
  * eyeball the whole system without hunting through feature screens. Not shipped UI.
  */
 
-private data class Swatch(val name: String, val color: Color, val onColor: Color, val ratioNote: String)
+private data class Swatch(
+    val name: String,
+    val color: Color,
+    val onColor: Color,
+    val ratioNote: String,
+)
 
 @Composable
 private fun SwatchRow(swatch: Swatch) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .background(swatch.color, RoundedCornerShape(GlowSpacing.sm))
-            .padding(horizontal = GlowSpacing.md),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .background(swatch.color, RoundedCornerShape(GlowSpacing.sm))
+                .padding(horizontal = GlowSpacing.md),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -61,38 +67,42 @@ private fun DesignSystemGallery() {
     val colors = LocalGlowColors.current
     val scheme = MaterialTheme.colorScheme
 
-    val paletteSwatches = listOf(
-        Swatch("honey-300", colors.honey300, colors.ink900, "surface only"),
-        Swatch("honey-400", colors.honey400, colors.ink900, "surface only"),
-        Swatch("honey-500 (primary)", colors.honey500, colors.ink900, "11.35:1"),
-        Swatch("honey-600", colors.honey600, colors.ink900, "8.98:1"),
-        Swatch("honey-700 (clay, text-safe on light)", colors.honey700, colors.ink900, "4.93:1"),
-    )
+    val paletteSwatches =
+        listOf(
+            Swatch("honey-300", colors.honey300, colors.ink900, "surface only"),
+            Swatch("honey-400", colors.honey400, colors.ink900, "surface only"),
+            Swatch("honey-500 (primary)", colors.honey500, colors.ink900, "11.35:1"),
+            Swatch("honey-600", colors.honey600, colors.ink900, "8.98:1"),
+            Swatch("honey-700 (clay, text-safe on light)", colors.honey700, colors.ink900, "4.93:1"),
+        )
 
-    val verdictSwatches = listOf(
-        Swatch("keep", colors.verdictColor("keep"), colors.onVerdictColor("keep"), "11.35:1"),
-        Swatch("likely_useful", colors.verdictColor("likely_useful"), colors.onVerdictColor("likely_useful"), "4.8-4.88:1"),
-        Swatch("evidence_unclear", colors.verdictColor("evidence_unclear"), colors.onVerdictColor("evidence_unclear"), "4.93:1"),
-        Swatch("investigate", colors.verdictColor("investigate"), colors.onVerdictColor("investigate"), "4.90:1"),
-        Swatch("locked / unknown", colors.verdictColor("locked"), colors.onVerdictColor("locked"), "7.87:1"),
-    )
+    val verdictSwatches =
+        listOf(
+            Swatch("keep", colors.verdictColor("keep"), colors.onVerdictColor("keep"), "11.35:1"),
+            Swatch("likely_useful", colors.verdictColor("likely_useful"), colors.onVerdictColor("likely_useful"), "4.8-4.88:1"),
+            Swatch("evidence_unclear", colors.verdictColor("evidence_unclear"), colors.onVerdictColor("evidence_unclear"), "4.93:1"),
+            Swatch("investigate", colors.verdictColor("investigate"), colors.onVerdictColor("investigate"), "4.90:1"),
+            Swatch("locked / unknown", colors.verdictColor("locked"), colors.onVerdictColor("locked"), "7.87:1"),
+        )
 
-    val schemeSwatches = listOf(
-        Swatch("primary / onPrimary", scheme.primary, scheme.onPrimary, "M3 role"),
-        Swatch("primaryContainer / onPrimaryContainer", scheme.primaryContainer, scheme.onPrimaryContainer, "M3 role"),
-        Swatch("secondary / onSecondary", scheme.secondary, scheme.onSecondary, "M3 role"),
-        Swatch("tertiary / onTertiary", scheme.tertiary, scheme.onTertiary, "M3 role"),
-        Swatch("error / onError", scheme.error, scheme.onError, "M3 role"),
-        Swatch("background / onBackground", scheme.background, scheme.onBackground, "M3 role"),
-        Swatch("surface / onSurface", scheme.surface, scheme.onSurface, "M3 role"),
-        Swatch("surfaceVariant / onSurfaceVariant", scheme.surfaceVariant, scheme.onSurfaceVariant, "M3 role"),
-    )
+    val schemeSwatches =
+        listOf(
+            Swatch("primary / onPrimary", scheme.primary, scheme.onPrimary, "M3 role"),
+            Swatch("primaryContainer / onPrimaryContainer", scheme.primaryContainer, scheme.onPrimaryContainer, "M3 role"),
+            Swatch("secondary / onSecondary", scheme.secondary, scheme.onSecondary, "M3 role"),
+            Swatch("tertiary / onTertiary", scheme.tertiary, scheme.onTertiary, "M3 role"),
+            Swatch("error / onError", scheme.error, scheme.onError, "M3 role"),
+            Swatch("background / onBackground", scheme.background, scheme.onBackground, "M3 role"),
+            Swatch("surface / onSurface", scheme.surface, scheme.onSurface, "M3 role"),
+            Swatch("surfaceVariant / onSurfaceVariant", scheme.surfaceVariant, scheme.onSurfaceVariant, "M3 role"),
+        )
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(scheme.background)
-            .padding(GlowSpacing.md),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(scheme.background)
+                .padding(GlowSpacing.md),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
     ) {
         item {
@@ -155,13 +165,14 @@ private fun SpacingRow() {
 @Composable
 private fun ShapeRow() {
     Row(horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm)) {
-        val shapes = listOf(
-            "sm" to GlowShapes.sm,
-            "md" to GlowShapes.md,
-            "lg" to GlowShapes.lg,
-            "xl" to GlowShapes.xl,
-            "pill" to GlowShapes.pill,
-        )
+        val shapes =
+            listOf(
+                "sm" to GlowShapes.sm,
+                "md" to GlowShapes.md,
+                "lg" to GlowShapes.lg,
+                "xl" to GlowShapes.xl,
+                "pill" to GlowShapes.pill,
+            )
         shapes.forEach { (label, shape) ->
             ShapeSample(label, shape)
         }
@@ -169,7 +180,10 @@ private fun ShapeRow() {
 }
 
 @Composable
-private fun RowScope.ShapeSample(label: String, shape: androidx.compose.foundation.shape.CornerBasedShape) {
+private fun RowScope.ShapeSample(
+    label: String,
+    shape: androidx.compose.foundation.shape.CornerBasedShape,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             Modifier

@@ -6,14 +6,16 @@ import com.glowup.ai.data.remote.ApiError
 import com.glowup.ai.data.remote.NetworkJson
 import com.glowup.ai.data.remote.dto.CaptureQualityInputDto
 import com.glowup.ai.domain.model.CaptureCreateRequest
-import com.glowup.ai.domain.model.CaptureResult
 import com.glowup.ai.domain.model.CapturePose
+import com.glowup.ai.domain.model.CaptureResult
 
 /** Outcome of processing a single [CaptureOutboxEntity] row. Deleting the row is the CALLER's
  * job (see [com.glowup.ai.data.repository.CaptureRepository.drainOutboxOnce] and
  * [CaptureUploadWorker]) — this class only decides what happened. */
 sealed class OutboxOutcome {
-    data class Uploaded(val result: CaptureResult) : OutboxOutcome()
+    data class Uploaded(
+        val result: CaptureResult,
+    ) : OutboxOutcome()
 
     /** Reconciliation found the capture already accepted from a previous, ambiguously-failed
      * attempt — the row must be deleted WITHOUT re-uploading. */
@@ -22,11 +24,15 @@ sealed class OutboxOutcome {
     /** Ambiguous or transient failure (network/server/unauthorized) — the row must be kept,
      * `attemptCount` incremented, and WorkManager's exponential backoff applied before the next
      * attempt tries again (which will reconcile first — see [process]). */
-    data class RetryLater(val error: ApiError) : OutboxOutcome()
+    data class RetryLater(
+        val error: ApiError,
+    ) : OutboxOutcome()
 
     /** The server explicitly rejected this exact payload (quality/validation/conflict) — safe to
      * stop retrying automatically; the row moves to `failed_permanent` for a manual retake. */
-    data class PermanentFailure(val error: ApiError) : OutboxOutcome()
+    data class PermanentFailure(
+        val error: ApiError,
+    ) : OutboxOutcome()
 }
 
 /**
@@ -50,39 +56,49 @@ class CaptureOutboxProcessor(
     private val wasAlreadyAccepted: suspend (userId: String, vertical: String, capturedAt: String) -> Boolean,
     private val loadImageBase64: suspend (path: String) -> String,
 ) {
-
     suspend fun process(entry: CaptureOutboxEntity): OutboxOutcome {
         if (entry.attemptCount > 0 && wasAlreadyAccepted(entry.userId, entry.vertical, entry.capturedAt)) {
             return OutboxOutcome.AlreadyAccepted
         }
 
         val base64 = loadImageBase64(entry.imagePath)
-        val pose = entry.qualityJson
-            ?.let { json -> runCatching { NetworkJson.decodeFromString(CaptureQualityInputDto.serializer(), json) }.getOrNull() }
-            ?.let { CapturePose(it.facePresent, it.yawDegrees, it.pitchDegrees, it.distanceCm, it.expressionNeutral) }
-        val deviceMeta = entry.deviceMetaJson
-            ?.let { json -> runCatching { NetworkJson.decodeFromString(kotlinx.serialization.serializer<Map<String, String>>(), json) }.getOrNull() }
+        val pose =
+            entry.qualityJson
+                ?.let { json -> runCatching { NetworkJson.decodeFromString(CaptureQualityInputDto.serializer(), json) }.getOrNull() }
+                ?.let { CapturePose(it.facePresent, it.yawDegrees, it.pitchDegrees, it.distanceCm, it.expressionNeutral) }
+        val deviceMeta =
+            entry.deviceMetaJson
+                ?.let { json ->
+                    runCatching { NetworkJson.decodeFromString(kotlinx.serialization.serializer<Map<String, String>>(), json) }.getOrNull()
+                }
 
-        val request = CaptureCreateRequest(
-            userId = entry.userId,
-            imageBase64 = base64,
-            pose = pose,
-            isBaseline = entry.isBaseline,
-            vertical = entry.vertical,
-            experimentId = entry.experimentId,
-            capturedAt = entry.capturedAt,
-            deviceMeta = deviceMeta,
-        )
+        val request =
+            CaptureCreateRequest(
+                userId = entry.userId,
+                imageBase64 = base64,
+                pose = pose,
+                isBaseline = entry.isBaseline,
+                vertical = entry.vertical,
+                experimentId = entry.experimentId,
+                capturedAt = entry.capturedAt,
+                deviceMeta = deviceMeta,
+            )
 
         return when (val result = upload(request)) {
-            is GlowResult.Success -> OutboxOutcome.Uploaded(result.data)
-            is GlowResult.Failure -> when (result.error) {
-                is ApiError.CaptureQualityRejected,
-                is ApiError.Validation,
-                is ApiError.Conflict,
-                is ApiError.NotFound,
-                -> OutboxOutcome.PermanentFailure(result.error)
-                else -> OutboxOutcome.RetryLater(result.error)
+            is GlowResult.Success -> {
+                OutboxOutcome.Uploaded(result.data)
+            }
+
+            is GlowResult.Failure -> {
+                when (result.error) {
+                    is ApiError.CaptureQualityRejected,
+                    is ApiError.Validation,
+                    is ApiError.Conflict,
+                    is ApiError.NotFound,
+                    -> OutboxOutcome.PermanentFailure(result.error)
+
+                    else -> OutboxOutcome.RetryLater(result.error)
+                }
             }
         }
     }

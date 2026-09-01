@@ -44,15 +44,23 @@ fun ExperimentDetailRoute(
     Scaffold(topBar = { GlowTopBar(title = "Experiment", onBack = onBack) }) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (val s = state) {
-                is ExperimentDetailUiState.Loading -> ShimmerSkeleton(modifier = Modifier.padding(16.dp), height = 200.dp)
-                is ExperimentDetailUiState.Error -> ErrorState(modifier = Modifier.padding(16.dp), message = s.message, onRetry = viewModel::load)
-                is ExperimentDetailUiState.Content -> ExperimentDetailContent(
-                    state = s,
-                    onRequestStatusChange = viewModel::requestStatusChange,
-                    onCancelStatusChange = viewModel::cancelStatusChange,
-                    onConfirmStatusChange = viewModel::confirmStatusChange,
-                    onApplyEarlyStop = viewModel::applyEarlyStopRecommendation,
-                )
+                is ExperimentDetailUiState.Loading -> {
+                    ShimmerSkeleton(modifier = Modifier.padding(16.dp), height = 200.dp)
+                }
+
+                is ExperimentDetailUiState.Error -> {
+                    ErrorState(modifier = Modifier.padding(16.dp), message = s.message, onRetry = viewModel::load)
+                }
+
+                is ExperimentDetailUiState.Content -> {
+                    ExperimentDetailContent(
+                        state = s,
+                        onRequestStatusChange = viewModel::requestStatusChange,
+                        onCancelStatusChange = viewModel::cancelStatusChange,
+                        onConfirmStatusChange = viewModel::confirmStatusChange,
+                        onApplyEarlyStop = viewModel::applyEarlyStopRecommendation,
+                    )
+                }
             }
         }
     }
@@ -84,14 +92,25 @@ private fun ExperimentDetailContent(
         val earlyStop = experiment.earlyStop
         if (earlyStop != null && earlyStop.conclusive) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
-                    .background(glow.warning.copy(alpha = 0.18f), RoundedCornerShape(18.dp))
-                    .padding(20.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                        .background(glow.warning.copy(alpha = 0.18f), RoundedCornerShape(18.dp))
+                        .padding(20.dp),
             ) {
-                Text("Early result available", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = glow.ink900)
-                Text(earlyStop.message, style = MaterialTheme.typography.bodyMedium, color = glow.ink900, modifier = Modifier.padding(top = 6.dp, bottom = 12.dp))
+                Text(
+                    "Early result available",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = glow.ink900,
+                )
+                Text(
+                    earlyStop.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = glow.ink900,
+                    modifier = Modifier.padding(top = 6.dp, bottom = 12.dp),
+                )
                 if (earlyStop.recommendedStatus != null && earlyStop.recommendedStatus != ExperimentStatus.UNKNOWN) {
                     GlowButton(
                         text = "Mark as ${earlyStop.recommendedStatus.name.lowercase()} now",
@@ -115,7 +134,12 @@ private fun ExperimentDetailContent(
             }
         }
         if (state.statusChangeError != null) {
-            Text(state.statusChangeError, color = glow.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+            Text(
+                state.statusChangeError,
+                color = glow.danger,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 8.dp),
+            )
         }
 
         if (experiment.products.isNotEmpty()) {

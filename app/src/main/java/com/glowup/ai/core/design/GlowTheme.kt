@@ -57,85 +57,77 @@ import androidx.core.view.WindowCompat
  * Light theme Material 3 color scheme.
  * Maps our design tokens to Material 3's semantic color roles.
  */
-private val LightMaterialColorScheme = lightColorScheme(
-    // Primary brand colors
-    primary = GlowAccentColors.PrimaryEnd, // Orange
-    onPrimary = GlowSecondaryColors.TextPrimary,
-    primaryContainer = GlowAccentColors.PrimaryLight,
-    onPrimaryContainer = GlowSecondaryColors.TextPrimary,
-
-    // Secondary colors
-    secondary = GlowAccentColors.PrimaryStart, // Amber
-    onSecondary = GlowSecondaryColors.TextPrimary,
-    secondaryContainer = GlowAccentColors.PrimaryLight,
-    onSecondaryContainer = GlowSecondaryColors.TextPrimary,
-
-    // Tertiary (health/wellness accent)
-    tertiary = GlowHealthColors.SoftGreen,
-    onTertiary = GlowSecondaryColors.TextPrimary,
-    tertiaryContainer = GlowHealthColors.SoftGreen.copy(alpha = 0.2f),
-    onTertiaryContainer = GlowSecondaryColors.TextPrimary,
-
-    // Background & Surface
-    background = GlowPrimaryColors.Background,
-    onBackground = GlowSecondaryColors.TextPrimary,
-    surface = GlowPrimaryColors.Surface,
-    onSurface = GlowSecondaryColors.TextPrimary,
-    surfaceVariant = GlowPrimaryColors.Elevated,
-    onSurfaceVariant = GlowSecondaryColors.TextSecondary,
-
-    // Error
-    error = GlowAccentColors.Error,
-    onError = GlowPrimaryColors.Surface,
-    errorContainer = GlowAccentColors.Error.copy(alpha = 0.12f),
-    onErrorContainer = GlowAccentColors.Error,
-
-    // Outline
-    outline = GlowSecondaryColors.TextTertiary,
-    outlineVariant = GlowPrimaryColors.Elevated,
-)
+private val LightMaterialColorScheme =
+    lightColorScheme(
+        // Primary brand colors
+        primary = GlowAccentColors.PrimaryEnd, // Orange
+        onPrimary = GlowSecondaryColors.TextPrimary,
+        primaryContainer = GlowAccentColors.PrimaryLight,
+        onPrimaryContainer = GlowSecondaryColors.TextPrimary,
+        // Secondary colors
+        secondary = GlowAccentColors.PrimaryStart, // Amber
+        onSecondary = GlowSecondaryColors.TextPrimary,
+        secondaryContainer = GlowAccentColors.PrimaryLight,
+        onSecondaryContainer = GlowSecondaryColors.TextPrimary,
+        // Tertiary (health/wellness accent)
+        tertiary = GlowHealthColors.SoftGreen,
+        onTertiary = GlowSecondaryColors.TextPrimary,
+        tertiaryContainer = GlowHealthColors.SoftGreen.copy(alpha = 0.2f),
+        onTertiaryContainer = GlowSecondaryColors.TextPrimary,
+        // Background & Surface
+        background = GlowPrimaryColors.Background,
+        onBackground = GlowSecondaryColors.TextPrimary,
+        surface = GlowPrimaryColors.Surface,
+        onSurface = GlowSecondaryColors.TextPrimary,
+        surfaceVariant = GlowPrimaryColors.Elevated,
+        onSurfaceVariant = GlowSecondaryColors.TextSecondary,
+        // Error
+        error = GlowAccentColors.Error,
+        onError = GlowPrimaryColors.Surface,
+        errorContainer = GlowAccentColors.Error.copy(alpha = 0.12f),
+        onErrorContainer = GlowAccentColors.Error,
+        // Outline
+        outline = GlowSecondaryColors.TextTertiary,
+        outlineVariant = GlowPrimaryColors.Elevated,
+    )
 
 /**
  * Dark theme Material 3 color scheme.
  * Maintains the warm, health-focused aesthetic in dark mode.
  */
-private val DarkMaterialColorScheme = darkColorScheme(
-    // Primary brand colors (keep vibrant in dark mode)
-    primary = GlowAccentColors.PrimaryEnd,
-    onPrimary = GlowSecondaryColors.TextPrimary,
-    primaryContainer = GlowAccentColors.PrimaryHover,
-    onPrimaryContainer = GlowDarkColors.TextPrimary,
-
-    // Secondary colors
-    secondary = GlowAccentColors.PrimaryStart,
-    onSecondary = GlowSecondaryColors.TextPrimary,
-    secondaryContainer = GlowAccentColors.PrimaryStart.copy(alpha = 0.3f),
-    onSecondaryContainer = GlowDarkColors.TextPrimary,
-
-    // Tertiary (health/wellness accent)
-    tertiary = GlowHealthColors.SoftGreen,
-    onTertiary = GlowSecondaryColors.TextPrimary,
-    tertiaryContainer = GlowHealthColors.SoftGreen.copy(alpha = 0.2f),
-    onTertiaryContainer = GlowDarkColors.TextPrimary,
-
-    // Background & Surface
-    background = GlowDarkColors.Background,
-    onBackground = GlowDarkColors.TextPrimary,
-    surface = GlowDarkColors.Surface,
-    onSurface = GlowDarkColors.TextPrimary,
-    surfaceVariant = GlowDarkColors.Elevated,
-    onSurfaceVariant = GlowDarkColors.TextSecondary,
-
-    // Error
-    error = GlowAccentColors.Error,
-    onError = GlowPrimaryColors.Surface,
-    errorContainer = GlowAccentColors.Error.copy(alpha = 0.12f),
-    onErrorContainer = GlowAccentColors.Error,
-
-    // Outline
-    outline = GlowDarkColors.TextTertiary,
-    outlineVariant = GlowDarkColors.Elevated,
-)
+private val DarkMaterialColorScheme =
+    darkColorScheme(
+        // Primary brand colors (keep vibrant in dark mode)
+        primary = GlowAccentColors.PrimaryEnd,
+        onPrimary = GlowSecondaryColors.TextPrimary,
+        primaryContainer = GlowAccentColors.PrimaryHover,
+        onPrimaryContainer = GlowDarkColors.TextPrimary,
+        // Secondary colors
+        secondary = GlowAccentColors.PrimaryStart,
+        onSecondary = GlowSecondaryColors.TextPrimary,
+        secondaryContainer = GlowAccentColors.PrimaryStart.copy(alpha = 0.3f),
+        onSecondaryContainer = GlowDarkColors.TextPrimary,
+        // Tertiary (health/wellness accent)
+        tertiary = GlowHealthColors.SoftGreen,
+        onTertiary = GlowSecondaryColors.TextPrimary,
+        tertiaryContainer = GlowHealthColors.SoftGreen.copy(alpha = 0.2f),
+        onTertiaryContainer = GlowDarkColors.TextPrimary,
+        // Background & Surface
+        background = GlowDarkColors.Background,
+        onBackground = GlowDarkColors.TextPrimary,
+        surface = GlowDarkColors.Surface,
+        onSurface = GlowDarkColors.TextPrimary,
+        surfaceVariant = GlowDarkColors.Elevated,
+        onSurfaceVariant = GlowDarkColors.TextSecondary,
+        // Error
+        error = GlowAccentColors.Error,
+        onError = GlowPrimaryColors.Surface,
+        errorContainer = GlowAccentColors.Error.copy(alpha = 0.12f),
+        onErrorContainer = GlowAccentColors.Error,
+        // Outline
+        outline = GlowDarkColors.TextTertiary,
+        outlineVariant = GlowDarkColors.Elevated,
+    )
 
 // ================================================================================================
 // THEME COMPOSABLE
@@ -162,18 +154,20 @@ fun GlowTheme(
     content: @Composable () -> Unit,
 ) {
     // Select color scheme based on theme
-    val materialColorScheme = if (darkTheme) {
-        DarkMaterialColorScheme
-    } else {
-        LightMaterialColorScheme
-    }
+    val materialColorScheme =
+        if (darkTheme) {
+            DarkMaterialColorScheme
+        } else {
+            LightMaterialColorScheme
+        }
 
     // Select custom color tokens
-    val glowColorScheme = if (darkTheme) {
-        DarkColorScheme
-    } else {
-        LightColorScheme
-    }
+    val glowColorScheme =
+        if (darkTheme) {
+            DarkColorScheme
+        } else {
+            LightColorScheme
+        }
 
     // Update system bars
     val view = LocalView.current
@@ -182,18 +176,20 @@ fun GlowTheme(
             val window = (view.context as? Activity)?.window ?: return@SideEffect
 
             // Set status bar color
-            window.statusBarColor = if (darkTheme) {
-                GlowDarkColors.Background.toArgb()
-            } else {
-                GlowPrimaryColors.Background.toArgb()
-            }
+            window.statusBarColor =
+                if (darkTheme) {
+                    GlowDarkColors.Background.toArgb()
+                } else {
+                    GlowPrimaryColors.Background.toArgb()
+                }
 
             // Set navigation bar color
-            window.navigationBarColor = if (darkTheme) {
-                GlowDarkColors.Background.toArgb()
-            } else {
-                GlowPrimaryColors.Background.toArgb()
-            }
+            window.navigationBarColor =
+                if (darkTheme) {
+                    GlowDarkColors.Background.toArgb()
+                } else {
+                    GlowPrimaryColors.Background.toArgb()
+                }
 
             // Set system bar icon colors (light icons on dark background, dark icons on light background)
             WindowCompat.getInsetsController(window, view).apply {

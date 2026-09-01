@@ -21,17 +21,18 @@ data class RoutineEventCreateRequestDto(
     @SerialName("experiment_id") val experimentId: String? = null,
 )
 
-fun RoutineEventRequest.toDto(): RoutineEventCreateRequestDto = RoutineEventCreateRequestDto(
-    userId = userId,
-    productId = productId,
-    action = action.toWire(),
-    timestamp = timestamp,
-    slot = slot,
-    dose = dose,
-    frequency = frequency,
-    notes = notes,
-    experimentId = experimentId,
-)
+fun RoutineEventRequest.toDto(): RoutineEventCreateRequestDto =
+    RoutineEventCreateRequestDto(
+        userId = userId,
+        productId = productId,
+        action = action.toWire(),
+        timestamp = timestamp,
+        slot = slot,
+        dose = dose,
+        frequency = frequency,
+        notes = notes,
+        experimentId = experimentId,
+    )
 
 @Serializable
 data class ActiveProductWindowDto(
@@ -48,11 +49,12 @@ data class ConfoundCheckDto(
     val message: String? = null,
 )
 
-fun ConfoundCheckDto.toDomain(): ConfoundCheck = ConfoundCheck(
-    confounded = confounded,
-    activeWindows = activeWindows.map { ActiveProductWindow(it.productId, it.productName, it.startedAt, it.stableAt) },
-    message = message,
-)
+fun ConfoundCheckDto.toDomain(): ConfoundCheck =
+    ConfoundCheck(
+        confounded = confounded,
+        activeWindows = activeWindows.map { ActiveProductWindow(it.productId, it.productName, it.startedAt, it.stableAt) },
+        message = message,
+    )
 
 @Serializable
 data class RoutineEventDto(
@@ -68,15 +70,16 @@ data class RoutineEventDto(
     @SerialName("confound_warning") val confoundWarning: ConfoundCheckDto? = null,
 )
 
-fun RoutineEventDto.toDomain(): RoutineEvent = RoutineEvent(
-    id = id,
-    productId = productId,
-    productName = productName,
-    action = RoutineAction.fromRaw(action),
-    timestamp = timestamp,
-    slot = slot,
-    dose = dose,
-    frequency = frequency,
-    notes = notes,
-    confoundWarning = confoundWarning?.toDomain(),
-)
+fun RoutineEventDto.toDomain(): RoutineEvent =
+    RoutineEvent(
+        id = id,
+        productId = productId,
+        productName = productName,
+        action = RoutineAction.fromRaw(action),
+        timestamp = timestamp,
+        slot = slot,
+        dose = dose,
+        frequency = frequency,
+        notes = notes,
+        confoundWarning = confoundWarning?.toDomain(),
+    )

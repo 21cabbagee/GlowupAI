@@ -18,12 +18,13 @@ data class ContextEventCreateRequestDto(
     val notes: String? = null,
 )
 
-fun ContextEventCreateRequest.toDto(): ContextEventCreateRequestDto = ContextEventCreateRequestDto(
-    eventType = eventType.toWire(),
-    value = value,
-    occurredAt = occurredAt,
-    notes = notes,
-)
+fun ContextEventCreateRequest.toDto(): ContextEventCreateRequestDto =
+    ContextEventCreateRequestDto(
+        eventType = eventType.toWire(),
+        value = value,
+        occurredAt = occurredAt,
+        notes = notes,
+    )
 
 @Serializable
 data class ContextEventDto(
@@ -34,13 +35,14 @@ data class ContextEventDto(
     val notes: String? = null,
 )
 
-fun ContextEventDto.toDomain(): ContextEvent = ContextEvent(
-    id = id,
-    eventType = ContextEventType.fromRaw(eventType),
-    value = value,
-    occurredAt = occurredAt,
-    notes = notes,
-)
+fun ContextEventDto.toDomain(): ContextEvent =
+    ContextEvent(
+        id = id,
+        eventType = ContextEventType.fromRaw(eventType),
+        value = value,
+        occurredAt = occurredAt,
+        notes = notes,
+    )
 
 @Serializable
 data class RootCauseInsightDto(
@@ -51,13 +53,14 @@ data class RootCauseInsightDto(
     val message: String = "",
 )
 
-fun RootCauseInsightDto.toDomain(): RootCauseInsight = RootCauseInsight(
-    eventType = ContextEventType.fromRaw(eventType),
-    occurrences = occurrences,
-    normalizedEffect = normalizedEffect,
-    metric = metric,
-    message = message,
-)
+fun RootCauseInsightDto.toDomain(): RootCauseInsight =
+    RootCauseInsight(
+        eventType = ContextEventType.fromRaw(eventType),
+        occurrences = occurrences,
+        normalizedEffect = normalizedEffect,
+        metric = metric,
+        message = message,
+    )
 
 @Serializable
 data class BudgetFlaggedProductDto(
@@ -77,12 +80,16 @@ data class BudgetOptimizerDto(
     val disclaimer: String = "",
 )
 
-fun BudgetOptimizerDto.toDomain(): BudgetOptimizer = BudgetOptimizer(
-    flagged = flagged.map { BudgetFlaggedProduct(it.productId, it.productName, it.daysStable, it.estimatedAnnualCostCents, it.currency, it.reason) },
-    estimatedAnnualWasteCents = estimatedAnnualWasteCents,
-    currency = currency,
-    disclaimer = disclaimer,
-)
+fun BudgetOptimizerDto.toDomain(): BudgetOptimizer =
+    BudgetOptimizer(
+        flagged =
+            flagged.map {
+                BudgetFlaggedProduct(it.productId, it.productName, it.daysStable, it.estimatedAnnualCostCents, it.currency, it.reason)
+            },
+        estimatedAnnualWasteCents = estimatedAnnualWasteCents,
+        currency = currency,
+        disclaimer = disclaimer,
+    )
 
 @Serializable
 data class DermExportDto(
@@ -94,11 +101,12 @@ data class DermExportDto(
     val disclaimer: String = "",
 )
 
-fun DermExportDto.toDomain(): DermExport = DermExport(
-    generatedAt = generatedAt,
-    captureCount = captureCount,
-    modelVersions = modelVersions,
-    verdicts = verdicts.map { it.toDomain() },
-    printableHtml = printableHtml,
-    disclaimer = disclaimer,
-)
+fun DermExportDto.toDomain(): DermExport =
+    DermExport(
+        generatedAt = generatedAt,
+        captureCount = captureCount,
+        modelVersions = modelVersions,
+        verdicts = verdicts.map { it.toDomain() },
+        printableHtml = printableHtml,
+        disclaimer = disclaimer,
+    )

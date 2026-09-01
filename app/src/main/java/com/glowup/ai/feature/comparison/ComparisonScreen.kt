@@ -89,7 +89,7 @@ fun ComparisonScreen(
                         IconButton(onClick = { /* TODO: Share functionality */ }) {
                             Icon(
                                 imageVector = Icons.Filled.Share,
-                                contentDescription = "Share comparison"
+                                contentDescription = "Share comparison",
                             )
                         }
                     }
@@ -98,20 +98,29 @@ fun ComparisonScreen(
         },
     ) { padding ->
         when (state) {
-            is ComparisonUiState.Loading -> ComparisonLoadingSkeleton(padding)
-            is ComparisonUiState.Error -> Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(24.dp)
-            ) {
-                ErrorState(message = state.message, onRetry = onRetry)
+            is ComparisonUiState.Loading -> {
+                ComparisonLoadingSkeleton(padding)
             }
-            is ComparisonUiState.Content -> ComparisonContent(
-                padding = padding,
-                state = state,
-                onComparisonSelected = onComparisonSelected,
-            )
+
+            is ComparisonUiState.Error -> {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(24.dp),
+                ) {
+                    ErrorState(message = state.message, onRetry = onRetry)
+                }
+            }
+
+            is ComparisonUiState.Content -> {
+                ComparisonContent(
+                    padding = padding,
+                    state = state,
+                    onComparisonSelected = onComparisonSelected,
+                )
+            }
         }
     }
 }
@@ -119,10 +128,11 @@ fun ComparisonScreen(
 @Composable
 private fun ComparisonLoadingSkeleton(padding: PaddingValues) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-            .padding(GlowSpacing.md),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(GlowSpacing.md),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         ShimmerSkeleton(height = 60.dp, cornerRadius = 16.dp)
@@ -143,12 +153,13 @@ private fun ComparisonContent(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = GlowSpacing.md,
-            end = GlowSpacing.md,
-            top = padding.calculateTopPadding() + GlowSpacing.md,
-            bottom = padding.calculateBottomPadding() + GlowSpacing.xl,
-        ),
+        contentPadding =
+            PaddingValues(
+                start = GlowSpacing.md,
+                end = GlowSpacing.md,
+                top = padding.calculateTopPadding() + GlowSpacing.md,
+                bottom = padding.calculateBottomPadding() + GlowSpacing.xl,
+            ),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
     ) {
         // Header info card
@@ -172,14 +183,17 @@ private fun ComparisonContent(
                 text = "Share Progress",
                 onClick = { /* TODO: Share functionality */ },
                 modifier = Modifier.fillMaxWidth(),
-                variant = GlowButtonVariant.Primary
+                variant = GlowButtonVariant.Primary,
             )
         }
     }
 }
 
 @Composable
-private fun ComparisonHeaderCard(baseline: HistoryItem, current: HistoryItem) {
+private fun ComparisonHeaderCard(
+    baseline: HistoryItem,
+    current: HistoryItem,
+) {
     val glowColors = LocalGlowColors.current
     val baselineDate = formatCaptureDate(baseline.capturedAt)
     val currentDate = formatCaptureDate(current.capturedAt)
@@ -188,17 +202,19 @@ private fun ComparisonHeaderCard(baseline: HistoryItem, current: HistoryItem) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = glowColors.surfaceCard
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = glowColors.surfaceCard,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(GlowSpacing.md),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(GlowSpacing.md),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             // Baseline
             Column(horizontalAlignment = Alignment.Start) {
@@ -206,13 +222,13 @@ private fun ComparisonHeaderCard(baseline: HistoryItem, current: HistoryItem) {
                     text = "BASELINE",
                     style = MaterialTheme.typography.labelSmall,
                     color = glowColors.ink600,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = baselineDate,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = glowColors.ink900
+                    color = glowColors.ink900,
                 )
             }
 
@@ -222,13 +238,13 @@ private fun ComparisonHeaderCard(baseline: HistoryItem, current: HistoryItem) {
                     imageVector = Icons.Filled.ArrowForward,
                     contentDescription = null,
                     tint = glowColors.honey500,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
                 Text(
                     text = "$daysBetween days",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = glowColors.honey500
+                    color = glowColors.honey500,
                 )
             }
 
@@ -238,13 +254,13 @@ private fun ComparisonHeaderCard(baseline: HistoryItem, current: HistoryItem) {
                     text = "CURRENT",
                     style = MaterialTheme.typography.labelSmall,
                     color = glowColors.ink600,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = currentDate,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = glowColors.ink900
+                    color = glowColors.ink900,
                 )
             }
         }
@@ -252,92 +268,97 @@ private fun ComparisonHeaderCard(baseline: HistoryItem, current: HistoryItem) {
 }
 
 @Composable
-private fun PhotoComparisonCard(baseline: HistoryItem, current: HistoryItem) {
+private fun PhotoComparisonCard(
+    baseline: HistoryItem,
+    current: HistoryItem,
+) {
     val glowColors = LocalGlowColors.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = glowColors.surfaceCard
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = glowColors.surfaceCard,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(GlowSpacing.md)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(GlowSpacing.md),
         ) {
             Text(
                 text = "Photo Comparison",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = glowColors.ink900
+                color = glowColors.ink900,
             )
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 // Baseline photo
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(200.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outline,
-                            shape = RoundedCornerShape(12.dp)
-                        ),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(200.dp)
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(12.dp),
+                            ).border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outline,
+                                shape = RoundedCornerShape(12.dp),
+                            ),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = "BASELINE",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = glowColors.ink600
+                            color = glowColors.ink600,
                         )
                         Text(
                             text = formatCaptureDate(baseline.capturedAt),
                             style = MaterialTheme.typography.bodySmall,
-                            color = glowColors.ink600
+                            color = glowColors.ink600,
                         )
                     }
                 }
 
                 // Current photo
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(200.dp)
-                        .background(
-                            color = glowColors.honey300.copy(alpha = 0.3f),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .border(
-                            width = 1.dp,
-                            color = glowColors.honey300,
-                            shape = RoundedCornerShape(12.dp)
-                        ),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(200.dp)
+                            .background(
+                                color = glowColors.honey300.copy(alpha = 0.3f),
+                                shape = RoundedCornerShape(12.dp),
+                            ).border(
+                                width = 1.dp,
+                                color = glowColors.honey300,
+                                shape = RoundedCornerShape(12.dp),
+                            ),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = "CURRENT",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = glowColors.honey700
+                            color = glowColors.honey700,
                         )
                         Text(
                             text = formatCaptureDate(current.capturedAt),
                             style = MaterialTheme.typography.bodySmall,
-                            color = glowColors.honey700
+                            color = glowColors.honey700,
                         )
                     }
                 }
@@ -349,34 +370,39 @@ private fun PhotoComparisonCard(baseline: HistoryItem, current: HistoryItem) {
                 style = MaterialTheme.typography.bodySmall,
                 color = glowColors.ink600,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
 }
 
 @Composable
-private fun MetricsComparisonCard(baseline: HistoryItem, current: HistoryItem) {
+private fun MetricsComparisonCard(
+    baseline: HistoryItem,
+    current: HistoryItem,
+) {
     val glowColors = LocalGlowColors.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = glowColors.surfaceCard
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = glowColors.surfaceCard,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(GlowSpacing.md)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(GlowSpacing.md),
         ) {
             Text(
                 text = "Metrics Comparison",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = glowColors.ink900
+                color = glowColors.ink900,
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -385,7 +411,7 @@ private fun MetricsComparisonCard(baseline: HistoryItem, current: HistoryItem) {
                 label = "Redness",
                 baselineValue = baseline.rednessScore,
                 currentValue = current.rednessScore,
-                lowerIsBetter = true
+                lowerIsBetter = true,
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -394,7 +420,7 @@ private fun MetricsComparisonCard(baseline: HistoryItem, current: HistoryItem) {
                 label = "Blemishes",
                 baselineValue = baseline.blemishCount,
                 currentValue = current.blemishCount,
-                lowerIsBetter = true
+                lowerIsBetter = true,
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -403,7 +429,7 @@ private fun MetricsComparisonCard(baseline: HistoryItem, current: HistoryItem) {
                 label = "Texture",
                 baselineValue = baseline.textureScore,
                 currentValue = current.textureScore,
-                lowerIsBetter = true
+                lowerIsBetter = true,
             )
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -412,7 +438,7 @@ private fun MetricsComparisonCard(baseline: HistoryItem, current: HistoryItem) {
                 label = "Dark Spots",
                 baselineValue = baseline.darkspotArea,
                 currentValue = current.darkspotArea,
-                lowerIsBetter = true
+                lowerIsBetter = true,
             )
         }
     }
@@ -423,40 +449,40 @@ private fun MetricComparisonRow(
     label: String,
     baselineValue: Double?,
     currentValue: Double?,
-    lowerIsBetter: Boolean
+    lowerIsBetter: Boolean,
 ) {
     val glowColors = LocalGlowColors.current
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.SemiBold,
             color = glowColors.ink900,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
 
         if (baselineValue != null && currentValue != null) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 // Baseline value
                 Text(
                     text = formatMetricValue(baselineValue),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = glowColors.ink600
+                    color = glowColors.ink600,
                 )
 
                 Icon(
                     imageVector = Icons.Filled.ArrowForward,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = glowColors.ink600
+                    tint = glowColors.ink600,
                 )
 
                 // Current value
@@ -464,86 +490,99 @@ private fun MetricComparisonRow(
                     text = formatMetricValue(currentValue),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    color = glowColors.ink900
+                    color = glowColors.ink900,
                 )
 
                 // Trend indicator
                 TrendIndicator(
                     baseline = baselineValue,
                     current = currentValue,
-                    lowerIsBetter = lowerIsBetter
+                    lowerIsBetter = lowerIsBetter,
                 )
             }
         } else {
             Text(
                 text = "N/A",
                 style = MaterialTheme.typography.bodyMedium,
-                color = glowColors.ink600
+                color = glowColors.ink600,
             )
         }
     }
 }
 
 @Composable
-private fun TrendIndicator(baseline: Double, current: Double, lowerIsBetter: Boolean) {
+private fun TrendIndicator(
+    baseline: Double,
+    current: Double,
+    lowerIsBetter: Boolean,
+) {
     val glowColors = LocalGlowColors.current
     val delta = current - baseline
     val threshold = 0.01 // Consider values within 1% as "same"
 
-    val (icon, color, contentDescription) = when {
-        abs(delta) < threshold -> {
-            Triple(Icons.Filled.ArrowForward, glowColors.ink600, "No change")
+    val (icon, color, contentDescription) =
+        when {
+            abs(delta) < threshold -> {
+                Triple(Icons.Filled.ArrowForward, glowColors.ink600, "No change")
+            }
+
+            (delta < 0 && lowerIsBetter) || (delta > 0 && !lowerIsBetter) -> {
+                Triple(Icons.Filled.ArrowUpward, Color(0xFF10B981), "Improved")
+            }
+
+            else -> {
+                Triple(Icons.Filled.ArrowDownward, Color(0xFFEF4444), "Worsened")
+            }
         }
-        (delta < 0 && lowerIsBetter) || (delta > 0 && !lowerIsBetter) -> {
-            Triple(Icons.Filled.ArrowUpward, Color(0xFF10B981), "Improved")
-        }
-        else -> {
-            Triple(Icons.Filled.ArrowDownward, Color(0xFFEF4444), "Worsened")
-        }
-    }
 
     Box(
-        modifier = Modifier
-            .size(28.dp)
-            .background(color = color.copy(alpha = 0.1f), shape = RoundedCornerShape(6.dp)),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .size(28.dp)
+                .background(color = color.copy(alpha = 0.1f), shape = RoundedCornerShape(6.dp)),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
             tint = color,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(16.dp),
         )
     }
 }
 
 // Helper functions
-private fun formatCaptureDate(isoDate: String): String {
-    return try {
+private fun formatCaptureDate(isoDate: String): String =
+    try {
         val instant = Instant.parse(isoDate)
-        val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
-            .withZone(ZoneId.systemDefault())
+        val formatter =
+            DateTimeFormatter
+                .ofPattern("MMM d, yyyy")
+                .withZone(ZoneId.systemDefault())
         formatter.format(instant)
     } catch (e: Exception) {
         "Unknown"
     }
-}
 
-private fun calculateDaysBetween(startDate: String, endDate: String): Int {
-    return try {
+private fun calculateDaysBetween(
+    startDate: String,
+    endDate: String,
+): Int =
+    try {
         val start = Instant.parse(startDate)
         val end = Instant.parse(endDate)
-        val days = java.time.Duration.between(start, end).toDays()
+        val days =
+            java.time.Duration
+                .between(start, end)
+                .toDays()
         days.toInt()
     } catch (e: Exception) {
         0
     }
-}
 
-private fun formatMetricValue(value: Double): String {
-    return when {
+private fun formatMetricValue(value: Double): String =
+    when {
         value >= 10 -> String.format("%.0f", value)
         value >= 1 -> String.format("%.1f", value)
         else -> String.format("%.2f", value)
     }
-}

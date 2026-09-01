@@ -23,7 +23,6 @@ import org.junit.runner.RunWith
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class HomeScreenTest {
-
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
@@ -232,10 +231,12 @@ class HomeScreenTest {
         composeTestRule.waitUntil(timeoutMillis = 10000) {
             composeTestRule
                 .onAllNodesWithText("Current Streak", substring = true)
-                .fetchSemanticsNodes().isNotEmpty() ||
-            composeTestRule
-                .onAllNodesWithText("Home", substring = true)
-                .fetchSemanticsNodes().isNotEmpty()
+                .fetchSemanticsNodes()
+                .isNotEmpty() ||
+                composeTestRule
+                    .onAllNodesWithText("Home", substring = true)
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
         }
     }
 }

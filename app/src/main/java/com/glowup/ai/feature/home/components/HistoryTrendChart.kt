@@ -3,13 +3,13 @@ package com.glowup.ai.feature.home.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -83,28 +83,37 @@ fun HistoryTrendSection(
 
         val chartHistory = history.filter { it.valueFor(selectedMetric) != null }
         when {
-            !captureEnabled -> EmptyState(
-                modifier = Modifier.padding(top = 16.dp),
-                title = "Photo tracking is off",
-                body = "Re-enable facial-photo consent in Account → Data & Privacy to collect new readings.",
-                ctaLabel = "Capture unavailable",
-                onCtaClick = onCaptureAgain,
-                enabled = false,
-            )
-            history.isEmpty() -> EmptyState(
-                modifier = Modifier.padding(top = 16.dp),
-                title = "No captures yet",
-                body = "Take your first guided capture to start a history.",
-                ctaLabel = "Capture now",
-                onCtaClick = onCaptureAgain,
-            )
-            chartHistory.size < 2 -> EmptyState(
-                modifier = Modifier.padding(top = 16.dp),
-                title = "Not enough ${selectedMetric.label().lowercase()} readings",
-                body = "Capture at least two comparable readings to see how this metric is changing.",
-                ctaLabel = "Capture again",
-                onCtaClick = onCaptureAgain,
-            )
+            !captureEnabled -> {
+                EmptyState(
+                    modifier = Modifier.padding(top = 16.dp),
+                    title = "Photo tracking is off",
+                    body = "Re-enable facial-photo consent in Account → Data & Privacy to collect new readings.",
+                    ctaLabel = "Capture unavailable",
+                    onCtaClick = onCaptureAgain,
+                    enabled = false,
+                )
+            }
+
+            history.isEmpty() -> {
+                EmptyState(
+                    modifier = Modifier.padding(top = 16.dp),
+                    title = "No captures yet",
+                    body = "Take your first guided capture to start a history.",
+                    ctaLabel = "Capture now",
+                    onCtaClick = onCaptureAgain,
+                )
+            }
+
+            chartHistory.size < 2 -> {
+                EmptyState(
+                    modifier = Modifier.padding(top = 16.dp),
+                    title = "Not enough ${selectedMetric.label().lowercase()} readings",
+                    body = "Capture at least two comparable readings to see how this metric is changing.",
+                    ctaLabel = "Capture again",
+                    onCtaClick = onCaptureAgain,
+                )
+            }
+
             else -> {
                 TrendChartCanvas(
                     modifier = Modifier.padding(top = 16.dp),
@@ -114,10 +123,11 @@ fun HistoryTrendSection(
                 val latest = chartHistory.lastOrNull()
                 val noiseFloor = latest?.noiseFloor?.get(selectedMetric.toWire())
                 Text(
-                    text = buildString {
-                        append(latest?.modelVersion?.let { "Model $it" } ?: "Model version unknown")
-                        if (noiseFloor != null) append(" · noise floor ±${formatMetricValue(selectedMetric, noiseFloor)}")
-                    },
+                    text =
+                        buildString {
+                            append(latest?.modelVersion?.let { "Model $it" } ?: "Model version unknown")
+                            if (noiseFloor != null) append(" · noise floor ±${formatMetricValue(selectedMetric, noiseFloor)}")
+                        },
                     style = MaterialTheme.typography.labelSmall,
                     color = LocalGlowColors.current.ink600,
                     modifier = Modifier.padding(top = 8.dp),
@@ -148,21 +158,24 @@ private fun paddedDomain(values: List<Double>): Pair<Double, Double> {
     return (lo - pad) to (hi + pad)
 }
 
-private fun parseEpochMillis(iso: String): Long = runCatching {
-    val formats = listOf("yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd")
-    for (pattern in formats) {
-        val parsed = runCatching {
-            SimpleDateFormat(pattern, Locale.US).parse(iso.take(pattern.length.coerceAtMost(iso.length)))
-        }.getOrNull()
-        if (parsed != null) return parsed.time
-    }
-    0L
-}.getOrDefault(0L)
+private fun parseEpochMillis(iso: String): Long =
+    runCatching {
+        val formats = listOf("yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd")
+        for (pattern in formats) {
+            val parsed =
+                runCatching {
+                    SimpleDateFormat(pattern, Locale.US).parse(iso.take(pattern.length.coerceAtMost(iso.length)))
+                }.getOrNull()
+            if (parsed != null) return parsed.time
+        }
+        0L
+    }.getOrDefault(0L)
 
-private fun formatShortDate(iso: String): String = runCatching {
-    val date = java.util.Date(parseEpochMillis(iso))
-    SimpleDateFormat("MMM d", Locale.US).format(date)
-}.getOrDefault(iso.take(10))
+private fun formatShortDate(iso: String): String =
+    runCatching {
+        val date = java.util.Date(parseEpochMillis(iso))
+        SimpleDateFormat("MMM d", Locale.US).format(date)
+    }.getOrDefault(iso.take(10))
 
 @Composable
 private fun TrendChartCanvas(
@@ -181,55 +194,53 @@ private fun TrendChartCanvas(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .semantics {
-                    contentDescription = "${metric.label()} over ${history.size} captures. " +
-                        "A table with the exact values follows this chart."
-                }
-                .pointerInput(history, metric) {
-                    fun nearestIndex(x: Float): Int {
-                        val innerW = size.width - MARGIN_LEFT_PX - MARGIN_RIGHT_PX
-                        var best = 0
-                        var bestDist = Float.MAX_VALUE
-                        history.indices.forEach { i ->
-                            val px = xFor(i, history.size, MARGIN_LEFT_PX, innerW)
-                            val dist = abs(px - x)
-                            if (dist < bestDist) {
-                                bestDist = dist
-                                best = i
-                            }
-                        }
-                        return best
-                    }
-                    detectTapGestures(onPress = { offset -> selectedIndex = nearestIndex(offset.x) })
-                }
-                .pointerInput(history, metric) {
-                    detectDragGestures(
-                        onDrag = { change, _ ->
-                            change.consume()
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .semantics {
+                        contentDescription = "${metric.label()} over ${history.size} captures. " +
+                            "A table with the exact values follows this chart."
+                    }.pointerInput(history, metric) {
+                        fun nearestIndex(x: Float): Int {
                             val innerW = size.width - MARGIN_LEFT_PX - MARGIN_RIGHT_PX
                             var best = 0
                             var bestDist = Float.MAX_VALUE
                             history.indices.forEach { i ->
                                 val px = xFor(i, history.size, MARGIN_LEFT_PX, innerW)
-                                val dist = abs(px - change.position.x)
+                                val dist = abs(px - x)
                                 if (dist < bestDist) {
                                     bestDist = dist
                                     best = i
                                 }
                             }
-                            selectedIndex = best
-                        },
-                    )
-                },
+                            return best
+                        }
+                        detectTapGestures(onPress = { offset -> selectedIndex = nearestIndex(offset.x) })
+                    }.pointerInput(history, metric) {
+                        detectDragGestures(
+                            onDrag = { change, _ ->
+                                change.consume()
+                                val innerW = size.width - MARGIN_LEFT_PX - MARGIN_RIGHT_PX
+                                var best = 0
+                                var bestDist = Float.MAX_VALUE
+                                history.indices.forEach { i ->
+                                    val px = xFor(i, history.size, MARGIN_LEFT_PX, innerW)
+                                    val dist = abs(px - change.position.x)
+                                    if (dist < bestDist) {
+                                        bestDist = dist
+                                        best = i
+                                    }
+                                }
+                                selectedIndex = best
+                            },
+                        )
+                    },
         ) {
             val innerW = size.width - MARGIN_LEFT_PX - MARGIN_RIGHT_PX
             val innerH = size.height - MARGIN_TOP_PX - MARGIN_BOTTOM_PX
 
-            fun yFor(value: Double): Float =
-                (MARGIN_TOP_PX + innerH - ((value - lo) / (hi - lo) * innerH)).toFloat()
+            fun yFor(value: Double): Float = (MARGIN_TOP_PX + innerH - ((value - lo) / (hi - lo) * innerH)).toFloat()
 
             // Gridlines at lo / mid / hi.
             ticks.forEach { tick ->
@@ -245,18 +256,20 @@ private fun TrendChartCanvas(
             val points = history.indices.map { i -> Offset(xFor(i, history.size, MARGIN_LEFT_PX, innerW), yFor(values[i])) }
 
             // Area fill.
-            val fillPath = androidx.compose.ui.graphics.Path().apply {
-                points.forEachIndexed { i, p -> if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) }
-                lineTo(points.last().x, size.height - MARGIN_BOTTOM_PX)
-                lineTo(points.first().x, size.height - MARGIN_BOTTOM_PX)
-                close()
-            }
+            val fillPath =
+                androidx.compose.ui.graphics.Path().apply {
+                    points.forEachIndexed { i, p -> if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) }
+                    lineTo(points.last().x, size.height - MARGIN_BOTTOM_PX)
+                    lineTo(points.first().x, size.height - MARGIN_BOTTOM_PX)
+                    close()
+                }
             drawPath(fillPath, color = glow.chartFill)
 
             // Line.
-            val linePath = androidx.compose.ui.graphics.Path().apply {
-                points.forEachIndexed { i, p -> if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) }
-            }
+            val linePath =
+                androidx.compose.ui.graphics.Path().apply {
+                    points.forEachIndexed { i, p -> if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) }
+                }
             drawPath(linePath, color = glow.chartLine, style = Stroke(width = 5f, cap = StrokeCap.Round))
 
             // Baseline capture ring markers.
@@ -291,12 +304,13 @@ private fun TrendChartCanvas(
         }
 
         Text(
-            text = if (active != null) {
-                "${formatShortDate(active.capturedAt)} · ${formatMetricValue(metric, active.valueFor(metric) ?: 0.0)}" +
-                    " · ${active.confidenceLabel ?: "directional comparison"}"
-            } else {
-                "Tap or drag the chart for the capture behind a point."
-            },
+            text =
+                if (active != null) {
+                    "${formatShortDate(active.capturedAt)} · ${formatMetricValue(metric, active.valueFor(metric) ?: 0.0)}" +
+                        " · ${active.confidenceLabel ?: "directional comparison"}"
+                } else {
+                    "Tap or drag the chart for the capture behind a point."
+                },
             style = MaterialTheme.typography.bodySmall,
             color = glow.ink600,
             modifier = Modifier.padding(top = 8.dp),
@@ -309,8 +323,12 @@ private const val MARGIN_RIGHT_PX = 16f
 private const val MARGIN_TOP_PX = 12f
 private const val MARGIN_BOTTOM_PX = 12f
 
-private fun xFor(index: Int, count: Int, marginLeft: Float, innerW: Float): Float =
-    if (count <= 1) marginLeft + innerW / 2f else marginLeft + (index.toFloat() / (count - 1)) * innerW
+private fun xFor(
+    index: Int,
+    count: Int,
+    marginLeft: Float,
+    innerW: Float,
+): Float = if (count <= 1) marginLeft + innerW / 2f else marginLeft + (index.toFloat() / (count - 1)) * innerW
 
 /**
  * Accessible table alternative to the canvas chart — the web client keeps one alongside its SVG
@@ -325,9 +343,10 @@ fun HistoryAccessibleTable(
     val glow = LocalGlowColors.current
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
-                contentDescription = "Table header: date, redness, blemishes, dark spots, texture, reading quality"
-            },
+            modifier =
+                Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
+                    contentDescription = "Table header: date, redness, blemishes, dark spots, texture, reading quality"
+                },
         ) {
             TableCell("Date", weight = 1.2f, header = true)
             TableCell("Redness", weight = 1f, header = true)
@@ -338,20 +357,22 @@ fun HistoryAccessibleTable(
         }
         history.asReversed().forEach { item ->
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-                    .semantics(mergeDescendants = true) {
-                        contentDescription = buildString {
-                            append(formatShortDate(item.capturedAt))
-                            if (item.isBaseline) append(", baseline")
-                            append(", redness ${item.rednessScore?.let { String.format("%.3f", it) } ?: "unknown"}")
-                            append(", blemish count ${item.blemishCount?.toInt() ?: "unknown"}")
-                            append(", dark spot area ${item.darkspotArea?.let { String.format("%.3f", it) } ?: "unknown"}")
-                            append(", texture ${item.textureScore?.let { String.format("%.3f", it) } ?: "unknown"}")
-                            append(", reading quality ${item.confidenceLabel ?: "directional"}")
-                        }
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                        .semantics(mergeDescendants = true) {
+                            contentDescription =
+                                buildString {
+                                    append(formatShortDate(item.capturedAt))
+                                    if (item.isBaseline) append(", baseline")
+                                    append(", redness ${item.rednessScore?.let { String.format("%.3f", it) } ?: "unknown"}")
+                                    append(", blemish count ${item.blemishCount?.toInt() ?: "unknown"}")
+                                    append(", dark spot area ${item.darkspotArea?.let { String.format("%.3f", it) } ?: "unknown"}")
+                                    append(", texture ${item.textureScore?.let { String.format("%.3f", it) } ?: "unknown"}")
+                                    append(", reading quality ${item.confidenceLabel ?: "directional"}")
+                                }
+                        },
             ) {
                 TableCell(
                     text = formatShortDate(item.capturedAt) + if (item.isBaseline) " (base)" else "",

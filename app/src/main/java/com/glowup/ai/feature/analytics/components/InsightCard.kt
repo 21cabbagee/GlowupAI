@@ -34,63 +34,81 @@ fun InsightCard(
     val glow = LocalGlowColors.current
     var expanded by remember { mutableStateOf(false) }
 
-    val (backgroundColor, iconColor, icon) = when (insight.type) {
-        InsightType.IMPROVEMENT -> Triple(
-            glow.success.copy(alpha = 0.15f),
-            glow.success,
-            Icons.Filled.TrendingUp
-        )
-        InsightType.CONCERN -> Triple(
-            glow.danger.copy(alpha = 0.15f),
-            glow.danger,
-            Icons.Filled.Warning
-        )
-        InsightType.PATTERN -> Triple(
-            glow.honey500.copy(alpha = 0.15f),
-            glow.honey700,
-            Icons.Filled.Psychology
-        )
-        InsightType.ACHIEVEMENT -> Triple(
-            glow.success.copy(alpha = 0.15f),
-            glow.success,
-            Icons.Filled.EmojiEvents
-        )
-        InsightType.RECOMMENDATION -> Triple(
-            Color(0xFF7C4DFF).copy(alpha = 0.15f),
-            Color(0xFF7C4DFF),
-            Icons.Filled.Lightbulb
-        )
-    }
+    val (backgroundColor, iconColor, icon) =
+        when (insight.type) {
+            InsightType.IMPROVEMENT -> {
+                Triple(
+                    glow.success.copy(alpha = 0.15f),
+                    glow.success,
+                    Icons.Filled.TrendingUp,
+                )
+            }
+
+            InsightType.CONCERN -> {
+                Triple(
+                    glow.danger.copy(alpha = 0.15f),
+                    glow.danger,
+                    Icons.Filled.Warning,
+                )
+            }
+
+            InsightType.PATTERN -> {
+                Triple(
+                    glow.honey500.copy(alpha = 0.15f),
+                    glow.honey700,
+                    Icons.Filled.Psychology,
+                )
+            }
+
+            InsightType.ACHIEVEMENT -> {
+                Triple(
+                    glow.success.copy(alpha = 0.15f),
+                    glow.success,
+                    Icons.Filled.EmojiEvents,
+                )
+            }
+
+            InsightType.RECOMMENDATION -> {
+                Triple(
+                    Color(0xFF7C4DFF).copy(alpha = 0.15f),
+                    Color(0xFF7C4DFF),
+                    Icons.Filled.Lightbulb,
+                )
+            }
+        }
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(backgroundColor)
-            .clickable { expanded = !expanded }
-            .padding(GlowSpacing.md)
-            .animateContentSize(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            )
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(backgroundColor)
+                .clickable { expanded = !expanded }
+                .padding(GlowSpacing.md)
+                .animateContentSize(
+                    animationSpec =
+                        spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow,
+                        ),
+                ),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+            horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
         ) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(iconColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .background(iconColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = iconColor,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
             }
 
@@ -99,7 +117,7 @@ fun InsightCard(
                     text = insight.title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = glow.ink900
+                    color = glow.ink900,
                 )
 
                 insight.changePercent?.let { change ->
@@ -108,7 +126,7 @@ fun InsightCard(
                         fontFamily = FontFamily.Monospace,
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
-                        color = if (change > 0) glow.success else glow.danger
+                        color = if (change > 0) glow.success else glow.danger,
                     )
                 }
             }
@@ -116,7 +134,7 @@ fun InsightCard(
             Icon(
                 imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                 contentDescription = if (expanded) "Collapse" else "Expand",
-                tint = glow.ink600
+                tint = glow.ink600,
             )
         }
 
@@ -127,33 +145,33 @@ fun InsightCard(
                 text = insight.description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = glow.ink900,
-                modifier = Modifier.padding(start = 48.dp)
+                modifier = Modifier.padding(start = 48.dp),
             )
 
             insight.recommendation?.let { recommendation ->
                 Spacer(modifier = Modifier.height(GlowSpacing.sm))
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 48.dp)
-                        .background(
-                            glow.honey500.copy(alpha = 0.1f),
-                            RoundedCornerShape(8.dp)
-                        )
-                        .padding(GlowSpacing.sm),
-                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 48.dp)
+                            .background(
+                                glow.honey500.copy(alpha = 0.1f),
+                                RoundedCornerShape(8.dp),
+                            ).padding(GlowSpacing.sm),
+                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Lightbulb,
                         contentDescription = null,
                         tint = glow.honey700,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                     Text(
                         text = recommendation,
                         style = MaterialTheme.typography.bodySmall,
                         color = glow.ink900,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -168,7 +186,7 @@ fun InsightsList(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
     ) {
         insights.forEach { insight ->
             InsightCard(insight = insight)

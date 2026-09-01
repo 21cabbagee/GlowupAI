@@ -9,16 +9,27 @@ package com.glowup.ai.feature.insights
  */
 sealed interface ScreenState<out T> {
     data object Loading : ScreenState<Nothing>
-    data class Content<T>(val value: T) : ScreenState<T>
-    data class Empty(val title: String, val body: String? = null) : ScreenState<Nothing>
-    data class Error(val message: String) : ScreenState<Nothing>
+
+    data class Content<T>(
+        val value: T,
+    ) : ScreenState<T>
+
+    data class Empty(
+        val title: String,
+        val body: String? = null,
+    ) : ScreenState<Nothing>
+
+    data class Error(
+        val message: String,
+    ) : ScreenState<Nothing>
 
     /** The backend 403'd this call as Premium-only. Rendered as [com.glowup.ai.core.ui.LockedCard],
      * never folded into [Error]. */
     data object Locked : ScreenState<Nothing>
 }
 
-fun <T> ScreenState<T>.valueOrNull(): T? = when (this) {
-    is ScreenState.Content -> value
-    else -> null
-}
+fun <T> ScreenState<T>.valueOrNull(): T? =
+    when (this) {
+        is ScreenState.Content -> value
+        else -> null
+    }

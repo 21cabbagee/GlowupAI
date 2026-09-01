@@ -37,18 +37,19 @@ data class ExportBundleDto(
     val note: String? = null,
 )
 
-fun ExportBundleDto.toDomain(): ExportBundle = ExportBundle(
-    exportVersion = exportVersion,
-    exportedAt = exportedAt,
-    profile = profile,
-    consentEvents = consentEvents,
-    appearanceProfiles = appearanceProfiles,
-    routineEvents = routineEvents,
-    experiments = experiments,
-    capturesAndMetrics = capturesAndMetrics,
-    appearanceCaptures = appearanceCaptures,
-    verdicts = verdicts,
-    qna = qna,
-    engagement = engagement,
-    note = note,
-)
+fun ExportBundleDto.toDomain(): ExportBundle =
+    ExportBundle(
+        exportVersion = exportVersion,
+        exportedAt = exportedAt,
+        profile = profile,
+        consentEvents = consentEvents,
+        appearanceProfiles = appearanceProfiles,
+        routineEvents = routineEvents,
+        experiments = experiments,
+        capturesAndMetrics = capturesAndMetrics,
+        appearanceCaptures = appearanceCaptures,
+        verdicts = verdicts,
+        qna = qna,
+        engagement = engagement,
+        note = note,
+    )

@@ -12,10 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.glowup.ai.core.design.GlowUpTheme
-import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.design.GlowShapes
 import com.glowup.ai.core.design.GlowSpacing
+import com.glowup.ai.core.design.GlowUpTheme
+import com.glowup.ai.core.design.LocalGlowColors
 
 /**
  * The base surface for grouped content. Optionally interactive (pass [onClick]) — when it is,
@@ -29,16 +29,20 @@ fun GlowCard(
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
     val glow = LocalGlowColors.current
-    var cardModifier = modifier
-        .background(color = glow.surfaceCard, shape = GlowShapes.md)
+    var cardModifier =
+        modifier
+            .background(color = glow.surfaceCard, shape = GlowShapes.md)
 
-    cardModifier = if (onClick != null) {
-        cardModifier.clickable(
-            onClickLabel = contentDescription,
-            role = Role.Button,
-            onClick = onClick,
-        )
-    } else cardModifier
+    cardModifier =
+        if (onClick != null) {
+            cardModifier.clickable(
+                onClickLabel = contentDescription,
+                role = Role.Button,
+                onClick = onClick,
+            )
+        } else {
+            cardModifier
+        }
 
     Column(
         modifier = cardModifier.padding(GlowSpacing.md),

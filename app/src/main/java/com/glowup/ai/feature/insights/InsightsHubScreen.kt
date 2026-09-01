@@ -118,11 +118,30 @@ fun InsightsHubScreen(
             item { LabelForm(labelForm, viewModel) }
             item {
                 when (val current = labelsState) {
-                    ScreenState.Loading -> ShimmerSkeleton(height = 64.dp)
-                    is ScreenState.Error -> ErrorState(message = current.message, onRetry = viewModel::loadLabels)
-                    is ScreenState.Empty -> EmptyState(title = current.title, body = current.body, ctaLabel = "Refresh", onCtaClick = viewModel::loadLabels)
-                    is ScreenState.Content -> LabelsList(current.value)
-                    ScreenState.Locked -> Unit
+                    ScreenState.Loading -> {
+                        ShimmerSkeleton(height = 64.dp)
+                    }
+
+                    is ScreenState.Error -> {
+                        ErrorState(message = current.message, onRetry = viewModel::loadLabels)
+                    }
+
+                    is ScreenState.Empty -> {
+                        EmptyState(
+                            title = current.title,
+                            body = current.body,
+                            ctaLabel = "Refresh",
+                            onCtaClick = viewModel::loadLabels,
+                        )
+                    }
+
+                    is ScreenState.Content -> {
+                        LabelsList(current.value)
+                    }
+
+                    ScreenState.Locked -> {
+                        Unit
+                    }
                 }
             }
 
@@ -143,7 +162,12 @@ fun InsightsHubScreen(
 }
 
 @Composable
-private fun NavCard(icon: ImageVector, title: String, body: String, onClick: () -> Unit) {
+private fun NavCard(
+    icon: ImageVector,
+    title: String,
+    body: String,
+    onClick: () -> Unit,
+) {
     val glow = LocalGlowColors.current
     GlowCard(onClick = onClick, contentDescription = title) {
         androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.CenterVertically) {
@@ -158,7 +182,10 @@ private fun NavCard(icon: ImageVector, title: String, body: String, onClick: () 
 }
 
 @Composable
-private fun LabelForm(form: LabelFormState, viewModel: InsightsHubViewModel) {
+private fun LabelForm(
+    form: LabelFormState,
+    viewModel: InsightsHubViewModel,
+) {
     val glow = LocalGlowColors.current
     GlowCard {
         Text(
@@ -258,17 +285,23 @@ private fun ReprocessSection(
                     variant = GlowButtonVariant.Secondary,
                 )
             }
-            is ReprocessUiState.Polling -> PollingIndicator(
-                modifier = Modifier.padding(top = GlowSpacing.sm),
-                message = when (state.status) {
-                    JobStatus.QUEUED -> "Queued — recalculating history…"
-                    else -> "Recalculating history — values may change…"
-                },
-            )
+
+            is ReprocessUiState.Polling -> {
+                PollingIndicator(
+                    modifier = Modifier.padding(top = GlowSpacing.sm),
+                    message =
+                        when (state.status) {
+                            JobStatus.QUEUED -> "Queued — recalculating history…"
+                            else -> "Recalculating history — values may change…"
+                        },
+                )
+            }
+
             is ReprocessUiState.Completed -> {
                 Text(
-                    text = "Done. ${state.processedCount ?: 0} captures reprocessed" +
-                        (state.modelVersion?.let { " with $it" } ?: "") + ".",
+                    text =
+                        "Done. ${state.processedCount ?: 0} captures reprocessed" +
+                            (state.modelVersion?.let { " with $it" } ?: "") + ".",
                     color = glow.ink900,
                     modifier = Modifier.padding(top = GlowSpacing.sm),
                 )
@@ -279,6 +312,7 @@ private fun ReprocessSection(
                     variant = GlowButtonVariant.Ghost,
                 )
             }
+
             is ReprocessUiState.Failed -> {
                 ErrorState(
                     modifier = Modifier.padding(top = GlowSpacing.sm),
@@ -286,7 +320,10 @@ private fun ReprocessSection(
                     onRetry = onStart,
                 )
             }
-            ReprocessUiState.Locked -> Unit
+
+            ReprocessUiState.Locked -> {
+                Unit
+            }
         }
     }
 }

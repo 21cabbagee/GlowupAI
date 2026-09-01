@@ -13,9 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,24 +37,26 @@ fun PollingIndicator(
     val reducedMotion = isReducedMotionEnabled()
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(glow.honey300.copy(alpha = 0.3f))
-            .padding(horizontal = 14.dp, vertical = 12.dp)
-            .semantics {
-                contentDescription = message
-                liveRegion = LiveRegionMode.Polite
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(glow.honey300.copy(alpha = 0.3f))
+                .padding(horizontal = 14.dp, vertical = 12.dp)
+                .semantics {
+                    contentDescription = message
+                    liveRegion = LiveRegionMode.Polite
+                },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (reducedMotion) {
             // A static dot instead of an indeterminate spin, honouring reduced-motion.
             androidx.compose.foundation.layout.Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(glow.honey600),
+                modifier =
+                    Modifier
+                        .size(16.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(glow.honey600),
             )
         } else {
             CircularProgressIndicator(

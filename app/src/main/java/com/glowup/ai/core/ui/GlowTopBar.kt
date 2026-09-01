@@ -47,12 +47,13 @@ fun GlowTopBar(
             }
         },
         actions = { actions() },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = glow.paper,
-            titleContentColor = glow.ink900,
-            navigationIconContentColor = glow.ink900,
-            actionIconContentColor = glow.ink900,
-        ),
+        colors =
+            TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = glow.paper,
+                titleContentColor = glow.ink900,
+                navigationIconContentColor = glow.ink900,
+                actionIconContentColor = glow.ink900,
+            ),
     )
 }
 

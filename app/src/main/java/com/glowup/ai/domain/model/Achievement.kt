@@ -14,7 +14,7 @@ enum class AchievementType(
     val title: String,
     val description: String,
     val icon: ImageVector,
-    val requirement: AchievementRequirement
+    val requirement: AchievementRequirement,
 ) {
     // Capture milestones
     FIRST_CAPTURE(
@@ -22,28 +22,28 @@ enum class AchievementType(
         title = "First Step",
         description = "Took your first capture",
         icon = Icons.Filled.CameraAlt,
-        requirement = AchievementRequirement.CaptureCount(1)
+        requirement = AchievementRequirement.CaptureCount(1),
     ),
     TENTH_CAPTURE(
         id = "tenth_capture",
         title = "Committed",
         description = "Completed 10 captures",
         icon = Icons.Filled.Stars,
-        requirement = AchievementRequirement.CaptureCount(10)
+        requirement = AchievementRequirement.CaptureCount(10),
     ),
     FIFTIETH_CAPTURE(
         id = "fiftieth_capture",
         title = "Dedicated Tracker",
         description = "Completed 50 captures",
         icon = Icons.Filled.EmojiEvents,
-        requirement = AchievementRequirement.CaptureCount(50)
+        requirement = AchievementRequirement.CaptureCount(50),
     ),
     HUNDREDTH_CAPTURE(
         id = "hundredth_capture",
         title = "Century Club",
         description = "Completed 100 captures",
         icon = Icons.Filled.MilitaryTech,
-        requirement = AchievementRequirement.CaptureCount(100)
+        requirement = AchievementRequirement.CaptureCount(100),
     ),
 
     // Streak achievements
@@ -52,21 +52,21 @@ enum class AchievementType(
         title = "Week Warrior",
         description = "Maintained a 7-day streak",
         icon = Icons.Filled.LocalFireDepartment,
-        requirement = AchievementRequirement.StreakDays(7)
+        requirement = AchievementRequirement.StreakDays(7),
     ),
     MONTH_STREAK(
         id = "month_streak",
         title = "Monthly Master",
         description = "Maintained a 30-day streak",
         icon = Icons.Filled.Whatshot,
-        requirement = AchievementRequirement.StreakDays(30)
+        requirement = AchievementRequirement.StreakDays(30),
     ),
     QUARTER_STREAK(
         id = "quarter_streak",
         title = "Quarterly Champion",
         description = "Maintained a 90-day streak",
         icon = Icons.Filled.EmojiEvents,
-        requirement = AchievementRequirement.StreakDays(90)
+        requirement = AchievementRequirement.StreakDays(90),
     ),
 
     // Routine achievements
@@ -75,14 +75,14 @@ enum class AchievementType(
         title = "Product Pioneer",
         description = "Added your first product",
         icon = Icons.Filled.ShoppingBag,
-        requirement = AchievementRequirement.ProductCount(1)
+        requirement = AchievementRequirement.ProductCount(1),
     ),
     FULL_ROUTINE(
         id = "full_routine",
         title = "Routine Master",
         description = "Built a routine with 5+ products",
         icon = Icons.Filled.AutoAwesome,
-        requirement = AchievementRequirement.ProductCount(5)
+        requirement = AchievementRequirement.ProductCount(5),
     ),
 
     // Experiment achievements
@@ -91,14 +91,14 @@ enum class AchievementType(
         title = "Skin Scientist",
         description = "Started your first experiment",
         icon = Icons.Filled.Science,
-        requirement = AchievementRequirement.ExperimentCount(1)
+        requirement = AchievementRequirement.ExperimentCount(1),
     ),
     COMPLETED_EXPERIMENT(
         id = "completed_experiment",
         title = "Evidence-Based",
         description = "Completed an experiment",
         icon = Icons.Filled.VerifiedUser,
-        requirement = AchievementRequirement.CompletedExperimentCount(1)
+        requirement = AchievementRequirement.CompletedExperimentCount(1),
     ),
 
     // Engagement achievements
@@ -107,14 +107,14 @@ enum class AchievementType(
         title = "Baseline Established",
         description = "Completed your baseline capture",
         icon = Icons.Filled.Flag,
-        requirement = AchievementRequirement.HasBaseline
+        requirement = AchievementRequirement.HasBaseline,
     ),
     CONSENT_GIVEN(
         id = "consent_given",
         title = "Privacy Conscious",
         description = "Reviewed and accepted consent",
         icon = Icons.Filled.Security,
-        requirement = AchievementRequirement.HasConsent
+        requirement = AchievementRequirement.HasConsent,
     ),
 
     // Comparison achievements
@@ -123,7 +123,7 @@ enum class AchievementType(
         title = "Before & After",
         description = "Used comparison mode to track progress",
         icon = Icons.Filled.CompareArrows,
-        requirement = AchievementRequirement.UsedComparison
+        requirement = AchievementRequirement.UsedComparison,
     ),
 
     // Social achievements
@@ -132,7 +132,7 @@ enum class AchievementType(
         title = "Inspiration",
         description = "Shared your progress (opt-in)",
         icon = Icons.Filled.Share,
-        requirement = AchievementRequirement.SharedProgress
+        requirement = AchievementRequirement.SharedProgress,
     ),
 
     // Premium achievements
@@ -141,34 +141,55 @@ enum class AchievementType(
         title = "Power User",
         description = "Upgraded to Premium",
         icon = Icons.Filled.WorkspacePremium,
-        requirement = AchievementRequirement.IsPremium
-    );
+        requirement = AchievementRequirement.IsPremium,
+    ),
+    ;
 
     /**
      * Get tier based on achievement difficulty
      */
     val tier: AchievementTier
-        get() = when (this) {
-            FIRST_CAPTURE, FIRST_PRODUCT, BASELINE_SET, CONSENT_GIVEN -> AchievementTier.BRONZE
-            WEEK_STREAK, TENTH_CAPTURE, FIRST_EXPERIMENT, FULL_ROUTINE, BEFORE_AFTER -> AchievementTier.SILVER
-            MONTH_STREAK, FIFTIETH_CAPTURE, COMPLETED_EXPERIMENT, SHARED_PROGRESS -> AchievementTier.GOLD
-            QUARTER_STREAK, HUNDREDTH_CAPTURE, PREMIUM_UPGRADE -> AchievementTier.PLATINUM
-        }
+        get() =
+            when (this) {
+                FIRST_CAPTURE, FIRST_PRODUCT, BASELINE_SET, CONSENT_GIVEN -> AchievementTier.BRONZE
+                WEEK_STREAK, TENTH_CAPTURE, FIRST_EXPERIMENT, FULL_ROUTINE, BEFORE_AFTER -> AchievementTier.SILVER
+                MONTH_STREAK, FIFTIETH_CAPTURE, COMPLETED_EXPERIMENT, SHARED_PROGRESS -> AchievementTier.GOLD
+                QUARTER_STREAK, HUNDREDTH_CAPTURE, PREMIUM_UPGRADE -> AchievementTier.PLATINUM
+            }
 }
 
 /**
  * Achievement requirement types
  */
 sealed class AchievementRequirement {
-    data class CaptureCount(val count: Int) : AchievementRequirement()
-    data class StreakDays(val days: Int) : AchievementRequirement()
-    data class ProductCount(val count: Int) : AchievementRequirement()
-    data class ExperimentCount(val count: Int) : AchievementRequirement()
-    data class CompletedExperimentCount(val count: Int) : AchievementRequirement()
+    data class CaptureCount(
+        val count: Int,
+    ) : AchievementRequirement()
+
+    data class StreakDays(
+        val days: Int,
+    ) : AchievementRequirement()
+
+    data class ProductCount(
+        val count: Int,
+    ) : AchievementRequirement()
+
+    data class ExperimentCount(
+        val count: Int,
+    ) : AchievementRequirement()
+
+    data class CompletedExperimentCount(
+        val count: Int,
+    ) : AchievementRequirement()
+
     object HasBaseline : AchievementRequirement()
+
     object HasConsent : AchievementRequirement()
+
     object UsedComparison : AchievementRequirement()
+
     object SharedProgress : AchievementRequirement()
+
     object IsPremium : AchievementRequirement()
 }
 
@@ -177,12 +198,12 @@ sealed class AchievementRequirement {
  */
 enum class AchievementTier(
     val displayName: String,
-    val color: Long // ARGB color
+    val color: Long, // ARGB color
 ) {
     BRONZE("Bronze", 0xFFCD7F32),
     SILVER("Silver", 0xFFC0C0C0),
     GOLD("Gold", 0xFFFFD700),
-    PLATINUM("Platinum", 0xFFE5E4E2)
+    PLATINUM("Platinum", 0xFFE5E4E2),
 }
 
 /**
@@ -193,34 +214,40 @@ data class UserAchievement(
     val unlockedAt: String? = null, // ISO timestamp
     val progress: Float = 0f, // 0.0 to 1.0
     val isUnlocked: Boolean = false,
-    val isNew: Boolean = false // Just unlocked, show celebration
+    val isNew: Boolean = false, // Just unlocked, show celebration
 ) {
     /**
      * Get display progress text
      */
-    fun getProgressText(): String {
-        return when (val req = type.requirement) {
+    fun getProgressText(): String =
+        when (val req = type.requirement) {
             is AchievementRequirement.CaptureCount -> {
                 val current = (progress * req.count).toInt()
                 "$current / ${req.count}"
             }
+
             is AchievementRequirement.StreakDays -> {
                 val current = (progress * req.days).toInt()
                 "$current / ${req.days} days"
             }
+
             is AchievementRequirement.ProductCount -> {
                 val current = (progress * req.count).toInt()
                 "$current / ${req.count} products"
             }
+
             is AchievementRequirement.ExperimentCount -> {
                 val current = (progress * req.count).toInt()
                 "$current / ${req.count}"
             }
+
             is AchievementRequirement.CompletedExperimentCount -> {
                 val current = (progress * req.count).toInt()
                 "$current / ${req.count}"
             }
-            else -> if (isUnlocked) "Unlocked" else "Locked"
+
+            else -> {
+                if (isUnlocked) "Unlocked" else "Locked"
+            }
         }
-    }
 }

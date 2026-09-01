@@ -38,12 +38,13 @@ data class ReprocessJobDto(
     val error: String? = null,
 )
 
-fun ReprocessJobDto.toDomain(fallbackJobId: String): ReprocessJob = ReprocessJob(
-    jobId = jobId ?: fallbackJobId,
-    status = JobStatus.fromRaw(status),
-    result = result?.let { ReprocessResult(it.processedCount, it.modelVersion) },
-    error = error,
-)
+fun ReprocessJobDto.toDomain(fallbackJobId: String): ReprocessJob =
+    ReprocessJob(
+        jobId = jobId ?: fallbackJobId,
+        status = JobStatus.fromRaw(status),
+        result = result?.let { ReprocessResult(it.processedCount, it.modelVersion) },
+        error = error,
+    )
 
 @Serializable
 data class ShelfScanCreateRequestDto(
@@ -72,17 +73,19 @@ data class ShelfScanJobDto(
     val error: String? = null,
 )
 
-fun ShelfScanJobDto.toDomain(fallbackJobId: String): ShelfScanJob = ShelfScanJob(
-    jobId = jobId ?: fallbackJobId,
-    status = JobStatus.fromRaw(status),
-    result = result?.let { r ->
-        ShelfScanResult(
-            candidates = r.candidates.map { ShelfScanCandidate(it.name, it.brand, it.category, it.ingredients) },
-            message = r.message,
-        )
-    },
-    error = error,
-)
+fun ShelfScanJobDto.toDomain(fallbackJobId: String): ShelfScanJob =
+    ShelfScanJob(
+        jobId = jobId ?: fallbackJobId,
+        status = JobStatus.fromRaw(status),
+        result =
+            result?.let { r ->
+                ShelfScanResult(
+                    candidates = r.candidates.map { ShelfScanCandidate(it.name, it.brand, it.category, it.ingredients) },
+                    message = r.message,
+                )
+            },
+        error = error,
+    )
 
 @Serializable
 data class ShelfScanSelectionDto(

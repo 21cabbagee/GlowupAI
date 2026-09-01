@@ -24,28 +24,51 @@ import javax.inject.Singleton
  * | Shelf-scan confirm (`RoutineRepository`)                | products, dashboard                   |
  */
 sealed class InvalidationSignal {
-    data class CaptureAccepted(val userId: String, val vertical: String) : InvalidationSignal()
-    data class RoutineEventLogged(val userId: String) : InvalidationSignal()
-    data class ExperimentChanged(val userId: String) : InvalidationSignal()
-    data class ConsentChanged(val userId: String) : InvalidationSignal()
-    data class SubscriptionChanged(val userId: String) : InvalidationSignal()
-    data class ShelfScanConfirmed(val userId: String) : InvalidationSignal()
-    data class SessionCleared(val userId: String) : InvalidationSignal()
+    data class CaptureAccepted(
+        val userId: String,
+        val vertical: String,
+    ) : InvalidationSignal()
+
+    data class RoutineEventLogged(
+        val userId: String,
+    ) : InvalidationSignal()
+
+    data class ExperimentChanged(
+        val userId: String,
+    ) : InvalidationSignal()
+
+    data class ConsentChanged(
+        val userId: String,
+    ) : InvalidationSignal()
+
+    data class SubscriptionChanged(
+        val userId: String,
+    ) : InvalidationSignal()
+
+    data class ShelfScanConfirmed(
+        val userId: String,
+    ) : InvalidationSignal()
+
+    data class SessionCleared(
+        val userId: String,
+    ) : InvalidationSignal()
 }
 
 @Singleton
-class CacheInvalidationBus @Inject constructor() {
+class CacheInvalidationBus
+    @Inject
+    constructor() {
+        private val _events =
+            MutableSharedFlow<InvalidationSignal>(
+                // A singleton subscriber may be starting while a mutation publishes.
+                // Replaying the latest invalidation is harmless and prevents a cold
+                // start from losing the only signal that matters for its caches.
+                replay = 1,
+                extraBufferCapacity = 32,
+            )
+        val events: SharedFlow<InvalidationSignal> = _events
 
-    private val _events = MutableSharedFlow<InvalidationSignal>(
-        // A singleton subscriber may be starting while a mutation publishes.
-        // Replaying the latest invalidation is harmless and prevents a cold
-        // start from losing the only signal that matters for its caches.
-        replay = 1,
-        extraBufferCapacity = 32,
-    )
-    val events: SharedFlow<InvalidationSignal> = _events
-
-    fun publish(signal: InvalidationSignal) {
-        _events.tryEmit(signal)
+        fun publish(signal: InvalidationSignal) {
+            _events.tryEmit(signal)
+        }
     }
-}

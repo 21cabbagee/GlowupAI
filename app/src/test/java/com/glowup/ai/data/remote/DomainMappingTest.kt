@@ -18,15 +18,15 @@ import org.junit.Test
  * `Entitlement.isPremium` rule.
  */
 class DomainMappingTest {
-
     @Test
     fun `ingredients_json is parsed from a JSON array string on read`() {
-        val dto = ProductDto(
-            id = "p1",
-            name = "Barrier serum",
-            category = "moisturizer",
-            ingredientsJson = """["Niacinamide","Ceramide NP"]""",
-        )
+        val dto =
+            ProductDto(
+                id = "p1",
+                name = "Barrier serum",
+                category = "moisturizer",
+                ingredientsJson = """["Niacinamide","Ceramide NP"]""",
+            )
 
         val product = dto.toDomain()
 
@@ -61,13 +61,14 @@ class DomainMappingTest {
 
     @Test
     fun `isPremium requires both plan premium and status active`() {
-        val premium = com.glowup.ai.domain.model.Entitlement(
-            plan = Plan.PREMIUM,
-            status = EntitlementStatus.ACTIVE,
-            startedAt = null,
-            renewsAt = null,
-            source = null,
-        )
+        val premium =
+            com.glowup.ai.domain.model.Entitlement(
+                plan = Plan.PREMIUM,
+                status = EntitlementStatus.ACTIVE,
+                startedAt = null,
+                renewsAt = null,
+                source = null,
+            )
         assertTrue(premium.isPremium)
 
         val cancelledPremium = premium.copy(status = EntitlementStatus.CANCELLED)

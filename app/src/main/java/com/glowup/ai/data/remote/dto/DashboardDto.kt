@@ -31,13 +31,14 @@ data class VerdictDto(
     val evidence: VerdictEvidenceDto? = null,
 )
 
-fun VerdictDto.toDomain(): Verdict = Verdict(
-    label = VerdictLabel.fromRaw(label),
-    generatedText = generatedText,
-    productId = productId,
-    productName = productName,
-    evidence = evidence?.let { VerdictEvidence(it.nAfter, it.confidence) },
-)
+fun VerdictDto.toDomain(): Verdict =
+    Verdict(
+        label = VerdictLabel.fromRaw(label),
+        generatedText = generatedText,
+        productId = productId,
+        productName = productName,
+        evidence = evidence?.let { VerdictEvidence(it.nAfter, it.confidence) },
+    )
 
 @Serializable
 data class DashboardRoutineEventDto(
@@ -48,13 +49,14 @@ data class DashboardRoutineEventDto(
     val notes: String? = null,
 )
 
-fun DashboardRoutineEventDto.toDomain(): DashboardRoutineEvent = DashboardRoutineEvent(
-    action = RoutineAction.fromRaw(action),
-    productName = productName,
-    timestamp = timestamp,
-    slot = slot,
-    notes = notes,
-)
+fun DashboardRoutineEventDto.toDomain(): DashboardRoutineEvent =
+    DashboardRoutineEvent(
+        action = RoutineAction.fromRaw(action),
+        productName = productName,
+        timestamp = timestamp,
+        slot = slot,
+        notes = notes,
+    )
 
 @Serializable
 data class DashboardAnalyticsDto(
@@ -82,20 +84,22 @@ data class DashboardFeaturesDto(
     @SerialName("product_prediction") @Serializable(with = IntBooleanSerializer::class) val productPrediction: Boolean = false,
 )
 
-fun DashboardFeaturesDto.toDomain(): DashboardFeatures = DashboardFeatures(
-    productVerdictsUnlocked = productVerdictsUnlocked,
-    raw = mapOf(
-        "experiments" to experiments,
-        "ingredient_analysis" to ingredientAnalysis,
-        "long_history" to longHistory,
-        "qna" to qna,
-        "discover" to discover,
-        "root_cause" to rootCause,
-        "budget_optimizer" to budgetOptimizer,
-        "derm_export" to dermExport,
-        "product_prediction" to productPrediction,
-    ),
-)
+fun DashboardFeaturesDto.toDomain(): DashboardFeatures =
+    DashboardFeatures(
+        productVerdictsUnlocked = productVerdictsUnlocked,
+        raw =
+            mapOf(
+                "experiments" to experiments,
+                "ingredient_analysis" to ingredientAnalysis,
+                "long_history" to longHistory,
+                "qna" to qna,
+                "discover" to discover,
+                "root_cause" to rootCause,
+                "budget_optimizer" to budgetOptimizer,
+                "derm_export" to dermExport,
+                "product_prediction" to productPrediction,
+            ),
+    )
 
 @Serializable
 data class DashboardDto(
@@ -113,27 +117,29 @@ data class DashboardDto(
     val disclaimer: String = "Cosmetic tracking only; SkinProof does not diagnose, treat, or rule out medical conditions.",
 )
 
-fun DashboardDto.toDomain(): Dashboard = Dashboard(
-    profile = profile.toDomain(),
-    vertical = vertical,
-    history = history.map { it.toDomain() },
-    verdicts = verdicts.map { it.toDomain() },
-    experiments = experiments.map { it.toDomain() },
-    engagement = engagement?.toDomain(),
-    analytics = analytics?.let {
-        DashboardAnalytics(
-            medianHistoryDays = it.medianHistoryDays,
-            baselineCapture = it.baselineCapture,
-            firstThreeCaptures = it.firstThreeCaptures,
-            activation = it.activation?.toString(),
-        )
-    },
-    weeklyRecap = weeklyRecap?.toDomain(),
-    checkIns = checkIns.map { it.toDomain() },
-    routineEvents = routineEvents.map { it.toDomain() },
-    features = features.toDomain(),
-    disclaimer = disclaimer,
-)
+fun DashboardDto.toDomain(): Dashboard =
+    Dashboard(
+        profile = profile.toDomain(),
+        vertical = vertical,
+        history = history.map { it.toDomain() },
+        verdicts = verdicts.map { it.toDomain() },
+        experiments = experiments.map { it.toDomain() },
+        engagement = engagement?.toDomain(),
+        analytics =
+            analytics?.let {
+                DashboardAnalytics(
+                    medianHistoryDays = it.medianHistoryDays,
+                    baselineCapture = it.baselineCapture,
+                    firstThreeCaptures = it.firstThreeCaptures,
+                    activation = it.activation?.toString(),
+                )
+            },
+        weeklyRecap = weeklyRecap?.toDomain(),
+        checkIns = checkIns.map { it.toDomain() },
+        routineEvents = routineEvents.map { it.toDomain() },
+        features = features.toDomain(),
+        disclaimer = disclaimer,
+    )
 
 @Serializable
 data class CheckInCreateRequestDto(
@@ -143,12 +149,13 @@ data class CheckInCreateRequestDto(
     @SerialName("occurred_at") val occurredAt: String? = null,
 )
 
-fun com.glowup.ai.domain.model.CheckInCreateRequest.toDto(): CheckInCreateRequestDto = CheckInCreateRequestDto(
-    routineState = routineState.toWire(),
-    skinFeel = skinFeel.toWire(),
-    note = note,
-    occurredAt = occurredAt,
-)
+fun com.glowup.ai.domain.model.CheckInCreateRequest.toDto(): CheckInCreateRequestDto =
+    CheckInCreateRequestDto(
+        routineState = routineState.toWire(),
+        skinFeel = skinFeel.toWire(),
+        note = note,
+        occurredAt = occurredAt,
+    )
 
 @Serializable
 data class CheckInDto(
@@ -159,10 +166,11 @@ data class CheckInDto(
     @SerialName("occurred_at") val occurredAt: String = "",
 )
 
-fun CheckInDto.toDomain(): com.glowup.ai.domain.model.CheckIn = com.glowup.ai.domain.model.CheckIn(
-    id = id,
-    routineState = CheckInRoutineState.fromRaw(routineState),
-    skinFeel = CheckInSkinFeel.fromRaw(skinFeel),
-    note = note,
-    occurredAt = occurredAt,
-)
+fun CheckInDto.toDomain(): com.glowup.ai.domain.model.CheckIn =
+    com.glowup.ai.domain.model.CheckIn(
+        id = id,
+        routineState = CheckInRoutineState.fromRaw(routineState),
+        skinFeel = CheckInSkinFeel.fromRaw(skinFeel),
+        note = note,
+        occurredAt = occurredAt,
+    )

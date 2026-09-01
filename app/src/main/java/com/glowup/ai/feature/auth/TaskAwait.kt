@@ -12,10 +12,11 @@ import kotlin.coroutines.resumeWithException
  * touch gradle files), so the usual `Task<T>.await()` extension from that artifact is
  * unavailable — this is a minimal, dependency-free equivalent used only inside `feature/auth`.
  */
-internal suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { continuation ->
-    addOnSuccessListener { result -> continuation.resume(result) }
-    addOnFailureListener { exception -> continuation.resumeWithException(exception) }
-    addOnCanceledListener {
-        continuation.cancel()
+internal suspend fun <T> Task<T>.await(): T =
+    suspendCancellableCoroutine { continuation ->
+        addOnSuccessListener { result -> continuation.resume(result) }
+        addOnFailureListener { exception -> continuation.resumeWithException(exception) }
+        addOnCanceledListener {
+            continuation.cancel()
+        }
     }
-}

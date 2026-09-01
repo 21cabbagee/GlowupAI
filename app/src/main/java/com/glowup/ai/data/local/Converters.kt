@@ -2,8 +2,8 @@ package com.glowup.ai.data.local
 
 import androidx.room.TypeConverter
 import com.glowup.ai.data.remote.NetworkJson
-import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 
 /**
@@ -14,10 +14,8 @@ import kotlinx.serialization.builtins.serializer
  * (de)serialize.
  */
 class Converters {
-
     @TypeConverter
-    fun fromStringList(value: List<String>?): String? =
-        value?.let { NetworkJson.encodeToString(ListSerializer(String.serializer()), it) }
+    fun fromStringList(value: List<String>?): String? = value?.let { NetworkJson.encodeToString(ListSerializer(String.serializer()), it) }
 
     @TypeConverter
     fun toStringList(value: String?): List<String>? =

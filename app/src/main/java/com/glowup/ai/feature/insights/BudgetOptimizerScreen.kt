@@ -42,24 +42,38 @@ fun BudgetOptimizerScreen(
     Scaffold(topBar = { GlowTopBar(title = "Budget optimizer", onBack = onBack) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (val current = state) {
-                ScreenState.Loading -> Column(modifier = Modifier.padding(GlowSpacing.md)) {
-                    ShimmerSkeleton(height = 64.dp)
-                    ShimmerSkeleton(height = 96.dp, modifier = Modifier.padding(top = GlowSpacing.sm))
+                ScreenState.Loading -> {
+                    Column(modifier = Modifier.padding(GlowSpacing.md)) {
+                        ShimmerSkeleton(height = 64.dp)
+                        ShimmerSkeleton(height = 96.dp, modifier = Modifier.padding(top = GlowSpacing.sm))
+                    }
                 }
-                ScreenState.Locked -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    LockedCard(
-                        title = "Budget optimizer is Premium",
-                        body = "Find products you keep buying that don't seem to be earning their spot in your routine.",
-                        onUnlock = onUpgrade,
-                    )
+
+                ScreenState.Locked -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        LockedCard(
+                            title = "Budget optimizer is Premium",
+                            body = "Find products you keep buying that don't seem to be earning their spot in your routine.",
+                            onUnlock = onUpgrade,
+                        )
+                    }
                 }
-                is ScreenState.Error -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    ErrorState(message = current.message, onRetry = viewModel::load)
+
+                is ScreenState.Error -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        ErrorState(message = current.message, onRetry = viewModel::load)
+                    }
                 }
-                is ScreenState.Empty -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    EmptyState(title = current.title, body = current.body, ctaLabel = "Refresh", onCtaClick = viewModel::load)
+
+                is ScreenState.Empty -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        EmptyState(title = current.title, body = current.body, ctaLabel = "Refresh", onCtaClick = viewModel::load)
+                    }
                 }
-                is ScreenState.Content -> BudgetContent(current.value)
+
+                is ScreenState.Content -> {
+                    BudgetContent(current.value)
+                }
             }
         }
     }
@@ -84,9 +98,12 @@ private fun BudgetContent(optimizer: BudgetOptimizer) {
             }
         }
         item {
-            DisclaimerNote(text = optimizer.disclaimer.ifBlank {
-                "Based on products you've kept stable without a clear benefit — not a guarantee you should stop using them."
-            })
+            DisclaimerNote(
+                text =
+                    optimizer.disclaimer.ifBlank {
+                        "Based on products you've kept stable without a clear benefit — not a guarantee you should stop using them."
+                    },
+            )
         }
         items(optimizer.flagged, key = { it.productId }) { product -> FlaggedProductCard(product) }
     }
@@ -98,7 +115,12 @@ private fun FlaggedProductCard(product: BudgetFlaggedProduct) {
     GlowCard {
         Text(product.productName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = glow.ink900)
         Text("${product.daysStable} days stable", style = MaterialTheme.typography.labelMedium, color = glow.ink600)
-        Text(product.reason, style = MaterialTheme.typography.bodyMedium, color = glow.ink900, modifier = Modifier.padding(top = GlowSpacing.xs))
+        Text(
+            product.reason,
+            style = MaterialTheme.typography.bodyMedium,
+            color = glow.ink900,
+            modifier = Modifier.padding(top = GlowSpacing.xs),
+        )
         // `estimated_annual_cost_cents` can be null when no offer price is on file — the product
         // still renders as flagged, just without a figure, per ANDROID_PLAN.md §3.5.
         Text(
@@ -111,13 +133,17 @@ private fun FlaggedProductCard(product: BudgetFlaggedProduct) {
     }
 }
 
-private fun formatCents(cents: Int, currency: String): String {
+private fun formatCents(
+    cents: Int,
+    currency: String,
+): String {
     val amount = cents / 100.0
-    val symbol = when (currency.uppercase(Locale.US)) {
-        "USD" -> "$"
-        "EUR" -> "€"
-        "GBP" -> "£"
-        else -> "$currency "
-    }
+    val symbol =
+        when (currency.uppercase(Locale.US)) {
+            "USD" -> "$"
+            "EUR" -> "€"
+            "GBP" -> "£"
+            else -> "$currency "
+        }
     return "$symbol${"%.2f".format(amount)}"
 }

@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
@@ -29,9 +29,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 import com.glowup.ai.core.design.GlowShapes
 import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.ui.AchievementCelebration
@@ -42,9 +39,9 @@ import com.glowup.ai.core.ui.ErrorState
 import com.glowup.ai.core.ui.GlowTopBar
 import com.glowup.ai.core.ui.ShimmerSkeleton
 import com.glowup.ai.core.ui.StreakCounter
-import com.glowup.ai.domain.StreakCalculator
-import com.glowup.ai.domain.SessionStateMachine
 import com.glowup.ai.core.util.GlowResult
+import com.glowup.ai.domain.SessionStateMachine
+import com.glowup.ai.domain.StreakCalculator
 import com.glowup.ai.domain.model.CheckInRoutineState
 import com.glowup.ai.domain.model.CheckInSkinFeel
 import com.glowup.ai.domain.model.Dashboard
@@ -62,6 +59,9 @@ import com.glowup.ai.feature.home.components.RoutineTimelineSection
 import com.glowup.ai.feature.home.components.VerdictsSection
 import com.glowup.ai.feature.home.components.WeeklyRecapCard
 import com.glowup.ai.feature.shell.GlowDestination
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * `feature/home` entry point. `GET /dashboard` is the single initial snapshot for this screen —
@@ -116,18 +116,26 @@ fun HomeScreen(
         },
     ) { padding ->
         when (state) {
-            is HomeUiState.Loading -> HomeLoadingSkeleton(padding)
-            is HomeUiState.Error -> Box(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
-                ErrorState(message = state.message, onRetry = onRetry)
+            is HomeUiState.Loading -> {
+                HomeLoadingSkeleton(padding)
             }
-            is HomeUiState.Content -> HomeContent(
-                padding = padding,
-                state = state,
-                onMetricSelected = onMetricSelected,
-                onCheckInClick = onCheckInClick,
-                onFreezeDayUsed = onFreezeDayUsed,
-                onNavigate = onNavigate,
-            )
+
+            is HomeUiState.Error -> {
+                Box(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
+                    ErrorState(message = state.message, onRetry = onRetry)
+                }
+            }
+
+            is HomeUiState.Content -> {
+                HomeContent(
+                    padding = padding,
+                    state = state,
+                    onMetricSelected = onMetricSelected,
+                    onCheckInClick = onCheckInClick,
+                    onFreezeDayUsed = onFreezeDayUsed,
+                    onNavigate = onNavigate,
+                )
+            }
         }
 
         if (state is HomeUiState.Content && state.checkInSheetVisible) {
@@ -143,7 +151,7 @@ fun HomeScreen(
         if (state is HomeUiState.Content && state.celebrationAchievement != null) {
             AchievementCelebration(
                 achievement = state.celebrationAchievement,
-                onDismiss = onAchievementCelebrationDismiss
+                onDismiss = onAchievementCelebrationDismiss,
             )
         }
     }
@@ -182,56 +190,66 @@ private fun HomeContent(
 
     // PERFORMANCE: Use derivedStateOf to avoid re-sorting on every recomposition
     // (PERFORMANCE_OPTIMIZATIONS.md §2.1 - sortedBy is O(n log n), expensive for large history)
-    val sortedHistory = remember(state.history) {
-        derivedStateOf { state.history.sortedBy { it.capturedAt } }
-    }.value
-    val latest = remember(sortedHistory) {
-        derivedStateOf { sortedHistory.lastOrNull() }
-    }.value
-    val previous = remember(sortedHistory) {
-        derivedStateOf { sortedHistory.getOrNull(sortedHistory.size - 2) }
-    }.value
+    val sortedHistory =
+        remember(state.history) {
+            derivedStateOf { state.history.sortedBy { it.capturedAt } }
+        }.value
+    val latest =
+        remember(sortedHistory) {
+            derivedStateOf { sortedHistory.lastOrNull() }
+        }.value
+    val previous =
+        remember(sortedHistory) {
+            derivedStateOf { sortedHistory.getOrNull(sortedHistory.size - 2) }
+        }.value
 
     // Calculate days since first capture for journey count
-    val dayCount = remember(sortedHistory) {
-        derivedStateOf {
-            sortedHistory.firstOrNull()?.capturedAt?.let { firstCapture ->
-                try {
-                    val firstDate = Instant.parse(firstCapture)
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate()
-                    val today = LocalDate.now()
-                    java.time.temporal.ChronoUnit.DAYS.between(firstDate, today).toInt() + 1
-                } catch (e: Exception) {
-                    null
+    val dayCount =
+        remember(sortedHistory) {
+            derivedStateOf {
+                sortedHistory.firstOrNull()?.capturedAt?.let { firstCapture ->
+                    try {
+                        val firstDate =
+                            Instant
+                                .parse(firstCapture)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                        val today = LocalDate.now()
+                        java.time.temporal.ChronoUnit.DAYS
+                            .between(firstDate, today)
+                            .toInt() + 1
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
             }
-        }
-    }.value
+        }.value
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = GlowSpacing.lg,
-            end = GlowSpacing.lg,
-            top = padding.calculateTopPadding() + GlowSpacing.lg,
-            bottom = padding.calculateBottomPadding() + GlowSpacing.xl,
-        ),
+        contentPadding =
+            PaddingValues(
+                start = GlowSpacing.lg,
+                end = GlowSpacing.lg,
+                top = padding.calculateTopPadding() + GlowSpacing.lg,
+                bottom = padding.calculateBottomPadding() + GlowSpacing.xl,
+            ),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
         // Personalized greeting - creates emotional connection
         item {
             PersonalizedGreeting(
                 displayName = dashboard.profile.experienceProfile?.displayName,
-                dayCount = dayCount
+                dayCount = dayCount,
             )
         }
 
         if (state.dashboardStale) {
             item {
                 com.glowup.ai.core.ui.PollingIndicator(
-                    message = state.dashboardRefreshError?.let { "Showing your last saved dashboard — $it" }
-                        ?: "Showing your last saved dashboard.",
+                    message =
+                        state.dashboardRefreshError?.let { "Showing your last saved dashboard — $it" }
+                            ?: "Showing your last saved dashboard.",
                 )
             }
         }
@@ -249,11 +267,12 @@ private fun HomeContent(
         // Milestone progress - gamification element
         item {
             val currentStreak = state.streak?.currentStreak ?: 0
-            val nextMilestone = listOf(3, 7, 14, 30, 60, 90, 180, 365)
-                .firstOrNull { it > currentStreak } ?: (currentStreak + 30)
+            val nextMilestone =
+                listOf(3, 7, 14, 30, 60, 90, 180, 365)
+                    .firstOrNull { it > currentStreak } ?: (currentStreak + 30)
             com.glowup.ai.core.ui.MilestoneProgressCard(
                 currentStreak = currentStreak,
-                nextMilestone = nextMilestone
+                nextMilestone = nextMilestone,
             )
         }
 
@@ -276,7 +295,7 @@ private fun HomeContent(
                 onSeeAllClick = {
                     // Navigate to full history view
                     onNavigate(GlowDestination.Capture)
-                }
+                },
             )
         }
 
@@ -287,7 +306,7 @@ private fun HomeContent(
                     text = "Compare Progress",
                     onClick = { onNavigate(GlowDestination.Comparison) },
                     modifier = Modifier.fillMaxWidth(),
-                    variant = com.glowup.ai.core.ui.GlowButtonVariant.Secondary
+                    variant = com.glowup.ai.core.ui.GlowButtonVariant.Secondary,
                 )
             }
         }
@@ -297,7 +316,7 @@ private fun HomeContent(
             item {
                 AchievementSummary(
                     achievements = state.achievements,
-                    onClick = { onNavigate(GlowDestination.Achievements) }
+                    onClick = { onNavigate(GlowDestination.Achievements) },
                 )
             }
         }
@@ -330,61 +349,68 @@ private fun HomeContent(
         item {
             // PERFORMANCE: Use derivedStateOf to avoid re-parsing dates on every recomposition
             // (PERFORMANCE_OPTIMIZATIONS.md §2.1 - Instant.parse is expensive, runs 30+ times for typical user)
-            val captureDates = remember(sortedHistory) {
-                derivedStateOf {
-                    sortedHistory.mapNotNull { capture ->
-                        try {
-                            capture.capturedAt?.let { isoString ->
-                                Instant.parse(isoString)
-                                    .atZone(ZoneId.systemDefault())
-                                    .toLocalDate()
-                            }
-                        } catch (e: Exception) {
-                            null
-                        }
-                    }.toSet()
-                }
-            }.value
+            val captureDates =
+                remember(sortedHistory) {
+                    derivedStateOf {
+                        sortedHistory
+                            .mapNotNull { capture ->
+                                try {
+                                    capture.capturedAt?.let { isoString ->
+                                        Instant
+                                            .parse(isoString)
+                                            .atZone(ZoneId.systemDefault())
+                                            .toLocalDate()
+                                    }
+                                } catch (e: Exception) {
+                                    null
+                                }
+                            }.toSet()
+                    }
+                }.value
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = GlowShapes.md,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(GlowSpacing.md)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(GlowSpacing.md),
                 ) {
                     Text(
                         text = "Capture Calendar",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = com.glowup.ai.core.design.LocalGlowColors.current.ink900
+                        color = com.glowup.ai.core.design.LocalGlowColors.current.ink900,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     CompactCalendarHeatmap(
                         captureDates = captureDates,
                         onDateClick = { date ->
                             // Find the capture for this date and navigate
-                            val captureForDate = sortedHistory.find { capture ->
-                                try {
-                                    capture.capturedAt?.let { isoString ->
-                                        Instant.parse(isoString)
-                                            .atZone(ZoneId.systemDefault())
-                                            .toLocalDate() == date
-                                    } ?: false
-                                } catch (e: Exception) {
-                                    false
+                            val captureForDate =
+                                sortedHistory.find { capture ->
+                                    try {
+                                        capture.capturedAt?.let { isoString ->
+                                            Instant
+                                                .parse(isoString)
+                                                .atZone(ZoneId.systemDefault())
+                                                .toLocalDate() == date
+                                        } ?: false
+                                    } catch (e: Exception) {
+                                        false
+                                    }
                                 }
-                            }
                             // For now, navigate to Capture screen
                             // TODO: Navigate to specific capture detail when captureForDate.id is available
                             onNavigate(GlowDestination.Capture)
-                        }
+                        },
                     )
                 }
             }

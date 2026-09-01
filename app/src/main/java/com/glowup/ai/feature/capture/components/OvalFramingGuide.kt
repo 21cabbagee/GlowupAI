@@ -35,9 +35,13 @@ fun OvalFramingGuide(
         val center = Offset(size.width / 2f, size.height * 0.42f)
         val ovalTopLeft = Offset(center.x - ovalWidth / 2f, center.y - ovalHeight / 2f)
 
-        val ovalPath = Path().apply {
-            addOval(androidx.compose.ui.geometry.Rect(ovalTopLeft, Size(ovalWidth, ovalHeight)))
-        }
+        val ovalPath =
+            Path().apply {
+                addOval(
+                    androidx.compose.ui.geometry
+                        .Rect(ovalTopLeft, Size(ovalWidth, ovalHeight)),
+                )
+            }
 
         // Darken everything outside the oval.
         clipPath(path = ovalPath, clipOp = androidx.compose.ui.graphics.ClipOp.Difference) {
@@ -47,10 +51,11 @@ fun OvalFramingGuide(
         drawPath(
             path = ovalPath,
             color = strokeColor,
-            style = Stroke(
-                width = 4.dp.toPx(),
-                pathEffect = if (isFramingGood) null else PathEffect.dashPathEffect(floatArrayOf(18f, 14f)),
-            ),
+            style =
+                Stroke(
+                    width = 4.dp.toPx(),
+                    pathEffect = if (isFramingGood) null else PathEffect.dashPathEffect(floatArrayOf(18f, 14f)),
+                ),
         )
     }
 }

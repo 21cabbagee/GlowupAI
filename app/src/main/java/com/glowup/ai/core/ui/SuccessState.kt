@@ -1,8 +1,8 @@
 package com.glowup.ai.core.ui
 
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,9 +29,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -71,40 +71,42 @@ fun SuccessState(
 
     val scale by animateFloatAsState(
         targetValue = if (visible) 1f else 0.8f,
-        animationSpec = if (reducedMotion) {
-            spring(stiffness = Spring.StiffnessHigh)
-        } else {
-            spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMediumLow
-            )
-        },
-        label = "successScale"
+        animationSpec =
+            if (reducedMotion) {
+                spring(stiffness = Spring.StiffnessHigh)
+            } else {
+                spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
+                )
+            },
+        label = "successScale",
     )
 
     Column(
-        modifier = modifier
-            .scale(scale)
-            .fillMaxWidth()
-            .clip(GlowShapes.md)
-            .background(glow.honey500.copy(alpha = 0.12f))
-            .padding(GlowSpacing.lg)
-            .semantics {
-                contentDescription = "Success: $message"
-                liveRegion = LiveRegionMode.Polite
-            },
+        modifier =
+            modifier
+                .scale(scale)
+                .fillMaxWidth()
+                .clip(GlowShapes.md)
+                .background(glow.honey500.copy(alpha = 0.12f))
+                .padding(GlowSpacing.lg)
+                .semantics {
+                    contentDescription = "Success: $message"
+                    liveRegion = LiveRegionMode.Polite
+                },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Center,
         ) {
             Icon(
                 imageVector = Icons.Filled.CheckCircle,
                 contentDescription = null,
                 tint = glow.honey600,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
             )
             Spacer(modifier = Modifier.width(GlowSpacing.sm))
             Text(
@@ -146,27 +148,28 @@ fun SuccessIndicator(
 
     val scale by animateFloatAsState(
         targetValue = if (visible) 1f else 0.9f,
-        animationSpec = if (reducedMotion) {
-            spring(stiffness = Spring.StiffnessHigh)
-        } else {
-            spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
-            )
-        },
-        label = "successIndicatorScale"
+        animationSpec =
+            if (reducedMotion) {
+                spring(stiffness = Spring.StiffnessHigh)
+            } else {
+                spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium,
+                )
+            },
+        label = "successIndicatorScale",
     )
 
     Row(
         modifier = modifier.scale(scale),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = Icons.Filled.CheckCircle,
             contentDescription = null,
             tint = glow.honey600,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp),
         )
         Spacer(modifier = Modifier.width(GlowSpacing.xs))
         Text(
@@ -184,12 +187,12 @@ private fun SuccessStatePreviewLight() {
     GlowUpTheme(darkTheme = false) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             SuccessState(
                 message = "Your routine has been saved successfully!",
                 dismissLabel = "Got it",
-                onDismiss = {}
+                onDismiss = {},
             )
             SuccessIndicator(message = "Changes saved")
         }
@@ -202,12 +205,12 @@ private fun SuccessStatePreviewDark() {
     GlowUpTheme(darkTheme = true) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             SuccessState(
                 message = "Your routine has been saved successfully!",
                 dismissLabel = "Got it",
-                onDismiss = {}
+                onDismiss = {},
             )
             SuccessIndicator(message = "Changes saved")
         }

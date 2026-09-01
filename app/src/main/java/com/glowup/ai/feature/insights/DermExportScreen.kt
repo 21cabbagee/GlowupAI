@@ -48,24 +48,38 @@ fun DermExportScreen(
     Scaffold(topBar = { GlowTopBar(title = "Dermatologist export", onBack = onBack) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (val current = state) {
-                ScreenState.Loading -> Column(modifier = Modifier.padding(GlowSpacing.md)) {
-                    ShimmerSkeleton(height = 48.dp)
-                    ShimmerSkeleton(height = 400.dp, modifier = Modifier.padding(top = GlowSpacing.sm))
+                ScreenState.Loading -> {
+                    Column(modifier = Modifier.padding(GlowSpacing.md)) {
+                        ShimmerSkeleton(height = 48.dp)
+                        ShimmerSkeleton(height = 400.dp, modifier = Modifier.padding(top = GlowSpacing.sm))
+                    }
                 }
-                ScreenState.Locked -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    LockedCard(
-                        title = "Dermatologist export is Premium",
-                        body = "Generate a printable summary of your tracked history to bring to an appointment.",
-                        onUnlock = onUpgrade,
-                    )
+
+                ScreenState.Locked -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        LockedCard(
+                            title = "Dermatologist export is Premium",
+                            body = "Generate a printable summary of your tracked history to bring to an appointment.",
+                            onUnlock = onUpgrade,
+                        )
+                    }
                 }
-                is ScreenState.Error -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    ErrorState(message = current.message, onRetry = viewModel::load)
+
+                is ScreenState.Error -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        ErrorState(message = current.message, onRetry = viewModel::load)
+                    }
                 }
-                is ScreenState.Empty -> Box(modifier = Modifier.padding(GlowSpacing.md)) {
-                    EmptyState(title = current.title, body = current.body, ctaLabel = "Refresh", onCtaClick = viewModel::load)
+
+                is ScreenState.Empty -> {
+                    Box(modifier = Modifier.padding(GlowSpacing.md)) {
+                        EmptyState(title = current.title, body = current.body, ctaLabel = "Refresh", onCtaClick = viewModel::load)
+                    }
                 }
-                is ScreenState.Content -> DermExportContent(current.value)
+
+                is ScreenState.Content -> {
+                    DermExportContent(current.value)
+                }
             }
         }
     }
@@ -79,9 +93,10 @@ private fun DermExportContent(export: DermExport) {
     Column(modifier = Modifier.fillMaxSize()) {
         DisclaimerNote(
             modifier = Modifier.padding(GlowSpacing.md),
-            text = export.disclaimer.ifBlank {
-                "This is a cosmetic tracking summary, not a diagnosis. Share it with a licensed dermatologist for clinical interpretation."
-            },
+            text =
+                export.disclaimer.ifBlank {
+                    "This is a cosmetic tracking summary, not a diagnosis. Share it with a licensed dermatologist for clinical interpretation."
+                },
         )
         Text(
             text = "${export.captureCount} captures · generated ${export.generatedAt}",
@@ -92,10 +107,11 @@ private fun DermExportContent(export: DermExport) {
 
         // `printable_html` is a plain HTML string, not a downloadable file — render it directly.
         AndroidView(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(GlowSpacing.md),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(GlowSpacing.md),
             factory = { ctx ->
                 WebView(ctx).apply {
                     settings.javaScriptEnabled = false
@@ -126,18 +142,25 @@ private fun DermExportContent(export: DermExport) {
     }
 }
 
-private fun printExport(context: Context, webView: WebView) {
+private fun printExport(
+    context: Context,
+    webView: WebView,
+) {
     val printManager = context.getSystemService(Context.PRINT_SERVICE) as? PrintManager ?: return
     val jobName = "GlowUp AI export"
     val adapter = webView.createPrintDocumentAdapter(jobName)
     printManager.print(jobName, adapter, PrintAttributes.Builder().build())
 }
 
-private fun shareExport(context: Context, html: String) {
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/html"
-        putExtra(Intent.EXTRA_SUBJECT, "GlowUp AI dermatologist export")
-        putExtra(Intent.EXTRA_TEXT, html)
-    }
+private fun shareExport(
+    context: Context,
+    html: String,
+) {
+    val intent =
+        Intent(Intent.ACTION_SEND).apply {
+            type = "text/html"
+            putExtra(Intent.EXTRA_SUBJECT, "GlowUp AI dermatologist export")
+            putExtra(Intent.EXTRA_TEXT, html)
+        }
     context.startActivity(Intent.createChooser(intent, "Share export"))
 }

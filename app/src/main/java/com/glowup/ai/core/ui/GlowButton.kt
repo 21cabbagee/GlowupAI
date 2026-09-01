@@ -25,8 +25,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,26 +51,37 @@ private data class ButtonColors(
 private fun colorsFor(variant: GlowButtonVariant): ButtonColors {
     val glow = LocalGlowColors.current
     return when (variant) {
-        GlowButtonVariant.Primary -> ButtonColors(
-            background = glow.honey500,
-            content = glow.ink900,
-            border = null,
-        )
-        GlowButtonVariant.Secondary -> ButtonColors(
-            background = glow.surfaceCard,
-            content = glow.ink900,
-            border = glow.ink600.copy(alpha = 0.35f),
-        )
-        GlowButtonVariant.Ghost -> ButtonColors(
-            background = Color.Transparent,
-            content = glow.ink600,
-            border = null,
-        )
-        GlowButtonVariant.Danger -> ButtonColors(
-            background = glow.danger.copy(alpha = 0.12f),
-            content = glow.danger,
-            border = null,
-        )
+        GlowButtonVariant.Primary -> {
+            ButtonColors(
+                background = glow.honey500,
+                content = glow.ink900,
+                border = null,
+            )
+        }
+
+        GlowButtonVariant.Secondary -> {
+            ButtonColors(
+                background = glow.surfaceCard,
+                content = glow.ink900,
+                border = glow.ink600.copy(alpha = 0.35f),
+            )
+        }
+
+        GlowButtonVariant.Ghost -> {
+            ButtonColors(
+                background = Color.Transparent,
+                content = glow.ink600,
+                border = null,
+            )
+        }
+
+        GlowButtonVariant.Danger -> {
+            ButtonColors(
+                background = glow.danger.copy(alpha = 0.12f),
+                content = glow.danger,
+                border = null,
+            )
+        }
     }
 }
 
@@ -107,37 +118,38 @@ fun GlowButton(
     // Press scale animation: 96% scale when pressed
     val scale by animateFloatAsState(
         targetValue = if (isPressed && isInteractive) 0.96f else 1f,
-        animationSpec = GlowMotion.respectingReducedMotion(
-            GlowMotion.fast,
-            reducedMotion
-        ) as androidx.compose.animation.core.AnimationSpec<Float>,
-        label = "buttonPressScale"
+        animationSpec =
+            GlowMotion.respectingReducedMotion(
+                GlowMotion.fast,
+                reducedMotion,
+            ) as androidx.compose.animation.core.AnimationSpec<Float>,
+        label = "buttonPressScale",
     )
 
     Box(
-        modifier = modifier
-            .scale(scale)
-            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-            .background(
-                color = if (isInteractive) colors.background else colors.background.copy(alpha = 0.5f),
-                shape = GlowShapes.md,
-            )
-            .then(
-                if (colors.border != null) {
-                    Modifier.border(1.dp, colors.border, GlowShapes.md)
-                } else Modifier,
-            )
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                enabled = isInteractive,
-                onClick = onClick,
-            )
-            .padding(horizontal = GlowSpacing.lg, vertical = 12.dp)
-            .semantics {
-                this.contentDescription = contentDescription ?: text
-                if (!isInteractive) disabled()
-            },
+        modifier =
+            modifier
+                .scale(scale)
+                .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                .background(
+                    color = if (isInteractive) colors.background else colors.background.copy(alpha = 0.5f),
+                    shape = GlowShapes.md,
+                ).then(
+                    if (colors.border != null) {
+                        Modifier.border(1.dp, colors.border, GlowShapes.md)
+                    } else {
+                        Modifier
+                    },
+                ).clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = isInteractive,
+                    onClick = onClick,
+                ).padding(horizontal = GlowSpacing.lg, vertical = 12.dp)
+                .semantics {
+                    this.contentDescription = contentDescription ?: text
+                    if (!isInteractive) disabled()
+                },
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -178,7 +190,9 @@ private fun GlowButtonPreviewDark() {
 private fun ButtonPreviewColumn() {
     androidx.compose.foundation.layout.Column(
         modifier = Modifier.padding(16.dp),
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp),
+        verticalArrangement =
+            androidx.compose.foundation.layout.Arrangement
+                .spacedBy(12.dp),
     ) {
         GlowButton(text = "Continue", onClick = {}, variant = GlowButtonVariant.Primary)
         GlowButton(text = "Cancel", onClick = {}, variant = GlowButtonVariant.Secondary)

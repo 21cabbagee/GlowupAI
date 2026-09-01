@@ -20,14 +20,15 @@ data class ExperimentCreateRequestDto(
     @SerialName("target_days") val targetDays: Int = 14,
 )
 
-fun ExperimentCreateRequest.toDto(): ExperimentCreateRequestDto = ExperimentCreateRequestDto(
-    userId = userId,
-    name = name,
-    hypothesis = hypothesis,
-    productId = productId,
-    primaryMetric = primaryMetric.toWire(),
-    targetDays = targetDays,
-)
+fun ExperimentCreateRequest.toDto(): ExperimentCreateRequestDto =
+    ExperimentCreateRequestDto(
+        userId = userId,
+        name = name,
+        hypothesis = hypothesis,
+        productId = productId,
+        primaryMetric = primaryMetric.toWire(),
+        targetDays = targetDays,
+    )
 
 /** `status` uses the SAME path user id as a body field, purely so the
  * backend can 400 on a client-side mismatch before touching the DB. */
@@ -37,17 +38,19 @@ data class ExperimentStatusRequestDto(
     val status: String,
 )
 
-fun ExperimentStatusRequest.toDto(): ExperimentStatusRequestDto = ExperimentStatusRequestDto(
-    userId = userId,
-    status = when (status) {
-        ExperimentStatus.PLANNED -> "planned"
-        ExperimentStatus.RUNNING -> "running"
-        ExperimentStatus.PAUSED -> "paused"
-        ExperimentStatus.COMPLETED -> "completed"
-        ExperimentStatus.CANCELLED -> "cancelled"
-        ExperimentStatus.UNKNOWN -> throw IllegalArgumentException("ExperimentStatus.UNKNOWN cannot be sent to the server")
-    },
-)
+fun ExperimentStatusRequest.toDto(): ExperimentStatusRequestDto =
+    ExperimentStatusRequestDto(
+        userId = userId,
+        status =
+            when (status) {
+                ExperimentStatus.PLANNED -> "planned"
+                ExperimentStatus.RUNNING -> "running"
+                ExperimentStatus.PAUSED -> "paused"
+                ExperimentStatus.COMPLETED -> "completed"
+                ExperimentStatus.CANCELLED -> "cancelled"
+                ExperimentStatus.UNKNOWN -> throw IllegalArgumentException("ExperimentStatus.UNKNOWN cannot be sent to the server")
+            },
+    )
 
 @Serializable
 data class ExperimentProductDto(
@@ -63,11 +66,12 @@ data class EarlyStopDto(
     val message: String = "",
 )
 
-fun EarlyStopDto.toDomain(): EarlyStop = EarlyStop(
-    conclusive = conclusive,
-    recommendedStatus = recommendedStatus?.let { ExperimentStatus.fromRaw(it) },
-    message = message,
-)
+fun EarlyStopDto.toDomain(): EarlyStop =
+    EarlyStop(
+        conclusive = conclusive,
+        recommendedStatus = recommendedStatus?.let { ExperimentStatus.fromRaw(it) },
+        message = message,
+    )
 
 /** `start_at`/`end_at` are the real column names — never `started_at`. */
 @Serializable
@@ -86,17 +90,18 @@ data class ExperimentDto(
     @SerialName("early_stop") val earlyStop: EarlyStopDto? = null,
 )
 
-fun ExperimentDto.toDomain(): Experiment = Experiment(
-    id = id,
-    name = name,
-    hypothesis = hypothesis,
-    primaryMetric = PrimaryMetric.fromRaw(primaryMetric),
-    status = ExperimentStatus.fromRaw(status),
-    targetDays = targetDays,
-    startAt = startAt,
-    endAt = endAt,
-    products = products.map { ExperimentProduct(it.name, it.category, it.role) },
-    events = events.map { it.toDomain() },
-    captures = captures.map { it.toDomain() },
-    earlyStop = earlyStop?.toDomain(),
-)
+fun ExperimentDto.toDomain(): Experiment =
+    Experiment(
+        id = id,
+        name = name,
+        hypothesis = hypothesis,
+        primaryMetric = PrimaryMetric.fromRaw(primaryMetric),
+        status = ExperimentStatus.fromRaw(status),
+        targetDays = targetDays,
+        startAt = startAt,
+        endAt = endAt,
+        products = products.map { ExperimentProduct(it.name, it.category, it.role) },
+        events = events.map { it.toDomain() },
+        captures = captures.map { it.toDomain() },
+        earlyStop = earlyStop?.toDomain(),
+    )

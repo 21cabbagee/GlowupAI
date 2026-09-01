@@ -76,18 +76,21 @@ private fun RowScope.MetricTile(
 ) {
     val value = latest?.let { valueOf(it, metric) }
     val previousValue = previous?.let { valueOf(it, metric) }
-    val delta = if (value != null && previousValue != null) {
-        val diff = value - previousValue
-        if (kotlin.math.abs(diff) < 1e-9) {
-            StatDelta("No change vs previous", StatDeltaDirection.Flat)
+    val delta =
+        if (value != null && previousValue != null) {
+            val diff = value - previousValue
+            if (kotlin.math.abs(diff) < 1e-9) {
+                StatDelta("No change vs previous", StatDeltaDirection.Flat)
+            } else {
+                val improved = if (metric.higherIsBetter()) diff > 0 else diff < 0
+                StatDelta(
+                    text = "${if (diff > 0) "+" else ""}${formatMetricValue(metric, diff)} vs previous",
+                    direction = if (improved) StatDeltaDirection.Up else StatDeltaDirection.Down,
+                )
+            }
         } else {
-            val improved = if (metric.higherIsBetter()) diff > 0 else diff < 0
-            StatDelta(
-                text = "${if (diff > 0) "+" else ""}${formatMetricValue(metric, diff)} vs previous",
-                direction = if (improved) StatDeltaDirection.Up else StatDeltaDirection.Down,
-            )
+            null
         }
-    } else null
 
     StatTile(
         modifier = modifier,
@@ -97,18 +100,23 @@ private fun RowScope.MetricTile(
     )
 }
 
-private fun valueOf(item: HistoryItem, metric: PrimaryMetric): Double? = when (metric) {
-    PrimaryMetric.REDNESS_SCORE -> item.rednessScore
-    PrimaryMetric.BLEMISH_COUNT -> item.blemishCount
-    PrimaryMetric.DARKSPOT_AREA -> item.darkspotArea
-    PrimaryMetric.TEXTURE_SCORE -> item.textureScore
-    PrimaryMetric.UNKNOWN -> null
-}
+private fun valueOf(
+    item: HistoryItem,
+    metric: PrimaryMetric,
+): Double? =
+    when (metric) {
+        PrimaryMetric.REDNESS_SCORE -> item.rednessScore
+        PrimaryMetric.BLEMISH_COUNT -> item.blemishCount
+        PrimaryMetric.DARKSPOT_AREA -> item.darkspotArea
+        PrimaryMetric.TEXTURE_SCORE -> item.textureScore
+        PrimaryMetric.UNKNOWN -> null
+    }
 
-private fun metricLabel(metric: PrimaryMetric): String = when (metric) {
-    PrimaryMetric.REDNESS_SCORE -> "Redness"
-    PrimaryMetric.BLEMISH_COUNT -> "Blemishes"
-    PrimaryMetric.DARKSPOT_AREA -> "Dark spots"
-    PrimaryMetric.TEXTURE_SCORE -> "Texture"
-    PrimaryMetric.UNKNOWN -> "Metric"
-}
+private fun metricLabel(metric: PrimaryMetric): String =
+    when (metric) {
+        PrimaryMetric.REDNESS_SCORE -> "Redness"
+        PrimaryMetric.BLEMISH_COUNT -> "Blemishes"
+        PrimaryMetric.DARKSPOT_AREA -> "Dark spots"
+        PrimaryMetric.TEXTURE_SCORE -> "Texture"
+        PrimaryMetric.UNKNOWN -> "Metric"
+    }

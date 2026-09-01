@@ -41,15 +41,26 @@ import androidx.room.TypeConverters
 @TypeConverters(Converters::class)
 abstract class GlowUpDatabase : RoomDatabase() {
     abstract fun dashboardCacheDao(): DashboardCacheDao
+
     abstract fun historyCacheDao(): HistoryCacheDao
+
     abstract fun productCacheDao(): ProductCacheDao
+
     abstract fun routineEventCacheDao(): RoutineEventCacheDao
+
     abstract fun experimentCacheDao(): ExperimentCacheDao
+
     abstract fun verdictCacheDao(): VerdictCacheDao
+
     abstract fun offerCacheDao(): OfferCacheDao
+
     abstract fun productDetailCacheDao(): ProductDetailCacheDao
+
     abstract fun engagementCacheDao(): EngagementCacheDao
+
     abstract fun discoverCacheDao(): DiscoverCacheDao
+
     abstract fun labelCacheDao(): LabelCacheDao
+
     abstract fun contextEventCacheDao(): ContextEventCacheDao
 }

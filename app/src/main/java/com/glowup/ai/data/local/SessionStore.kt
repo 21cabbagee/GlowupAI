@@ -29,196 +29,242 @@ import javax.inject.Singleton
  * repeat that mistake even though today it is the only writer of this particular DataStore file.
  */
 @Singleton
-class SessionStore @Inject constructor(
-    private val dataStore: DataStore<Preferences>,
-) {
+class SessionStore
+    @Inject
+    constructor(
+        private val dataStore: DataStore<Preferences>,
+    ) {
+        private object Keys {
+            val USER_ID = stringPreferencesKey("glowup_user_id")
+            val FIREBASE_UID = stringPreferencesKey("glowup_firebase_uid")
+            val PLAN = stringPreferencesKey("glowup_plan")
+            val ENTITLEMENT_STATUS = stringPreferencesKey("glowup_entitlement_status")
+            val CONSENT_STATE = stringPreferencesKey("glowup_consent_state")
+            val ONBOARDING_STEP = stringPreferencesKey("glowup_onboarding_step")
+            val ONBOARDING_COMPLETE = booleanPreferencesKey("glowup_onboarding_complete")
+            val SELECTED_VERTICAL = stringPreferencesKey("glowup_selected_vertical")
+            val THEME_PREFERENCE = stringPreferencesKey("glowup_theme_preference")
+            val REMINDER_ENABLED = booleanPreferencesKey("glowup_reminder_enabled")
+            val REMINDER_CADENCE_DAYS = intPreferencesKey("glowup_reminder_cadence_days")
+            val REMINDER_NEXT_AT = stringPreferencesKey("glowup_reminder_next_at")
+            val REMINDER_WINDOW_START = stringPreferencesKey("glowup_reminder_window_start")
+            val REMINDER_WINDOW_END = stringPreferencesKey("glowup_reminder_window_end")
+            val NOTIFICATION_PERMISSION_PROMPTED = booleanPreferencesKey("glowup_notification_permission_prompted")
 
-    private object Keys {
-        val USER_ID = stringPreferencesKey("glowup_user_id")
-        val FIREBASE_UID = stringPreferencesKey("glowup_firebase_uid")
-        val PLAN = stringPreferencesKey("glowup_plan")
-        val ENTITLEMENT_STATUS = stringPreferencesKey("glowup_entitlement_status")
-        val CONSENT_STATE = stringPreferencesKey("glowup_consent_state")
-        val ONBOARDING_STEP = stringPreferencesKey("glowup_onboarding_step")
-        val ONBOARDING_COMPLETE = booleanPreferencesKey("glowup_onboarding_complete")
-        val SELECTED_VERTICAL = stringPreferencesKey("glowup_selected_vertical")
-        val THEME_PREFERENCE = stringPreferencesKey("glowup_theme_preference")
-        val REMINDER_ENABLED = booleanPreferencesKey("glowup_reminder_enabled")
-        val REMINDER_CADENCE_DAYS = intPreferencesKey("glowup_reminder_cadence_days")
-        val REMINDER_NEXT_AT = stringPreferencesKey("glowup_reminder_next_at")
-        val REMINDER_WINDOW_START = stringPreferencesKey("glowup_reminder_window_start")
-        val REMINDER_WINDOW_END = stringPreferencesKey("glowup_reminder_window_end")
-        val NOTIFICATION_PERMISSION_PROMPTED = booleanPreferencesKey("glowup_notification_permission_prompted")
+            // Additional notification preferences
+            val REMINDER_TIME_HOUR = intPreferencesKey("glowup_reminder_time_hour")
+            val REMINDER_TIME_MINUTE = intPreferencesKey("glowup_reminder_time_minute")
+            val STREAK_WARNINGS_ENABLED = booleanPreferencesKey("glowup_streak_warnings_enabled")
+            val WEEKLY_RECAP_ENABLED = booleanPreferencesKey("glowup_weekly_recap_enabled")
+            val ACHIEVEMENT_CELEBRATIONS_ENABLED = booleanPreferencesKey("glowup_achievement_celebrations_enabled")
 
-        // Additional notification preferences
-        val REMINDER_TIME_HOUR = intPreferencesKey("glowup_reminder_time_hour")
-        val REMINDER_TIME_MINUTE = intPreferencesKey("glowup_reminder_time_minute")
-        val STREAK_WARNINGS_ENABLED = booleanPreferencesKey("glowup_streak_warnings_enabled")
-        val WEEKLY_RECAP_ENABLED = booleanPreferencesKey("glowup_weekly_recap_enabled")
-        val ACHIEVEMENT_CELEBRATIONS_ENABLED = booleanPreferencesKey("glowup_achievement_celebrations_enabled")
+            // Display preferences
+            val FONT_SIZE = stringPreferencesKey("glowup_font_size")
+            val REDUCE_ANIMATIONS = booleanPreferencesKey("glowup_reduce_animations")
 
-        // Display preferences
-        val FONT_SIZE = stringPreferencesKey("glowup_font_size")
-        val REDUCE_ANIMATIONS = booleanPreferencesKey("glowup_reduce_animations")
+            // Data & Privacy preferences
+            val CLOUD_BACKUP_ENABLED = booleanPreferencesKey("glowup_cloud_backup_enabled")
 
-        // Data & Privacy preferences
-        val CLOUD_BACKUP_ENABLED = booleanPreferencesKey("glowup_cloud_backup_enabled")
+            /** Every key this store owns. [clearSession] removes exactly this set — nothing else. */
+            val ALL: Set<Preferences.Key<*>> =
+                setOf(
+                    USER_ID,
+                    FIREBASE_UID,
+                    PLAN,
+                    ENTITLEMENT_STATUS,
+                    CONSENT_STATE,
+                    ONBOARDING_STEP,
+                    ONBOARDING_COMPLETE,
+                    SELECTED_VERTICAL,
+                    THEME_PREFERENCE,
+                    REMINDER_ENABLED,
+                    REMINDER_CADENCE_DAYS,
+                    REMINDER_NEXT_AT,
+                    REMINDER_WINDOW_START,
+                    REMINDER_WINDOW_END,
+                    NOTIFICATION_PERMISSION_PROMPTED,
+                    REMINDER_TIME_HOUR,
+                    REMINDER_TIME_MINUTE,
+                    STREAK_WARNINGS_ENABLED,
+                    WEEKLY_RECAP_ENABLED,
+                    ACHIEVEMENT_CELEBRATIONS_ENABLED,
+                    FONT_SIZE,
+                    REDUCE_ANIMATIONS,
+                    CLOUD_BACKUP_ENABLED,
+                )
+        }
 
-        /** Every key this store owns. [clearSession] removes exactly this set — nothing else. */
-        val ALL: Set<Preferences.Key<*>> = setOf(
-            USER_ID, FIREBASE_UID, PLAN, ENTITLEMENT_STATUS, CONSENT_STATE, ONBOARDING_STEP,
-            ONBOARDING_COMPLETE, SELECTED_VERTICAL, THEME_PREFERENCE, REMINDER_ENABLED,
-            REMINDER_CADENCE_DAYS, REMINDER_NEXT_AT, REMINDER_WINDOW_START, REMINDER_WINDOW_END,
-            NOTIFICATION_PERMISSION_PROMPTED, REMINDER_TIME_HOUR, REMINDER_TIME_MINUTE,
-            STREAK_WARNINGS_ENABLED, WEEKLY_RECAP_ENABLED, ACHIEVEMENT_CELEBRATIONS_ENABLED,
-            FONT_SIZE, REDUCE_ANIMATIONS, CLOUD_BACKUP_ENABLED,
+        // -- Identity -------------------------------------------------------------------------------
+
+        val userIdFlow: Flow<String?> = dataStore.data.map { it[Keys.USER_ID] }
+
+        suspend fun userId(): String? = userIdFlow.first()
+
+        suspend fun setUserId(userId: String) = dataStore.edit { it[Keys.USER_ID] = userId }
+
+        val firebaseUidFlow: Flow<String?> = dataStore.data.map { it[Keys.FIREBASE_UID] }
+
+        suspend fun setFirebaseUid(uid: String) = dataStore.edit { it[Keys.FIREBASE_UID] = uid }
+
+        // -- Cached plan / entitlement (used ONLY as a cache key / offline hint — never as the
+        // authoritative Premium check; that is always [com.glowup.ai.domain.model.Entitlement.isPremium]
+        // derived from a fresh profile response). --------------------------------------------------
+
+        val planFlow: Flow<Plan> = dataStore.data.map { Plan.fromRaw(it[Keys.PLAN]) }
+
+        suspend fun plan(): Plan = planFlow.first()
+
+        val entitlementStatusFlow: Flow<EntitlementStatus> =
+            dataStore.data.map { EntitlementStatus.fromRaw(it[Keys.ENTITLEMENT_STATUS]) }
+
+        suspend fun setEntitlement(
+            plan: Plan,
+            status: EntitlementStatus,
+        ) = dataStore.edit {
+            it[Keys.PLAN] = plan.name.lowercase()
+            it[Keys.ENTITLEMENT_STATUS] = status.name.lowercase()
+        }
+
+        // -- Consent ----------------------------------------------------------------------------------
+
+        val consentStateFlow: Flow<ConsentState> =
+            dataStore.data.map { ConsentState.fromRaw(it[Keys.CONSENT_STATE]) }
+
+        suspend fun setConsentState(state: ConsentState) = dataStore.edit { it[Keys.CONSENT_STATE] = state.name.lowercase() }
+
+        // -- Onboarding -------------------------------------------------------------------------------
+
+        val onboardingStepFlow: Flow<String?> = dataStore.data.map { it[Keys.ONBOARDING_STEP] }
+
+        suspend fun setOnboardingStep(step: String) = dataStore.edit { it[Keys.ONBOARDING_STEP] = step }
+
+        val onboardingCompleteFlow: Flow<Boolean> =
+            dataStore.data.map { it[Keys.ONBOARDING_COMPLETE] ?: false }
+
+        suspend fun setOnboardingComplete(complete: Boolean) = dataStore.edit { it[Keys.ONBOARDING_COMPLETE] = complete }
+
+        // -- Vertical / theme / reminders --------------------------------------------------------------
+
+        val selectedVerticalFlow: Flow<String> =
+            dataStore.data.map { it[Keys.SELECTED_VERTICAL] ?: "skin" }
+
+        suspend fun selectedVertical(): String = selectedVerticalFlow.first()
+
+        suspend fun setSelectedVertical(vertical: String) = dataStore.edit { it[Keys.SELECTED_VERTICAL] = vertical }
+
+        /** Raw string ("light"/"dark"/"system") — [core.design] owns the actual enum/mapping. */
+        val themePreferenceFlow: Flow<String> = dataStore.data.map { it[Keys.THEME_PREFERENCE] ?: "system" }
+
+        suspend fun setThemePreference(theme: String) = dataStore.edit { it[Keys.THEME_PREFERENCE] = theme }
+
+        data class ReminderSettings(
+            val enabled: Boolean,
+            val cadenceDays: Int?,
+            val nextAt: String?,
+            val windowStart: String?,
+            val windowEnd: String?,
         )
-    }
 
-    // -- Identity -------------------------------------------------------------------------------
+        val reminderSettingsFlow: Flow<ReminderSettings> =
+            dataStore.data.map { prefs ->
+                ReminderSettings(
+                    enabled = prefs[Keys.REMINDER_ENABLED] ?: true,
+                    cadenceDays = prefs[Keys.REMINDER_CADENCE_DAYS],
+                    nextAt = prefs[Keys.REMINDER_NEXT_AT],
+                    windowStart = prefs[Keys.REMINDER_WINDOW_START],
+                    windowEnd = prefs[Keys.REMINDER_WINDOW_END],
+                )
+            }
 
-    val userIdFlow: Flow<String?> = dataStore.data.map { it[Keys.USER_ID] }
-    suspend fun userId(): String? = userIdFlow.first()
-    suspend fun setUserId(userId: String) = dataStore.edit { it[Keys.USER_ID] = userId }
+        /**
+         * Called by [com.glowup.ai.data.repository.HomeRepository] whenever a real (non-polling)
+         * `GET /engagement` or `GET /capture-guide` response comes back, so [ReminderWorker] always
+         * schedules from the server's own cadence/window rather than a client-invented interval.
+         */
+        suspend fun setReminderSchedule(
+            cadenceDays: Int?,
+            nextAt: String?,
+            windowStart: String? = null,
+            windowEnd: String? = null,
+        ) = dataStore.edit {
+            if (cadenceDays == null) it.remove(Keys.REMINDER_CADENCE_DAYS) else it[Keys.REMINDER_CADENCE_DAYS] = cadenceDays
+            if (nextAt == null) it.remove(Keys.REMINDER_NEXT_AT) else it[Keys.REMINDER_NEXT_AT] = nextAt
+            if (windowStart == null) it.remove(Keys.REMINDER_WINDOW_START) else it[Keys.REMINDER_WINDOW_START] = windowStart
+            if (windowEnd == null) it.remove(Keys.REMINDER_WINDOW_END) else it[Keys.REMINDER_WINDOW_END] = windowEnd
+        }
 
-    val firebaseUidFlow: Flow<String?> = dataStore.data.map { it[Keys.FIREBASE_UID] }
-    suspend fun setFirebaseUid(uid: String) = dataStore.edit { it[Keys.FIREBASE_UID] = uid }
+        suspend fun setRemindersEnabled(enabled: Boolean) = dataStore.edit { it[Keys.REMINDER_ENABLED] = enabled }
 
-    // -- Cached plan / entitlement (used ONLY as a cache key / offline hint — never as the
-    // authoritative Premium check; that is always [com.glowup.ai.domain.model.Entitlement.isPremium]
-    // derived from a fresh profile response). --------------------------------------------------
+        /** True after the one-time Android 13+ notification permission prompt was shown. */
+        val notificationPermissionPromptedFlow: Flow<Boolean> =
+            dataStore.data.map { it[Keys.NOTIFICATION_PERMISSION_PROMPTED] ?: false }
 
-    val planFlow: Flow<Plan> = dataStore.data.map { Plan.fromRaw(it[Keys.PLAN]) }
-    suspend fun plan(): Plan = planFlow.first()
-    val entitlementStatusFlow: Flow<EntitlementStatus> =
-        dataStore.data.map { EntitlementStatus.fromRaw(it[Keys.ENTITLEMENT_STATUS]) }
+        suspend fun setNotificationPermissionPrompted(prompted: Boolean) =
+            dataStore.edit {
+                it[Keys.NOTIFICATION_PERMISSION_PROMPTED] = prompted
+            }
 
-    suspend fun setEntitlement(plan: Plan, status: EntitlementStatus) = dataStore.edit {
-        it[Keys.PLAN] = plan.name.lowercase()
-        it[Keys.ENTITLEMENT_STATUS] = status.name.lowercase()
-    }
+        // -- Additional notification preferences ------------------------------------------------------
 
-    // -- Consent ----------------------------------------------------------------------------------
-
-    val consentStateFlow: Flow<ConsentState> =
-        dataStore.data.map { ConsentState.fromRaw(it[Keys.CONSENT_STATE]) }
-    suspend fun setConsentState(state: ConsentState) =
-        dataStore.edit { it[Keys.CONSENT_STATE] = state.name.lowercase() }
-
-    // -- Onboarding -------------------------------------------------------------------------------
-
-    val onboardingStepFlow: Flow<String?> = dataStore.data.map { it[Keys.ONBOARDING_STEP] }
-    suspend fun setOnboardingStep(step: String) = dataStore.edit { it[Keys.ONBOARDING_STEP] = step }
-
-    val onboardingCompleteFlow: Flow<Boolean> =
-        dataStore.data.map { it[Keys.ONBOARDING_COMPLETE] ?: false }
-    suspend fun setOnboardingComplete(complete: Boolean) =
-        dataStore.edit { it[Keys.ONBOARDING_COMPLETE] = complete }
-
-    // -- Vertical / theme / reminders --------------------------------------------------------------
-
-    val selectedVerticalFlow: Flow<String> =
-        dataStore.data.map { it[Keys.SELECTED_VERTICAL] ?: "skin" }
-    suspend fun selectedVertical(): String = selectedVerticalFlow.first()
-    suspend fun setSelectedVertical(vertical: String) =
-        dataStore.edit { it[Keys.SELECTED_VERTICAL] = vertical }
-
-    /** Raw string ("light"/"dark"/"system") — [core.design] owns the actual enum/mapping. */
-    val themePreferenceFlow: Flow<String> = dataStore.data.map { it[Keys.THEME_PREFERENCE] ?: "system" }
-    suspend fun setThemePreference(theme: String) = dataStore.edit { it[Keys.THEME_PREFERENCE] = theme }
-
-    data class ReminderSettings(
-        val enabled: Boolean,
-        val cadenceDays: Int?,
-        val nextAt: String?,
-        val windowStart: String?,
-        val windowEnd: String?,
-    )
-
-    val reminderSettingsFlow: Flow<ReminderSettings> = dataStore.data.map { prefs ->
-        ReminderSettings(
-            enabled = prefs[Keys.REMINDER_ENABLED] ?: true,
-            cadenceDays = prefs[Keys.REMINDER_CADENCE_DAYS],
-            nextAt = prefs[Keys.REMINDER_NEXT_AT],
-            windowStart = prefs[Keys.REMINDER_WINDOW_START],
-            windowEnd = prefs[Keys.REMINDER_WINDOW_END],
+        data class ReminderTime(
+            val hour: Int,
+            val minute: Int,
         )
+
+        val reminderTimeFlow: Flow<ReminderTime> =
+            dataStore.data.map { prefs ->
+                ReminderTime(
+                    hour = prefs[Keys.REMINDER_TIME_HOUR] ?: 20,
+                    minute = prefs[Keys.REMINDER_TIME_MINUTE] ?: 0,
+                )
+            }
+
+        suspend fun setReminderTime(
+            hour: Int,
+            minute: Int,
+        ) = dataStore.edit {
+            it[Keys.REMINDER_TIME_HOUR] = hour
+            it[Keys.REMINDER_TIME_MINUTE] = minute
+        }
+
+        val streakWarningsFlow: Flow<Boolean> = dataStore.data.map { it[Keys.STREAK_WARNINGS_ENABLED] ?: true }
+
+        suspend fun setStreakWarnings(enabled: Boolean) = dataStore.edit { it[Keys.STREAK_WARNINGS_ENABLED] = enabled }
+
+        val weeklyRecapFlow: Flow<Boolean> = dataStore.data.map { it[Keys.WEEKLY_RECAP_ENABLED] ?: true }
+
+        suspend fun setWeeklyRecap(enabled: Boolean) = dataStore.edit { it[Keys.WEEKLY_RECAP_ENABLED] = enabled }
+
+        val achievementCelebrationsFlow: Flow<Boolean> =
+            dataStore.data.map { it[Keys.ACHIEVEMENT_CELEBRATIONS_ENABLED] ?: true }
+
+        suspend fun setAchievementCelebrations(enabled: Boolean) = dataStore.edit { it[Keys.ACHIEVEMENT_CELEBRATIONS_ENABLED] = enabled }
+
+        // -- Display preferences ----------------------------------------------------------------------
+
+        val fontSizeFlow: Flow<String> = dataStore.data.map { it[Keys.FONT_SIZE] ?: "medium" }
+
+        suspend fun setFontSize(size: String) = dataStore.edit { it[Keys.FONT_SIZE] = size }
+
+        val reduceAnimationsFlow: Flow<Boolean> = dataStore.data.map { it[Keys.REDUCE_ANIMATIONS] ?: false }
+
+        suspend fun setReduceAnimations(enabled: Boolean) = dataStore.edit { it[Keys.REDUCE_ANIMATIONS] = enabled }
+
+        // -- Data & Privacy preferences ---------------------------------------------------------------
+
+        val cloudBackupFlow: Flow<Boolean> = dataStore.data.map { it[Keys.CLOUD_BACKUP_ENABLED] ?: false }
+
+        suspend fun setCloudBackup(enabled: Boolean) = dataStore.edit { it[Keys.CLOUD_BACKUP_ENABLED] = enabled }
+
+        // -- Session teardown -------------------------------------------------------------------------
+
+        /**
+         * Removes ONLY the keys this store owns ([Keys.ALL]). Used on `400 user not found` (stale
+         * local id — frontend-api-map.md "Startup and session recovery"), account deletion, and
+         * explicit sign-out. Never a blanket `clear()` — see class doc.
+         */
+        suspend fun clearSession() =
+            dataStore.edit { prefs ->
+                Keys.ALL.forEach { key -> prefs.remove(key) }
+            }
     }
-
-    /**
-     * Called by [com.glowup.ai.data.repository.HomeRepository] whenever a real (non-polling)
-     * `GET /engagement` or `GET /capture-guide` response comes back, so [ReminderWorker] always
-     * schedules from the server's own cadence/window rather than a client-invented interval.
-     */
-    suspend fun setReminderSchedule(
-        cadenceDays: Int?,
-        nextAt: String?,
-        windowStart: String? = null,
-        windowEnd: String? = null,
-    ) = dataStore.edit {
-        if (cadenceDays == null) it.remove(Keys.REMINDER_CADENCE_DAYS) else it[Keys.REMINDER_CADENCE_DAYS] = cadenceDays
-        if (nextAt == null) it.remove(Keys.REMINDER_NEXT_AT) else it[Keys.REMINDER_NEXT_AT] = nextAt
-        if (windowStart == null) it.remove(Keys.REMINDER_WINDOW_START) else it[Keys.REMINDER_WINDOW_START] = windowStart
-        if (windowEnd == null) it.remove(Keys.REMINDER_WINDOW_END) else it[Keys.REMINDER_WINDOW_END] = windowEnd
-    }
-
-    suspend fun setRemindersEnabled(enabled: Boolean) = dataStore.edit { it[Keys.REMINDER_ENABLED] = enabled }
-
-    /** True after the one-time Android 13+ notification permission prompt was shown. */
-    val notificationPermissionPromptedFlow: Flow<Boolean> =
-        dataStore.data.map { it[Keys.NOTIFICATION_PERMISSION_PROMPTED] ?: false }
-    suspend fun setNotificationPermissionPrompted(prompted: Boolean) = dataStore.edit {
-        it[Keys.NOTIFICATION_PERMISSION_PROMPTED] = prompted
-    }
-
-    // -- Additional notification preferences ------------------------------------------------------
-
-    data class ReminderTime(val hour: Int, val minute: Int)
-
-    val reminderTimeFlow: Flow<ReminderTime> = dataStore.data.map { prefs ->
-        ReminderTime(
-            hour = prefs[Keys.REMINDER_TIME_HOUR] ?: 20,
-            minute = prefs[Keys.REMINDER_TIME_MINUTE] ?: 0,
-        )
-    }
-
-    suspend fun setReminderTime(hour: Int, minute: Int) = dataStore.edit {
-        it[Keys.REMINDER_TIME_HOUR] = hour
-        it[Keys.REMINDER_TIME_MINUTE] = minute
-    }
-
-    val streakWarningsFlow: Flow<Boolean> = dataStore.data.map { it[Keys.STREAK_WARNINGS_ENABLED] ?: true }
-    suspend fun setStreakWarnings(enabled: Boolean) = dataStore.edit { it[Keys.STREAK_WARNINGS_ENABLED] = enabled }
-
-    val weeklyRecapFlow: Flow<Boolean> = dataStore.data.map { it[Keys.WEEKLY_RECAP_ENABLED] ?: true }
-    suspend fun setWeeklyRecap(enabled: Boolean) = dataStore.edit { it[Keys.WEEKLY_RECAP_ENABLED] = enabled }
-
-    val achievementCelebrationsFlow: Flow<Boolean> =
-        dataStore.data.map { it[Keys.ACHIEVEMENT_CELEBRATIONS_ENABLED] ?: true }
-    suspend fun setAchievementCelebrations(enabled: Boolean) =
-        dataStore.edit { it[Keys.ACHIEVEMENT_CELEBRATIONS_ENABLED] = enabled }
-
-    // -- Display preferences ----------------------------------------------------------------------
-
-    val fontSizeFlow: Flow<String> = dataStore.data.map { it[Keys.FONT_SIZE] ?: "medium" }
-    suspend fun setFontSize(size: String) = dataStore.edit { it[Keys.FONT_SIZE] = size }
-
-    val reduceAnimationsFlow: Flow<Boolean> = dataStore.data.map { it[Keys.REDUCE_ANIMATIONS] ?: false }
-    suspend fun setReduceAnimations(enabled: Boolean) = dataStore.edit { it[Keys.REDUCE_ANIMATIONS] = enabled }
-
-    // -- Data & Privacy preferences ---------------------------------------------------------------
-
-    val cloudBackupFlow: Flow<Boolean> = dataStore.data.map { it[Keys.CLOUD_BACKUP_ENABLED] ?: false }
-    suspend fun setCloudBackup(enabled: Boolean) = dataStore.edit { it[Keys.CLOUD_BACKUP_ENABLED] = enabled }
-
-    // -- Session teardown -------------------------------------------------------------------------
-
-    /**
-     * Removes ONLY the keys this store owns ([Keys.ALL]). Used on `400 user not found` (stale
-     * local id — frontend-api-map.md "Startup and session recovery"), account deletion, and
-     * explicit sign-out. Never a blanket `clear()` — see class doc.
-     */
-    suspend fun clearSession() = dataStore.edit { prefs ->
-        Keys.ALL.forEach { key -> prefs.remove(key) }
-    }
-}

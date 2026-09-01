@@ -25,8 +25,8 @@ import com.glowup.ai.data.remote.dto.ExperimentDto
 import com.glowup.ai.data.remote.dto.ExperimentStatusRequestDto
 import com.glowup.ai.data.remote.dto.ExportBundleDto
 import com.glowup.ai.data.remote.dto.HealthDto
-import com.glowup.ai.data.remote.dto.IngredientExplainerDto
 import com.glowup.ai.data.remote.dto.HistoryItemDto
+import com.glowup.ai.data.remote.dto.IngredientExplainerDto
 import com.glowup.ai.data.remote.dto.JobQueuedResponseDto
 import com.glowup.ai.data.remote.dto.LabelCreateRequestDto
 import com.glowup.ai.data.remote.dto.LabelDto
@@ -83,7 +83,6 @@ import retrofit2.http.Query
  * simply ignore it server-side unless `SKINPROOF_AUTH_REQUIRED=1`.
  */
 interface GlowUpApi {
-
     // -- Startup ------------------------------------------------------------
 
     @GET("health")
@@ -99,10 +98,14 @@ interface GlowUpApi {
     // -- Onboarding, profile, consent ----------------------------------------
 
     @POST("users")
-    suspend fun createUser(@Body body: UserCreateRequestDto): ProfileResponseDto
+    suspend fun createUser(
+        @Body body: UserCreateRequestDto,
+    ): ProfileResponseDto
 
     @GET("users/{userId}/profile")
-    suspend fun getProfile(@Path("userId") userId: String): ProfileResponseDto
+    suspend fun getProfile(
+        @Path("userId") userId: String,
+    ): ProfileResponseDto
 
     @PATCH("users/{userId}/profile")
     suspend fun updateProfile(
@@ -119,7 +122,9 @@ interface GlowUpApi {
     // -- Subscription / entitlement -------------------------------------------
 
     @GET("users/{userId}/subscription")
-    suspend fun getSubscription(@Path("userId") userId: String): SubscriptionDto
+    suspend fun getSubscription(
+        @Path("userId") userId: String,
+    ): SubscriptionDto
 
     @POST("users/{userId}/subscription/upgrade")
     suspend fun upgradeSubscription(
@@ -128,18 +133,26 @@ interface GlowUpApi {
     ): SubscriptionDto
 
     @POST("users/{userId}/subscription/cancel")
-    suspend fun cancelSubscription(@Path("userId") userId: String): SubscriptionDto
+    suspend fun cancelSubscription(
+        @Path("userId") userId: String,
+    ): SubscriptionDto
 
     // -- Products / routine / experiments -------------------------------------
 
     @POST("products")
-    suspend fun createProduct(@Body body: ProductCreateRequestDto): ProductDto
+    suspend fun createProduct(
+        @Body body: ProductCreateRequestDto,
+    ): ProductDto
 
     @GET("products/search")
-    suspend fun searchProducts(@Query("q") query: String = ""): List<ProductDto>
+    suspend fun searchProducts(
+        @Query("q") query: String = "",
+    ): List<ProductDto>
 
     @GET("products/lookup")
-    suspend fun lookupProduct(@Query("barcode") barcode: String): ProductDto?
+    suspend fun lookupProduct(
+        @Query("barcode") barcode: String,
+    ): ProductDto?
 
     @GET("products/{productId}")
     suspend fun getProduct(
@@ -166,7 +179,9 @@ interface GlowUpApi {
     ): PurchaseGuidanceDto
 
     @POST("routine-events")
-    suspend fun logRoutineEvent(@Body body: RoutineEventCreateRequestDto): RoutineEventDto
+    suspend fun logRoutineEvent(
+        @Body body: RoutineEventCreateRequestDto,
+    ): RoutineEventDto
 
     @GET("users/{userId}/confound-check")
     suspend fun confoundCheck(
@@ -175,10 +190,14 @@ interface GlowUpApi {
     ): ConfoundCheckDto
 
     @POST("experiments")
-    suspend fun createExperiment(@Body body: ExperimentCreateRequestDto): ExperimentDto
+    suspend fun createExperiment(
+        @Body body: ExperimentCreateRequestDto,
+    ): ExperimentDto
 
     @GET("users/{userId}/experiments")
-    suspend fun listExperiments(@Path("userId") userId: String): List<ExperimentDto>
+    suspend fun listExperiments(
+        @Path("userId") userId: String,
+    ): List<ExperimentDto>
 
     @GET("users/{userId}/experiments/{experimentId}")
     suspend fun getExperiment(
@@ -196,7 +215,9 @@ interface GlowUpApi {
     // -- Capture, dashboard, history ------------------------------------------
 
     @POST("captures")
-    suspend fun createCapture(@Body body: CaptureCreateRequestDto): CaptureResponseDto
+    suspend fun createCapture(
+        @Body body: CaptureCreateRequestDto,
+    ): CaptureResponseDto
 
     @GET("users/{userId}/capture-guide")
     suspend fun getCaptureGuide(
@@ -218,7 +239,9 @@ interface GlowUpApi {
 
     /** Side-effecting (writes a reminder row) — never poll. */
     @GET("users/{userId}/engagement")
-    suspend fun getEngagement(@Path("userId") userId: String): EngagementDto
+    suspend fun getEngagement(
+        @Path("userId") userId: String,
+    ): EngagementDto
 
     @POST("users/{userId}/engagement")
     suspend fun logEngagementEvent(
@@ -252,7 +275,9 @@ interface GlowUpApi {
     ): MeasurementFeedbackDto
 
     @GET("users/{userId}/analytics")
-    suspend fun getAnalytics(@Path("userId") userId: String): AnalyticsDto
+    suspend fun getAnalytics(
+        @Path("userId") userId: String,
+    ): AnalyticsDto
 
     // -- Q&A, triage, discover, commerce ---------------------------------------
 
@@ -263,14 +288,20 @@ interface GlowUpApi {
     ): QnaResponseDto
 
     @GET("users/{userId}/qna")
-    suspend fun getQnaHistory(@Path("userId") userId: String): List<QnaMessageDto>
+    suspend fun getQnaHistory(
+        @Path("userId") userId: String,
+    ): List<QnaMessageDto>
 
     /** Open route — no `user_id`, no Premium requirement. */
     @POST("triage")
-    suspend fun triage(@Body body: TriageCreateRequestDto): TriageResultDto
+    suspend fun triage(
+        @Body body: TriageCreateRequestDto,
+    ): TriageResultDto
 
     @GET("users/{userId}/discover")
-    suspend fun getDiscover(@Path("userId") userId: String): DiscoverDto
+    suspend fun getDiscover(
+        @Path("userId") userId: String,
+    ): DiscoverDto
 
     /** Commerce is free for every plan — never gate this call on Premium. */
     @GET("users/{userId}/commerce/offers")
@@ -288,7 +319,9 @@ interface GlowUpApi {
     // -- Labels -----------------------------------------------------------------
 
     @GET("users/{userId}/labels")
-    suspend fun getLabels(@Path("userId") userId: String): List<LabelDto>
+    suspend fun getLabels(
+        @Path("userId") userId: String,
+    ): List<LabelDto>
 
     @POST("users/{userId}/labels")
     suspend fun addLabel(
@@ -334,7 +367,9 @@ interface GlowUpApi {
     // -- Context events + root-cause search (Premium) -----------------------------
 
     @GET("users/{userId}/context-events")
-    suspend fun getContextEvents(@Path("userId") userId: String): List<ContextEventDto>
+    suspend fun getContextEvents(
+        @Path("userId") userId: String,
+    ): List<ContextEventDto>
 
     @POST("users/{userId}/context-events")
     suspend fun addContextEvent(
@@ -349,19 +384,27 @@ interface GlowUpApi {
     ): List<RootCauseInsightDto>
 
     @GET("users/{userId}/budget-optimizer")
-    suspend fun getBudgetOptimizer(@Path("userId") userId: String): BudgetOptimizerDto
+    suspend fun getBudgetOptimizer(
+        @Path("userId") userId: String,
+    ): BudgetOptimizerDto
 
     @GET("users/{userId}/derm-export")
-    suspend fun getDermExport(@Path("userId") userId: String): DermExportDto
+    suspend fun getDermExport(
+        @Path("userId") userId: String,
+    ): DermExportDto
 
     // -- Export, deletion ---------------------------------------------------------
 
     @GET("users/{userId}/export")
-    suspend fun exportUser(@Path("userId") userId: String): ExportBundleDto
+    suspend fun exportUser(
+        @Path("userId") userId: String,
+    ): ExportBundleDto
 
     /** `204 No Content` on success — do NOT attempt to parse a body. */
     @DELETE("users/{userId}")
-    suspend fun deleteUser(@Path("userId") userId: String): Response<Unit>
+    suspend fun deleteUser(
+        @Path("userId") userId: String,
+    ): Response<Unit>
 
     // -- Admin (NOT FOR APP USE) ----------------------------------------------------
     //

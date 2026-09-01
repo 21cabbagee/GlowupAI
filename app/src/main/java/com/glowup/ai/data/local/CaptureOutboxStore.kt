@@ -91,28 +91,35 @@ interface CaptureOutboxDao {
  * failed one).
  */
 @Singleton
-class CaptureImageStore @Inject constructor(@ApplicationContext private val context: Context) {
+class CaptureImageStore
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) {
+        private val dir: File by lazy {
+            File(context.filesDir, "capture_outbox").apply { mkdirs() }
+        }
 
-    private val dir: File by lazy {
-        File(context.filesDir, "capture_outbox").apply { mkdirs() }
-    }
+        suspend fun save(base64: String): String =
+            withContext(Dispatchers.IO) {
+                val file = File(dir, "${UUID.randomUUID()}.b64")
+                file.writeText(base64)
+                file.absolutePath
+            }
 
-    suspend fun save(base64: String): String = withContext(Dispatchers.IO) {
-        val file = File(dir, "${UUID.randomUUID()}.b64")
-        file.writeText(base64)
-        file.absolutePath
-    }
+        suspend fun read(path: String): String =
+            withContext(Dispatchers.IO) {
+                File(path).readText()
+            }
 
-    suspend fun read(path: String): String = withContext(Dispatchers.IO) {
-        File(path).readText()
-    }
+        suspend fun delete(path: String) =
+            withContext(Dispatchers.IO) {
+                runCatching { File(path).delete() }
+                Unit
+            }
 
-    suspend fun delete(path: String) = withContext(Dispatchers.IO) {
-        runCatching { File(path).delete() }
-        Unit
+        suspend fun deleteAll(paths: Iterable<String>) =
+            withContext(Dispatchers.IO) {
+                paths.forEach { path -> runCatching { File(path).delete() } }
+            }
     }
-
-    suspend fun deleteAll(paths: Iterable<String>) = withContext(Dispatchers.IO) {
-        paths.forEach { path -> runCatching { File(path).delete() } }
-    }
-}

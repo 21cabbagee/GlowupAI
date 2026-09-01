@@ -20,9 +20,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -81,7 +81,10 @@ fun DataAndPrivacyRoute(
     )
 }
 
-private fun launchShareSheet(context: Context, uri: android.net.Uri) {
+private fun launchShareSheet(
+    context: Context,
+    uri: android.net.Uri,
+) {
     context.startActivity(ExportFileWriter.shareIntent(uri))
 }
 
@@ -101,34 +104,43 @@ private fun DataAndPrivacyContent(
     Scaffold(topBar = { GlowTopBar(title = "Data & Privacy", onBack = onBack) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
-                uiState.loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Loading your privacy settings…", style = MaterialTheme.typography.bodyMedium)
+                uiState.loading -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Loading your privacy settings…", style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
-                uiState.loadError != null -> Box(Modifier.fillMaxSize().padding(GlowSpacing.lg), contentAlignment = Alignment.Center) {
-                    ErrorState(message = uiState.loadError, onRetry = onRetry)
+
+                uiState.loadError != null -> {
+                    Box(Modifier.fillMaxSize().padding(GlowSpacing.lg), contentAlignment = Alignment.Center) {
+                        ErrorState(message = uiState.loadError, onRetry = onRetry)
+                    }
                 }
-                else -> Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(GlowSpacing.lg),
-                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
-                ) {
-                    ConsentCard(
-                        consentState = uiState.consentState,
-                        updating = uiState.consentUpdating,
-                        error = uiState.consentError,
-                        onSetConsent = onSetConsent,
-                    )
-                    ExportCard(exportState = uiState.export, onExportClick = onExportClick, onDismissError = onDismissExportError)
-                    DangerZoneCard(
-                        deleteState = uiState.delete,
-                        confirmationText = uiState.deleteConfirmationText,
-                        onBeginDelete = onBeginDelete,
-                        onCancelDelete = onCancelDelete,
-                        onDeleteTextChange = onDeleteTextChange,
-                        onConfirmDelete = onConfirmDelete,
-                    )
+
+                else -> {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(GlowSpacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
+                    ) {
+                        ConsentCard(
+                            consentState = uiState.consentState,
+                            updating = uiState.consentUpdating,
+                            error = uiState.consentError,
+                            onSetConsent = onSetConsent,
+                        )
+                        ExportCard(exportState = uiState.export, onExportClick = onExportClick, onDismissError = onDismissExportError)
+                        DangerZoneCard(
+                            deleteState = uiState.delete,
+                            confirmationText = uiState.deleteConfirmationText,
+                            onBeginDelete = onBeginDelete,
+                            onCancelDelete = onCancelDelete,
+                            onDeleteTextChange = onDeleteTextChange,
+                            onConfirmDelete = onConfirmDelete,
+                        )
+                    }
                 }
             }
         }
@@ -152,10 +164,11 @@ private fun ConsentCard(
             color = glow.ink900,
         )
         androidx.compose.foundation.layout.Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = GlowSpacing.sm)
-                .semantics { contentDescription = "Facial photo consent, ${if (isActive) "on" else "off"}" },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = GlowSpacing.sm)
+                    .semantics { contentDescription = "Facial photo consent, ${if (isActive) "on" else "off"}" },
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -166,8 +179,9 @@ private fun ConsentCard(
                     color = glow.ink900,
                 )
                 Text(
-                    text = "Required for photo capture. Declining locks capture but keeps the " +
-                        "rest of your account usable.",
+                    text =
+                        "Required for photo capture. Declining locks capture but keeps the " +
+                            "rest of your account usable.",
                     style = MaterialTheme.typography.bodySmall,
                     color = glow.ink600,
                 )
@@ -205,26 +219,29 @@ private fun ExportCard(
             color = glow.ink900,
         )
         Text(
-            text = "Downloads a JSON file of your profile, consent history, routine events, " +
-                "experiments, captures and their metrics, verdicts, Q&A (Premium only), and " +
-                "engagement history.",
+            text =
+                "Downloads a JSON file of your profile, consent history, routine events, " +
+                    "experiments, captures and their metrics, verdicts, Q&A (Premium only), and " +
+                    "engagement history.",
             style = MaterialTheme.typography.bodySmall,
             color = glow.ink600,
             modifier = Modifier.padding(top = GlowSpacing.xs),
         )
         DisclaimerNote(
             modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.sm),
-            text = "Raw photo bytes are NOT included in this export — only the measurements " +
-                "and metadata derived from them.",
+            text =
+                "Raw photo bytes are NOT included in this export — only the measurements " +
+                    "and metadata derived from them.",
         )
         if (exportState is ExportState.Failed) {
             Text(
                 text = exportState.message,
                 style = MaterialTheme.typography.bodySmall,
                 color = glow.danger,
-                modifier = Modifier.padding(top = GlowSpacing.sm).semantics {
-                    liveRegion = LiveRegionMode.Assertive
-                },
+                modifier =
+                    Modifier.padding(top = GlowSpacing.sm).semantics {
+                        liveRegion = LiveRegionMode.Assertive
+                    },
             )
         }
         GlowButton(
@@ -258,55 +275,62 @@ private fun DangerZoneCard(
             color = glow.danger,
         )
         Text(
-            text = "This permanently deletes your GlowUp AI account, all captures, photos, " +
-                "routine history, experiments, and Q&A. This cannot be undone.",
+            text =
+                "This permanently deletes your GlowUp AI account, all captures, photos, " +
+                    "routine history, experiments, and Q&A. This cannot be undone.",
             style = MaterialTheme.typography.bodySmall,
             color = glow.ink600,
             modifier = Modifier.padding(top = GlowSpacing.xs),
         )
 
         when (deleteState) {
-            DeleteAccountState.Idle -> GlowButton(
-                modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.md),
-                text = "Delete my account",
-                onClick = onBeginDelete,
-                variant = GlowButtonVariant.Danger,
-            )
-            else -> Column(modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.md)) {
-                Text(
-                    text = "Type DELETE to confirm. This is your final warning — nothing can " +
-                        "reverse this action once you submit it.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = glow.danger,
-                    fontWeight = FontWeight.SemiBold,
+            DeleteAccountState.Idle -> {
+                GlowButton(
+                    modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.md),
+                    text = "Delete my account",
+                    onClick = onBeginDelete,
+                    variant = GlowButtonVariant.Danger,
                 )
-                GlowTextField(
-                    modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.sm),
-                    value = confirmationText,
-                    onValueChange = onDeleteTextChange,
-                    label = "Type DELETE",
-                    enabled = deleteState != DeleteAccountState.Deleting,
-                    errorText = (deleteState as? DeleteAccountState.Failed)?.message,
-                )
-                androidx.compose.foundation.layout.Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.sm),
-                    horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
-                ) {
-                    GlowButton(
-                        modifier = Modifier.weight(1f),
-                        text = "Cancel",
-                        onClick = onCancelDelete,
-                        variant = GlowButtonVariant.Ghost,
+            }
+
+            else -> {
+                Column(modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.md)) {
+                    Text(
+                        text =
+                            "Type DELETE to confirm. This is your final warning — nothing can " +
+                                "reverse this action once you submit it.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = glow.danger,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    GlowTextField(
+                        modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.sm),
+                        value = confirmationText,
+                        onValueChange = onDeleteTextChange,
+                        label = "Type DELETE",
                         enabled = deleteState != DeleteAccountState.Deleting,
+                        errorText = (deleteState as? DeleteAccountState.Failed)?.message,
                     )
-                    GlowButton(
-                        modifier = Modifier.weight(1f),
-                        text = "Delete forever",
-                        onClick = onConfirmDelete,
-                        variant = GlowButtonVariant.Danger,
-                        enabled = confirmationText == DELETE_CONFIRMATION_TOKEN && deleteState != DeleteAccountState.Deleting,
-                        loading = deleteState == DeleteAccountState.Deleting,
-                    )
+                    androidx.compose.foundation.layout.Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.sm),
+                        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
+                    ) {
+                        GlowButton(
+                            modifier = Modifier.weight(1f),
+                            text = "Cancel",
+                            onClick = onCancelDelete,
+                            variant = GlowButtonVariant.Ghost,
+                            enabled = deleteState != DeleteAccountState.Deleting,
+                        )
+                        GlowButton(
+                            modifier = Modifier.weight(1f),
+                            text = "Delete forever",
+                            onClick = onConfirmDelete,
+                            variant = GlowButtonVariant.Danger,
+                            enabled = confirmationText == DELETE_CONFIRMATION_TOKEN && deleteState != DeleteAccountState.Deleting,
+                            loading = deleteState == DeleteAccountState.Deleting,
+                        )
+                    }
                 }
             }
         }

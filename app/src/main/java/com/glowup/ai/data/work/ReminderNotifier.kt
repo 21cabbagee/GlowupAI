@@ -14,8 +14,10 @@ fun interface ReminderNotifier {
 }
 
 /** Default binding so Task 2.4 compiles standalone before Phase 4.2 lands. */
-class NoOpReminderNotifier @Inject constructor() : ReminderNotifier {
-    override suspend fun notifyCaptureDue(settings: SessionStore.ReminderSettings) {
-        // Intentionally inert. Phase 4.2 replaces the WorkModule binding with a real notifier.
+class NoOpReminderNotifier
+    @Inject
+    constructor() : ReminderNotifier {
+        override suspend fun notifyCaptureDue(settings: SessionStore.ReminderSettings) {
+            // Intentionally inert. Phase 4.2 replaces the WorkModule binding with a real notifier.
+        }
     }
-}

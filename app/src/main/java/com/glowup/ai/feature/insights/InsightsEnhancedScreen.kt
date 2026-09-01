@@ -1,14 +1,19 @@
 package com.glowup.ai.feature.insights
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -30,6 +35,7 @@ import java.time.temporal.ChronoUnit
 fun InsightsEnhancedRoute(
     onNavigateBack: () -> Unit,
     onNavigateToRoutine: () -> Unit,
+    onNavigateToCapture: () -> Unit,
     viewModel: InsightsEnhancedViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -42,7 +48,8 @@ fun InsightsEnhancedRoute(
         onTimeRangeSelected = viewModel::selectTimeRange,
         onNavigateBack = onNavigateBack,
         onNavigateToRoutine = onNavigateToRoutine,
-        onRefresh = viewModel::refresh
+        onNavigateToCapture = onNavigateToCapture,
+        onRefresh = viewModel::refresh,
     )
 }
 
@@ -54,7 +61,8 @@ private fun InsightsEnhancedScreen(
     onTimeRangeSelected: (TimeRange) -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateToRoutine: () -> Unit,
-    onRefresh: () -> Unit
+    onNavigateToCapture: () -> Unit,
+    onRefresh: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -65,34 +73,38 @@ private fun InsightsEnhancedScreen(
                     IconButton(onClick = onRefresh) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
                     }
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         when (uiState) {
             is InsightsEnhancedUiState.Loading -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
             }
+
             is InsightsEnhancedUiState.Error -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(GlowSpacing.lg)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(GlowSpacing.lg),
                 ) {
                     ErrorState(
                         message = uiState.message,
-                        onRetry = onRefresh
+                        onRetry = onRefresh,
                     )
                 }
             }
+
             is InsightsEnhancedUiState.Content -> {
                 InsightsContent(
                     padding = padding,
@@ -101,7 +113,8 @@ private fun InsightsEnhancedScreen(
                     selectedTimeRange = uiState.selectedTimeRange,
                     onMetricSelected = onMetricSelected,
                     onTimeRangeSelected = onTimeRangeSelected,
-                    onNavigateToRoutine = onNavigateToRoutine
+                    onNavigateToRoutine = onNavigateToRoutine,
+                    onNavigateToCapture = onNavigateToCapture,
                 )
             }
         }
@@ -116,22 +129,50 @@ private fun InsightsContent(
     selectedTimeRange: TimeRange,
     onMetricSelected: (PrimaryMetric) -> Unit,
     onTimeRangeSelected: (TimeRange) -> Unit,
-    onNavigateToRoutine: () -> Unit
+    onNavigateToRoutine: () -> Unit,
+    onNavigateToCapture: () -> Unit,
 ) {
     val glowColors = LocalGlowColors.current
 
+    // Check if there's any data to display
+    val hasCaptures = data.metricTrends.values.any { it.isNotEmpty() }
+    val hasSummaries = data.summaries.isNotEmpty()
+    val hasRecommendations = data.recommendations.isNotEmpty()
+    val isEmpty = !hasCaptures && !hasSummaries && !hasRecommendations
+
+    // Show empty state if no data at all
+    if (isEmpty) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(GlowSpacing.lg),
+            contentAlignment = Alignment.Center,
+        ) {
+            EmptyState(
+                title = "No insights yet",
+                body = "Capture your first photo to start tracking your skin progress and get personalized insights.",
+                ctaLabel = "Take Photo",
+                onCtaClick = onNavigateToCapture,
+            )
+        }
+        return
+    }
+
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(padding),
         contentPadding = PaddingValues(GlowSpacing.lg),
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg)
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
     ) {
         // Metric selector
         item {
             MetricSelector(
                 selectedMetric = selectedMetric,
-                onMetricSelected = onMetricSelected
+                onMetricSelected = onMetricSelected,
             )
         }
 
@@ -139,7 +180,7 @@ private fun InsightsContent(
         item {
             TimeRangeSelector(
                 selectedRange = selectedTimeRange,
-                onRangeSelected = onTimeRangeSelected
+                onRangeSelected = onTimeRangeSelected,
             )
         }
 
@@ -148,15 +189,16 @@ private fun InsightsContent(
             val metricData = data.metricTrends[selectedMetric] ?: emptyList()
             TrendChart(
                 title = selectedMetric.displayName,
-                dataPoints = metricData.map {
-                    TrendDataPoint(
-                        timestamp = it.timestamp,
-                        value = it.value,
-                        label = it.label
-                    )
-                },
+                dataPoints =
+                    metricData.map {
+                        TrendDataPoint(
+                            timestamp = it.timestamp,
+                            value = it.value,
+                            label = it.label,
+                        )
+                    },
                 metricLabel = selectedMetric.displayName,
-                subtitle = "Last ${selectedTimeRange.days} days"
+                subtitle = "Last ${selectedTimeRange.days} days",
             )
         }
 
@@ -165,20 +207,40 @@ private fun InsightsContent(
             SectionHeader(title = "Summary")
         }
 
-        items(data.summaries) { summary ->
-            SummaryCard(summary = summary)
+        if (data.summaries.isEmpty()) {
+            item {
+                EmptyState(
+                    title = "No summaries yet",
+                    body = "Keep capturing photos to generate weekly and monthly summaries of your progress.",
+                    ctaLabel = "Take Photo",
+                    onCtaClick = onNavigateToCapture,
+                )
+            }
+        } else {
+            items(data.summaries) { summary ->
+                SummaryCard(summary = summary)
+            }
         }
 
         // Product recommendations
-        if (data.recommendations.isNotEmpty()) {
-            item {
-                SectionHeader(title = "Recommendations")
-            }
+        item {
+            SectionHeader(title = "Recommendations")
+        }
 
+        if (data.recommendations.isEmpty()) {
+            item {
+                EmptyState(
+                    title = "No recommendations yet",
+                    body = "As you track your progress, we'll provide personalized recommendations to help improve your skin.",
+                    ctaLabel = "Take Photo",
+                    onCtaClick = onNavigateToCapture,
+                )
+            }
+        } else {
             items(data.recommendations) { recommendation ->
                 RecommendationCard(
                     recommendation = recommendation,
-                    onNavigateToRoutine = onNavigateToRoutine
+                    onNavigateToRoutine = onNavigateToRoutine,
                 )
             }
         }
@@ -186,8 +248,9 @@ private fun InsightsContent(
         // Disclaimer
         item {
             DisclaimerNote(
-                text = "Insights are based on tracked data and general patterns. " +
-                    "Always consult with a dermatologist for medical advice."
+                text =
+                    "Insights are based on tracked data and general patterns. " +
+                        "Always consult with a dermatologist for medical advice.",
             )
         }
     }
@@ -200,7 +263,7 @@ private fun InsightsContent(
 private fun MetricSelector(
     selectedMetric: PrimaryMetric,
     onMetricSelected: (PrimaryMetric) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val glowColors = LocalGlowColors.current
 
@@ -209,20 +272,20 @@ private fun MetricSelector(
             text = "Select Metric",
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
-            color = glowColors.ink900
+            color = glowColors.ink900,
         )
 
         Spacer(modifier = Modifier.height(GlowSpacing.sm))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+            horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
         ) {
             PrimaryMetric.values().forEach { metric ->
                 FilterChip(
                     selected = metric == selectedMetric,
                     onClick = { onMetricSelected(metric) },
-                    label = { Text(metric.displayName) }
+                    label = { Text(metric.displayName) },
                 )
             }
         }
@@ -236,17 +299,17 @@ private fun MetricSelector(
 private fun TimeRangeSelector(
     selectedRange: TimeRange,
     onRangeSelected: (TimeRange) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+        horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
     ) {
         TimeRange.values().forEach { range ->
             FilterChip(
                 selected = range == selectedRange,
                 onClick = { onRangeSelected(range) },
-                label = { Text(range.label) }
+                label = { Text(range.label) },
             )
         }
     }
@@ -258,40 +321,68 @@ private fun TimeRangeSelector(
 @Composable
 private fun SummaryCard(
     summary: InsightSummary,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val glowColors = LocalGlowColors.current
+    val reducedMotion = isReducedMotionEnabled()
+
+    // Animate card appearance
+    val alpha by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = if (reducedMotion) tween(0) else tween(durationMillis = 300, easing = GlowEasing),
+        label = "summaryCardAlpha",
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = if (reducedMotion) tween(0) else tween(durationMillis = 300, easing = GlowEasing),
+        label = "summaryCardScale",
+    )
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .alpha(alpha)
+                .scale(scale),
         shape = GlowShapes.md,
-        colors = CardDefaults.cardColors(
-            containerColor = when (summary.type) {
-                SummaryType.POSITIVE -> glowColors.softGreen.copy(alpha = 0.1f)
-                SummaryType.NEGATIVE -> glowColors.danger.copy(alpha = 0.1f)
-                SummaryType.NEUTRAL -> MaterialTheme.colorScheme.surface
-            }
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    when (summary.type) {
+                        SummaryType.POSITIVE -> glowColors.success.copy(alpha = 0.1f)
+                        SummaryType.NEGATIVE -> glowColors.danger.copy(alpha = 0.1f)
+                        SummaryType.NEUTRAL -> MaterialTheme.colorScheme.surface
+                    },
+            ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(GlowSpacing.md),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(GlowSpacing.md),
             horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector = when (summary.type) {
-                    SummaryType.POSITIVE -> Icons.Filled.TrendingUp
-                    SummaryType.NEGATIVE -> Icons.Filled.TrendingDown
-                    SummaryType.NEUTRAL -> Icons.Filled.Info
-                },
-                contentDescription = null,
-                tint = when (summary.type) {
-                    SummaryType.POSITIVE -> glowColors.softGreen
-                    SummaryType.NEGATIVE -> glowColors.danger
-                    SummaryType.NEUTRAL -> glowColors.ink600
-                }
+                imageVector =
+                    when (summary.type) {
+                        SummaryType.POSITIVE -> Icons.Filled.TrendingUp
+                        SummaryType.NEGATIVE -> Icons.Filled.TrendingDown
+                        SummaryType.NEUTRAL -> Icons.Filled.Info
+                    },
+                contentDescription =
+                    when (summary.type) {
+                        SummaryType.POSITIVE -> "Positive trend"
+                        SummaryType.NEGATIVE -> "Negative trend"
+                        SummaryType.NEUTRAL -> "Neutral information"
+                    },
+                tint =
+                    when (summary.type) {
+                        SummaryType.POSITIVE -> glowColors.success
+                        SummaryType.NEGATIVE -> glowColors.danger
+                        SummaryType.NEUTRAL -> glowColors.ink600
+                    },
             )
 
             Column(modifier = Modifier.weight(1f)) {
@@ -299,12 +390,12 @@ private fun SummaryCard(
                     text = summary.title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = glowColors.ink900
+                    color = glowColors.ink900,
                 )
                 Text(
                     text = summary.description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = glowColors.ink600
+                    color = glowColors.ink600,
                 )
             }
         }
@@ -318,36 +409,56 @@ private fun SummaryCard(
 private fun RecommendationCard(
     recommendation: ProductRecommendation,
     onNavigateToRoutine: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val glowColors = LocalGlowColors.current
+    val reducedMotion = isReducedMotionEnabled()
+
+    // Animate card appearance
+    val alpha by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = if (reducedMotion) tween(0) else tween(durationMillis = 300, easing = GlowEasing),
+        label = "recommendationCardAlpha",
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = if (reducedMotion) tween(0) else tween(durationMillis = 300, easing = GlowEasing),
+        label = "recommendationCardScale",
+    )
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .alpha(alpha)
+                .scale(scale),
         shape = GlowShapes.md,
-        colors = CardDefaults.cardColors(
-            containerColor = glowColors.honey500.copy(alpha = 0.1f)
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = glowColors.honey500.copy(alpha = 0.1f),
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(GlowSpacing.md)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(GlowSpacing.md),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
                     imageVector = Icons.Filled.Lightbulb,
-                    contentDescription = null,
-                    tint = glowColors.honey700
+                    contentDescription = "Recommendation",
+                    tint = glowColors.honey700,
                 )
                 Text(
                     text = recommendation.title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = glowColors.ink900
+                    color = glowColors.ink900,
                 )
             }
 
@@ -356,7 +467,7 @@ private fun RecommendationCard(
             Text(
                 text = recommendation.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = glowColors.ink600
+                color = glowColors.ink600,
             )
 
             if (recommendation.actionable) {
@@ -366,7 +477,7 @@ private fun RecommendationCard(
                     text = "Update Routine",
                     onClick = onNavigateToRoutine,
                     variant = GlowButtonVariant.Secondary,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
@@ -377,41 +488,47 @@ private fun RecommendationCard(
 
 sealed class InsightsEnhancedUiState {
     object Loading : InsightsEnhancedUiState()
-    data class Error(val message: String) : InsightsEnhancedUiState()
+
+    data class Error(
+        val message: String,
+    ) : InsightsEnhancedUiState()
+
     data class Content(
         val data: InsightsData,
-        val selectedTimeRange: TimeRange
+        val selectedTimeRange: TimeRange,
     ) : InsightsEnhancedUiState()
 }
 
 data class InsightsData(
     val metricTrends: Map<PrimaryMetric, List<MetricDataPoint>>,
     val summaries: List<InsightSummary>,
-    val recommendations: List<ProductRecommendation>
+    val recommendations: List<ProductRecommendation>,
 )
 
 data class MetricDataPoint(
     val timestamp: String,
     val value: Float,
-    val label: String? = null
+    val label: String? = null,
 )
 
 data class InsightSummary(
     val title: String,
     val description: String,
     val type: SummaryType,
-    val period: String
+    val period: String,
 )
 
 enum class SummaryType {
-    POSITIVE, NEGATIVE, NEUTRAL
+    POSITIVE,
+    NEGATIVE,
+    NEUTRAL,
 }
 
 data class ProductRecommendation(
     val title: String,
     val description: String,
     val reason: RecommendationReason,
-    val actionable: Boolean = true
+    val actionable: Boolean = true,
 )
 
 enum class RecommendationReason {
@@ -419,12 +536,15 @@ enum class RecommendationReason {
     TEXTURE_IMPROVING,
     TONE_DECLINING,
     HYDRATION_LOW,
-    GENERAL
+    GENERAL,
 }
 
-enum class TimeRange(val label: String, val days: Int) {
+enum class TimeRange(
+    val label: String,
+    val days: Int,
+) {
     WEEK("7 days", 7),
     TWO_WEEKS("14 days", 14),
     MONTH("30 days", 30),
-    THREE_MONTHS("90 days", 90)
+    THREE_MONTHS("90 days", 90),
 }

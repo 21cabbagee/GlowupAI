@@ -40,28 +40,40 @@ fun AnalyticsPanel(
         )
         DisclaimerNote(
             modifier = Modifier.fillMaxWidth().then(topGap),
-            text = "These are engagement-derived product metrics about how you use GlowUp AI — " +
-                "NOT a measure of clinical confidence in any skin result.",
+            text =
+                "These are engagement-derived product metrics about how you use GlowUp AI — " +
+                    "NOT a measure of clinical confidence in any skin result.",
         )
         when {
-            analytics != null -> AnalyticsRows(analytics, topGap)
-            errorMessage != null -> Text(
-                text = "Couldn't load activity metrics right now.",
-                style = MaterialTheme.typography.bodySmall,
-                color = LocalGlowColors.current.ink600,
-                modifier = topGap,
-            )
-            else -> Column(modifier = topGap, verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)) {
-                ShimmerSkeleton()
-                ShimmerSkeleton()
-                ShimmerSkeleton()
+            analytics != null -> {
+                AnalyticsRows(analytics, topGap)
+            }
+
+            errorMessage != null -> {
+                Text(
+                    text = "Couldn't load activity metrics right now.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = LocalGlowColors.current.ink600,
+                    modifier = topGap,
+                )
+            }
+
+            else -> {
+                Column(modifier = topGap, verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)) {
+                    ShimmerSkeleton()
+                    ShimmerSkeleton()
+                    ShimmerSkeleton()
+                }
             }
         }
     }
 }
 
 @Composable
-private fun AnalyticsRows(analytics: Analytics, topGap: Modifier) {
+private fun AnalyticsRows(
+    analytics: Analytics,
+    topGap: Modifier,
+) {
     val glow = LocalGlowColors.current
     Column(modifier = topGap, verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs)) {
         AnalyticsRow("Activation stage", analytics.activation ?: "Not started")
@@ -84,7 +96,10 @@ private fun AnalyticsRows(analytics: Analytics, topGap: Modifier) {
 }
 
 @Composable
-private fun AnalyticsRow(label: String, value: String) {
+private fun AnalyticsRow(
+    label: String,
+    value: String,
+) {
     val glow = LocalGlowColors.current
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(text = label, style = MaterialTheme.typography.bodySmall, color = glow.ink600)
@@ -92,11 +107,13 @@ private fun AnalyticsRow(label: String, value: String) {
     }
 }
 
-private fun boolLabel(value: Boolean?): String = when (value) {
-    true -> "Yes"
-    false -> "Not yet"
-    null -> "Unknown"
-}
+private fun boolLabel(value: Boolean?): String =
+    when (value) {
+        true -> "Yes"
+        false -> "Not yet"
+        null -> "Unknown"
+    }
 
 private fun percent(fraction: Double): String = String.format(Locale.US, "%.0f%%", fraction * 100)
+
 private fun oneDecimal(value: Double): String = String.format(Locale.US, "%.1f", value)

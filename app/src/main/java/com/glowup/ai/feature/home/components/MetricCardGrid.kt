@@ -46,11 +46,12 @@ fun MetricCardGrid(
     var visible by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
         targetValue = if (visible) 1f else 0.95f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        ),
-        label = "metricScale"
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMediumLow,
+            ),
+        label = "metricScale",
     )
 
     LaunchedEffect(Unit) {
@@ -59,38 +60,38 @@ fun MetricCardGrid(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+        verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
     ) {
         Text(
             text = "Your Metrics",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = glowColors.ink900,
-            modifier = Modifier.padding(bottom = GlowSpacing.xs)
+            modifier = Modifier.padding(bottom = GlowSpacing.xs),
         )
 
         // Row 1: Redness, Blemishes, Dark Spots
         Row(
             modifier = Modifier.fillMaxWidth().scale(scale),
-            horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm)
+            horizontalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
         ) {
             MetricTileWithAnimation(
                 modifier = Modifier.weight(1f),
                 metric = PrimaryMetric.REDNESS_SCORE,
                 latest = latest,
-                previous = previous
+                previous = previous,
             )
             MetricTileWithAnimation(
                 modifier = Modifier.weight(1f),
                 metric = PrimaryMetric.BLEMISH_COUNT,
                 latest = latest,
-                previous = previous
+                previous = previous,
             )
             MetricTileWithAnimation(
                 modifier = Modifier.weight(1f),
                 metric = PrimaryMetric.DARKSPOT_AREA,
                 latest = latest,
-                previous = previous
+                previous = previous,
             )
         }
 
@@ -99,7 +100,7 @@ fun MetricCardGrid(
             modifier = Modifier.fillMaxWidth().scale(scale),
             metric = PrimaryMetric.TEXTURE_SCORE,
             latest = latest,
-            previous = previous
+            previous = previous,
         )
     }
 }
@@ -113,20 +114,23 @@ private fun MetricTileWithAnimation(
 ) {
     val value = latest?.let { valueOf(it, metric) }
     val previousValue = previous?.let { valueOf(it, metric) }
-    val delta = if (value != null && previousValue != null) {
-        val diff = value - previousValue
-        if (kotlin.math.abs(diff) < 1e-9) {
-            StatDelta("→ Stable", StatDeltaDirection.Flat)
+    val delta =
+        if (value != null && previousValue != null) {
+            val diff = value - previousValue
+            if (kotlin.math.abs(diff) < 1e-9) {
+                StatDelta("→ Stable", StatDeltaDirection.Flat)
+            } else {
+                val improved = if (metric.higherIsBetter()) diff > 0 else diff < 0
+                val symbol = if (improved) "▼" else "▲"
+                val text = "${formatMetricValue(metric, kotlin.math.abs(diff))}"
+                StatDelta(
+                    text = "$symbol $text",
+                    direction = if (improved) StatDeltaDirection.Down else StatDeltaDirection.Up,
+                )
+            }
         } else {
-            val improved = if (metric.higherIsBetter()) diff > 0 else diff < 0
-            val symbol = if (improved) "▼" else "▲"
-            val text = "${formatMetricValue(metric, kotlin.math.abs(diff))}"
-            StatDelta(
-                text = "$symbol $text",
-                direction = if (improved) StatDeltaDirection.Down else StatDeltaDirection.Up,
-            )
+            null
         }
-    } else null
 
     StatTile(
         modifier = modifier,
@@ -136,18 +140,23 @@ private fun MetricTileWithAnimation(
     )
 }
 
-private fun valueOf(item: HistoryItem, metric: PrimaryMetric): Double? = when (metric) {
-    PrimaryMetric.REDNESS_SCORE -> item.rednessScore
-    PrimaryMetric.BLEMISH_COUNT -> item.blemishCount
-    PrimaryMetric.DARKSPOT_AREA -> item.darkspotArea
-    PrimaryMetric.TEXTURE_SCORE -> item.textureScore
-    PrimaryMetric.UNKNOWN -> null
-}
+private fun valueOf(
+    item: HistoryItem,
+    metric: PrimaryMetric,
+): Double? =
+    when (metric) {
+        PrimaryMetric.REDNESS_SCORE -> item.rednessScore
+        PrimaryMetric.BLEMISH_COUNT -> item.blemishCount
+        PrimaryMetric.DARKSPOT_AREA -> item.darkspotArea
+        PrimaryMetric.TEXTURE_SCORE -> item.textureScore
+        PrimaryMetric.UNKNOWN -> null
+    }
 
-private fun metricLabel(metric: PrimaryMetric): String = when (metric) {
-    PrimaryMetric.REDNESS_SCORE -> "Redness"
-    PrimaryMetric.BLEMISH_COUNT -> "Blemishes"
-    PrimaryMetric.DARKSPOT_AREA -> "Dark Spots"
-    PrimaryMetric.TEXTURE_SCORE -> "Texture"
-    PrimaryMetric.UNKNOWN -> "Metric"
-}
+private fun metricLabel(metric: PrimaryMetric): String =
+    when (metric) {
+        PrimaryMetric.REDNESS_SCORE -> "Redness"
+        PrimaryMetric.BLEMISH_COUNT -> "Blemishes"
+        PrimaryMetric.DARKSPOT_AREA -> "Dark Spots"
+        PrimaryMetric.TEXTURE_SCORE -> "Texture"
+        PrimaryMetric.UNKNOWN -> "Metric"
+    }

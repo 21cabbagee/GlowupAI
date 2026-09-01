@@ -76,13 +76,14 @@ object GlowFontWeight {
  *
  * Example: "Track your skin, with evidence."
  */
-val DisplayTextStyle = TextStyle(
-    fontFamily = PrimaryFontFamily,
-    fontWeight = GlowFontWeight.SemiBold,
-    fontSize = 32.sp,
-    lineHeight = 40.sp,
-    letterSpacing = 0.sp,
-)
+val DisplayTextStyle =
+    TextStyle(
+        fontFamily = PrimaryFontFamily,
+        fontWeight = GlowFontWeight.SemiBold,
+        fontSize = 32.sp,
+        lineHeight = 40.sp,
+        letterSpacing = 0.sp,
+    )
 
 /**
  * Title text style - 24sp, SemiBold, 32sp line height
@@ -90,13 +91,14 @@ val DisplayTextStyle = TextStyle(
  *
  * Example: "Good morning, User 👋"
  */
-val TitleTextStyle = TextStyle(
-    fontFamily = PrimaryFontFamily,
-    fontWeight = GlowFontWeight.SemiBold,
-    fontSize = 24.sp,
-    lineHeight = 32.sp,
-    letterSpacing = 0.sp,
-)
+val TitleTextStyle =
+    TextStyle(
+        fontFamily = PrimaryFontFamily,
+        fontWeight = GlowFontWeight.SemiBold,
+        fontSize = 24.sp,
+        lineHeight = 32.sp,
+        letterSpacing = 0.sp,
+    )
 
 /**
  * Body text style - 16sp, Regular, 24sp line height
@@ -104,13 +106,14 @@ val TitleTextStyle = TextStyle(
  *
  * Example: "Guided photo tracking, routine testing, and honest verdicts"
  */
-val BodyTextStyle = TextStyle(
-    fontFamily = PrimaryFontFamily,
-    fontWeight = GlowFontWeight.Regular,
-    fontSize = 16.sp,
-    lineHeight = 24.sp,
-    letterSpacing = 0.sp,
-)
+val BodyTextStyle =
+    TextStyle(
+        fontFamily = PrimaryFontFamily,
+        fontWeight = GlowFontWeight.Regular,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.sp,
+    )
 
 /**
  * Caption text style - 14sp, Regular, 20sp line height
@@ -118,13 +121,14 @@ val BodyTextStyle = TextStyle(
  *
  * Example: "Day 8 of your journey"
  */
-val CaptionTextStyle = TextStyle(
-    fontFamily = PrimaryFontFamily,
-    fontWeight = GlowFontWeight.Regular,
-    fontSize = 14.sp,
-    lineHeight = 20.sp,
-    letterSpacing = 0.sp,
-)
+val CaptionTextStyle =
+    TextStyle(
+        fontFamily = PrimaryFontFamily,
+        fontWeight = GlowFontWeight.Regular,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.sp,
+    )
 
 // ================================================================================================
 // TYPOGRAPHY VARIANTS
@@ -159,22 +163,24 @@ object GlowTextStyles {
     val MonospaceBody = BodyTextStyle.copy(fontFamily = MonospaceFontFamily)
 
     /** Button text style - 16sp, SemiBold */
-    val Button = TextStyle(
-        fontFamily = PrimaryFontFamily,
-        fontWeight = GlowFontWeight.SemiBold,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.sp,
-    )
+    val Button =
+        TextStyle(
+            fontFamily = PrimaryFontFamily,
+            fontWeight = GlowFontWeight.SemiBold,
+            fontSize = 16.sp,
+            lineHeight = 24.sp,
+            letterSpacing = 0.sp,
+        )
 
     /** Secondary button text style - 16sp, Medium */
-    val ButtonSecondary = TextStyle(
-        fontFamily = PrimaryFontFamily,
-        fontWeight = GlowFontWeight.Medium,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.sp,
-    )
+    val ButtonSecondary =
+        TextStyle(
+            fontFamily = PrimaryFontFamily,
+            fontWeight = GlowFontWeight.Medium,
+            fontSize = 16.sp,
+            lineHeight = 24.sp,
+            letterSpacing = 0.sp,
+        )
 }
 
 // ================================================================================================
@@ -188,36 +194,34 @@ object GlowTextStyles {
  * This allows seamless integration with Material 3 components while
  * maintaining our simplified typography scale.
  */
-val GlowTypography = Typography(
-    // Display styles (largest text)
-    displayLarge = DisplayTextStyle.copy(fontSize = 36.sp, lineHeight = 44.sp),
-    displayMedium = DisplayTextStyle,
-    displaySmall = TitleTextStyle.copy(fontSize = 28.sp, lineHeight = 36.sp),
-
-    // Headline styles (section headers)
-    headlineLarge = TitleTextStyle.copy(fontSize = 28.sp, lineHeight = 36.sp),
-    headlineMedium = TitleTextStyle,
-    headlineSmall = TitleTextStyle.copy(fontSize = 20.sp, lineHeight = 28.sp),
-
-    // Title styles (screen titles)
-    titleLarge = TitleTextStyle.copy(fontSize = 22.sp, lineHeight = 28.sp),
-    titleMedium = BodyTextStyle.copy(fontWeight = GlowFontWeight.SemiBold),
-    titleSmall = CaptionTextStyle.copy(fontWeight = GlowFontWeight.SemiBold),
-
-    // Body styles (main content)
-    bodyLarge = BodyTextStyle,
-    bodyMedium = CaptionTextStyle.copy(fontSize = 14.sp, lineHeight = 20.sp),
-    bodySmall = CaptionTextStyle.copy(fontSize = 12.sp, lineHeight = 16.sp),
-
-    // Label styles (buttons, tabs, chips)
-    labelLarge = GlowTextStyles.Button,
-    labelMedium = CaptionTextStyle.copy(fontWeight = GlowFontWeight.Medium),
-    labelSmall = CaptionTextStyle.copy(
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        fontWeight = GlowFontWeight.Medium
-    ),
-)
+val GlowTypography =
+    Typography(
+        // Display styles (largest text)
+        displayLarge = DisplayTextStyle.copy(fontSize = 36.sp, lineHeight = 44.sp),
+        displayMedium = DisplayTextStyle,
+        displaySmall = TitleTextStyle.copy(fontSize = 28.sp, lineHeight = 36.sp),
+        // Headline styles (section headers)
+        headlineLarge = TitleTextStyle.copy(fontSize = 28.sp, lineHeight = 36.sp),
+        headlineMedium = TitleTextStyle,
+        headlineSmall = TitleTextStyle.copy(fontSize = 20.sp, lineHeight = 28.sp),
+        // Title styles (screen titles)
+        titleLarge = TitleTextStyle.copy(fontSize = 22.sp, lineHeight = 28.sp),
+        titleMedium = BodyTextStyle.copy(fontWeight = GlowFontWeight.SemiBold),
+        titleSmall = CaptionTextStyle.copy(fontWeight = GlowFontWeight.SemiBold),
+        // Body styles (main content)
+        bodyLarge = BodyTextStyle,
+        bodyMedium = CaptionTextStyle.copy(fontSize = 14.sp, lineHeight = 20.sp),
+        bodySmall = CaptionTextStyle.copy(fontSize = 12.sp, lineHeight = 16.sp),
+        // Label styles (buttons, tabs, chips)
+        labelLarge = GlowTextStyles.Button,
+        labelMedium = CaptionTextStyle.copy(fontWeight = GlowFontWeight.Medium),
+        labelSmall =
+            CaptionTextStyle.copy(
+                fontSize = 11.sp,
+                lineHeight = 16.sp,
+                fontWeight = GlowFontWeight.Medium,
+            ),
+    )
 
 // ================================================================================================
 // USAGE GUIDELINES

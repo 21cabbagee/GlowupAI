@@ -63,29 +63,38 @@ private fun PaywallContent(
     Scaffold(topBar = { GlowTopBar(title = "GlowUp Premium", onBack = onBack) }) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when (uiState) {
-                PaywallUiState.Loading -> Column(
-                    modifier = Modifier.fillMaxSize().padding(GlowSpacing.lg),
-                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
-                ) {
-                    ShimmerSkeleton(height = 120.dp, cornerRadius = 18.dp)
-                    ShimmerSkeleton(height = 240.dp, cornerRadius = 18.dp)
-                }
-                is PaywallUiState.Error -> Box(Modifier.fillMaxSize().padding(GlowSpacing.lg), contentAlignment = Alignment.Center) {
-                    ErrorState(message = uiState.message, onRetry = onRetry)
-                }
-                is PaywallUiState.Content -> Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(GlowSpacing.lg),
-                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
-                ) {
-                    if (uiState.subscription.isPremium) {
-                        AlreadyPremiumCard()
-                    } else {
-                        UpgradeCard(uiState = uiState, onUpgradeClick = onUpgradeClick, onDismissJustUpgraded = onDismissJustUpgraded)
+                PaywallUiState.Loading -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(GlowSpacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
+                    ) {
+                        ShimmerSkeleton(height = 120.dp, cornerRadius = 18.dp)
+                        ShimmerSkeleton(height = 240.dp, cornerRadius = 18.dp)
                     }
-                    PremiumFeaturesCard()
+                }
+
+                is PaywallUiState.Error -> {
+                    Box(Modifier.fillMaxSize().padding(GlowSpacing.lg), contentAlignment = Alignment.Center) {
+                        ErrorState(message = uiState.message, onRetry = onRetry)
+                    }
+                }
+
+                is PaywallUiState.Content -> {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(GlowSpacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
+                    ) {
+                        if (uiState.subscription.isPremium) {
+                            AlreadyPremiumCard()
+                        } else {
+                            UpgradeCard(uiState = uiState, onUpgradeClick = onUpgradeClick, onDismissJustUpgraded = onDismissJustUpgraded)
+                        }
+                        PremiumFeaturesCard()
+                    }
                 }
             }
         }
@@ -133,9 +142,10 @@ private fun UpgradeCard(
         )
         DisclaimerNote(
             modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.md),
-            text = "This is a local checkout simulation for internal/closed testing — it is not " +
-                "a real payment provider and no card is charged. Real paid distribution will use " +
-                "Google Play Billing in a future release.",
+            text =
+                "This is a local checkout simulation for internal/closed testing — it is not " +
+                    "a real payment provider and no card is charged. Real paid distribution will use " +
+                    "Google Play Billing in a future release.",
         )
         if (uiState.justUpgraded) {
             Text(

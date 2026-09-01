@@ -5,11 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Verified
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,22 +53,28 @@ fun OffersSection(
                 ShimmerSkeleton(height = 84.dp, modifier = Modifier.padding(top = GlowSpacing.sm))
             }
 
-            is SectionState.Error -> ErrorState(message = state.message, onRetry = onRetry)
+            is SectionState.Error -> {
+                ErrorState(message = state.message, onRetry = onRetry)
+            }
 
-            is SectionState.Empty -> EmptyState(
-                title = state.title,
-                body = state.body,
-                ctaLabel = "Refresh",
-                onCtaClick = onRetry,
-            )
+            is SectionState.Empty -> {
+                EmptyState(
+                    title = state.title,
+                    body = state.body,
+                    ctaLabel = "Refresh",
+                    onCtaClick = onRetry,
+                )
+            }
 
             // Offers are never locked — see class doc — but the exhaustive `when` still needs a
             // branch; treat it identically to Error so a bug elsewhere can never silently hide
             // commerce.
-            is SectionState.Locked -> ErrorState(
-                message = "Couldn't load offers right now.",
-                onRetry = onRetry,
-            )
+            is SectionState.Locked -> {
+                ErrorState(
+                    message = "Couldn't load offers right now.",
+                    onRetry = onRetry,
+                )
+            }
 
             is SectionState.Content -> {
                 val offers = state.value
@@ -188,7 +194,10 @@ private fun OfferCard(
     }
 }
 
-private fun formatPrice(priceCents: Int?, currency: String): String {
+private fun formatPrice(
+    priceCents: Int?,
+    currency: String,
+): String {
     if (priceCents == null) return "Price varies"
     val amount = priceCents / 100.0
     return String.format(Locale.getDefault(), "%s %.2f", currency, amount)

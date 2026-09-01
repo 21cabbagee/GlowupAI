@@ -1,6 +1,7 @@
 package com.glowup.ai.feature.routine
 
 import android.net.Uri
+import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -40,7 +41,6 @@ import com.glowup.ai.feature.routine.components.AddProductSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.util.Base64
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,38 +53,57 @@ fun ShelfScanRoute(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch {
-            val base64 = withContext(Dispatchers.IO) {
-                runCatching {
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
-                        Base64.encodeToString(stream.readBytes(), Base64.NO_WRAP)
+    val pickImage =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            if (uri == null) return@rememberLauncherForActivityResult
+            scope.launch {
+                val base64 =
+                    withContext(Dispatchers.IO) {
+                        runCatching {
+                            context.contentResolver.openInputStream(uri)?.use { stream ->
+                                Base64.encodeToString(stream.readBytes(), Base64.NO_WRAP)
+                            }
+                        }.getOrNull()
                     }
-                }.getOrNull()
+                if (base64 != null) viewModel.submitPhoto(base64)
             }
-            if (base64 != null) viewModel.submitPhoto(base64)
         }
-    }
 
     Scaffold(topBar = { GlowTopBar(title = "Scan shelf", onBack = onBack) }) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             when (val s = state) {
-                is ShelfScanUiState.Idle -> ShelfScanIntro(onPickPhoto = { pickImage.launch("image/*") })
-                is ShelfScanUiState.Uploading -> PollingIndicator(message = "Uploading your photo…")
-                is ShelfScanUiState.Polling -> PollingIndicator(message = s.message)
-                is ShelfScanUiState.Error -> ErrorState(message = s.message, onRetry = viewModel::reset)
-                is ShelfScanUiState.Ready -> ShelfScanReadyContent(
-                    state = s,
-                    onToggle = viewModel::toggleCandidate,
-                    onEditName = viewModel::editCandidateName,
-                    onEditCategory = viewModel::editCandidateCategory,
-                    onConfirm = viewModel::confirmSelected,
-                    onOpenManualAdd = viewModel::openManualAdd,
-                    onDismissManualAdd = viewModel::dismissManualAdd,
-                    onSubmitManualAdd = viewModel::submitManualAdd,
-                )
-                is ShelfScanUiState.Done -> ShelfScanDoneContent(count = s.createdProducts.size, onDone = onDone)
+                is ShelfScanUiState.Idle -> {
+                    ShelfScanIntro(onPickPhoto = { pickImage.launch("image/*") })
+                }
+
+                is ShelfScanUiState.Uploading -> {
+                    PollingIndicator(message = "Uploading your photo…")
+                }
+
+                is ShelfScanUiState.Polling -> {
+                    PollingIndicator(message = s.message)
+                }
+
+                is ShelfScanUiState.Error -> {
+                    ErrorState(message = s.message, onRetry = viewModel::reset)
+                }
+
+                is ShelfScanUiState.Ready -> {
+                    ShelfScanReadyContent(
+                        state = s,
+                        onToggle = viewModel::toggleCandidate,
+                        onEditName = viewModel::editCandidateName,
+                        onEditCategory = viewModel::editCandidateCategory,
+                        onConfirm = viewModel::confirmSelected,
+                        onOpenManualAdd = viewModel::openManualAdd,
+                        onDismissManualAdd = viewModel::dismissManualAdd,
+                        onSubmitManualAdd = viewModel::submitManualAdd,
+                    )
+                }
+
+                is ShelfScanUiState.Done -> {
+                    ShelfScanDoneContent(count = s.createdProducts.size, onDone = onDone)
+                }
             }
         }
     }
@@ -127,8 +146,9 @@ private fun ShelfScanReadyContent(
     if (state.candidates.isEmpty()) {
         EmptyState(
             title = "Nothing found in this photo",
-            body = state.message
-                ?: "Automatic shelf reading isn't available right now. You can still add products by hand.",
+            body =
+                state.message
+                    ?: "Automatic shelf reading isn't available right now. You can still add products by hand.",
             ctaLabel = "Add product manually",
             onCtaClick = onOpenManualAdd,
         )
@@ -173,7 +193,12 @@ private fun ShelfScanReadyContent(
                 }
             }
             if (state.confirmError != null) {
-                Text(state.confirmError, color = glow.danger, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 8.dp))
+                Text(
+                    state.confirmError,
+                    color = glow.danger,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 GlowButton(
@@ -206,7 +231,10 @@ private fun ShelfScanReadyContent(
 }
 
 @Composable
-private fun ShelfScanDoneContent(count: Int, onDone: () -> Unit) {
+private fun ShelfScanDoneContent(
+    count: Int,
+    onDone: () -> Unit,
+) {
     val glow = LocalGlowColors.current
     Column {
         Text(

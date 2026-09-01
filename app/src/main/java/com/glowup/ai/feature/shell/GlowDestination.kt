@@ -20,40 +20,61 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 sealed interface GlowDestination {
-
     // ---- feature/auth -----------------------------------------------------
     @Serializable data object Splash : GlowDestination
+
     @Serializable data object Welcome : GlowDestination
+
     @Serializable data object SignIn : GlowDestination
 
     // ---- feature/onboarding ------------------------------------------------
     @Serializable data object Onboarding : GlowDestination
+
     @Serializable data object Consent : GlowDestination
 
     // ---- feature/home -------------------------------------------------------
     @Serializable data object Home : GlowDestination
+
     @Serializable data object Achievements : GlowDestination
 
     // ---- feature/capture ----------------------------------------------------
     @Serializable data object Capture : GlowDestination
-    @Serializable data class CaptureResult(val captureId: String) : GlowDestination
+
+    @Serializable data class CaptureResult(
+        val captureId: String,
+    ) : GlowDestination
 
     // ---- feature/comparison --------------------------------------------------
     @Serializable data object Comparison : GlowDestination
 
     // ---- feature/routine ------------------------------------------------------
     @Serializable data object Routine : GlowDestination
-    @Serializable data class ProductDetail(val productId: String) : GlowDestination
+
+    @Serializable data class ProductDetail(
+        val productId: String,
+    ) : GlowDestination
+
     @Serializable data object ShelfScan : GlowDestination
+
     @Serializable data object Experiments : GlowDestination
-    @Serializable data class ExperimentDetail(val experimentId: String) : GlowDestination
+
+    @Serializable data class ExperimentDetail(
+        val experimentId: String,
+    ) : GlowDestination
 
     // ---- feature/insights -----------------------------------------------------
     @Serializable data object Insights : GlowDestination
-    @Serializable data class QnaThread(val threadId: String? = null) : GlowDestination
+
+    @Serializable data class QnaThread(
+        val threadId: String? = null,
+    ) : GlowDestination
+
     @Serializable data object ContextLog : GlowDestination
+
     @Serializable data object RootCause : GlowDestination
+
     @Serializable data object BudgetOptimizer : GlowDestination
+
     @Serializable data object DermExport : GlowDestination
 
     // ---- feature/discover -----------------------------------------------------
@@ -62,20 +83,24 @@ sealed interface GlowDestination {
 
     // ---- feature/account --------------------------------------------------------
     @Serializable data object Account : GlowDestination
+
     @Serializable data object Paywall : GlowDestination
+
     @Serializable data object Settings : GlowDestination
+
     @Serializable data object DataAndPrivacy : GlowDestination
 
     companion object {
         /** Destinations that render full-screen, chromeless — no bottom bar. */
-        val fullScreenRoutes: Set<kotlin.reflect.KClass<out GlowDestination>> = setOf(
-            Splash::class,
-            Welcome::class,
-            SignIn::class,
-            Onboarding::class,
-            Consent::class,
-            Capture::class,
-            CaptureResult::class,
-        )
+        val fullScreenRoutes: Set<kotlin.reflect.KClass<out GlowDestination>> =
+            setOf(
+                Splash::class,
+                Welcome::class,
+                SignIn::class,
+                Onboarding::class,
+                Consent::class,
+                Capture::class,
+                CaptureResult::class,
+            )
     }
 }
