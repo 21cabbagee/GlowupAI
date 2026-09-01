@@ -1,4 +1,4 @@
-"""FastAPI routers for SkinProof API."""
+"""FastAPI routers for GlowUp AI API."""
 
 from .admin import setup_admin_router
 from .analytics import setup_analytics_router

@@ -39,10 +39,10 @@ def triage(text: str) -> SafetyResult:
     if matches:
         return SafetyResult(
             scope="dermatology_review",
-            message="This may be outside cosmetic tracking. Please consult a qualified dermatologist; SkinProof does not diagnose skin conditions.",
+            message="This may be outside cosmetic tracking. Please consult a qualified dermatologist; GlowUp AI does not diagnose skin conditions.",
             matched_terms=matches,
         )
     return SafetyResult(
         scope="cosmetic_tracking",
-        message="SkinProof can explain your measured trend, but it cannot diagnose or rule out a medical condition.",
+        message="GlowUp AI can explain your measured trend, but it cannot diagnose or rule out a medical condition.",
     )

@@ -307,7 +307,7 @@ class AnalyticsService:
             return {
                 "status": "building_signal",
                 "headline": "Your baseline is in. Build the comparison.",
-                "body": "One more standardized capture will let SkinProof separate a broad trend from a single-frame impression.",
+                "body": "One more standardized capture will let GlowUp AI separate a broad trend from a single-frame impression.",
                 "next_action": "Take the next guided capture",
                 "capture_count": len(history),
                 "check_in_count": len(checkins),

@@ -402,7 +402,7 @@ class GlowupAIService:
             "history": history,
             "routine_events": events,
             "verdicts": verdicts,
-            "disclaimer": "Cosmetic tracking only; SkinProof does not diagnose or treat medical conditions.",
+            "disclaimer": "Cosmetic tracking only; GlowUp AI does not diagnose or treat medical conditions.",
         }
 
     def history(self, user_id: str) -> List[Dict[str, Any]]:

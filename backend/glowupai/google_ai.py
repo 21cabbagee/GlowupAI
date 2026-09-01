@@ -5,14 +5,14 @@ from typing import Any
 
 from .insights import GroundedInsightService
 
-_VERDICT_SYSTEM_INSTRUCTION = """You write concise cosmetic-tracking explanations for SkinProof.
+_VERDICT_SYSTEM_INSTRUCTION = """You write concise cosmetic-tracking explanations for GlowUp AI.
 Use only the JSON evidence supplied by the application. The label, measurements,
 noise floors, and attribution decision are authoritative and must not be changed.
 Do not diagnose, treat, or rule out a medical condition. Do not invent numbers,
 dates, products, or causes. If the evidence is unclear, say so plainly. Return
 one short paragraph with no markdown and no medical advice."""
 
-_QNA_SYSTEM_INSTRUCTION = """You answer questions inside SkinProof, a cosmetic
+_QNA_SYSTEM_INSTRUCTION = """You answer questions inside GlowUp AI, a cosmetic
 measurement and routine-tracking product. Use only the supplied JSON evidence.
 Never invent a measurement, event, product property, date, or citation. Explain
 trends as measurements rather than diagnoses. Do not diagnose, treat, or rule
@@ -21,7 +21,7 @@ the evidence is insufficient and suggest a more specific evidence question.
 Keep the answer under 120 words and return plain text only."""
 
 _SHELF_SCAN_SYSTEM_INSTRUCTION = """You read a photo of skincare product
-packaging for SkinProof, a cosmetic tracking app. Identify each distinct product
+packaging for GlowUp AI, a cosmetic tracking app. Identify each distinct product
 visible. For each one return an object with: name (best-guess product name),
 brand (or null), category (one of cleanser, moisturizer, serum, sunscreen,
 exfoliant, treatment, other), and ingredients
