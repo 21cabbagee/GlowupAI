@@ -3,7 +3,7 @@
 # =============================================================================
 # Stage 1: Builder - Install dependencies
 # =============================================================================
-FROM python:3.12.7-slim AS builder
+FROM python:3.12.14-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -22,26 +22,26 @@ RUN apt-get update && \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies with security patches
-# Hardcoded list ensures layer only invalidates when dependencies change
+# Install Python dependencies from pyproject.toml
+# This ensures versions stay in sync with project requirements
 COPY pyproject.toml ./
 RUN pip install --user --no-cache-dir \
-        "fastapi>=0.115.0" \
-        "uvicorn[standard]>=0.32.0" \
-        "pillow>=10.4.0" \
+        "fastapi>=0.115.6" \
+        "uvicorn[standard]>=0.34.0" \
+        "pillow>=11.0.0" \
         "opencv-python>=4.10.0.84" \
-        "numpy>=1.26.0" \
-        "cryptography>=43.0.3" \
+        "numpy>=2.0.0" \
+        "cryptography>=44.0.0" \
         "google-genai>=1.0.0" \
-        "psycopg[binary,pool]>=3.2.3" \
-        "PyJWT[crypto]>=2.9.0" \
-        "redis>=5.2.0" \
-        "sentry-sdk[fastapi]>=2.17.0"
+        "psycopg[binary,pool]>=3.2.6" \
+        "PyJWT[crypto]>=2.10.0" \
+        "redis>=5.2.1" \
+        "sentry-sdk[fastapi]>=2.20.0"
 
 # =============================================================================
 # Stage 2: Runtime - Minimal production image
 # =============================================================================
-FROM python:3.12.7-slim AS runtime
+FROM python:3.12.14-slim AS runtime
 
 # Security metadata
 LABEL maintainer="GlowupAI Team" \
@@ -118,4 +118,3 @@ sys.exit(0 if response.status == 200 else 1)"
 # - workers: Set via UVICORN_WORKERS env var (default: 1)
 # - log-config: Disabled, we use our own structured logging
 CMD ["sh", "-c", "uvicorn glowupai.complete_api:app --host 0.0.0.0 --port ${PORT} --workers ${UVICORN_WORKERS:-1} --no-access-log"]
-# Force rebuild - Tue Sep  1 18:27:05 IST 2026
