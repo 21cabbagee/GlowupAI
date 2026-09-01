@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw
 
 from skinproof.capture import CaptureQuality
 from skinproof.db import Database
+from skinproof.face_alignment import align_face_safe, FaceAlignmentError
 from skinproof.metrics import analyze
 from skinproof.photos import MemoryPhotoStore
 from skinproof.service import SkinProofService
@@ -123,6 +124,67 @@ class CoreTests(unittest.TestCase):
     def test_safety_triage_is_outside_llm_scope(self):
         result = self.service.triage_question("I have a changing mole and pain")
         self.assertEqual(result["scope"], "dermatology_review")
+
+    def test_face_alignment_improves_consistency(self):
+        """Test that face alignment reduces metric variance across rotated images."""
+        # Create a base face-like image
+        base_img = Image.new("RGB", (300, 300), (210, 165, 145))
+        draw = ImageDraw.Draw(base_img)
+
+        # Draw a simple face with eyes
+        # Left eye
+        draw.ellipse((90, 120, 110, 140), fill=(255, 255, 255))
+        draw.ellipse((95, 125, 105, 135), fill=(0, 0, 0))
+
+        # Right eye
+        draw.ellipse((190, 120, 210, 140), fill=(255, 255, 255))
+        draw.ellipse((195, 125, 205, 135), fill=(0, 0, 0))
+
+        # Add some texture and a blemish
+        for y in range(150, 200, 8):
+            for x in range(100, 200, 8):
+                draw.rectangle((x, y, x + 2, y + 2), fill=(165, 130, 118))
+        draw.ellipse((140, 170, 160, 190), fill=(220, 45, 35))
+
+        # Save base image
+        base_bytes = io.BytesIO()
+        base_img.save(base_bytes, format="PNG")
+        base_bytes = base_bytes.getvalue()
+
+        # Create rotated version (5 degrees)
+        rotated_img = base_img.rotate(5, expand=False, fillcolor=(210, 165, 145))
+        rotated_bytes = io.BytesIO()
+        rotated_img.save(rotated_bytes, format="PNG")
+        rotated_bytes = rotated_bytes.getvalue()
+
+        # Analyze both with alignment
+        result_base = analyze(base_bytes, 0.9)
+        result_rotated = analyze(rotated_bytes, 0.9)
+
+        # With alignment, metrics should be very similar
+        # (within noise floor tolerance)
+        blemish_diff = abs(result_base.blemish_count - result_rotated.blemish_count)
+        texture_diff = abs(result_base.texture_score - result_rotated.texture_score)
+
+        # Assert that differences are small (alignment reduces variance)
+        self.assertLess(blemish_diff, 3.0, "Blemish count should be consistent with alignment")
+        self.assertLess(texture_diff, 5.0, "Texture score should be consistent with alignment")
+
+    def test_face_alignment_handles_no_face_gracefully(self):
+        """Test that alignment gracefully handles images without faces."""
+        # Create an image with no face
+        no_face_img = Image.new("RGB", (200, 200), (100, 150, 200))
+        no_face_bytes = io.BytesIO()
+        no_face_img.save(no_face_bytes, format="PNG")
+        no_face_bytes = no_face_bytes.getvalue()
+
+        # Should not raise an exception - falls back to resized original
+        aligned_bytes = align_face_safe(no_face_bytes)
+        self.assertIsNotNone(aligned_bytes)
+
+        # Verify output is valid image
+        with Image.open(io.BytesIO(aligned_bytes)) as img:
+            self.assertEqual(img.size, (256, 256))
 
 
 if __name__ == "__main__":

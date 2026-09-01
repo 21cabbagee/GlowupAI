@@ -635,6 +635,64 @@ class CompleteSkinProofService(SkinProofService):
             )
         }
 
+    def _get_baseline_metrics(self, user_id: str, vertical: str = "skin") -> dict | None:
+        """Get the baseline capture metrics for calculating relative changes."""
+        row = self.db.fetchone(
+            """SELECT m.blemish_count, m.redness_score, m.darkspot_area, m.texture_score
+               FROM photo_captures c
+               JOIN metric_snapshots m ON m.id=(SELECT m2.id FROM metric_snapshots m2
+                                                 WHERE m2.photo_id=c.id
+                                                 ORDER BY m2.created_at DESC LIMIT 1)
+               LEFT JOIN appearance_captures a ON a.photo_id=c.id AND a.vertical=?
+               WHERE c.user_id=? AND c.is_baseline=1
+               ORDER BY c.captured_at
+               LIMIT 1""",
+            (vertical, user_id),
+        )
+        if not row:
+            return None
+        return row_dict(row)
+
+    def _calculate_relative_change(self, current_value: float | None, baseline_value: float | None) -> float | None:
+        """Calculate percentage change from baseline, handling division by zero."""
+        if current_value is None or baseline_value is None:
+            return None
+        if baseline_value == 0:
+            # Handle division by zero: if current is also 0, no change; otherwise infinite change
+            if current_value == 0:
+                return 0.0
+            # Return None for infinite change cases
+            return None
+        return round(((current_value - baseline_value) / baseline_value) * 100, 2)
+
+    def _add_baseline_comparison(self, user_id: str, metric: dict, vertical: str = "skin") -> dict:
+        """Add baseline comparison data to metrics."""
+        baseline = self._get_baseline_metrics(user_id, vertical)
+        if not baseline:
+            return {
+                "has_baseline": False,
+                "redness_change_pct": None,
+                "blemish_change_pct": None,
+                "darkspot_change_pct": None,
+                "texture_change_pct": None,
+            }
+
+        return {
+            "has_baseline": True,
+            "redness_change_pct": self._calculate_relative_change(
+                metric.get("redness_score"), baseline.get("redness_score")
+            ),
+            "blemish_change_pct": self._calculate_relative_change(
+                metric.get("blemish_count"), baseline.get("blemish_count")
+            ),
+            "darkspot_change_pct": self._calculate_relative_change(
+                metric.get("darkspot_area"), baseline.get("darkspot_area")
+            ),
+            "texture_change_pct": self._calculate_relative_change(
+                metric.get("texture_score"), baseline.get("texture_score")
+            ),
+        }
+
     def create_capture(
         self,
         user_id: str,
@@ -695,6 +753,17 @@ class CompleteSkinProofService(SkinProofService):
             }
         )
         result["capture_protocol"] = CAPTURE_PROTOCOL_VERSION
+        # Add baseline comparison if this is not the baseline itself
+        if not is_baseline:
+            result["baseline_comparison"] = self._add_baseline_comparison(user_id, metric, vertical)
+        else:
+            result["baseline_comparison"] = {
+                "has_baseline": False,
+                "redness_change_pct": None,
+                "blemish_change_pct": None,
+                "darkspot_change_pct": None,
+                "texture_change_pct": None,
+            }
         return result
 
     @staticmethod
@@ -977,6 +1046,19 @@ class CompleteSkinProofService(SkinProofService):
             item["noise_floor"] = load(item.pop("noise_floor_json"))
             item["appearance_metrics"] = load(item.pop("metrics_json"), {})
             item.update(self._measurement_explanation(item))
+            # Add baseline comparison for non-baseline captures
+            if not item.get("is_baseline"):
+                item["baseline_comparison"] = self._add_baseline_comparison(
+                    user_id, item, vertical
+                )
+            else:
+                item["baseline_comparison"] = {
+                    "has_baseline": False,
+                    "redness_change_pct": None,
+                    "blemish_change_pct": None,
+                    "darkspot_change_pct": None,
+                    "texture_change_pct": None,
+                }
             output.append(item)
         if not self.is_premium(user_id):
             cutoff = datetime.now(timezone.utc) - timedelta(days=FREE_HISTORY_DAYS)
@@ -1170,8 +1252,8 @@ class CompleteSkinProofService(SkinProofService):
         history = self.history(user_id, vertical)
         plan = profile["entitlement"]["plan"]
         verdicts = self.verdicts_for_user(user_id)
-        features = {feature: plan == "premium" for feature in PREMIUM_FEATURES}
-        features["product_verdicts_unlocked"] = (
+        features = {feature: int(plan == "premium") for feature in PREMIUM_FEATURES}
+        features["product_verdicts_unlocked"] = int(
             self._free_unlocked_product_id(user_id) is not None or plan == "premium"
         )
         return {

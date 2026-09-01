@@ -5,6 +5,8 @@ from dataclasses import asdict, dataclass
 
 from PIL import Image
 
+from .face_alignment import align_face_safe
+
 NOISE_FLOORS = {
     "blemish_count": 1.5,
     "redness_score": 0.015,
@@ -58,7 +60,11 @@ def analyze(
 ) -> MetricResult:
     """Compute transparent longitudinal cosmetic measurements."""
 
-    with Image.open(io.BytesIO(image_bytes)) as original:
+    # Apply face alignment before analysis for consistency
+    # This aligns eyes to horizontal, scales to consistent distance, and centers face
+    aligned_bytes = align_face_safe(image_bytes, target_eye_distance=80, output_size=(256, 256))
+
+    with Image.open(io.BytesIO(aligned_bytes)) as original:
         image = original.convert("RGB").resize((96, 96))
     pixels = _pixels(image)
     points: list[tuple[int, int, int, int, int]] = []

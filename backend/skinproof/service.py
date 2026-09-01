@@ -14,6 +14,7 @@ from .db import Database, json_dumps
 from .insights import GroundedInsightService, InsightService
 from .metrics import MetricResult, analyze
 from .photos import MemoryPhotoStore, PhotoStore
+from .preprocessing import check_preprocessing_available, preprocess_for_analysis, preprocess_for_analysis_pil
 from .safety import triage
 
 
@@ -247,6 +248,25 @@ class SkinProofService:
             )
             quality = json.loads(capture["capture_quality_json"])
             image_bytes = self.photos.read(capture["raw_ref"])
+
+            # Apply preprocessing to normalize lighting and quality
+            import os
+            preprocessing_enabled = os.getenv("SKINPROOF_ENABLE_PREPROCESSING", "1") == "1"
+            if preprocessing_enabled:
+                try:
+                    if check_preprocessing_available():
+                        # Use OpenCV-based preprocessing for best results
+                        preprocessed_bytes = preprocess_for_analysis(image_bytes)
+                    else:
+                        # Fallback to PIL-based preprocessing if OpenCV unavailable
+                        preprocessed_bytes = preprocess_for_analysis_pil(image_bytes)
+                    image_bytes = preprocessed_bytes
+                except Exception as exc:
+                    # If preprocessing fails, continue with original image
+                    # but log the error for monitoring
+                    import logging
+                    logging.warning(f"Preprocessing failed, using original image: {exc}")
+
             baseline_row = self.db.fetchone(
                 """SELECT m.* FROM metric_snapshots m JOIN photo_captures c ON c.id = m.photo_id
                    WHERE m.user_id = ? AND c.is_baseline = 1 ORDER BY c.captured_at LIMIT 1""",

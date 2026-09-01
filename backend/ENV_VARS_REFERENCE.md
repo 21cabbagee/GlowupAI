@@ -54,6 +54,9 @@ SKINPROOF_RAW_RETENTION_DAYS=730
 | **VERSIONING** ||||
 | `SKINPROOF_MODEL_VERSION` | No | deterministic-3.0 | Measurement model version |
 | `SKINPROOF_POLICY_VERSION` | No | 2026-01 | Privacy policy version |
+| **IMAGE PREPROCESSING** ||||
+| `SKINPROOF_ENABLE_PREPROCESSING` | No | 1 | Enable image preprocessing pipeline (0 or 1) |
+| `SKINPROOF_SKIP_QUALITY_CHECKS` | No | 0 | Skip quality validation (testing only, 0 or 1) |
 | **RUNTIME** ||||
 | `PORT` | Auto | 8000 | Server port (Railway auto-injects) |
 
@@ -346,7 +349,7 @@ SKINPROOF_RAW_RETENTION_DAYS=730
 ```
 
 ### Production Hardened
-Full production setup (13 variables):
+Full production setup (14 variables):
 ```bash
 # Core
 SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
@@ -363,6 +366,9 @@ SKINPROOF_AUTH_REQUIRED=1
 SKINPROOF_PHOTO_DIR=/data/photos
 SKINPROOF_PHOTO_KEY=your_base64_key
 SKINPROOF_RAW_RETENTION_DAYS=730
+
+# Image Processing
+SKINPROOF_ENABLE_PREPROCESSING=1
 
 # Tuning
 SKINPROOF_DB_POOL_MIN_SIZE=2
@@ -456,6 +462,66 @@ SKINPROOF_ENV=development
 ### ✅ Correct: Production mode
 ```bash
 SKINPROOF_ENV=production
+```
+
+---
+
+### SKINPROOF_ENABLE_PREPROCESSING
+**Required:** No
+
+**Default:** `1` (enabled)
+
+**Values:** `0` | `1`
+
+**Description:** Controls the image preprocessing pipeline that normalizes lighting and quality before analysis.
+
+**What it does:**
+- Applies white balance correction to normalize color temperature
+- Uses CLAHE (Contrast Limited Adaptive Histogram Equalization) for local contrast
+- Reduces noise while preserving edges
+- Standardizes image dimensions for consistent analysis
+
+**When to disable:**
+- Testing with raw images
+- Comparing preprocessed vs non-preprocessed results
+- Debugging analysis issues
+
+**Example:**
+```bash
+# Enable preprocessing (default, recommended)
+SKINPROOF_ENABLE_PREPROCESSING=1
+
+# Disable preprocessing (testing only)
+SKINPROOF_ENABLE_PREPROCESSING=0
+```
+
+**Note:** Preprocessing improves consistency across different lighting conditions and reduces false variations in metrics. Keep enabled in production for best results.
+
+---
+
+### SKINPROOF_SKIP_QUALITY_CHECKS
+**Required:** No
+
+**Default:** `0` (checks enabled)
+
+**Values:** `0` | `1`
+
+**Description:** Skips capture quality validation checks. FOR TESTING ONLY.
+
+**When set to 1:**
+- All photos are accepted regardless of quality
+- No validation for brightness, sharpness, pose, distance
+- Useful for testing with synthetic or non-standard images
+
+**Warning:** Never enable in production - this bypasses important quality gates that ensure consistent measurements.
+
+**Example:**
+```bash
+# Normal mode - quality checks enabled
+SKINPROOF_SKIP_QUALITY_CHECKS=0
+
+# Testing mode - accept all photos
+SKINPROOF_SKIP_QUALITY_CHECKS=1
 ```
 
 ---
