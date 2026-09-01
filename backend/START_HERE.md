@@ -49,7 +49,7 @@ railway login
 
 ### 2. Go to Backend Directory
 ```bash
-cd /Users/21cabbage/Skinproof/backend
+cd /Users/21cabbage/GlowupAI/backend
 ```
 
 ### 3. Initialize Railway Project
@@ -73,16 +73,16 @@ python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(3
 ### 6. Set Environment Variables
 Copy this into Railway Dashboard → Variables:
 ```bash
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-SKINPROOF_ENV=production
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
-SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_ENV=production
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com
 GEMINI_API_KEY=your_gemini_key_here
-SKINPROOF_ADMIN_TOKEN=paste_generated_token_here
-SKINPROOF_AUTH_REQUIRED=0
-SKINPROOF_PHOTO_DIR=/data/photos
-SKINPROOF_PHOTO_KEY=paste_generated_key_here
-SKINPROOF_RAW_RETENTION_DAYS=730
+GLOWUPAI_ADMIN_TOKEN=paste_generated_token_here
+GLOWUPAI_AUTH_REQUIRED=0
+GLOWUPAI_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_KEY=paste_generated_key_here
+GLOWUPAI_RAW_RETENTION_DAYS=730
 ```
 
 ### 7. Create Volume for Photos
@@ -150,7 +150,7 @@ Expected response:
 
 ### Load Helper Functions
 ```bash
-cd /Users/21cabbage/Skinproof/backend
+cd /Users/21cabbage/GlowupAI/backend
 source railway-commands.sh
 ```
 
@@ -183,9 +183,9 @@ After deployment, verify:
 | Problem | Solution | Doc |
 |---------|----------|-----|
 | Health check fails | Check DATABASE_URL exists | RAILWAY_DEPLOY.md |
-| CORS errors | Fix SKINPROOF_ALLOWED_ORIGINS | ENV_VARS_REFERENCE.md |
+| CORS errors | Fix GLOWUPAI_ALLOWED_ORIGINS | ENV_VARS_REFERENCE.md |
 | Photos disappear | Mount volume at /data/photos | RAILWAY_DEPLOY.md §3.5 |
-| 401 errors | Check SKINPROOF_AUTH_REQUIRED | ENV_VARS_REFERENCE.md |
+| 401 errors | Check GLOWUPAI_AUTH_REQUIRED | ENV_VARS_REFERENCE.md |
 
 ### Still Stuck?
 1. Check `RAILWAY_DEPLOY.md` troubleshooting section
@@ -212,7 +212,7 @@ See `RAILWAY_DEPLOY.md` for detailed cost info.
 ### After Successful Deployment
 1. Update frontend API URL
 2. Test end-to-end flow
-3. Enable authentication (`SKINPROOF_AUTH_REQUIRED=1`)
+3. Enable authentication (`GLOWUPAI_AUTH_REQUIRED=1`)
 4. Add custom domain (optional)
 5. Setup monitoring
 
@@ -227,7 +227,7 @@ See `DEPLOYMENT_CHECKLIST.md` for maintenance schedule.
 
 ## 📊 Your Application
 
-**Name:** GlowUp AI Backend (formerly SkinProof)
+**Name:** GlowUp AI Backend (formerly GlowupAI)
 
 **Tech Stack:**
 - FastAPI (Python web framework)
@@ -246,10 +246,10 @@ See `DEPLOYMENT_CHECKLIST.md` for maintenance schedule.
 ## 🔐 Security Notes
 
 **Required in Production:**
-- `SKINPROOF_ENV=production` (exactly)
-- `SKINPROOF_DISABLE_LEGACY_KEY_FILE=1`
-- Strong `SKINPROOF_ADMIN_TOKEN` (32+ chars)
-- Proper `SKINPROOF_PHOTO_KEY` (base64 32 bytes)
+- `GLOWUPAI_ENV=production` (exactly)
+- `GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1`
+- Strong `GLOWUPAI_ADMIN_TOKEN` (32+ chars)
+- Proper `GLOWUPAI_PHOTO_KEY` (base64 32 bytes)
 - No secrets in Git
 
 See `DEPLOYMENT_CHECKLIST.md` security section.
@@ -259,7 +259,7 @@ See `DEPLOYMENT_CHECKLIST.md` security section.
 ## 📁 Project Structure
 
 ```
-/Users/21cabbage/Skinproof/backend/
+/Users/21cabbage/GlowupAI/backend/
 ├── START_HERE.md                    ← You are here
 ├── RAILWAY_README.md                ← Package overview
 ├── RAILWAY_DEPLOY.md                ← Full deployment guide
@@ -272,7 +272,7 @@ See `DEPLOYMENT_CHECKLIST.md` security section.
 ├── Dockerfile                       ← Docker config (existing)
 ├── pyproject.toml                   ← Python deps (existing)
 ├── .env.example                     ← Dev reference (existing)
-└── skinproof/                       ← App code (existing)
+└── glowupai/                       ← App code (existing)
     ├── complete_api.py              ← Main API
     ├── config.py                    ← Settings
     └── migrations/                  ← Database migrations

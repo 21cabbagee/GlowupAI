@@ -76,7 +76,7 @@ Everything you need to deploy the GlowUp AI backend to Railway in one package.
 
 2. **Initialize Project**
    ```bash
-   cd /Users/21cabbage/Skinproof/backend
+   cd /Users/21cabbage/GlowupAI/backend
    railway init
    ```
 
@@ -144,7 +144,7 @@ Give new team members:
 ### Update Environment Variables
 ```bash
 source railway-commands.sh
-set_var SKINPROOF_ALLOWED_ORIGINS "https://new-domain.com"
+set_var GLOWUPAI_ALLOWED_ORIGINS "https://new-domain.com"
 ```
 
 ### Check Deployment Status
@@ -247,20 +247,20 @@ generate_all_secrets
 
 **Required (7 variables):**
 ```bash
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-SKINPROOF_ENV=production
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
-SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_ENV=production
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com
 GEMINI_API_KEY=your_key
-SKINPROOF_ADMIN_TOKEN=your_token
-SKINPROOF_AUTH_REQUIRED=0
+GLOWUPAI_ADMIN_TOKEN=your_token
+GLOWUPAI_AUTH_REQUIRED=0
 ```
 
 **Photo Storage (3 variables):**
 ```bash
-SKINPROOF_PHOTO_DIR=/data/photos
-SKINPROOF_PHOTO_KEY=your_base64_key
-SKINPROOF_RAW_RETENTION_DAYS=730
+GLOWUPAI_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_KEY=your_base64_key
+GLOWUPAI_RAW_RETENTION_DAYS=730
 ```
 
 **Auto-Injected by Railway:**
@@ -314,7 +314,7 @@ See `RAILWAY_DEPLOY.md` for detailed cost breakdown.
 | Symptom | Solution | Doc Reference |
 |---------|----------|---------------|
 | Health check fails | Check DATABASE_URL | RAILWAY_DEPLOY.md §6.1 |
-| CORS errors | Fix SKINPROOF_ALLOWED_ORIGINS | ENV_VARS_REFERENCE.md |
+| CORS errors | Fix GLOWUPAI_ALLOWED_ORIGINS | ENV_VARS_REFERENCE.md |
 | 401 errors | Check Firebase config | ENV_VARS_REFERENCE.md |
 | Photos disappear | Mount volume at /data/photos | RAILWAY_DEPLOY.md §3.5 |
 | Build fails | Check Dockerfile, pyproject.toml | RAILWAY_DEPLOY.md §4 |
@@ -361,7 +361,7 @@ See `RAILWAY_DEPLOY.md` for detailed cost breakdown.
 
 3. **Enable Authentication**
    - Verify auth flow works
-   - Set `SKINPROOF_AUTH_REQUIRED=1`
+   - Set `GLOWUPAI_AUTH_REQUIRED=1`
 
 4. **Setup Monitoring**
    - Configure Railway alerts
@@ -453,7 +453,7 @@ See `DEPLOYMENT_CHECKLIST.md` for complete maintenance checklist.
 
 ## License & Usage
 
-This deployment package is part of the GlowUp AI (formerly SkinProof) backend project.
+This deployment package is part of the GlowUp AI (formerly GlowupAI) backend project.
 
 All documentation and scripts in this package are provided as-is for deploying the GlowUp AI backend to Railway.
 

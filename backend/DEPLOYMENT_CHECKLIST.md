@@ -44,27 +44,27 @@ If using Railway Volume:
 Copy this into Railway Dashboard -> Variables:
 
 #### Core Required (4 variables)
-- [ ] `SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7`
-- [ ] `SKINPROOF_ENV=production`
-- [ ] `SKINPROOF_DISABLE_LEGACY_KEY_FILE=1`
-- [ ] `SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com`
+- [ ] `GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7`
+- [ ] `GLOWUPAI_ENV=production`
+- [ ] `GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1`
+- [ ] `GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com`
 
 #### API Keys (2 variables)
 - [ ] `GEMINI_API_KEY=<your-key>`
-- [ ] `SKINPROOF_ADMIN_TOKEN=<your-token>`
+- [ ] `GLOWUPAI_ADMIN_TOKEN=<your-token>`
 
 #### Authentication (1 variable)
-- [ ] `SKINPROOF_AUTH_REQUIRED=0` (set to 1 after frontend testing)
+- [ ] `GLOWUPAI_AUTH_REQUIRED=0` (set to 1 after frontend testing)
 
 #### Photo Storage (3 variables, if using volume)
-- [ ] `SKINPROOF_PHOTO_DIR=/data/photos`
-- [ ] `SKINPROOF_PHOTO_KEY=<your-base64-key>`
-- [ ] `SKINPROOF_RAW_RETENTION_DAYS=730`
+- [ ] `GLOWUPAI_PHOTO_DIR=/data/photos`
+- [ ] `GLOWUPAI_PHOTO_KEY=<your-base64-key>`
+- [ ] `GLOWUPAI_RAW_RETENTION_DAYS=730`
 
 #### Optional Tuning (3 variables - has good defaults)
-- [ ] `SKINPROOF_GEMINI_MODEL=gemini-3.5-flash-lite`
-- [ ] `SKINPROOF_GEMINI_ENABLED=1`
-- [ ] `SKINPROOF_MODEL_VERSION=deterministic-3.0`
+- [ ] `GLOWUPAI_GEMINI_MODEL=gemini-3.5-flash-lite`
+- [ ] `GLOWUPAI_GEMINI_ENABLED=1`
+- [ ] `GLOWUPAI_MODEL_VERSION=deterministic-3.0`
 
 **Total Variables to Set: 13-14** (depending on photo storage choice)
 
@@ -76,7 +76,7 @@ Copy this into Railway Dashboard -> Variables:
 Choose one method:
 
 **Method A: CLI Deploy**
-- [ ] `cd /Users/21cabbage/Skinproof/backend`
+- [ ] `cd /Users/21cabbage/GlowupAI/backend`
 - [ ] `railway up`
 - [ ] Watch build logs for errors
 
@@ -154,15 +154,15 @@ fetch('https://your-project.up.railway.app/api/health')
 ## Security Hardening
 
 ### Configuration Review
-- [ ] `SKINPROOF_ENV=production` is set (not development)
-- [ ] `SKINPROOF_DISABLE_LEGACY_KEY_FILE=1` is set
-- [ ] `SKINPROOF_ADMIN_TOKEN` is NOT a weak/test value
-- [ ] `SKINPROOF_PHOTO_KEY` is proper base64-encoded 32 bytes
+- [ ] `GLOWUPAI_ENV=production` is set (not development)
+- [ ] `GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1` is set
+- [ ] `GLOWUPAI_ADMIN_TOKEN` is NOT a weak/test value
+- [ ] `GLOWUPAI_PHOTO_KEY` is proper base64-encoded 32 bytes
 - [ ] `GEMINI_API_KEY` is not visible in logs
 - [ ] No secrets committed to Git (check .env is in .gitignore)
 
 ### CORS Configuration
-- [ ] `SKINPROOF_ALLOWED_ORIGINS` only includes production domains
+- [ ] `GLOWUPAI_ALLOWED_ORIGINS` only includes production domains
 - [ ] No wildcard (*) origins in production
 - [ ] Both www and non-www versions added if needed
 
@@ -170,7 +170,7 @@ fetch('https://your-project.up.railway.app/api/health')
 - [ ] Firebase project ID matches your project
 - [ ] Frontend configured to send Authorization headers
 - [ ] Test authentication flow end-to-end
-- [ ] Once confirmed working, set `SKINPROOF_AUTH_REQUIRED=1`
+- [ ] Once confirmed working, set `GLOWUPAI_AUTH_REQUIRED=1`
 
 ---
 
@@ -214,7 +214,7 @@ TTL: 300
 - [ ] SSL certificate shows as valid in browser
 
 ### Post-Domain Configuration
-- [ ] Update `SKINPROOF_ALLOWED_ORIGINS` with custom domain
+- [ ] Update `GLOWUPAI_ALLOWED_ORIGINS` with custom domain
 - [ ] Update frontend API base URL
 - [ ] Test end-to-end flow with custom domain
 

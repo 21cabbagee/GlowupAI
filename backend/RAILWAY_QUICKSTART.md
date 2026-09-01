@@ -15,7 +15,7 @@ npm install -g @railway/cli
 
 # Login and initialize
 railway login
-cd /Users/21cabbage/Skinproof/backend
+cd /Users/21cabbage/GlowupAI/backend
 railway init
 ```
 
@@ -28,16 +28,16 @@ In Railway Dashboard:
 Go to your service -> Settings -> Variables, and paste:
 
 ```bash
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-SKINPROOF_ENV=production
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_ENV=production
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
 GEMINI_API_KEY=YOUR_GEMINI_KEY_HERE
-SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
-SKINPROOF_AUTH_REQUIRED=0
-SKINPROOF_ADMIN_TOKEN=GENERATE_RANDOM_TOKEN
-SKINPROOF_PHOTO_DIR=/data/photos
-SKINPROOF_PHOTO_KEY=GENERATE_BASE64_KEY
-SKINPROOF_RAW_RETENTION_DAYS=730
+GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com
+GLOWUPAI_AUTH_REQUIRED=0
+GLOWUPAI_ADMIN_TOKEN=GENERATE_RANDOM_TOKEN
+GLOWUPAI_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_KEY=GENERATE_BASE64_KEY
+GLOWUPAI_RAW_RETENTION_DAYS=730
 ```
 
 ### 4. Generate Required Secrets
@@ -89,7 +89,7 @@ Your backend is now live at: `https://your-project.up.railway.app`
 **Next Steps:**
 1. Update your frontend to use this URL
 2. Test CORS from frontend
-3. Once verified, set `SKINPROOF_AUTH_REQUIRED=1`
+3. Once verified, set `GLOWUPAI_AUTH_REQUIRED=1`
 4. Optional: Add custom domain in Railway settings
 
 ## Troubleshooting
@@ -97,7 +97,7 @@ Your backend is now live at: `https://your-project.up.railway.app`
 | Issue | Fix |
 |-------|-----|
 | Health check fails | Check DATABASE_URL exists and PostgreSQL is running |
-| CORS errors | Update SKINPROOF_ALLOWED_ORIGINS with your actual domain |
+| CORS errors | Update GLOWUPAI_ALLOWED_ORIGINS with your actual domain |
 | Photos disappear | Verify volume is mounted at /data/photos |
 | Build fails | Check logs with `railway logs` |
 

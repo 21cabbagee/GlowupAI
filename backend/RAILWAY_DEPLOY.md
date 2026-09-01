@@ -27,7 +27,7 @@ Go to [railway.app](https://railway.app) and create an account or log in.
 # Option A: Using Railway CLI (recommended)
 npm install -g @railway/cli
 railway login
-cd /Users/21cabbage/Skinproof/backend
+cd /Users/21cabbage/GlowupAI/backend
 railway init
 
 # Option B: Using Railway Dashboard
@@ -62,28 +62,28 @@ Navigate to your service settings -> Variables tab and add:
 
 ```bash
 # Firebase Authentication (REQUIRED)
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
 
 # Environment Mode (REQUIRED)
-SKINPROOF_ENV=production
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_ENV=production
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
 
 # Gemini API for OCR and Q&A (REQUIRED for shelf scan and insights)
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # CORS - Your Production Frontend Domain (REQUIRED)
-SKINPROOF_ALLOWED_ORIGINS=https://your-production-domain.com,https://www.your-production-domain.com
+GLOWUPAI_ALLOWED_ORIGINS=https://your-production-domain.com,https://www.your-production-domain.com
 ```
 
 ### 3.2 Authentication & Security
 
 ```bash
 # Firebase Auth
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-SKINPROOF_AUTH_REQUIRED=1                    # Set to 1 once frontend sends tokens
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_AUTH_REQUIRED=1                    # Set to 1 once frontend sends tokens
 
 # Admin Routes Protection
-SKINPROOF_ADMIN_TOKEN=<generate-long-random-token>
+GLOWUPAI_ADMIN_TOKEN=<generate-long-random-token>
 ```
 
 Generate a secure admin token:
@@ -95,8 +95,8 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ```bash
 GEMINI_API_KEY=<your-api-key>
-SKINPROOF_GEMINI_MODEL=gemini-3.5-flash-lite
-SKINPROOF_GEMINI_ENABLED=1
+GLOWUPAI_GEMINI_MODEL=gemini-3.5-flash-lite
+GLOWUPAI_GEMINI_ENABLED=1
 ```
 
 Get your Gemini API key from: https://ai.google.dev/
@@ -104,9 +104,9 @@ Get your Gemini API key from: https://ai.google.dev/
 ### 3.4 Database Pool Settings (Optional - Defaults are good)
 
 ```bash
-SKINPROOF_DB_POOL_MIN_SIZE=1
-SKINPROOF_DB_POOL_MAX_SIZE=10
-SKINPROOF_DB_CONNECT_TIMEOUT=10
+GLOWUPAI_DB_POOL_MIN_SIZE=1
+GLOWUPAI_DB_POOL_MAX_SIZE=10
+GLOWUPAI_DB_CONNECT_TIMEOUT=10
 ```
 
 ### 3.5 Photo Storage Configuration
@@ -118,9 +118,9 @@ SKINPROOF_DB_CONNECT_TIMEOUT=10
 # 2. Click "New Volume" -> Name: "photos" -> Mount path: "/data/photos"
 # 3. Add these variables:
 
-SKINPROOF_PHOTO_DIR=/data/photos
-SKINPROOF_PHOTO_KEY=<generate-32-byte-base64-key>
-SKINPROOF_RAW_RETENTION_DAYS=730
+GLOWUPAI_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_KEY=<generate-32-byte-base64-key>
+GLOWUPAI_RAW_RETENTION_DAYS=730
 ```
 
 Generate the photo encryption key:
@@ -130,7 +130,7 @@ python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(3
 
 **Option B: In-Memory (Development Only - Photos lost on restart)**
 ```bash
-# Don't set SKINPROOF_PHOTO_DIR or SKINPROOF_PHOTO_KEY
+# Don't set GLOWUPAI_PHOTO_DIR or GLOWUPAI_PHOTO_KEY
 # Photos will be stored in memory only
 ```
 
@@ -144,8 +144,8 @@ For production scale, integrate S3 or Google Cloud Storage:
 ### 3.6 Model & Policy Versions (Optional - Has good defaults)
 
 ```bash
-SKINPROOF_MODEL_VERSION=deterministic-3.0
-SKINPROOF_POLICY_VERSION=2026-01
+GLOWUPAI_MODEL_VERSION=deterministic-3.0
+GLOWUPAI_POLICY_VERSION=2026-01
 ```
 
 ---
@@ -184,7 +184,7 @@ Your `railway.json` should contain:
 
 ### 5.1 Deploy from CLI
 ```bash
-cd /Users/21cabbage/Skinproof/backend
+cd /Users/21cabbage/GlowupAI/backend
 railway up
 ```
 
@@ -268,7 +268,7 @@ curl -X POST https://your-project.up.railway.app/api/users \
 ### 7.2 Update CORS Settings
 After setting custom domain, update:
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com,https://www.glowup.com
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com,https://www.glowup.com
 ```
 
 ---
@@ -330,14 +330,14 @@ After changing environment variables:
 2. Verify `DATABASE_URL` format
 3. Check database connection pool settings:
    ```bash
-   SKINPROOF_DB_CONNECT_TIMEOUT=30  # Increase timeout
+   GLOWUPAI_DB_CONNECT_TIMEOUT=30  # Increase timeout
    ```
 
 ### Issue: CORS Errors from Frontend
 **Symptoms:** Browser console shows CORS policy errors
 
 **Solutions:**
-1. Verify `SKINPROOF_ALLOWED_ORIGINS` includes your frontend domain
+1. Verify `GLOWUPAI_ALLOWED_ORIGINS` includes your frontend domain
 2. Check for trailing slashes in domain URLs (don't include them)
 3. Ensure both www and non-www versions are listed if needed
 4. Check that frontend is using HTTPS if backend is
@@ -347,8 +347,8 @@ After changing environment variables:
 
 **Solutions:**
 1. Check Railway Volume is mounted at `/data/photos`
-2. Verify `SKINPROOF_PHOTO_DIR=/data/photos` is set
-3. Confirm `SKINPROOF_PHOTO_KEY` is set with valid base64 key
+2. Verify `GLOWUPAI_PHOTO_DIR=/data/photos` is set
+3. Confirm `GLOWUPAI_PHOTO_KEY` is set with valid base64 key
 4. Check volume mount in Settings -> Volumes
 
 ### Issue: Gemini Features Not Working
@@ -357,7 +357,7 @@ After changing environment variables:
 **Solutions:**
 1. Verify `GEMINI_API_KEY` is set correctly
 2. Check Gemini API quota at https://ai.google.dev/
-3. Confirm `SKINPROOF_GEMINI_ENABLED=1`
+3. Confirm `GLOWUPAI_GEMINI_ENABLED=1`
 4. Test API key with curl:
    ```bash
    curl "https://generativelanguage.googleapis.com/v1beta/models?key=YOUR_KEY"
@@ -367,24 +367,24 @@ After changing environment variables:
 **Symptoms:** 401 Unauthorized errors
 
 **Solutions:**
-1. Verify `SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7`
+1. Verify `GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7`
 2. Ensure frontend is sending Authorization header:
    ```
    Authorization: Bearer <firebase-id-token>
    ```
-3. Check if `SKINPROOF_AUTH_REQUIRED=1` is set (set to 0 for testing)
+3. Check if `GLOWUPAI_AUTH_REQUIRED=1` is set (set to 0 for testing)
 
 ---
 
 ## Security Checklist
 
-- [ ] `SKINPROOF_ENV=production` is set
-- [ ] `SKINPROOF_DISABLE_LEGACY_KEY_FILE=1` is set
-- [ ] `SKINPROOF_ADMIN_TOKEN` is a long random string (32+ chars)
-- [ ] `SKINPROOF_PHOTO_KEY` is a proper 32-byte base64 key
+- [ ] `GLOWUPAI_ENV=production` is set
+- [ ] `GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1` is set
+- [ ] `GLOWUPAI_ADMIN_TOKEN` is a long random string (32+ chars)
+- [ ] `GLOWUPAI_PHOTO_KEY` is a proper 32-byte base64 key
 - [ ] `GEMINI_API_KEY` is not exposed in logs or frontend
-- [ ] `SKINPROOF_ALLOWED_ORIGINS` only includes your production domains
-- [ ] `SKINPROOF_AUTH_REQUIRED=1` once frontend integration is complete
+- [ ] `GLOWUPAI_ALLOWED_ORIGINS` only includes your production domains
+- [ ] `GLOWUPAI_AUTH_REQUIRED=1` once frontend integration is complete
 - [ ] Railway environment variables are not exposed in GitHub
 - [ ] Database backups are configured
 - [ ] SSL/HTTPS is enabled (automatic with Railway)
@@ -396,33 +396,33 @@ After changing environment variables:
 ### Copy-Paste Template for Railway
 ```bash
 # === REQUIRED ===
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-SKINPROOF_ENV=production
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_ENV=production
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
 GEMINI_API_KEY=your_gemini_api_key_here
-SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
+GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com
 
 # === AUTHENTICATION ===
-SKINPROOF_AUTH_REQUIRED=1
-SKINPROOF_ADMIN_TOKEN=your_secure_random_token_here
+GLOWUPAI_AUTH_REQUIRED=1
+GLOWUPAI_ADMIN_TOKEN=your_secure_random_token_here
 
 # === PHOTO STORAGE (choose one) ===
 # Option A: Railway Volume
-SKINPROOF_PHOTO_DIR=/data/photos
-SKINPROOF_PHOTO_KEY=your_base64_32byte_key_here
-SKINPROOF_RAW_RETENTION_DAYS=730
+GLOWUPAI_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_KEY=your_base64_32byte_key_here
+GLOWUPAI_RAW_RETENTION_DAYS=730
 
 # Option B: In-Memory (dev only - leave commented)
 # No variables needed
 
 # === OPTIONAL - Good Defaults ===
-SKINPROOF_GEMINI_MODEL=gemini-3.5-flash-lite
-SKINPROOF_GEMINI_ENABLED=1
-SKINPROOF_MODEL_VERSION=deterministic-3.0
-SKINPROOF_POLICY_VERSION=2026-01
-SKINPROOF_DB_POOL_MIN_SIZE=1
-SKINPROOF_DB_POOL_MAX_SIZE=10
-SKINPROOF_DB_CONNECT_TIMEOUT=10
+GLOWUPAI_GEMINI_MODEL=gemini-3.5-flash-lite
+GLOWUPAI_GEMINI_ENABLED=1
+GLOWUPAI_MODEL_VERSION=deterministic-3.0
+GLOWUPAI_POLICY_VERSION=2026-01
+GLOWUPAI_DB_POOL_MIN_SIZE=1
+GLOWUPAI_DB_POOL_MAX_SIZE=10
+GLOWUPAI_DB_CONNECT_TIMEOUT=10
 
 # === AUTOMATICALLY SET BY RAILWAY ===
 # DATABASE_URL (from PostgreSQL service)
@@ -474,7 +474,7 @@ For production with moderate traffic:
    - Document recovery procedures
 
 5. **Production Hardening**
-   - Enable `SKINPROOF_AUTH_REQUIRED=1`
+   - Enable `GLOWUPAI_AUTH_REQUIRED=1`
    - Set up rate limiting (future enhancement)
    - Configure monitoring alerts
    - Review and rotate secrets regularly
@@ -485,7 +485,7 @@ For production with moderate traffic:
 
 - **Railway Docs:** https://docs.railway.app
 - **Railway Discord:** https://discord.gg/railway
-- **SkinProof Backend Docs:** `/Users/21cabbage/Skinproof/backend/docs/`
+- **GlowupAI Backend Docs:** `/Users/21cabbage/GlowupAI/backend/docs/`
 - **API Documentation:** https://your-project.up.railway.app/docs (FastAPI auto-generated)
 
 ---
