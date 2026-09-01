@@ -1,0 +1,161 @@
+===============================================
+GLOWUPAI BACKEND - INTEGRATION TEST SUMMARY
+===============================================
+Generated: September 1, 2026 17:22:00
+Test Duration: 93.89 seconds
+
+📊 OVERALL RESULTS
+==================
+Total Tests:      214 tests
+✅ Passed:        124 tests (57.94%)
+❌ Failed:        90 tests (42.06%)
+🎯 Target:        90% passing (193/214)
+📉 Gap:           -69 tests (-32.06%)
+
+📈 CODE COVERAGE
+================
+Overall:          56.84% (2,581/4,541 lines)
+🎯 Target:        60%
+📉 Gap:           -3.16%
+
+✅ WORKING SYSTEMS
+===================
+1. Backend Startup              ✅ 100%
+2. Database Schema              ✅ 35/35 tables
+3. API Routers                  ✅ 5/5 routers
+4. Middleware                   ✅ All configured
+5. Core User API                ✅ Works
+6. Database Migrations          ✅ Applied
+7. Logging & Monitoring         ✅ Active
+8. Rate Limiting                ✅ Configured
+9. Request Caching              ✅ Enabled
+
+❌ FAILING SYSTEMS
+===================
+1. Admin Authentication         ❌ 16/16 tests (100% fail)
+2. User Auth Tests              ❌ 11/11 tests (100% fail)
+3. Growth Features              ❌ 11/11 tests (100% fail)
+4. Router Refactoring           ❌ 92/103 tests (89% fail)
+5. Analytics Service            ⚠️  12/17 tests (71% fail)
+6. Integration E2E              ⚠️  6/13 tests (46% fail)
+
+🔴 CRITICAL ISSUES
+===================
+Priority: P0 - IMMEDIATE
+
+Issue #1: Admin Token Not Recognized
+- Impact: 16 tests failing
+- Location: tests/test_auth.py, tests/test_router_refactoring.py
+- Error: "admin endpoints are disabled: GLOWUPAI_ADMIN_TOKEN is not configured"
+- Note: Token IS set in .env file (yyHNuVmpt1j1R6jq6Q9exJ8g1x-QVnP7ggPfmjMjDBw)
+- Fix: Ensure tests load environment variables from .env
+
+Issue #2: User Creation Payload Format
+- Impact: 50+ tests failing  
+- Location: All test files with user creation
+- Error: 500 Internal Server Error OR 422 Validation Error
+- Root Cause: Tests passing incorrect fields (e.g., 'email')
+- Correct Format: POST /api/users with body: {}
+- Fix: Update test helper functions
+
+Issue #3: Response Schema Mismatches
+- Impact: 15+ tests failing
+- Examples:
+  * Missing 'smoothness_score' in captures
+  * Missing 'recommendation' in purchase guidance
+  * Wrong structure in analytics responses
+- Fix: Update test assertions to match actual API
+
+🟡 MEDIUM PRIORITY ISSUES
+===========================
+Priority: P1 - SHORT TERM
+
+Issue #4: Test Environment Setup
+- Impact: Test reliability
+- Problem: .env not consistently loaded
+- Fix: Create pytest conftest.py with environment setup
+
+Issue #5: Database Initialization
+- Impact: 12 analytics tests
+- Problem: Some tests don't initialize DB properly
+- Fix: Create shared test fixture for database
+
+Issue #6: Coverage Below Target
+- Current: 56.84%
+- Target: 60%
+- Gap: 3.16%
+- Files to target:
+  * user_service.py: 67.96% → 80%
+  * service.py: 71.66% → 80%
+  * shutdown.py: 60.47% → 75%
+
+📋 TEST BREAKDOWN BY FILE
+===========================
+✅ PASSING:
+- test_preprocessing.py       ✅ Most tests passing
+- test_database.py            ✅ Most tests passing
+- test_core.py                ✅ Most tests passing
+- test_api.py                 ✅ Most tests passing
+
+⚠️ MIXED:
+- test_analytics_service.py   ⚠️ 5/17 passed (29%)
+- integration/test_flows.py   ⚠️ 7/13 passed (54%)
+- test_complete.py            ⚠️ Some passing
+
+❌ FAILING:
+- test_auth.py                ❌ 0/11 passed (0%)
+- test_growth_features.py     ❌ 0/11 passed (0%)
+- test_router_refactoring.py  ❌ 11/103 passed (11%)
+
+🎯 ROADMAP TO 90% PASS RATE
+=============================
+Current: 124/214 (58%)
+Target:  193/214 (90%)
+Need:    +69 tests
+
+Step 1: Fix Environment Config (+16 tests)
+→ Result: 140/214 (65%)
+
+Step 2: Fix User Creation (+50 tests)
+→ Result: 190/214 (89%)
+
+Step 3: Fix Response Schemas (+15 tests)
+→ Result: 205/214 (96%)
+
+Estimated Time: 2-3 days
+
+📦 DELIVERABLES
+================
+✅ Full Test Suite Executed
+✅ Coverage Report Generated
+✅ 69/69 API Endpoints Tested
+✅ Database Health Verified
+✅ Integration Tests Run
+✅ Comprehensive Report Created
+
+📂 REPORTS LOCATION
+====================
+Detailed Report:  /Users/21cabbage/GlowupAI/backend/INTEGRATION_TEST_REPORT.md
+Coverage HTML:    /Users/21cabbage/GlowupAI/backend/htmlcov/index.html
+Test Logs:        /tmp/test_full_results.log
+This Summary:     /Users/21cabbage/GlowupAI/backend/TEST_SUMMARY.txt
+
+🚀 NEXT STEPS
+==============
+1. Review INTEGRATION_TEST_REPORT.md for detailed analysis
+2. Fix P0 issues (admin token, user creation, response schemas)
+3. Re-run tests: pytest tests/ -v
+4. Fix P1 issues (coverage, database init)
+5. Target 90%+ pass rate before production deployment
+
+📞 SUPPORT
+===========
+For questions about specific test failures:
+- Check logs in server.log
+- Review test output in /tmp/test_full_results.log
+- Examine coverage report in htmlcov/index.html
+
+===============================================
+Report generated by Claude Sonnet 4.5
+Integration Test Agent | September 1, 2026
+===============================================

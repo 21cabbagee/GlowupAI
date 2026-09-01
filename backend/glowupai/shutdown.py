@@ -48,7 +48,7 @@ class GracefulShutdown:
                 else:
                     handler()
                 logger.info(f"Cleanup handler completed: {handler.__name__}")
-            except Exception as exc:
+            except (OSError, RuntimeError, ValueError, TypeError) as exc:
                 logger.error(f"Error in cleanup handler {handler.__name__}: {exc}")
 
         logger.info("Graceful shutdown complete")

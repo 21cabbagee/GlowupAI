@@ -124,18 +124,18 @@ Time to Deploy:      10-15 minutes
 ═══════════════════════════════════════════════════════════════════════════
 
 REQUIRED (7):
-  1. SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-  2. SKINPROOF_ENV=production
-  3. SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
-  4. SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
+  1. GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+  2. GLOWUPAI_ENV=production
+  3. GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
+  4. GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com
   5. GEMINI_API_KEY=<your-key>
-  6. SKINPROOF_ADMIN_TOKEN=<generated>
-  7. SKINPROOF_AUTH_REQUIRED=0
+  6. GLOWUPAI_ADMIN_TOKEN=<generated>
+  7. GLOWUPAI_AUTH_REQUIRED=0
 
 PHOTO STORAGE (3):
-  8. SKINPROOF_PHOTO_DIR=/data/photos
-  9. SKINPROOF_PHOTO_KEY=<generated>
-  10. SKINPROOF_RAW_RETENTION_DAYS=730
+  8. GLOWUPAI_PHOTO_DIR=/data/photos
+  9. GLOWUPAI_PHOTO_KEY=<generated>
+  10. GLOWUPAI_RAW_RETENTION_DAYS=730
 
 AUTO-INJECTED BY RAILWAY:
   • DATABASE_URL (from PostgreSQL service)

@@ -9,20 +9,20 @@
 DATABASE_URL=postgresql://user:pass@host:5432/dbname
 
 # CORS (REQUIRED in production)
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai
 
 # Environment
-SKINPROOF_ENV=production
+GLOWUPAI_ENV=production
 
 # Authentication
-SKINPROOF_AUTH_REQUIRED=1
-SKINPROOF_FIREBASE_PROJECT_ID=your-project-id
+GLOWUPAI_AUTH_REQUIRED=1
+GLOWUPAI_FIREBASE_PROJECT_ID=your-project-id
 
 # Admin Access
-SKINPROOF_ADMIN_TOKEN=<generate-random-token>
+GLOWUPAI_ADMIN_TOKEN=<generate-random-token>
 
 # AI
-SKINPROOF_GEMINI_API_KEY=<your-key>
+GLOWUPAI_GEMINI_API_KEY=<your-key>
 ```
 
 ## Key Endpoints
@@ -94,8 +94,8 @@ curl -H "Authorization: Bearer <admin-token>" \
 ## Common Issues
 
 ### Service Won't Start
-**Error**: `SKINPROOF_ALLOWED_ORIGINS must be configured`  
-**Fix**: Set `SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com`
+**Error**: `GLOWUPAI_ALLOWED_ORIGINS must be configured`  
+**Fix**: Set `GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com`
 
 ### Database Connection Failed
 **Error**: `database unavailable`  
@@ -114,14 +114,14 @@ curl -H "Authorization: Bearer <admin-token>" \
 ```bash
 # 1. Set environment variables
 export DATABASE_URL=postgresql://...
-export SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai
+export GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai
 # ... (see above for all required vars)
 
 # 2. Build
-docker build -t skinproof:production .
+docker build -t glowupai:production .
 
 # 3. Test locally
-docker run --env-file .env.production -p 8000:8000 skinproof:production
+docker run --env-file .env.production -p 8000:8000 glowupai:production
 
 # 4. Deploy
 railway up  # or your platform
@@ -142,7 +142,7 @@ curl https://api.glowup.ai/api/health
 
 - [ ] HTTPS enabled
 - [ ] CORS configured (no `*`)
-- [ ] Auth enabled (`SKINPROOF_AUTH_REQUIRED=1`)
+- [ ] Auth enabled (`GLOWUPAI_AUTH_REQUIRED=1`)
 - [ ] Admin token strong and secret
 - [ ] Database uses SSL
 - [ ] Rate limiting enabled

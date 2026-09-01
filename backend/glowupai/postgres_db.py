@@ -106,6 +106,13 @@ class PostgresDatabase:
     def healthcheck(self) -> bool:
         return self.fetchone("SELECT 1 AS ok") == {"ok": 1}
 
+    def count_tables(self) -> int:
+        """Count the number of user-created tables in the database."""
+        result = self.fetchone(
+            "SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
+        )
+        return result["count"] if result else 0
+
     def _migrate(self) -> None:
         migration_dir = Path(__file__).parent / "migrations"
         with self.pool.connection() as connection:

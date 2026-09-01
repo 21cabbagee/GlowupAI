@@ -1,7 +1,7 @@
-# SkinProof UI
+# GlowupAI UI
 
 The web workspace and the installable Android app are one Next.js codebase.
-The FastAPI service in `../skinproof` owns all data; this app only renders it.
+The FastAPI service in `../glowupai` owns all data; this app only renders it.
 
 ## Run
 
@@ -9,21 +9,21 @@ Two processes. Start the API first.
 
 ```powershell
 # terminal 1 - the API
-python -m skinproof.cli serve --port 8010
+python -m glowupai.cli serve --port 8010
 
 # terminal 2 - the UI
 cd web
-$env:SKINPROOF_API_ORIGIN = "http://127.0.0.1:8010"
+$env:GLOWUPAI_API_ORIGIN = "http://127.0.0.1:8010"
 npm run dev
 ```
 
 Open <http://localhost:3000>.
 
-`SKINPROOF_API_ORIGIN` defaults to `http://127.0.0.1:8000`, which matches
-`skinproof.cli serve` with no `--port`. Set it whenever the API is elsewhere.
+`GLOWUPAI_API_ORIGIN` defaults to `http://127.0.0.1:8000`, which matches
+`glowupai.cli serve` with no `--port`. Set it whenever the API is elsewhere.
 
 > **`rewrites()` is evaluated at build time.** `npm run build` bakes the API
-> origin into `.next/routes-manifest.json`, so `SKINPROOF_API_ORIGIN` must be
+> origin into `.next/routes-manifest.json`, so `GLOWUPAI_API_ORIGIN` must be
 > set for the *build*, not just for `next start`. Building without it and then
 > starting with it silently proxies to the default port.
 

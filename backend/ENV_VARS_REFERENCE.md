@@ -6,22 +6,22 @@ Complete reference for all environment variables used by GlowUp AI Backend.
 
 ```bash
 # === CORE REQUIRED (4 vars) ===
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-SKINPROOF_ENV=production
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
-SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_ENV=production
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com
 
 # === AUTHENTICATION (2 vars) ===
 GEMINI_API_KEY=your_gemini_key_here
-SKINPROOF_ADMIN_TOKEN=your_random_token_here
+GLOWUPAI_ADMIN_TOKEN=your_random_token_here
 
 # === AUTH CONTROL (1 var) ===
-SKINPROOF_AUTH_REQUIRED=0
+GLOWUPAI_AUTH_REQUIRED=0
 
 # === PHOTO STORAGE (3 vars) ===
-SKINPROOF_PHOTO_DIR=/data/photos
-SKINPROOF_PHOTO_KEY=your_base64_key_here
-SKINPROOF_RAW_RETENTION_DAYS=730
+GLOWUPAI_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_KEY=your_base64_key_here
+GLOWUPAI_RAW_RETENTION_DAYS=730
 ```
 
 ---
@@ -32,31 +32,31 @@ SKINPROOF_RAW_RETENTION_DAYS=730
 |----------|----------|---------|-------------|
 | **DATABASE** ||||
 | `DATABASE_URL` | Auto | - | PostgreSQL connection URL (Railway auto-injects) |
-| `SKINPROOF_DB_POOL_MIN_SIZE` | No | 1 | Minimum database connections in pool |
-| `SKINPROOF_DB_POOL_MAX_SIZE` | No | 10 | Maximum database connections in pool |
-| `SKINPROOF_DB_CONNECT_TIMEOUT` | No | 10 | Database connection timeout (seconds) |
+| `GLOWUPAI_DB_POOL_MIN_SIZE` | No | 1 | Minimum database connections in pool |
+| `GLOWUPAI_DB_POOL_MAX_SIZE` | No | 10 | Maximum database connections in pool |
+| `GLOWUPAI_DB_CONNECT_TIMEOUT` | No | 10 | Database connection timeout (seconds) |
 | **CORE** ||||
-| `SKINPROOF_ENV` | **Yes** | development | Environment: `production` or `development` |
-| `SKINPROOF_FIREBASE_PROJECT_ID` | **Yes** | - | Firebase project ID for auth |
-| `SKINPROOF_ALLOWED_ORIGINS` | **Yes** | localhost | Comma-separated CORS origins |
-| `SKINPROOF_DISABLE_LEGACY_KEY_FILE` | **Yes** | 0 | Disable local key file (set to 1 in prod) |
+| `GLOWUPAI_ENV` | **Yes** | development | Environment: `production` or `development` |
+| `GLOWUPAI_FIREBASE_PROJECT_ID` | **Yes** | - | Firebase project ID for auth |
+| `GLOWUPAI_ALLOWED_ORIGINS` | **Yes** | localhost | Comma-separated CORS origins |
+| `GLOWUPAI_DISABLE_LEGACY_KEY_FILE` | **Yes** | 0 | Disable local key file (set to 1 in prod) |
 | **AUTHENTICATION** ||||
-| `SKINPROOF_AUTH_REQUIRED` | No | 0 | Require Firebase auth on endpoints (0 or 1) |
-| `SKINPROOF_ADMIN_TOKEN` | Recommended | - | Secret token for /api/admin/* routes |
+| `GLOWUPAI_AUTH_REQUIRED` | No | 0 | Require Firebase auth on endpoints (0 or 1) |
+| `GLOWUPAI_ADMIN_TOKEN` | Recommended | - | Secret token for /api/admin/* routes |
 | **GEMINI AI** ||||
 | `GEMINI_API_KEY` | **Yes** | - | Google Gemini API key |
-| `SKINPROOF_GEMINI_MODEL` | No | gemini-3.5-flash-lite | Gemini model to use |
-| `SKINPROOF_GEMINI_ENABLED` | No | 1 | Enable/disable Gemini features |
+| `GLOWUPAI_GEMINI_MODEL` | No | gemini-3.5-flash-lite | Gemini model to use |
+| `GLOWUPAI_GEMINI_ENABLED` | No | 1 | Enable/disable Gemini features |
 | **PHOTO STORAGE** ||||
-| `SKINPROOF_PHOTO_DIR` | No | - | Directory for encrypted photo storage |
-| `SKINPROOF_PHOTO_KEY` | No | - | Base64-encoded 32-byte encryption key |
-| `SKINPROOF_RAW_RETENTION_DAYS` | No | 730 | Days to retain raw photo data |
+| `GLOWUPAI_PHOTO_DIR` | No | - | Directory for encrypted photo storage |
+| `GLOWUPAI_PHOTO_KEY` | No | - | Base64-encoded 32-byte encryption key |
+| `GLOWUPAI_RAW_RETENTION_DAYS` | No | 730 | Days to retain raw photo data |
 | **VERSIONING** ||||
-| `SKINPROOF_MODEL_VERSION` | No | deterministic-3.0 | Measurement model version |
-| `SKINPROOF_POLICY_VERSION` | No | 2026-01 | Privacy policy version |
+| `GLOWUPAI_MODEL_VERSION` | No | deterministic-3.0 | Measurement model version |
+| `GLOWUPAI_POLICY_VERSION` | No | 2026-01 | Privacy policy version |
 | **IMAGE PREPROCESSING** ||||
-| `SKINPROOF_ENABLE_PREPROCESSING` | No | 1 | Enable image preprocessing pipeline (0 or 1) |
-| `SKINPROOF_SKIP_QUALITY_CHECKS` | No | 0 | Skip quality validation (testing only, 0 or 1) |
+| `GLOWUPAI_ENABLE_PREPROCESSING` | No | 1 | Enable image preprocessing pipeline (0 or 1) |
+| `GLOWUPAI_SKIP_QUALITY_CHECKS` | No | 0 | Skip quality validation (testing only, 0 or 1) |
 | **RUNTIME** ||||
 | `PORT` | Auto | 8000 | Server port (Railway auto-injects) |
 | **MONITORING** ||||
@@ -65,10 +65,10 @@ SKINPROOF_RAW_RETENTION_DAYS=730
 | `SENTRY_PROFILES_SAMPLE_RATE` | No | 0.1 | Percentage of profiles to capture (0.0-1.0) |
 | **PERFORMANCE** ||||
 | `REDIS_URL` | Recommended | - | Redis URL for caching and rate limiting |
-| `SKINPROOF_CACHE_ENABLED` | No | 1 | Enable response caching (0 or 1) |
-| `SKINPROOF_SLOW_THRESHOLD_MS` | No | 1000 | Threshold for logging slow requests (ms) |
-| `SKINPROOF_MAX_IMAGE_DIMENSION` | No | 1024 | Max image dimension for compression (px) |
-| `SKINPROOF_IMAGE_QUALITY` | No | 85 | JPEG quality for compression (0-100) |
+| `GLOWUPAI_CACHE_ENABLED` | No | 1 | Enable response caching (0 or 1) |
+| `GLOWUPAI_SLOW_THRESHOLD_MS` | No | 1000 | Threshold for logging slow requests (ms) |
+| `GLOWUPAI_MAX_IMAGE_DIMENSION` | No | 1024 | Max image dimension for compression (px) |
+| `GLOWUPAI_IMAGE_QUALITY` | No | 85 | JPEG quality for compression (0-100) |
 
 ---
 
@@ -80,10 +80,10 @@ SKINPROOF_RAW_RETENTION_DAYS=730
 **Set by:** Railway automatically when PostgreSQL is added
 
 **Description:** Connection string for PostgreSQL database. Also accepts:
-- `SKINPROOF_DATABASE_URL` (alternative name)
+- `GLOWUPAI_DATABASE_URL` (alternative name)
 - `POSTGRES_URL` (alternative name)
 
-If none are set, falls back to SQLite at `SKINPROOF_DB_PATH`.
+If none are set, falls back to SQLite at `GLOWUPAI_DB_PATH`.
 
 **Example:**
 ```
@@ -92,7 +92,7 @@ postgresql://postgres:ABC123@containers-us-west-1.railway.app:5432/railway
 
 ---
 
-### SKINPROOF_ENV
+### GLOWUPAI_ENV
 **Required:** Yes
 
 **Values:** `production` | `development`
@@ -106,12 +106,12 @@ postgresql://postgres:ABC123@containers-us-west-1.railway.app:5432/railway
 
 **Set to:**
 ```bash
-SKINPROOF_ENV=production
+GLOWUPAI_ENV=production
 ```
 
 ---
 
-### SKINPROOF_FIREBASE_PROJECT_ID
+### GLOWUPAI_FIREBASE_PROJECT_ID
 **Required:** Yes
 
 **Format:** Firebase project ID string
@@ -120,7 +120,7 @@ SKINPROOF_ENV=production
 
 **For GlowUp AI:**
 ```bash
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
 ```
 
 **How to find:**
@@ -128,7 +128,7 @@ SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
 
 ---
 
-### SKINPROOF_ALLOWED_ORIGINS
+### GLOWUPAI_ALLOWED_ORIGINS
 **Required:** Yes (in production)
 
 **Format:** Comma-separated URLs (no spaces, no trailing slashes)
@@ -138,13 +138,13 @@ SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
 **Examples:**
 ```bash
 # Single domain
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com
 
 # Multiple domains
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com,https://www.glowup.com
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com,https://www.glowup.com
 
 # Development (default if unset)
-SKINPROOF_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+GLOWUPAI_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
 ```
 
 **Important:**
@@ -172,13 +172,13 @@ SKINPROOF_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
 GEMINI_API_KEY=your_actual_gemini_api_key_here
 ```
 
-**Alternative name:** `SKINPROOF_GEMINI_API_KEY`
+**Alternative name:** `GLOWUPAI_GEMINI_API_KEY`
 
 **If not set:** AI features will be disabled but app will still work for basic tracking.
 
 ---
 
-### SKINPROOF_ADMIN_TOKEN
+### GLOWUPAI_ADMIN_TOKEN
 **Required:** Recommended for production
 
 **Format:** Long random string (32+ characters)
@@ -195,14 +195,14 @@ python3 -c "import secrets; print(secrets.token_urlsafe(32))"
 
 **Usage:**
 ```bash
-curl -H "X-Admin-Token: your_token_here" https://api.glowup.com/api/admin/audit
+curl -H "Authorization: Bearer your_token_here" https://api.glowup.com/api/admin/audit
 ```
 
 **If not set:** All admin routes return 403 Forbidden.
 
 ---
 
-### SKINPROOF_AUTH_REQUIRED
+### GLOWUPAI_AUTH_REQUIRED
 **Required:** No
 
 **Values:** `0` (off) | `1` (on)
@@ -212,17 +212,17 @@ curl -H "X-Admin-Token: your_token_here" https://api.glowup.com/api/admin/audit
 **Description:** Require Firebase authentication on all user-scoped endpoints.
 
 **Deployment strategy:**
-1. Deploy with `SKINPROOF_AUTH_REQUIRED=0`
+1. Deploy with `GLOWUPAI_AUTH_REQUIRED=0`
 2. Test API without auth
 3. Integrate Firebase auth in frontend
 4. Test with auth headers
-5. Flip to `SKINPROOF_AUTH_REQUIRED=1`
+5. Flip to `GLOWUPAI_AUTH_REQUIRED=1`
 
 **Set to 1 when:** Frontend sends `Authorization: Bearer <token>` on all requests.
 
 ---
 
-### SKINPROOF_PHOTO_DIR
+### GLOWUPAI_PHOTO_DIR
 **Required:** No (but recommended for production)
 
 **Format:** Absolute path to directory
@@ -231,20 +231,20 @@ curl -H "X-Admin-Token: your_token_here" https://api.glowup.com/api/admin/audit
 
 **For Railway Volume:**
 ```bash
-SKINPROOF_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_DIR=/data/photos
 ```
 
 **Requirements:**
 - Must be writable by app user
 - Should be on persistent volume (not ephemeral)
-- Must set `SKINPROOF_PHOTO_KEY` when using this
+- Must set `GLOWUPAI_PHOTO_KEY` when using this
 
 **If not set:** Photos stored in memory only (lost on restart).
 
 ---
 
-### SKINPROOF_PHOTO_KEY
-**Required:** If using SKINPROOF_PHOTO_DIR
+### GLOWUPAI_PHOTO_KEY
+**Required:** If using GLOWUPAI_PHOTO_DIR
 
 **Format:** Base64-encoded 32-byte key
 
@@ -257,7 +257,7 @@ python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(3
 
 **Example:**
 ```bash
-SKINPROOF_PHOTO_KEY=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6==
+GLOWUPAI_PHOTO_KEY=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6==
 ```
 
 **Security:**
@@ -267,7 +267,7 @@ SKINPROOF_PHOTO_KEY=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6==
 
 ---
 
-### SKINPROOF_DISABLE_LEGACY_KEY_FILE
+### GLOWUPAI_DISABLE_LEGACY_KEY_FILE
 **Required:** Yes in production
 
 **Values:** `0` (allow) | `1` (disable)
@@ -276,14 +276,14 @@ SKINPROOF_PHOTO_KEY=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6==
 
 **Set to:**
 ```bash
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
 ```
 
 **Why:** Security - prevents accidental exposure of local development keys.
 
 ---
 
-### SKINPROOF_DB_POOL_MIN_SIZE / MAX_SIZE
+### GLOWUPAI_DB_POOL_MIN_SIZE / MAX_SIZE
 **Required:** No
 
 **Defaults:** Min: 1, Max: 10
@@ -297,15 +297,15 @@ SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
 
 **Example:**
 ```bash
-SKINPROOF_DB_POOL_MIN_SIZE=2
-SKINPROOF_DB_POOL_MAX_SIZE=20
+GLOWUPAI_DB_POOL_MIN_SIZE=2
+GLOWUPAI_DB_POOL_MAX_SIZE=20
 ```
 
 **Monitor:** If seeing "connection pool exhausted" errors, increase MAX_SIZE.
 
 ---
 
-### SKINPROOF_RAW_RETENTION_DAYS
+### GLOWUPAI_RAW_RETENTION_DAYS
 **Required:** No
 
 **Default:** 730 (2 years)
@@ -320,7 +320,7 @@ SKINPROOF_DB_POOL_MAX_SIZE=20
 
 **Example:**
 ```bash
-SKINPROOF_RAW_RETENTION_DAYS=365
+GLOWUPAI_RAW_RETENTION_DAYS=365
 ```
 
 ---
@@ -341,49 +341,49 @@ SKINPROOF_RAW_RETENTION_DAYS=365
 ### Minimal Working Deployment
 These 7 variables get you a working deployment:
 ```bash
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-SKINPROOF_ENV=production
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
-SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_ENV=production
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com
 GEMINI_API_KEY=your_key
-SKINPROOF_AUTH_REQUIRED=0
-SKINPROOF_ADMIN_TOKEN=your_token
+GLOWUPAI_AUTH_REQUIRED=0
+GLOWUPAI_ADMIN_TOKEN=your_token
 ```
 
 ### With Persistent Photo Storage
 Add these 3 for photo persistence:
 ```bash
-SKINPROOF_PHOTO_DIR=/data/photos
-SKINPROOF_PHOTO_KEY=your_base64_key
-SKINPROOF_RAW_RETENTION_DAYS=730
+GLOWUPAI_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_KEY=your_base64_key
+GLOWUPAI_RAW_RETENTION_DAYS=730
 ```
 
 ### Production Hardened
 Full production setup (14 variables):
 ```bash
 # Core
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-SKINPROOF_ENV=production
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com,https://www.glowup.com
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_ENV=production
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com,https://www.glowup.com
 
 # Auth
 GEMINI_API_KEY=your_key
-SKINPROOF_ADMIN_TOKEN=your_token
-SKINPROOF_AUTH_REQUIRED=1
+GLOWUPAI_ADMIN_TOKEN=your_token
+GLOWUPAI_AUTH_REQUIRED=1
 
 # Photos
-SKINPROOF_PHOTO_DIR=/data/photos
-SKINPROOF_PHOTO_KEY=your_base64_key
-SKINPROOF_RAW_RETENTION_DAYS=730
+GLOWUPAI_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_KEY=your_base64_key
+GLOWUPAI_RAW_RETENTION_DAYS=730
 
 # Image Processing
-SKINPROOF_ENABLE_PREPROCESSING=1
+GLOWUPAI_ENABLE_PREPROCESSING=1
 
 # Tuning
-SKINPROOF_DB_POOL_MIN_SIZE=2
-SKINPROOF_DB_POOL_MAX_SIZE=20
-SKINPROOF_GEMINI_MODEL=gemini-3.5-flash-lite
+GLOWUPAI_DB_POOL_MIN_SIZE=2
+GLOWUPAI_DB_POOL_MAX_SIZE=20
+GLOWUPAI_GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 ---
@@ -393,23 +393,23 @@ SKINPROOF_GEMINI_MODEL=gemini-3.5-flash-lite
 Use this to verify your configuration:
 
 ### Required Variables Check
-- [ ] `SKINPROOF_ENV=production` (exactly)
-- [ ] `SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7` (exactly)
-- [ ] `SKINPROOF_DISABLE_LEGACY_KEY_FILE=1` (exactly)
-- [ ] `SKINPROOF_ALLOWED_ORIGINS` contains your actual domain
+- [ ] `GLOWUPAI_ENV=production` (exactly)
+- [ ] `GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7` (exactly)
+- [ ] `GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1` (exactly)
+- [ ] `GLOWUPAI_ALLOWED_ORIGINS` contains your actual domain
 - [ ] `GEMINI_API_KEY` is a valid Gemini key
-- [ ] `SKINPROOF_ADMIN_TOKEN` is 32+ character random string
+- [ ] `GLOWUPAI_ADMIN_TOKEN` is 32+ character random string
 
 ### Optional but Recommended
-- [ ] `SKINPROOF_PHOTO_DIR=/data/photos` (if using volume)
-- [ ] `SKINPROOF_PHOTO_KEY` is base64-encoded 32 bytes
-- [ ] `SKINPROOF_AUTH_REQUIRED=0` initially, then flip to 1
+- [ ] `GLOWUPAI_PHOTO_DIR=/data/photos` (if using volume)
+- [ ] `GLOWUPAI_PHOTO_KEY` is base64-encoded 32 bytes
+- [ ] `GLOWUPAI_AUTH_REQUIRED=0` initially, then flip to 1
 
 ### Security Validation
 - [ ] No secrets in Git
-- [ ] `SKINPROOF_ENV` is NOT "development"
-- [ ] `SKINPROOF_ALLOWED_ORIGINS` does NOT include localhost
-- [ ] `SKINPROOF_ADMIN_TOKEN` is NOT "admin" or "test"
+- [ ] `GLOWUPAI_ENV` is NOT "development"
+- [ ] `GLOWUPAI_ALLOWED_ORIGINS` does NOT include localhost
+- [ ] `GLOWUPAI_ADMIN_TOKEN` is NOT "admin" or "test"
 - [ ] Photo encryption key is properly random
 
 ---
@@ -418,24 +418,24 @@ Use this to verify your configuration:
 
 ### ❌ Wrong: Trailing slashes in CORS
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com/
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com/
 ```
 
 ### ✅ Correct: No trailing slashes
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com
 ```
 
 ---
 
 ### ❌ Wrong: Spaces after commas
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com, https://www.glowup.com
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com, https://www.glowup.com
 ```
 
 ### ✅ Correct: No spaces
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com,https://www.glowup.com
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com,https://www.glowup.com
 ```
 
 ---
@@ -454,29 +454,29 @@ DATABASE_URL=postgresql://...
 
 ### ❌ Wrong: Weak admin token
 ```bash
-SKINPROOF_ADMIN_TOKEN=admin123
+GLOWUPAI_ADMIN_TOKEN=admin123
 ```
 
 ### ✅ Correct: Strong random token
 ```bash
-SKINPROOF_ADMIN_TOKEN=X7f9JmK3pL2nQ8rT6vY1wZ4bN5hM9sD0cA2eG7iU3oP5
+GLOWUPAI_ADMIN_TOKEN=X7f9JmK3pL2nQ8rT6vY1wZ4bN5hM9sD0cA2eG7iU3oP5
 ```
 
 ---
 
 ### ❌ Wrong: Development mode in production
 ```bash
-SKINPROOF_ENV=development
+GLOWUPAI_ENV=development
 ```
 
 ### ✅ Correct: Production mode
 ```bash
-SKINPROOF_ENV=production
+GLOWUPAI_ENV=production
 ```
 
 ---
 
-### SKINPROOF_ENABLE_PREPROCESSING
+### GLOWUPAI_ENABLE_PREPROCESSING
 **Required:** No
 
 **Default:** `1` (enabled)
@@ -499,10 +499,10 @@ SKINPROOF_ENV=production
 **Example:**
 ```bash
 # Enable preprocessing (default, recommended)
-SKINPROOF_ENABLE_PREPROCESSING=1
+GLOWUPAI_ENABLE_PREPROCESSING=1
 
 # Disable preprocessing (testing only)
-SKINPROOF_ENABLE_PREPROCESSING=0
+GLOWUPAI_ENABLE_PREPROCESSING=0
 ```
 
 **Note:** Preprocessing improves consistency across different lighting conditions and reduces false variations in metrics. Keep enabled in production for best results.
@@ -564,7 +564,7 @@ REDIS_URL=rediss://user:password@host:6379/0  # TLS
 
 ---
 
-### SKINPROOF_MAX_IMAGE_DIMENSION
+### GLOWUPAI_MAX_IMAGE_DIMENSION
 **Required:** No
 
 **Default:** 1024
@@ -574,13 +574,13 @@ REDIS_URL=rediss://user:password@host:6379/0  # TLS
 **Examples:**
 ```bash
 # Default - good balance of quality and storage
-SKINPROOF_MAX_IMAGE_DIMENSION=1024
+GLOWUPAI_MAX_IMAGE_DIMENSION=1024
 
 # Higher quality, more storage
-SKINPROOF_MAX_IMAGE_DIMENSION=2048
+GLOWUPAI_MAX_IMAGE_DIMENSION=2048
 
 # Lower quality, less storage
-SKINPROOF_MAX_IMAGE_DIMENSION=768
+GLOWUPAI_MAX_IMAGE_DIMENSION=768
 ```
 
 **Impact:**
@@ -590,7 +590,7 @@ SKINPROOF_MAX_IMAGE_DIMENSION=768
 
 ---
 
-### SKINPROOF_IMAGE_QUALITY
+### GLOWUPAI_IMAGE_QUALITY
 **Required:** No
 
 **Default:** 85
@@ -607,12 +607,12 @@ SKINPROOF_MAX_IMAGE_DIMENSION=768
 
 **Example:**
 ```bash
-SKINPROOF_IMAGE_QUALITY=85
+GLOWUPAI_IMAGE_QUALITY=85
 ```
 
 ---
 
-### SKINPROOF_SKIP_QUALITY_CHECKS
+### GLOWUPAI_SKIP_QUALITY_CHECKS
 **Required:** No
 
 **Default:** `0` (checks enabled)
@@ -631,10 +631,10 @@ SKINPROOF_IMAGE_QUALITY=85
 **Example:**
 ```bash
 # Normal mode - quality checks enabled
-SKINPROOF_SKIP_QUALITY_CHECKS=0
+GLOWUPAI_SKIP_QUALITY_CHECKS=0
 
 # Testing mode - accept all photos
-SKINPROOF_SKIP_QUALITY_CHECKS=1
+GLOWUPAI_SKIP_QUALITY_CHECKS=1
 ```
 
 ---
@@ -643,33 +643,33 @@ SKINPROOF_SKIP_QUALITY_CHECKS=1
 
 ### Development (Local)
 ```bash
-SKINPROOF_ENV=development
-DATABASE_URL=postgresql://skinproof:skinproof@localhost:5432/skinproof
-SKINPROOF_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+GLOWUPAI_ENV=development
+DATABASE_URL=postgresql://glowupai:glowupai@localhost:5432/glowupai
+GLOWUPAI_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
 GEMINI_API_KEY=your_dev_key
-SKINPROOF_AUTH_REQUIRED=0
+GLOWUPAI_AUTH_REQUIRED=0
 ```
 
 ### Staging
 ```bash
-SKINPROOF_ENV=production
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-staging
-SKINPROOF_ALLOWED_ORIGINS=https://staging.glowup.com
+GLOWUPAI_ENV=production
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-staging
+GLOWUPAI_ALLOWED_ORIGINS=https://staging.glowup.com
 GEMINI_API_KEY=your_staging_key
-SKINPROOF_AUTH_REQUIRED=1
-SKINPROOF_ADMIN_TOKEN=staging_token_here
+GLOWUPAI_AUTH_REQUIRED=1
+GLOWUPAI_ADMIN_TOKEN=staging_token_here
 ```
 
 ### Production
 ```bash
-SKINPROOF_ENV=production
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com,https://www.glowup.com
+GLOWUPAI_ENV=production
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com,https://www.glowup.com
 GEMINI_API_KEY=your_production_key
-SKINPROOF_AUTH_REQUIRED=1
-SKINPROOF_ADMIN_TOKEN=production_token_here
-SKINPROOF_PHOTO_DIR=/data/photos
-SKINPROOF_PHOTO_KEY=production_photo_key_here
+GLOWUPAI_AUTH_REQUIRED=1
+GLOWUPAI_ADMIN_TOKEN=production_token_here
+GLOWUPAI_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_KEY=production_photo_key_here
 ```
 
 ---
@@ -683,33 +683,33 @@ SKINPROOF_PHOTO_KEY=production_photo_key_here
 
 ### CORS Errors
 **Check:**
-- `SKINPROOF_ALLOWED_ORIGINS` includes your frontend domain
+- `GLOWUPAI_ALLOWED_ORIGINS` includes your frontend domain
 - No trailing slashes
 - No spaces after commas
 - HTTPS matches (http vs https)
 
 ### 401 Unauthorized
 **Check:**
-- `SKINPROOF_AUTH_REQUIRED` is 0 for initial testing
-- `SKINPROOF_FIREBASE_PROJECT_ID` matches your Firebase project
+- `GLOWUPAI_AUTH_REQUIRED` is 0 for initial testing
+- `GLOWUPAI_FIREBASE_PROJECT_ID` matches your Firebase project
 - Frontend sends `Authorization: Bearer <token>` header
 
 ### Photos Disappear
 **Check:**
-- `SKINPROOF_PHOTO_DIR=/data/photos` is set
+- `GLOWUPAI_PHOTO_DIR=/data/photos` is set
 - Railway volume is mounted at `/data/photos`
-- `SKINPROOF_PHOTO_KEY` is set and valid base64
+- `GLOWUPAI_PHOTO_KEY` is set and valid base64
 
 ### Gemini Features Fail
 **Check:**
 - `GEMINI_API_KEY` is set
 - Key is valid (test at https://ai.google.dev/)
-- `SKINPROOF_GEMINI_ENABLED=1`
+- `GLOWUPAI_GEMINI_ENABLED=1`
 - API quota not exceeded
 
 ### Admin Routes Return 403
 **Check:**
-- `SKINPROOF_ADMIN_TOKEN` is set
+- `GLOWUPAI_ADMIN_TOKEN` is set
 - Request includes `X-Admin-Token` header
 - Token matches exactly (no spaces)
 
@@ -720,16 +720,16 @@ SKINPROOF_PHOTO_KEY=production_photo_key_here
 **Paste this into Railway Variables tab:**
 
 ```bash
-SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7
-SKINPROOF_ENV=production
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
-SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
+GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+GLOWUPAI_ENV=production
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com
 GEMINI_API_KEY=your_gemini_key_here
-SKINPROOF_ADMIN_TOKEN=your_random_token_here
-SKINPROOF_AUTH_REQUIRED=0
-SKINPROOF_PHOTO_DIR=/data/photos
-SKINPROOF_PHOTO_KEY=your_base64_key_here
-SKINPROOF_RAW_RETENTION_DAYS=730
+GLOWUPAI_ADMIN_TOKEN=your_random_token_here
+GLOWUPAI_AUTH_REQUIRED=0
+GLOWUPAI_PHOTO_DIR=/data/photos
+GLOWUPAI_PHOTO_KEY=your_base64_key_here
+GLOWUPAI_RAW_RETENTION_DAYS=730
 ```
 
 **Remember to:**

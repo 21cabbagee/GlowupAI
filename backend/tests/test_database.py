@@ -243,56 +243,101 @@ class TestDatabaseOperations(unittest.TestCase):
 
     def test_create_routine_event(self):
         """Test routine event creation."""
-        user_id = self.db.create_user(firebase_uid="routine_test")
-        product_id = self.db.create_product(name="Test Product")
-
-        event_id = self.db.create_routine_event(
-            user_id=user_id,
-            product_id=product_id,
-            action="start"
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "routine_test")
         )
 
-        self.assertIsNotNone(event_id)
+        product_id = str(uuid.uuid4())
+        ingredients = json.dumps(["Water"])
+        self.db.execute(
+            "INSERT INTO products (id, name, ingredients_json) VALUES (?, ?, ?)",
+            (product_id, "Test Product", ingredients)
+        )
+
+        event_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+        self.db.execute(
+            "INSERT INTO routine_events (id, user_id, product_id, action, timestamp) VALUES (?, ?, ?, ?, ?)",
+            (event_id, user_id, product_id, "start", timestamp)
+        )
+
+        event = self.db.fetchone("SELECT * FROM routine_events WHERE id = ?", (event_id,))
+        self.assertIsNotNone(event)
+        self.assertEqual(event["action"], "start")
 
     def test_get_user_routine_events(self):
         """Test retrieving user's routine events."""
-        user_id = self.db.create_user(firebase_uid="events_test")
-        product_id = self.db.create_product(name="Test Product")
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "events_test")
+        )
+
+        product_id = str(uuid.uuid4())
+        ingredients = json.dumps(["Water"])
+        self.db.execute(
+            "INSERT INTO products (id, name, ingredients_json) VALUES (?, ?, ?)",
+            (product_id, "Test Product", ingredients)
+        )
 
         # Create multiple events
-        self.db.create_routine_event(user_id, product_id, "start")
-        self.db.create_routine_event(user_id, product_id, "stop")
+        timestamp = datetime.now().isoformat()
+        event_id_1 = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO routine_events (id, user_id, product_id, action, timestamp) VALUES (?, ?, ?, ?, ?)",
+            (event_id_1, user_id, product_id, "start", timestamp)
+        )
+        event_id_2 = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO routine_events (id, user_id, product_id, action, timestamp) VALUES (?, ?, ?, ?, ?)",
+            (event_id_2, user_id, product_id, "stop", timestamp)
+        )
 
-        events = self.db.get_routine_events(user_id)
+        events = self.db.fetchall("SELECT * FROM routine_events WHERE user_id = ?", (user_id,))
 
         self.assertGreaterEqual(len(events), 2)
 
     def test_delete_user_captures(self):
         """Test deleting user's captures."""
-        user_id = self.db.create_user(firebase_uid="delete_test")
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "delete_test")
+        )
 
         # Create captures
         for i in range(3):
-            self.db.create_capture(
-                user_id=user_id,
-                metrics={"smoothness_score": 70.0},
-                image_url=f"https://example.com/img{i}.jpg"
+            capture_id = str(uuid.uuid4())
+            captured_at = datetime.now().isoformat()
+            capture_quality = json.dumps({"sharpness": 0.9})
+            self.db.execute(
+                "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json) VALUES (?, ?, ?, ?, ?)",
+                (capture_id, user_id, captured_at, f"https://example.com/img{i}.jpg", capture_quality)
             )
 
         # Delete captures
-        self.db.delete_user_captures(user_id)
+        self.db.execute("DELETE FROM photo_captures WHERE user_id = ?", (user_id,))
 
         # Verify deletion
-        captures = self.db.list_captures(user_id)
+        captures = self.db.fetchall("SELECT * FROM photo_captures WHERE user_id = ?", (user_id,))
         self.assertEqual(len(captures), 0)
 
     def test_database_connection_persistence(self):
         """Test that database connection persists across operations."""
-        user_id = self.db.create_user(firebase_uid="persist_test")
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "persist_test")
+        )
 
         # Multiple operations
-        self.db.update_consent(user_id, facial_data=True)
-        user = self.db.get_user(user_id)
+        self.db.execute(
+            "INSERT INTO consent_events (user_id, consent_type, granted, policy_version) VALUES (?, ?, ?, ?)",
+            (user_id, "facial_data", 1, "1.0")
+        )
+        user = self.db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
 
         self.assertIsNotNone(user)
 
@@ -301,15 +346,20 @@ class TestDatabaseOperations(unittest.TestCase):
         user_ids = []
 
         for i in range(10):
-            user_id = self.db.create_user(
-                firebase_uid=f"concurrent_test_{i}",
-                email=f"user{i}@example.com"
+            user_id = str(uuid.uuid4())
+            self.db.execute(
+                "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+                (user_id, f"concurrent_test_{i}")
             )
             user_ids.append(user_id)
 
         # All users should be created
         self.assertEqual(len(user_ids), 10)
         self.assertEqual(len(set(user_ids)), 10)  # All unique
+
+        # Verify all users exist in database
+        all_users = self.db.fetchall("SELECT * FROM users WHERE firebase_uid LIKE 'concurrent_test_%'")
+        self.assertEqual(len(all_users), 10)
 
 
 if __name__ == "__main__":

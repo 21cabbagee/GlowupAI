@@ -1,0 +1,13 @@
+Method,Name,Error,Occurrences,First Seen,Last Seen
+GET,/api/users/[user_id]/profile,CatchResponseError('Got status 400'),153,2026-09-01T11:49:06Z,2026-09-01T11:49:45Z
+GET,/api/users/[user_id]/profile,CatchResponseError('Got status 0'),64,2026-09-01T11:48:48Z,2026-09-01T11:49:06Z
+GET,/api/users/[user_id]/analytics,CatchResponseError('Got status 400'),91,2026-09-01T11:49:06Z,2026-09-01T11:49:44Z
+GET,/api/users/[user_id]/history,CatchResponseError('Got status 0'),103,2026-09-01T11:48:47Z,2026-09-01T11:49:06Z
+GET,/api/users/[user_id]/analytics,CatchResponseError('Got status 0'),37,2026-09-01T11:48:49Z,2026-09-01T11:49:05Z
+GET,/health,CatchResponseError('Got status 429'),21,2026-09-01T11:49:35Z,2026-09-01T11:49:44Z
+GET,/api/users/[user_id]/dashboard,CatchResponseError('Got status 400'),300,2026-09-01T11:49:06Z,2026-09-01T11:49:43Z
+GET,/api/users/[user_id]/history,CatchResponseError('Got status 400'),262,2026-09-01T11:49:06Z,2026-09-01T11:49:45Z
+GET,/api/users/[user_id]/dashboard,CatchResponseError('Got status 429'),102,2026-09-01T11:49:31Z,2026-09-01T11:49:44Z
+GET,/health,CatchResponseError('Got status 0'),25,2026-09-01T11:48:49Z,2026-09-01T11:49:05Z
+GET,/health,CatchResponseError('Got status 404'),48,2026-09-01T11:49:06Z,2026-09-01T11:49:34Z
+GET,/api/users/[user_id]/dashboard,CatchResponseError('Got status 0'),148,2026-09-01T11:48:47Z,2026-09-01T11:49:06Z

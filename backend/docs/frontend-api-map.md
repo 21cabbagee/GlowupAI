@@ -1,11 +1,11 @@
-# SkinProof frontend API map
+# GlowupAI frontend API map
 
-This is the integration contract for the complete SkinProof surface as it exists
-in `skinproof/complete_api.py` and `skinproof/complete_service.py` (the former
+This is the integration contract for the complete GlowupAI surface as it exists
+in `glowupai/complete_api.py` and `glowupai/complete_service.py` (the former
 `complete_api_runtime`/`complete_service_runtime` subclass layer was folded
 into these two modules; there is no longer a separate runtime layer). The
-default application exposed by `skinproof.api:app` is `complete_api.app`
-directly. The fallback page is `skinproof/static/index.html`; it calls these
+default application exposed by `glowupai.api:app` is `complete_api.app`
+directly. The fallback page is `glowupai/static/index.html`; it calls these
 endpoints directly from the browser. The typed Next client in `web/lib/api.ts`
 is an alternate consumer of the same surface.
 
@@ -24,7 +24,7 @@ client should ignore unknown fields.
 - By default the API still has no enforced authentication: the client carries
   a `user_id`, and every user-scoped route trusts the path/query/body value as
   given. An optional auth boundary exists (see "Authentication" below) but is
-  off unless the deployment sets `SKINPROOF_AUTH_REQUIRED=1`. Even when it is
+  off unless the deployment sets `GLOWUPAI_AUTH_REQUIRED=1`. Even when it is
   on, treat `user_id` as sensitive and do not log it or put it in analytics
   URLs unnecessarily.
 - The only valid appearance vertical is `skin`.
@@ -40,8 +40,8 @@ client should ignore unknown fields.
 - Premium means both `entitlement.plan == "premium"` and
   `entitlement.status == "active"`. Premium routes return `403` otherwise.
 - The complete app's `POST /api/users` returns a profile-shaped object. The
-  older legacy app (`skinproof/api_legacy.py`, used only by its own test) returns
-  only a user object. Frontend integration must point at `skinproof.api:app`
+  older legacy app (`glowupai/api_legacy.py`, used only by its own test) returns
+  only a user object. Frontend integration must point at `glowupai.api:app`
   and must not mix the two contracts.
 - **Commerce is no longer Premium-gated.** `GET .../commerce/offers` and the
   offer-click route are available to every consenting user, free or premium;
@@ -95,7 +95,7 @@ from a button click alone.
 
 On app boot, load a locally persisted `user_id` only as a candidate. Call
 `GET /api/users/{user_id}/profile`; if it returns `400 user not found`, clear
-only the SkinProof session key and restart at `welcome`. The static page
+only the GlowupAI session key and restart at `welcome`. The static page
 currently leaves a stale ID in local storage after this error.
 
 ## Authentication
@@ -109,15 +109,15 @@ turns the flag on.
 
 ### Config flags (server-side, not client-visible)
 
-- `SKINPROOF_FIREBASE_PROJECT_ID` — the Firebase project whose ID tokens are
+- `GLOWUPAI_FIREBASE_PROJECT_ID` — the Firebase project whose ID tokens are
   accepted. Required for `POST /api/auth/session` and for ownership
   enforcement to do anything other than fail closed.
-- `SKINPROOF_AUTH_REQUIRED` — default **off**. When unset/false, every route
+- `GLOWUPAI_AUTH_REQUIRED` — default **off**. When unset/false, every route
   behaves exactly as documented elsewhere in this file: no header is checked,
   `user_id` is trusted as given. When set to a truthy value, every
   user-scoped route requires a valid bearer token whose Firebase uid owns the
   `user_id` in play.
-- `SKINPROOF_ADMIN_TOKEN` — gates the three `/api/admin/*` routes
+- `GLOWUPAI_ADMIN_TOKEN` — gates the three `/api/admin/*` routes
   independently of the flag above (see "Admin routes" below).
 
 ### `POST /api/auth/session`
@@ -126,7 +126,7 @@ turns the flag on.
 - Response: the same profile shape as `GET /api/users/{user_id}/profile`
   (`{user, appearance_profiles, entitlement, verticals, experience_profile}`).
 - Behavior: verifies the Firebase ID token (signature, `exp`, `iss`, `aud`
-  against `SKINPROOF_FIREBASE_PROJECT_ID`), then looks up a user by the
+  against `GLOWUPAI_FIREBASE_PROJECT_ID`), then looks up a user by the
   token's `sub` (Firebase uid). On first sight it creates the user, the skin
   appearance profile, and the free entitlement — the same side effects as
   `POST /api/users` — and binds the uid. Every later call with a token for the
@@ -135,7 +135,7 @@ turns the flag on.
   the current `POST /api/users` call from a fresh account state.
 - Expected errors: `401` for a missing, malformed, expired, wrong-audience,
   wrong-issuer, or otherwise unverifiable token; `401` if
-  `SKINPROOF_FIREBASE_PROJECT_ID` is not configured on the server (fails
+  `GLOWUPAI_FIREBASE_PROJECT_ID` is not configured on the server (fails
   closed rather than accepting an unverifiable token).
 - Ideal UI state: call this immediately after Firebase Google/email-password
   sign-in succeeds, persist the returned `user.id` the same way the client
@@ -144,7 +144,7 @@ turns the flag on.
 
 ### Ownership enforcement on user-scoped routes
 
-When `SKINPROOF_AUTH_REQUIRED=1`, every route that is scoped to a `user_id` —
+When `GLOWUPAI_AUTH_REQUIRED=1`, every route that is scoped to a `user_id` —
 whether it appears in the path (`/api/users/{user_id}/...`), a query
 parameter (`GET /api/products/{id}?user_id=...`), or the JSON body
 (`POST /api/routine-events`, `POST /api/experiments`) — requires
@@ -168,19 +168,19 @@ is bound (via `POST /api/auth/session`) to that exact `user_id`.
 
 `GET /api/admin/audit`, `POST /api/admin/offers`, and
 `GET /api/admin/measurement-feedback` previously had **no protection at all**
-regardless of `SKINPROOF_AUTH_REQUIRED` — `GET /api/admin/audit` in
+regardless of `GLOWUPAI_AUTH_REQUIRED` — `GET /api/admin/audit` in
 particular leaked the global audit log to any caller (see the trap noted
 below under that route). All three now always require
-`Authorization: Bearer <SKINPROOF_ADMIN_TOKEN>`, checked with a
+`Authorization: Bearer <GLOWUPAI_ADMIN_TOKEN>`, checked with a
 constant-time comparison, independent of the per-user auth flag:
 
-- `SKINPROOF_ADMIN_TOKEN` unset on the server: all three routes refuse every
+- `GLOWUPAI_ADMIN_TOKEN` unset on the server: all three routes refuse every
   request with `403`, token or not. There is no "open" fallback.
 - Token configured but missing/wrong in the request: `403`.
 - Token configured and matching: the route behaves as documented elsewhere in
   this file.
 
-No user-facing client should ever hold `SKINPROOF_ADMIN_TOKEN` or call these
+No user-facing client should ever hold `GLOWUPAI_ADMIN_TOKEN` or call these
 routes; they exist for operator tooling only. The Android app must not call
 `GET /api/admin/audit` for a personal timeline, exactly as this document
 already warned before the boundary existed.
@@ -649,7 +649,7 @@ not `route` alone.
 
 - Minimal payload: `{"model_version":"deterministic-3.1"}`.
 - Response: `{"job_id","status":"queued"}` — the reprocess itself runs on a
-  background thread pool (`skinproof/jobs.py`), not on the request.
+  background thread pool (`glowupai/jobs.py`), not on the request.
 - Prerequisites: active Premium; the photo store must still contain accepted
   captures.
 - Expected errors: `400 user not found`; `403 Historical reprocessing requires
@@ -731,7 +731,7 @@ not `route` alone.
 - Expected errors: `400 user not found`; `500` if photo deletion/database
   deletion fails. The route has no confirmation token or idempotency key.
 - Ideal UI state: irreversible action behind a typed `DELETE` confirmation,
-  final warning, and disabled submit. On `204`, clear only SkinProof session
+  final warning, and disabled submit. On `204`, clear only GlowupAI session
   storage, in-memory caches, and any pending requests, then return to the
   welcome screen. The static page currently calls `localStorage.clear()`, which
   can erase unrelated application data.
@@ -765,7 +765,7 @@ client should never ship a button that calls it.
 
 ### 1. The current static shell is not sequential
 
-`skinproof/static/index.html` renders Overview, Capture, Routine, Insights,
+`glowupai/static/index.html` renders Overview, Capture, Routine, Insights,
 Discover, and Account tabs at boot. Its `view()` function permits navigation
 to every view before a profile or consent exists. It does route a newly created
 profile to Account for consent, but the navigation remains available and
@@ -882,7 +882,7 @@ fields before changing either client.
 
 ### 12. Account deletion must be scoped and recoverable at the UI boundary
 
-Require a typed confirmation, cancel in-flight reads, remove only the SkinProof
+Require a typed confirmation, cancel in-flight reads, remove only the GlowupAI
 session key, invalidate cached profile/data, and route to onboarding after the
 `204`. Do not show a success state until the server response is received.
 
@@ -917,7 +917,7 @@ session key, invalidate cached profile/data, and route to onboarding after the
    and, once `completed`, `result: {"candidates":[{"name","brand","category",
    "ingredients":[...]}],"message"}`. `candidates` is empty with an
    explanatory `message` when the AI vision provider is not configured
-   (`GEMINI_API_KEY`/`SKINPROOF_GEMINI_ENABLED` unset) — always handle that
+   (`GEMINI_API_KEY`/`GLOWUPAI_GEMINI_ENABLED` unset) — always handle that
    case with a manual "add product" fallback.
 3. `POST /api/users/{user_id}/shelf-scan/{job_id}/confirm`
    `{"selections":[{"name","category","ingredients","stabilization_days"}]}`

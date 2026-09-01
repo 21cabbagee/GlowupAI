@@ -75,10 +75,10 @@ generate_photo_key() {
 generate_all_secrets() {
     echo_info "Generating all required secrets..."
     echo ""
-    echo "SKINPROOF_ADMIN_TOKEN:"
+    echo "GLOWUPAI_ADMIN_TOKEN:"
     generate_admin_token
     echo ""
-    echo "SKINPROOF_PHOTO_KEY:"
+    echo "GLOWUPAI_PHOTO_KEY:"
     generate_photo_key
     echo ""
     echo_info "Copy these values to Railway Dashboard -> Variables"
@@ -152,8 +152,8 @@ check_health() {
 check_database() {
     echo_info "Checking database connection..."
     railway run python3 -c "
-from skinproof.config import Settings
-from skinproof.complete_db import build_full_database
+from glowupai.config import Settings
+from glowupai.complete_db import build_full_database
 
 settings = Settings.from_env()
 db = build_full_database(settings)
@@ -166,8 +166,8 @@ print(f'Database healthy: {result}')
 run_migrations() {
     echo_info "Running database migrations..."
     railway run python3 -c "
-from skinproof.config import Settings
-from skinproof.complete_db import build_full_database
+from glowupai.config import Settings
+from glowupai.complete_db import build_full_database
 
 settings = Settings.from_env()
 db = build_full_database(settings)
@@ -322,8 +322,8 @@ ${YELLOW}Setup:${NC}
   railway_link           - Link existing project
 
 ${YELLOW}Secrets:${NC}
-  generate_admin_token   - Generate SKINPROOF_ADMIN_TOKEN
-  generate_photo_key     - Generate SKINPROOF_PHOTO_KEY
+  generate_admin_token   - Generate GLOWUPAI_ADMIN_TOKEN
+  generate_photo_key     - Generate GLOWUPAI_PHOTO_KEY
   generate_all_secrets   - Generate all required secrets
 
 ${YELLOW}Deployment:${NC}

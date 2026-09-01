@@ -147,7 +147,7 @@ class MLModelInference:
         self.model = SkinAnalysisModel(pretrained=False)
 
         try:
-            checkpoint = torch.load(model_path, map_location=self.device)
+            checkpoint = torch.load(model_path, map_location=self.device, weights_only=True)
 
             # Handle both full checkpoint and state_dict only formats
             if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:

@@ -13,7 +13,7 @@ import os
 import smtplib
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import requests
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class ModelMonitor:
     """Monitors ML model health and performance."""
 
-    def __init__(self, db: Database):
+    def __init__(self, db: Database) -> None:
         self.db = db
         self.alert_thresholds = {
             "variance_threshold": 0.05,  # 5% variance
@@ -37,9 +37,9 @@ class ModelMonitor:
     def track_prediction(
         self,
         capture_id: str,
-        predictions: dict[str, float],
+        predictions: Dict[str, float],
         processing_time_ms: float,
-        error: str | None = None,
+        error: Optional[str] = None,
     ) -> None:
         """
         Track a single prediction for monitoring.
@@ -71,7 +71,7 @@ class ModelMonitor:
             ),
         )
 
-    def calculate_variance(self, time_window_hours: int = 24) -> dict[str, float]:
+    def calculate_variance(self, time_window_hours: int = 24) -> Dict[str, float]:
         """
         Calculate prediction variance for each metric.
 
@@ -96,7 +96,7 @@ class ModelMonitor:
         )
 
         # Group by capture ID
-        capture_groups: dict[str, list[dict]] = {}
+        capture_groups: Dict[str, List[Dict[str, Any]]] = {}
         for row in predictions:
             capture_id = row["capture_id"]
             try:
@@ -135,7 +135,7 @@ class ModelMonitor:
 
         return avg_variances
 
-    def detect_distribution_drift(self, time_window_days: int = 7) -> dict[str, float]:
+    def detect_distribution_drift(self, time_window_days: int = 7) -> Dict[str, float]:
         """
         Detect distribution drift in predictions.
 
@@ -240,7 +240,7 @@ class ModelMonitor:
 
         return result["errors"] / result["total"]
 
-    def get_processing_time_stats(self, time_window_hours: int = 24) -> dict[str, float]:
+    def get_processing_time_stats(self, time_window_hours: int = 24) -> Dict[str, float]:
         """
         Get processing time statistics.
 
@@ -273,7 +273,7 @@ class ModelMonitor:
             "mean": float(np.mean(time_values)),
         }
 
-    def get_health_status(self) -> dict[str, Any]:
+    def get_health_status(self) -> Dict[str, Any]:
         """
         Get overall model health status.
 
@@ -451,7 +451,7 @@ Timestamp: {health['timestamp']}
             ),
         )
 
-    def generate_daily_report(self) -> dict[str, Any]:
+    def generate_daily_report(self) -> Dict[str, Any]:
         """
         Generate daily summary report.
 

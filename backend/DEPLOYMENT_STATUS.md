@@ -84,7 +84,7 @@ Migration files to be applied on staging:
 # Or use Render shell:
 # 1. Go to service page
 # 2. Click "Shell"
-# 3. Run: python -m skinproof.migrations
+# 3. Run: python -m glowupai.migrations
 ```
 
 ### 4. Verify Deployment
@@ -142,8 +142,8 @@ git push origin main
 ### Code Changes Summary
 ```
 Backend Changes:
-- skinproof/complete_api.py: +243 lines
-- skinproof/complete_service.py: +129 lines
+- glowupai/complete_api.py: +243 lines
+- glowupai/complete_service.py: +129 lines
 - New files: analytics.py, rate_limiter.py, monitoring.py, performance.py
 - Tests: +comprehensive test suite
 - Migrations: +5 new migration files

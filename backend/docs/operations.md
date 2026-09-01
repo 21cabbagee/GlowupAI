@@ -9,18 +9,18 @@ covers the one-time and per-deploy provider steps.
 
 ```powershell
 python -m pip install -e .
-python -m skinproof.cli serve
+python -m glowupai.cli serve
 ```
 
 The browser surface is `/`; interactive API documentation is `/docs`.
 
-For development, omit `SKINPROOF_PHOTO_DIR` and the server uses memory-only
+For development, omit `GLOWUPAI_PHOTO_DIR` and the server uses memory-only
 photo storage. For encrypted local object storage, set a 32-byte base64 key:
 
 ```powershell
-$env:SKINPROOF_PHOTO_DIR = ".data/photos"
-$env:SKINPROOF_PHOTO_KEY = "<base64-encoded-32-byte-key>"
-python -m skinproof.cli serve
+$env:GLOWUPAI_PHOTO_DIR = ".data/photos"
+$env:GLOWUPAI_PHOTO_KEY = "<base64-encoded-32-byte-key>"
+python -m glowupai.cli serve
 ```
 
 The `cryptography` dependency is declared in `pyproject.toml`; a deployment
@@ -29,7 +29,7 @@ must install project dependencies before enabling that store.
 ## PostgreSQL setup
 
 Set DATABASE_URL in the process environment. The API opens a bounded
-connection pool and applies every unapplied file in skinproof/migrations
+connection pool and applies every unapplied file in glowupai/migrations
 before serving requests. Startup fails fast if the initial connection is
 unavailable; /api/health reports database, database_ready, and returns 503
 if a later health check fails.
@@ -47,9 +47,9 @@ required.
 - provide DATABASE_URL and verify /api/health reports database_ready=true;
 - use a managed PostgreSQL backup/restore policy and keep migration files in
   the release artifact;
-- set SKINPROOF_DB_POOL_MAX_SIZE to match the host worker count and the
+- set GLOWUPAI_DB_POOL_MAX_SIZE to match the host worker count and the
   provider connection limit;
-- keep SKINPROOF_ENV=production and disable legacy local key-file lookup.
+- keep GLOWUPAI_ENV=production and disable legacy local key-file lookup.
 
 ## Before accepting real users
 
@@ -90,9 +90,9 @@ required.
   (`railway.json`); a crash-looping deploy stops retrying rather than
   burning build minutes indefinitely — check `railway logs` before
   re-triggering manually.
-- The container runs as a non-root user (`skinproof`, uid 10001). If a
+- The container runs as a non-root user (`glowupai`, uid 10001). If a
   future change needs to write outside `/app`, it must be an explicitly
   writable, pre-created, owned directory — not assumed root access.
 - Photo storage is not durable across redeploys unless a persistent volume
-  is attached and `SKINPROOF_PHOTO_DIR`/`SKINPROOF_PHOTO_KEY` point at it;
+  is attached and `GLOWUPAI_PHOTO_DIR`/`GLOWUPAI_PHOTO_KEY` point at it;
   see `DEPLOY.md` §4 for the full tradeoff and the interim recommendation.

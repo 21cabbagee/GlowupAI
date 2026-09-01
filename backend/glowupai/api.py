@@ -88,7 +88,7 @@ def _close_databases() -> None:
     apps.extend(_legacy_apps)
     seen = set()
     for current in apps:
-        database = getattr(getattr(current, "state", None), "skinproof", None)
+        database = getattr(getattr(current, "state", None), "glowupai", None)
         database = getattr(database, "db", None)
         if database is not None and id(database) not in seen:
             seen.add(id(database))

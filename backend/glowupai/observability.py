@@ -66,8 +66,8 @@ class MetricsCollector:
             error_rate = self.metrics["error_count"] / self.metrics["request_count"]
 
         return {
-            "total_requests": self.metrics["request_count"],
-            "total_errors": self.metrics["error_count"],
+            "requests": self.metrics["request_count"],
+            "errors": self.metrics["error_count"],
             "error_rate": round(error_rate * 100, 2),
             "avg_duration_ms": round(avg_duration, 2),
             "top_endpoints": sorted(
@@ -107,9 +107,10 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
             return response
 
-        except Exception as exc:
+        except (RuntimeError, ValueError, OSError, IOError) as exc:
             duration_ms = (time.time() - start_time) * 1000
             # Record as 500 error
+            logger.error(f"Request processing failed: {exc}")
             self.collector.record_request(
                 request.method, request.url.path, 500, duration_ms,
             )
@@ -117,7 +118,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
 
 def setup_opentelemetry(
-    service_name: str = "skinproof", enabled: bool = False,
+    service_name: str = "glowupai", enabled: bool = False,
 ) -> dict | None:
     """Setup OpenTelemetry instrumentation.
 
@@ -125,7 +126,7 @@ def setup_opentelemetry(
     1. Install: pip install opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-fastapi
     2. Set environment variables:
        - OTEL_EXPORTER_OTLP_ENDPOINT (e.g., http://collector:4317)
-       - OTEL_SERVICE_NAME=skinproof
+       - OTEL_SERVICE_NAME=glowupai
     3. Set enabled=True
 
     Args:
@@ -178,7 +179,7 @@ def setup_opentelemetry(
             "opentelemetry-instrumentation-fastapi opentelemetry-exporter-otlp",
         )
         return None
-    except Exception as exc:
+    except (RuntimeError, ValueError, OSError) as exc:
         logger.error(f"Failed to initialize OpenTelemetry: {exc}")
         return None
 
@@ -195,5 +196,5 @@ def instrument_fastapi(app, otel_config: dict | None):
             instrumentor = otel_config["instrumentor"]
             instrumentor.instrument_app(app)
             logger.info("FastAPI instrumented with OpenTelemetry")
-        except Exception as exc:
+        except (RuntimeError, ValueError, AttributeError) as exc:
             logger.error(f"Failed to instrument FastAPI: {exc}")

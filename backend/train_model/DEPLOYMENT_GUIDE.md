@@ -40,11 +40,11 @@ If you need to deploy manually:
 
 ```bash
 # 1. Create models directory
-mkdir -p /Users/21cabbage/GlowupAI/backend/skinproof/models
+mkdir -p /Users/21cabbage/GlowupAI/backend/glowupai/models
 
 # 2. Copy model
 cp checkpoints/best_model.pth \
-   /Users/21cabbage/GlowupAI/backend/skinproof/models/skin_analysis_v2.pth
+   /Users/21cabbage/GlowupAI/backend/glowupai/models/skin_analysis_v2.pth
 
 # 3. Test model loading
 cd /Users/21cabbage/GlowupAI/backend/train_model
@@ -71,7 +71,7 @@ USE_NEW_MODEL=1
 ### Option C: Test Single Request
 
 ```bash
-USE_NEW_MODEL=1 python3 -m skinproof.cli analyze test_image.jpg
+USE_NEW_MODEL=1 python3 -m glowupai.cli analyze test_image.jpg
 ```
 
 ## Testing
@@ -102,7 +102,7 @@ Test with a specific image:
 cd /Users/21cabbage/GlowupAI/backend
 USE_NEW_MODEL=1 python3 << EOF
 from pathlib import Path
-from skinproof.ml_model import MLModelInference
+from glowupai.ml_model import MLModelInference
 
 model = MLModelInference()
 image_path = "path/to/test/image.jpg"
@@ -126,10 +126,10 @@ Compare old vs new model on same image:
 cd /Users/21cabbage/GlowupAI/backend
 
 # Test with deterministic model
-USE_NEW_MODEL=0 python3 -m skinproof.cli analyze test_image.jpg > old_result.json
+USE_NEW_MODEL=0 python3 -m glowupai.cli analyze test_image.jpg > old_result.json
 
 # Test with ML model
-USE_NEW_MODEL=1 python3 -m skinproof.cli analyze test_image.jpg > new_result.json
+USE_NEW_MODEL=1 python3 -m glowupai.cli analyze test_image.jpg > new_result.json
 
 # Compare results
 diff old_result.json new_result.json
@@ -154,7 +154,7 @@ The system will automatically fall back to the deterministic model.
 If you want to completely remove the ML model:
 
 ```bash
-rm -f /Users/21cabbage/GlowupAI/backend/skinproof/models/skin_analysis_v2.pth
+rm -f /Users/21cabbage/GlowupAI/backend/glowupai/models/skin_analysis_v2.pth
 ```
 
 ## Monitoring
@@ -211,7 +211,7 @@ RuntimeError: Failed to load ML model
 **Solution:**
 ```bash
 # Verify file
-ls -lh /Users/21cabbage/GlowupAI/backend/skinproof/models/skin_analysis_v2.pth
+ls -lh /Users/21cabbage/GlowupAI/backend/glowupai/models/skin_analysis_v2.pth
 
 # Re-deploy
 cd /Users/21cabbage/GlowupAI/backend/train_model
@@ -240,7 +240,7 @@ If inference is slow:
 
 1. **Check device:**
    ```python
-   from skinproof.ml_model import get_ml_model
+   from glowupai.ml_model import get_ml_model
    model = get_ml_model()
    print(model.device)  # Should be 'cpu' or 'cuda'
    ```
@@ -297,9 +297,9 @@ The `analyze()` function in `metrics.py`:
 | File | Location |
 |------|----------|
 | Trained checkpoint | `train_model/checkpoints/best_model.pth` |
-| Production model | `backend/skinproof/models/skin_analysis_v2.pth` |
-| ML integration | `backend/skinproof/ml_model.py` |
-| Analysis function | `backend/skinproof/metrics.py` |
+| Production model | `backend/glowupai/models/skin_analysis_v2.pth` |
+| ML integration | `backend/glowupai/ml_model.py` |
+| Analysis function | `backend/glowupai/metrics.py` |
 | Deployment script | `train_model/DEPLOY.sh` |
 | Consistency test | `train_model/test_consistency.py` |
 

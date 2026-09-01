@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from .db import Database
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class AnalyticsTracker:
     """Track analytics events for user behavior and product metrics."""
 
-    def __init__(self, db: Database):
+    def __init__(self, db: Database) -> None:
         self.db = db
         self._ensure_schema()
 
@@ -43,8 +43,8 @@ class AnalyticsTracker:
     def track_event(
         self,
         event_type: str,
-        user_id: str | None = None,
-        event_data: dict[str, Any] | None = None,
+        user_id: Optional[str] = None,
+        event_data: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Track an analytics event.
 
@@ -81,7 +81,7 @@ class AnalyticsTracker:
         return event_id
 
     def track_user_signup(
-        self, user_id: str, method: str, email: str | None = None,
+        self, user_id: str, method: str, email: Optional[str] = None,
     ) -> str:
         """Track user signup event.
 
@@ -104,7 +104,7 @@ class AnalyticsTracker:
         user_id: str,
         capture_id: str,
         is_baseline: bool = False,
-        metrics: dict[str, Any] | None = None,
+        metrics: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Track capture creation event.
 
@@ -128,7 +128,7 @@ class AnalyticsTracker:
         )
 
     def track_comparison_viewed(
-        self, user_id: str, capture_ids: list[str] | None = None,
+        self, user_id: str, capture_ids: Optional[List[str]] = None,
     ) -> str:
         """Track comparison view event.
 
@@ -178,8 +178,8 @@ class AnalyticsTracker:
         )
 
     def get_user_events(
-        self, user_id: str, event_type: str | None = None, limit: int = 100,
-    ) -> list[dict]:
+        self, user_id: str, event_type: Optional[str] = None, limit: int = 100,
+    ) -> List[Dict[str, Any]]:
         """Get analytics events for a user.
 
         Args:
@@ -224,8 +224,8 @@ class AnalyticsTracker:
         ]
 
     def get_event_counts(
-        self, days: int = 7, event_type: str | None = None,
-    ) -> dict[str, int]:
+        self, days: int = 7, event_type: Optional[str] = None,
+    ) -> Dict[str, int]:
         """Get event counts for the last N days.
 
         Args:
@@ -261,7 +261,7 @@ class AnalyticsTracker:
 
         return {row["event_type"]: row["count"] for row in rows}
 
-    def get_daily_stats(self, days: int = 30) -> list[dict]:
+    def get_daily_stats(self, days: int = 30) -> List[Dict[str, Any]]:
         """Get daily aggregated stats for the last N days.
 
         Args:
@@ -334,7 +334,7 @@ class AnalyticsTracker:
 
         return streak
 
-    def get_analytics_summary(self, days: int = 7) -> dict:
+    def get_analytics_summary(self, days: int = 7) -> Dict[str, Any]:
         """Get comprehensive analytics summary.
 
         Args:

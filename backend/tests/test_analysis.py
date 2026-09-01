@@ -151,7 +151,7 @@ class TestAnalysisPipeline(unittest.TestCase):
 class TestFaceDetection(unittest.TestCase):
     """Test face detection functionality."""
 
-    @patch('skinproof.pipeline.detect_face')
+    @patch('glowupai.pipeline.detect_face')
     def test_face_detection_called(self, mock_detect):
         """Test that face detection is called during analysis."""
         mock_detect.return_value = {

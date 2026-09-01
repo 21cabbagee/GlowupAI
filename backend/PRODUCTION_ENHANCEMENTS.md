@@ -16,7 +16,7 @@ The backend has been hardened for production deployment with:
 
 ## New Features
 
-### 1. Structured Logging (`skinproof/logging_config.py`)
+### 1. Structured Logging (`glowupai/logging_config.py`)
 
 **Features**:
 - JSON-formatted logs for easy parsing
@@ -26,8 +26,8 @@ The backend has been hardened for production deployment with:
 
 **Configuration**:
 ```bash
-SKINPROOF_LOG_LEVEL=INFO
-SKINPROOF_JSON_LOGS=1
+GLOWUPAI_LOG_LEVEL=INFO
+GLOWUPAI_JSON_LOGS=1
 ```
 
 **Log Format**:
@@ -35,7 +35,7 @@ SKINPROOF_JSON_LOGS=1
 {
   "timestamp": "2026-08-31T10:15:30Z",
   "level": "INFO",
-  "logger": "skinproof.access",
+  "logger": "glowupai.access",
   "message": "POST /api/captures",
   "request_id": "abc123",
   "user_id": "user_123",
@@ -44,7 +44,7 @@ SKINPROOF_JSON_LOGS=1
 }
 ```
 
-### 2. Production Middleware (`skinproof/middleware.py`)
+### 2. Production Middleware (`glowupai/middleware.py`)
 
 **Rate Limiting**:
 - Token bucket algorithm
@@ -67,8 +67,8 @@ SKINPROOF_JSON_LOGS=1
 
 **Configuration**:
 ```bash
-SKINPROOF_RATE_LIMIT_ENABLED=1
-SKINPROOF_REQUEST_TIMEOUT=30
+GLOWUPAI_RATE_LIMIT_ENABLED=1
+GLOWUPAI_REQUEST_TIMEOUT=30
 ```
 
 ### 3. Enhanced Health Check
@@ -102,7 +102,7 @@ SKINPROOF_REQUEST_TIMEOUT=30
 }
 ```
 
-### 4. Metrics Collection (`skinproof/observability.py`)
+### 4. Metrics Collection (`glowupai/observability.py`)
 
 **Endpoint**: `GET /api/metrics` (admin only)
 
@@ -150,15 +150,15 @@ SKINPROOF_REQUEST_TIMEOUT=30
 ```bash
 OTEL_ENABLED=1
 OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
-OTEL_SERVICE_NAME=skinproof
+OTEL_SERVICE_NAME=glowupai
 ```
 
 **Installation** (optional):
 ```bash
-pip install skinproof[otel]
+pip install glowupai[otel]
 ```
 
-### 6. Graceful Shutdown (`skinproof/shutdown.py`)
+### 6. Graceful Shutdown (`glowupai/shutdown.py`)
 
 **Features**:
 - Handles SIGTERM/SIGINT signals
@@ -170,11 +170,11 @@ pip install skinproof[otel]
 
 **New Configuration**:
 ```bash
-SKINPROOF_DB_POOL_MIN_SIZE=2
-SKINPROOF_DB_POOL_MAX_SIZE=20
-SKINPROOF_DB_CONNECT_TIMEOUT=10
-SKINPROOF_DB_POOL_TIMEOUT=30
-SKINPROOF_DB_STATEMENT_TIMEOUT=30000
+GLOWUPAI_DB_POOL_MIN_SIZE=2
+GLOWUPAI_DB_POOL_MAX_SIZE=20
+GLOWUPAI_DB_CONNECT_TIMEOUT=10
+GLOWUPAI_DB_POOL_TIMEOUT=30
+GLOWUPAI_DB_STATEMENT_TIMEOUT=30000
 ```
 
 **Features**:
@@ -193,7 +193,7 @@ SKINPROOF_DB_STATEMENT_TIMEOUT=30000
 
 **Configuration** (REQUIRED in production):
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai,https://www.glowup.ai
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai,https://www.glowup.ai
 ```
 
 **Runtime Validation**:
@@ -222,7 +222,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3
 
 ## Updated Configuration
 
-### Enhanced Settings (`skinproof/config.py`)
+### Enhanced Settings (`glowupai/config.py`)
 
 New settings added:
 - `database_statement_timeout`: Query timeout (milliseconds)
@@ -233,7 +233,7 @@ New settings added:
 - `request_timeout`: Request timeout (seconds)
 - `otel_enabled`: Enable OpenTelemetry
 
-### Updated Database Adapter (`skinproof/postgres_db.py`)
+### Updated Database Adapter (`glowupai/postgres_db.py`)
 
 - Accepts new timeout configurations
 - Statement timeout via connection options
@@ -301,19 +301,19 @@ New settings added:
 Add these new variables to your deployment:
 ```bash
 # Database timeouts
-SKINPROOF_DB_POOL_TIMEOUT=30
-SKINPROOF_DB_STATEMENT_TIMEOUT=30000
+GLOWUPAI_DB_POOL_TIMEOUT=30
+GLOWUPAI_DB_STATEMENT_TIMEOUT=30000
 
 # CORS (REQUIRED IN PRODUCTION)
-SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
+GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com
 
 # Logging
-SKINPROOF_LOG_LEVEL=INFO
-SKINPROOF_JSON_LOGS=1
+GLOWUPAI_LOG_LEVEL=INFO
+GLOWUPAI_JSON_LOGS=1
 
 # Rate limiting
-SKINPROOF_RATE_LIMIT_ENABLED=1
-SKINPROOF_REQUEST_TIMEOUT=30
+GLOWUPAI_RATE_LIMIT_ENABLED=1
+GLOWUPAI_REQUEST_TIMEOUT=30
 ```
 
 **2. Update Code**:
@@ -326,7 +326,7 @@ git pull origin main
 **3. Rebuild Docker Image**:
 
 ```bash
-docker build -t skinproof:latest .
+docker build -t glowupai:latest .
 ```
 
 **4. Deploy**:
@@ -344,18 +344,18 @@ Deploy using your platform's method (Railway, Render, K8s, etc.)
 
 **CORS Configuration** (IMPORTANT):
 
-If `SKINPROOF_ENV=production` and `SKINPROOF_ALLOWED_ORIGINS` is not set, the application will fail to start. This is intentional - you MUST configure CORS origins explicitly in production.
+If `GLOWUPAI_ENV=production` and `GLOWUPAI_ALLOWED_ORIGINS` is not set, the application will fail to start. This is intentional - you MUST configure CORS origins explicitly in production.
 
 **Workaround** (not recommended):
 ```bash
 # Allow all origins (NOT RECOMMENDED FOR PRODUCTION)
-SKINPROOF_ALLOWED_ORIGINS=*
+GLOWUPAI_ALLOWED_ORIGINS=*
 ```
 
 **Proper fix**:
 ```bash
 # Specify your actual frontend domains
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai,https://www.glowup.ai
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai,https://www.glowup.ai
 ```
 
 ## Performance Impact
@@ -416,13 +416,13 @@ curl -H "Authorization: Bearer <admin-token>" \
 **4. Test Timeout**:
 ```bash
 # Request should timeout after configured timeout
-SKINPROOF_REQUEST_TIMEOUT=5 uvicorn skinproof.api:app
+GLOWUPAI_REQUEST_TIMEOUT=5 uvicorn glowupai.api:app
 ```
 
 **5. Test Graceful Shutdown**:
 ```bash
 # Start server
-uvicorn skinproof.api:app &
+uvicorn glowupai.api:app &
 PID=$!
 
 # Send SIGTERM
@@ -470,11 +470,11 @@ Existing tests should continue to pass. New tests can be added for:
 
 ### Application Won't Start
 
-**Error**: `SKINPROOF_ALLOWED_ORIGINS must be explicitly configured in production`
+**Error**: `GLOWUPAI_ALLOWED_ORIGINS must be explicitly configured in production`
 
 **Solution**: Set CORS origins:
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
+GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com
 ```
 
 ### High Memory Usage
@@ -490,7 +490,7 @@ SKINPROOF_ALLOWED_ORIGINS=https://your-domain.com
 
 **Symptom**: Legitimate users getting 429 responses
 
-**Solution**: Adjust limits in `skinproof/middleware.py`:
+**Solution**: Adjust limits in `glowupai/middleware.py`:
 ```python
 self.limits = {
     "auth": (20, 40),  # Increased from (10, 20)
@@ -505,7 +505,7 @@ self.limits = {
 
 **Solution**: Check environment variable:
 ```bash
-SKINPROOF_JSON_LOGS=1
+GLOWUPAI_JSON_LOGS=1
 ```
 
 ## Future Enhancements

@@ -1,6 +1,6 @@
-# SkinProof
+# GlowupAI
 
-SkinProof is a privacy-first personal appearance evidence workspace. It turns
+GlowupAI is a privacy-first personal appearance evidence workspace. It turns
 standardized skin captures, routine events, products, and context into a
 longitudinal record with conservative trends and product verdicts.
 
@@ -150,9 +150,9 @@ not met. Domain validation failures return HTTP 400. See `/docs` and
 Next.js web/PWA (web/)
         | relative /api/* through Next rewrites
         v
-FastAPI (skinproof/complete_api.py)
+FastAPI (glowupai/complete_api.py)
         v
-CompleteSkinProofService
+CompleteGlowupAIService
   |-- capture quality + deterministic metrics
   |-- attribution + stabilization windows
   |-- entitlements + feature usage
@@ -165,14 +165,14 @@ CompleteSkinProofService
 
 | Path | Responsibility |
 | --- | --- |
-| `skinproof/complete_api.py` | FastAPI routes and validation |
-| `skinproof/complete_service.py` | Complete domain workflows |
-| `skinproof/metrics.py` | Deterministic appearance measurements |
-| `skinproof/attribution.py` | Stabilization-aware verdict logic |
-| `skinproof/photos.py` | Memory and encrypted photo stores |
-| `skinproof/postgres_db.py` | PostgreSQL pool and migration runner |
-| `skinproof/migrations/` | Production SQL migrations |
-| `skinproof/google_ai.py` | Optional grounded Gemini text/vision adapters |
+| `glowupai/complete_api.py` | FastAPI routes and validation |
+| `glowupai/complete_service.py` | Complete domain workflows |
+| `glowupai/metrics.py` | Deterministic appearance measurements |
+| `glowupai/attribution.py` | Stabilization-aware verdict logic |
+| `glowupai/photos.py` | Memory and encrypted photo stores |
+| `glowupai/postgres_db.py` | PostgreSQL pool and migration runner |
+| `glowupai/migrations/` | Production SQL migrations |
+| `glowupai/google_ai.py` | Optional grounded Gemini text/vision adapters |
 | `web/app/` | Next.js pages |
 | `web/lib/api.ts` | Typed frontend API client |
 | `tests/` | Core, API, growth, experience, and AI coverage |
@@ -183,24 +183,24 @@ Backend:
 
 ```powershell
 python -m pip install -e .
-python -m skinproof.cli serve
+python -m glowupai.cli serve
 ```
 
 Open <http://127.0.0.1:8000>. SQLite defaults to
-`.data/skinproof.sqlite3`, which is git-ignored.
+`.data/glowupai.sqlite3`, which is git-ignored.
 
 Web client in a second terminal:
 
 ```powershell
-python -m skinproof.cli serve --port 8010
+python -m glowupai.cli serve --port 8010
 
 cd web
 npm ci
-$env:SKINPROOF_API_ORIGIN = "http://127.0.0.1:8010"
+$env:GLOWUPAI_API_ORIGIN = "http://127.0.0.1:8010"
 npm run dev
 ```
 
-Open <http://localhost:3000>. Set `SKINPROOF_API_ORIGIN` before `npm run build`
+Open <http://localhost:3000>. Set `GLOWUPAI_API_ORIGIN` before `npm run build`
 too because Next.js evaluates rewrites at build time.
 
 PostgreSQL and API with Docker:
@@ -210,15 +210,15 @@ docker compose up --build
 ```
 
 This starts PostgreSQL 16 and the API on port 8000. A database URL selects
-PostgreSQL and applies `skinproof/migrations/`; SQLite remains the local/test
+PostgreSQL and applies `glowupai/migrations/`; SQLite remains the local/test
 fallback.
 
 ## Configuration
 
 Use `.env.example` for the PostgreSQL URL and pool, SQLite path, Gemini key and
 model, environment, consent policy, and model version. Additional storage
-settings include `SKINPROOF_PHOTO_DIR`, base64 32-byte
-`SKINPROOF_PHOTO_KEY`, and `SKINPROOF_RAW_RETENTION_DAYS`.
+settings include `GLOWUPAI_PHOTO_DIR`, base64 32-byte
+`GLOWUPAI_PHOTO_KEY`, and `GLOWUPAI_RAW_RETENTION_DAYS`.
 
 Keep real keys in environment variables or a secret manager. The ignored local
 `first.py` key bridge and `.data/` database are not pushed.
@@ -239,7 +239,7 @@ The Premium test profile already created in the current local database is:
 | Entitlement source | `local_seed` |
 | Email/password | Not applicable |
 
-To open it, run the API against the existing `.data/skinproof.sqlite3`, visit
+To open it, run the API against the existing `.data/glowupai.sqlite3`, visit
 `/sign-in`, enter the profile ID in **Local profile ID**, and continue. The
 database is git-ignored, so this exact profile exists only in the current local
 workspace. On a fresh clone, create a profile and use Account -> Upgrade, or
@@ -249,7 +249,7 @@ The separate temporary developer fixture on the sign-in page is:
 
 | Field | Value |
 | --- | --- |
-| Username | `skinproof-demo` |
+| Username | `glowupai-demo` |
 | Access code | `temporary-access-2026` |
 | Result | Creates/restores a local **Free** profile |
 
@@ -273,7 +273,7 @@ AI fallbacks, shelf scan, commerce, export, and deletion.
 - Billing is a local entitlement toggle, not a payment processor.
 - Managed object storage, KMS, billing webhooks, and a durable external job
   queue remain deployment adapters.
-- SkinProof is cosmetic tracking, not diagnosis.
+- GlowupAI is cosmetic tracking, not diagnosis.
 
 ## Supporting documentation
 

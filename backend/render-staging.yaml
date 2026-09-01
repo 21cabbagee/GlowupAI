@@ -8,13 +8,13 @@ services:
     branch: staging
     healthCheckPath: /api/health
     envVars:
-      - key: SKINPROOF_FIREBASE_PROJECT_ID
+      - key: GLOWUPAI_FIREBASE_PROJECT_ID
         value: glowup-ai-38ae7
-      - key: SKINPROOF_PHOTOS_DIR
+      - key: GLOWUPAI_PHOTOS_DIR
         value: /app/photos
-      - key: SKINPROOF_RATE_LIMIT_ENABLED
+      - key: GLOWUPAI_RATE_LIMIT_ENABLED
         value: "1"
-      - key: SKINPROOF_SKIP_QUALITY_CHECKS
+      - key: GLOWUPAI_SKIP_QUALITY_CHECKS
         value: "0"
       - key: ENVIRONMENT
         value: staging

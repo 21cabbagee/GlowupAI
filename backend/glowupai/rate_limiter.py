@@ -63,7 +63,7 @@ class RedisRateLimiter:
 
     async def check_rate_limit(
         self, client_id: str, path: str, method: str,
-    ) -> tuple[bool, int | None]:
+    ) -> tuple[bool, int | None, int, int]:
         """Check if request is within rate limit.
 
         Args:
@@ -72,7 +72,7 @@ class RedisRateLimiter:
             method: HTTP method
 
         Returns:
-            Tuple of (allowed: bool, retry_after: int | None)
+            Tuple of (allowed: bool, retry_after: int | None, remaining: int, reset: int)
         """
         limit_type = self._get_limit_type(path, method)
         max_requests, window_seconds = self.limits[limit_type]
@@ -88,7 +88,7 @@ class RedisRateLimiter:
 
     async def _check_redis_limit(
         self, client_id: str, limit_type: str, max_requests: int, window_seconds: int,
-    ) -> tuple[bool, int | None]:
+    ) -> tuple[bool, int | None, int, int]:
         """Check rate limit using Redis sliding window."""
         try:
             key = f"ratelimit:{limit_type}:{client_id}"
@@ -101,28 +101,32 @@ class RedisRateLimiter:
             # Count requests in current window
             request_count = self.redis_client.zcard(key)
 
+            # Get oldest entry for reset calculation
+            oldest = self.redis_client.zrange(key, 0, 0, withscores=True)
+            reset_timestamp = int(oldest[0][1] + window_seconds) if oldest else int(now + window_seconds)
+
             if request_count < max_requests:
                 # Add current request
                 self.redis_client.zadd(key, {str(now): now})
                 self.redis_client.expire(key, window_seconds)
-                return True, None
+                remaining = max_requests - request_count - 1
+                return True, None, remaining, reset_timestamp
             else:
                 # Calculate retry after
-                oldest = self.redis_client.zrange(key, 0, 0, withscores=True)
                 if oldest:
                     retry_after = int(oldest[0][1] + window_seconds - now) + 1
                 else:
                     retry_after = window_seconds
-                return False, retry_after
+                return False, retry_after, 0, reset_timestamp
 
-        except Exception as exc:
+        except (ConnectionError, TimeoutError, OSError, ValueError) as exc:
             logger.error(f"Redis rate limit check failed: {exc}")
             # Fall back to allowing request on Redis failure
-            return True, None
+            return True, None, max_requests, int(time.time() + window_seconds)
 
     async def _check_memory_limit(
         self, client_id: str, limit_type: str, max_requests: int, window_seconds: int,
-    ) -> tuple[bool, int | None]:
+    ) -> tuple[bool, int | None, int, int]:
         """Check rate limit using in-memory sliding window."""
         key = f"{limit_type}:{client_id}"
         now = time.time()
@@ -137,13 +141,17 @@ class RedisRateLimiter:
             ts for ts in self.fallback_memory[key] if ts > window_start
         ]
 
-        if len(self.fallback_memory[key]) < max_requests:
+        current_count = len(self.fallback_memory[key])
+        oldest = min(self.fallback_memory[key]) if self.fallback_memory[key] else now
+        reset_timestamp = int(oldest + window_seconds)
+
+        if current_count < max_requests:
             self.fallback_memory[key].append(now)
-            return True, None
+            remaining = max_requests - current_count - 1
+            return True, None, remaining, reset_timestamp
         else:
-            oldest = min(self.fallback_memory[key])
             retry_after = int(oldest + window_seconds - now) + 1
-            return False, retry_after
+            return False, retry_after, 0, reset_timestamp
 
 
 class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
@@ -182,13 +190,18 @@ class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
                 decoded = json.loads(base64.urlsafe_b64decode(payload))
                 if "sub" in decoded:
                     client_id = f"user:{decoded['sub']}"
-            except Exception:
-                pass  # Fall back to IP
+            except (ValueError, KeyError, IndexError, json.JSONDecodeError) as exc:
+                # JWT parsing failed - fall back to IP
+                logger.debug(f"Failed to extract user ID from JWT for rate limiting: {exc}")
+                pass
 
         # Check rate limit
-        allowed, retry_after = await self.limiter.check_rate_limit(
+        allowed, retry_after, remaining, reset_timestamp = await self.limiter.check_rate_limit(
             client_id, request.url.path, request.method,
         )
+
+        limit_type = self.limiter._get_limit_type(request.url.path, request.method)
+        max_requests = self.limiter.limits[limit_type][0]
 
         if not allowed:
             logger.warning(
@@ -202,11 +215,9 @@ class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
 
             headers = {
                 "Retry-After": str(retry_after or 60),
-                "X-RateLimit-Limit": str(self.limiter.limits.get(
-                    self.limiter._get_limit_type(request.url.path, request.method),
-                    (60, 60),
-                )[0]),
+                "X-RateLimit-Limit": str(max_requests),
                 "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": str(reset_timestamp),
             }
 
             return JSONResponse(
@@ -221,9 +232,8 @@ class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
 
         # Add rate limit info to response headers
         response = await call_next(request)
-        limit_type = self.limiter._get_limit_type(request.url.path, request.method)
-        max_requests = self.limiter.limits[limit_type][0]
-
         response.headers["X-RateLimit-Limit"] = str(max_requests)
+        response.headers["X-RateLimit-Remaining"] = str(remaining)
+        response.headers["X-RateLimit-Reset"] = str(reset_timestamp)
 
         return response

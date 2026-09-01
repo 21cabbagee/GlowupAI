@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import base64
 import json
+import sqlite3
 import uuid
 from datetime import UTC, datetime, timezone
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from .attribution import AttributionEngine, iso, parse_time
 from .capture import merge_quality
@@ -35,17 +36,27 @@ def new_id() -> str:
     return str(uuid.uuid4())
 
 
-def row_dict(row) -> dict | None:
+def row_dict(row: Any) -> Optional[Dict[str, Any]]:
     return None if row is None else dict(row)
+
+
+def enrich_metric(metric: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Add computed fields to metric dictionary for backward compatibility."""
+    if metric is None:
+        return None
+    # Add smoothness_score as inverse of texture_score
+    if "texture_score" in metric and "smoothness_score" not in metric:
+        metric["smoothness_score"] = round(100.0 - metric["texture_score"], 3)
+    return metric
 
 
 class GlowupAIService:
     def __init__(
         self,
         db: Database,
-        settings: Settings | None = None,
-        photos: PhotoStore | None = None,
-        insights: InsightService | None = None,
+        settings: Optional[Settings] = None,
+        photos: Optional[PhotoStore] = None,
+        insights: Optional[InsightService] = None,
     ) -> None:
         self.db = db
         self.settings = settings or Settings.from_env()
@@ -53,7 +64,7 @@ class GlowupAIService:
         self.insights = insights or GroundedInsightService()
         self.attribution = AttributionEngine(db)
 
-    def create_user(self, skin_type: str | None = None) -> dict:
+    def create_user(self, skin_type: Optional[str] = None) -> Dict[str, Any]:
         user_id = new_id()
         self.db.execute(
             "INSERT INTO users (id, skin_type) VALUES (?, ?)", (user_id, skin_type),
@@ -63,8 +74,8 @@ class GlowupAIService:
         )
 
     def grant_consent(
-        self, user_id: str, facial_data: bool, policy_version: str | None = None,
-    ) -> dict:
+        self, user_id: str, facial_data: bool, policy_version: Optional[str] = None,
+    ) -> Dict[str, Any]:
         self.require_user(user_id)
         state = "active" if facial_data else "declined"
         self.db.execute(
@@ -78,7 +89,7 @@ class GlowupAIService:
             self.db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,)),
         )
 
-    def require_user(self, user_id: str) -> dict:
+    def require_user(self, user_id: str) -> Dict[str, Any]:
         user = row_dict(
             self.db.fetchone(
                 "SELECT * FROM users WHERE id = ? AND deleted_at IS NULL", (user_id,),
@@ -88,7 +99,7 @@ class GlowupAIService:
             raise ValueError("user not found")
         return user
 
-    def require_consent(self, user_id: str) -> dict:
+    def require_consent(self, user_id: str) -> Dict[str, Any]:
         user = self.require_user(user_id)
         if user["consent_state"] != "active":
             raise PermissionError(
@@ -99,11 +110,11 @@ class GlowupAIService:
     def create_product(
         self,
         name: str,
-        barcode: str | None = None,
+        barcode: Optional[str] = None,
         category: str = "other",
-        ingredients=None,
+        ingredients: Any = None,
         stabilization_days: int = 14,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         if not name.strip():
             raise ValueError("product name is required")
         if stabilization_days < 0 or stabilization_days > 180:
@@ -121,7 +132,7 @@ class GlowupAIService:
                     stabilization_days,
                 ),
             )
-        except Exception as exc:
+        except sqlite3.IntegrityError as exc:
             if "UNIQUE" in str(exc).upper():
                 raise ValueError("barcode already exists") from exc
             raise
@@ -129,7 +140,7 @@ class GlowupAIService:
             self.db.fetchone("SELECT * FROM products WHERE id = ?", (product_id,)),
         )
 
-    def search_products(self, query: str) -> list[dict]:
+    def search_products(self, query: str) -> List[Dict[str, Any]]:
         pattern = f"%{query.strip()}%"
         return [
             row_dict(row)
@@ -144,12 +155,12 @@ class GlowupAIService:
         user_id: str,
         product_id: str,
         action: str,
-        timestamp: str | None = None,
+        timestamp: Optional[str] = None,
         slot: str = "unspecified",
-        dose: str | None = None,
-        frequency: str | None = None,
-        notes: str | None = None,
-    ) -> dict:
+        dose: Optional[str] = None,
+        frequency: Optional[str] = None,
+        notes: Optional[str] = None,
+    ) -> Dict[str, Any]:
         self.require_user(user_id)
         if not self.db.fetchone("SELECT id FROM products WHERE id = ?", (product_id,)):
             raise ValueError("product not found")
@@ -180,11 +191,11 @@ class GlowupAIService:
         self,
         user_id: str,
         image_bytes: bytes,
-        quality_data: dict | None = None,
-        captured_at: str | None = None,
-        device_meta: dict | None = None,
+        quality_data: Optional[Dict[str, Any]] = None,
+        captured_at: Optional[str] = None,
+        device_meta: Optional[Dict[str, Any]] = None,
         is_baseline: bool = False,
-    ) -> dict:
+    ) -> Dict[str, Any]:
         user = self.require_consent(user_id)
         if not image_bytes:
             raise ValueError("image is required")
@@ -231,10 +242,12 @@ class GlowupAIService:
         capture["capture_quality"] = json.loads(capture.pop("capture_quality_json"))
         capture["device_meta"] = json.loads(capture.pop("device_meta_json"))
         capture["analysis_job_id"] = job_id
-        capture["metric"] = row_dict(
-            self.db.fetchone(
-                "SELECT * FROM metric_snapshots WHERE photo_id = ?", (capture_id,),
-            ),
+        capture["metric"] = enrich_metric(
+            row_dict(
+                self.db.fetchone(
+                    "SELECT * FROM metric_snapshots WHERE photo_id = ?", (capture_id,),
+                ),
+            )
         )
         return capture
 
@@ -265,7 +278,7 @@ class GlowupAIService:
                         # Fallback to PIL-based preprocessing if OpenCV unavailable
                         preprocessed_bytes = preprocess_for_analysis_pil(image_bytes)
                     image_bytes = preprocessed_bytes
-                except Exception as exc:
+                except (OSError, IOError, ValueError, RuntimeError) as exc:
                     # If preprocessing fails, continue with original image
                     # but log the error for monitoring
                     import logging
@@ -317,14 +330,17 @@ class GlowupAIService:
                 "UPDATE analysis_jobs SET status = 'completed', completed_at = ? WHERE id = ?",
                 (now_iso(), job_id),
             )
-        except Exception as exc:
+        except (OSError, IOError, ValueError, RuntimeError, sqlite3.Error) as exc:
+            # Catch specific job failure types for proper error tracking
+            import logging
+            logging.error(f"Analysis job {job_id} failed: {exc}")
             self.db.execute(
                 "UPDATE analysis_jobs SET status = 'failed', error = ?, completed_at = ? WHERE id = ?",
                 (str(exc), now_iso(), job_id),
             )
             raise
 
-    def refresh_verdicts(self, user_id: str) -> list[dict]:
+    def refresh_verdicts(self, user_id: str) -> List[Dict[str, Any]]:
         results = self.attribution.evaluate_user(user_id)
         for result in results:
             text = self.insights.generate(result.as_dict())
@@ -365,12 +381,12 @@ class GlowupAIService:
         return [self._decode_verdict(row) for row in latest]
 
     @staticmethod
-    def _decode_verdict(row) -> dict:
+    def _decode_verdict(row: Any) -> Dict[str, Any]:
         result = row_dict(row)
         result["evidence"] = json.loads(result.pop("evidence_json"))
         return result
 
-    def dashboard(self, user_id: str) -> dict:
+    def dashboard(self, user_id: str) -> Dict[str, Any]:
         user = self.require_user(user_id)
         verdicts = self.refresh_verdicts(user_id)
         history = self.history(user_id)
@@ -389,7 +405,7 @@ class GlowupAIService:
             "disclaimer": "Cosmetic tracking only; SkinProof does not diagnose or treat medical conditions.",
         }
 
-    def history(self, user_id: str) -> list[dict]:
+    def history(self, user_id: str) -> List[Dict[str, Any]]:
         self.require_user(user_id)
         rows = self.db.fetchall(
             """SELECT c.id, c.captured_at, c.is_baseline, c.capture_quality_json, m.model_version,
@@ -404,10 +420,12 @@ class GlowupAIService:
             item = row_dict(row)
             item["capture_quality"] = json.loads(item.pop("capture_quality_json"))
             item["noise_floor"] = json.loads(item.pop("noise_floor_json"))
+            # Add smoothness_score for backward compatibility
+            enrich_metric(item)
             result.append(item)
         return result
 
-    def export_user(self, user_id: str) -> dict:
+    def export_user(self, user_id: str) -> Dict[str, Any]:
         user = self.require_user(user_id)
         return {
             "export_version": "1",
@@ -443,11 +461,11 @@ class GlowupAIService:
         self.photos.delete_user(user_id)
         self.db.execute("DELETE FROM users WHERE id = ?", (user_id,))
 
-    def ingredient_explainer(self, product_id: str) -> dict:
+    def ingredient_explainer(self, product_id: str) -> Dict[str, Any]:
         product = self.db.fetchone("SELECT * FROM products WHERE id = ?", (product_id,))
         if not product:
             raise ValueError("product not found")
         return explain(product["name"], product["ingredients_json"])
 
-    def triage_question(self, text: str) -> dict:
+    def triage_question(self, text: str) -> Dict[str, Any]:
         return triage(text).as_dict()

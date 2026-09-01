@@ -50,7 +50,7 @@ class RateLimiter:
         else:
             return "api"
 
-    async def check_rate_limit(self, client_id: str, endpoint: str) -> bool:
+    async def check_rate_limit(self, client_id: str, endpoint: str) -> tuple[int, int, int]:
         """Check if request is within rate limit.
 
         Args:
@@ -58,7 +58,7 @@ class RateLimiter:
             endpoint: Request endpoint path
 
         Returns:
-            True if within limit, False if exceeded
+            Tuple of (max_requests: int, remaining: int, reset_timestamp: int)
 
         Raises:
             RateLimitExceeded: If rate limit is exceeded
@@ -78,10 +78,16 @@ class RateLimiter:
             )
             client["last_update"] = now
 
+            # Calculate when bucket will be full again (reset time)
+            tokens_to_full = burst_size - client["tokens"]
+            seconds_to_full = (tokens_to_full * 60.0) / requests_per_minute
+            reset_timestamp = int(now + seconds_to_full)
+
             # Check if we have tokens
             if client["tokens"] >= 1:
                 client["tokens"] -= 1
-                return True
+                remaining = int(client["tokens"])
+                return requests_per_minute, remaining, reset_timestamp
             else:
                 # Calculate retry after time
                 retry_after = (
@@ -115,9 +121,33 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         client_id = request.client.host if request.client else "unknown"
 
         try:
-            await self.limiter.check_rate_limit(client_id, request.url.path)
-            return await call_next(request)
+            max_requests, remaining, reset_timestamp = await self.limiter.check_rate_limit(
+                client_id, request.url.path,
+            )
+
+            # Add rate limit headers to response
+            response = await call_next(request)
+            response.headers["X-RateLimit-Limit"] = str(max_requests)
+            response.headers["X-RateLimit-Remaining"] = str(remaining)
+            response.headers["X-RateLimit-Reset"] = str(reset_timestamp)
+
+            return response
         except RateLimitExceeded as exc:
+            # Extract retry_after from exception message
+            retry_after = "60"
+            if "Retry after" in str(exc):
+                try:
+                    retry_after = str(exc).split("Retry after ")[1].split(" seconds")[0]
+                except (IndexError, ValueError):
+                    pass
+
+            # Calculate reset timestamp (now + retry_after)
+            reset_timestamp = int(time.time() + int(retry_after))
+
+            # Get max requests for this endpoint type
+            endpoint_type = self.limiter._get_endpoint_type(request.url.path)
+            max_requests = self.limiter.limits[endpoint_type][0]
+
             logger.warning(
                 f"Rate limit exceeded for {client_id} on {request.url.path}",
                 extra={"client_id": client_id, "endpoint": request.url.path},
@@ -125,7 +155,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={"detail": str(exc), "error_code": "RATE_LIMIT_EXCEEDED"},
-                headers={"Retry-After": "60"},
+                headers={
+                    "Retry-After": retry_after,
+                    "X-RateLimit-Limit": str(max_requests),
+                    "X-RateLimit-Remaining": "0",
+                    "X-RateLimit-Reset": str(reset_timestamp),
+                },
             )
 
 
@@ -192,11 +227,11 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             )
 
 
-def create_health_checker(db_check: Callable, settings) -> Callable:
+def create_health_checker(db, settings) -> Callable:
     """Create a comprehensive health check function.
 
     Args:
-        db_check: Function to check database health
+        db: Database instance with healthcheck and count_tables methods
         settings: Application settings
 
     Returns:
@@ -209,14 +244,17 @@ def create_health_checker(db_check: Callable, settings) -> Callable:
 
         # Database check
         try:
-            db_healthy = await asyncio.get_event_loop().run_in_executor(None, db_check)
+            db_healthy = await asyncio.get_event_loop().run_in_executor(None, db.healthcheck)
+            table_count = await asyncio.get_event_loop().run_in_executor(None, db.count_tables)
             checks["checks"]["database"] = {
                 "status": "healthy" if db_healthy else "unhealthy",
                 "backend": getattr(settings, "database_url", None)
                 and "postgres"
                 or "sqlite",
+                "database_tables": table_count,
             }
-        except Exception as exc:
+        except (OSError, RuntimeError, ValueError) as exc:
+            logger.error(f"Database health check failed: {exc}")
             checks["checks"]["database"] = {"status": "unhealthy", "error": str(exc)}
             checks["status"] = "unhealthy"
 
@@ -231,7 +269,8 @@ def create_health_checker(db_check: Callable, settings) -> Callable:
                     "status": "healthy" if free_gb > 1.0 else "warning",
                     "free_gb": round(free_gb, 2),
                 }
-        except Exception as exc:
+        except (OSError, IOError) as exc:
+            logger.warning(f"Disk health check failed: {exc}")
             checks["checks"]["disk"] = {"status": "unknown", "error": str(exc)}
 
         # Gemini API check (if enabled)

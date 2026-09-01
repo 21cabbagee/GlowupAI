@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .complete_db import build_full_database
 from .config import Settings
@@ -16,6 +16,9 @@ from .service import GlowupAIService
 
 
 class UserCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    firebase_uid: str
+    email: str | None = None
     skin_type: str | None = None
 
 
@@ -63,11 +66,11 @@ def create_app(service: GlowupAIService | None = None) -> FastAPI:
         build_full_database(settings), settings, build_photo_store(settings.photo_dir),
     )
     app = FastAPI(
-        title="SkinProof API",
+        title="GlowupAI API",
         version="0.1.0",
         description="Cosmetic tracking, not diagnosis.",
     )
-    app.state.skinproof = active_service
+    app.state.glowupai = active_service
 
     def run(callable_, *args, **kwargs):
         try:

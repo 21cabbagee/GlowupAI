@@ -1,0 +1,6 @@
+Method,Name,Error,Occurrences,First Seen,Last Seen
+GET,/api/history,CatchResponseError('Status: 429'),15,2026-09-01T11:22:45Z,2026-09-01T11:22:57Z
+POST,/api/captures/analyze,CatchResponseError('Status: 429'),74,2026-09-01T11:22:01Z,2026-09-01T11:22:54Z
+GET,/api/history,CatchResponseError('Status: 500'),10,2026-09-01T11:22:01Z,2026-09-01T11:22:26Z
+POST,/api/captures [baseline],HTTPError('429 Client Error: Too Many Requests for url: /api/captures [baseline]'),8,2026-09-01T11:21:59Z,2026-09-01T11:22:02Z
+GET,/api/dashboard,CatchResponseError('Status: 429'),116,2026-09-01T11:22:11Z,2026-09-01T11:22:56Z

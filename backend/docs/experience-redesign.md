@@ -1,4 +1,4 @@
-# SkinProof consumer experience redesign
+# GlowupAI consumer experience redesign
 
 Status: implementation specification  
 Audience: product, design, frontend, backend, QA  
@@ -8,13 +8,13 @@ Scope: onboarding through daily use; this document does not change source code.
 
 ## 1. Product decision
 
-SkinProof should feel like a private, calm ritual that happens one intentional
+GlowupAI should feel like a private, calm ritual that happens one intentional
 screen at a time. The interaction grammar may borrow from Bumble's pacing—large
 visual focus, one decision per screen, direct primary action, directional
 transitions, and a strong personal profile—but it must not copy Bumble's brand,
 colors, language, or swipe-to-match metaphor.
 
-The current `skinproof/static/index.html` is the opposite of that experience:
+The current `glowupai/static/index.html` is the opposite of that experience:
 
 - it opens with a persistent desktop-style tab bar (`Overview`, `Capture`,
   `Routine`, `Insights`, `Discover`, `Account`);
@@ -112,7 +112,7 @@ screen is valid. Do not expose the application nav until screen 12 is complete.
 **Purpose:** establish tone and invite the first commitment.
 
 **Visual:** warm off-white background, full-height portrait composition, one
-abstract measurement frame or live-light illustration, SkinProof wordmark, no
+abstract measurement frame or live-light illustration, GlowupAI wordmark, no
 charts and no product grid.
 
 **Copy:**
@@ -252,18 +252,18 @@ not a real face photo.
 **Copy:**
 
 - Heading: `Your face is yours.`
-- Body: `To compare your appearance over time, SkinProof stores the captures you choose to take and creates measurements from them.`
+- Body: `To compare your appearance over time, GlowupAI stores the captures you choose to take and creates measurements from them.`
 - Point 1: `You choose every capture.`
 - Point 2: `We use it for cosmetic appearance tracking, not diagnosis.`
 - Point 3: `You can export or delete your data from your profile.`
-- Checkbox label: `I understand and consent to facial-data capture for my SkinProof profile.`
+- Checkbox label: `I understand and consent to facial-data capture for my GlowupAI profile.`
 - Primary CTA: `I consent and continue`
 - Secondary: `Not now`
 - Link: `Read the full privacy policy`
 
 **Interaction:** the primary CTA remains disabled until the checkbox is checked.
 `Not now` moves to a consent-declined state with `Return to consent` and
-`Leave SkinProof`; it must not unlock camera access. Submit
+`Leave GlowupAI`; it must not unlock camera access. Submit
 `POST /api/users/{user_id}/consent` with `facial_data: true` and the active
 policy version. Audit success only after the response is confirmed.
 

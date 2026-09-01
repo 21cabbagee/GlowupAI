@@ -24,7 +24,7 @@ Use this checklist when deploying the GlowUp AI Backend with all production feat
 
 ### Database
 
-- [ ] Review migration: `skinproof/migrations/0005_analytics_and_indexes.sql`
+- [ ] Review migration: `glowupai/migrations/0005_analytics_and_indexes.sql`
 - [ ] Test migration on development database first
 - [ ] Backup production database before deployment
 
@@ -32,12 +32,12 @@ Use this checklist when deploying the GlowUp AI Backend with all production feat
 
 ### Required Variables
 
-- [ ] `SKINPROOF_ENV=production`
-- [ ] `SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7`
-- [ ] `SKINPROOF_ALLOWED_ORIGINS=https://your-app.com`
-- [ ] `SKINPROOF_DISABLE_LEGACY_KEY_FILE=1`
+- [ ] `GLOWUPAI_ENV=production`
+- [ ] `GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7`
+- [ ] `GLOWUPAI_ALLOWED_ORIGINS=https://your-app.com`
+- [ ] `GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1`
 - [ ] `GEMINI_API_KEY=your_gemini_key`
-- [ ] `SKINPROOF_ADMIN_TOKEN=your_secure_token` (32+ chars)
+- [ ] `GLOWUPAI_ADMIN_TOKEN=your_secure_token` (32+ chars)
 
 ### Monitoring (Recommended)
 
@@ -54,11 +54,11 @@ Use this checklist when deploying the GlowUp AI Backend with all production feat
 
 ### Optional Tuning
 
-- [ ] `SKINPROOF_MAX_IMAGE_DIMENSION=1024` (default)
-- [ ] `SKINPROOF_IMAGE_QUALITY=85` (default)
-- [ ] `SKINPROOF_CACHE_ENABLED=1` (default)
-- [ ] `SKINPROOF_RATE_LIMIT_ENABLED=1` (default)
-- [ ] `SKINPROOF_SLOW_THRESHOLD_MS=1000` (default)
+- [ ] `GLOWUPAI_MAX_IMAGE_DIMENSION=1024` (default)
+- [ ] `GLOWUPAI_IMAGE_QUALITY=85` (default)
+- [ ] `GLOWUPAI_CACHE_ENABLED=1` (default)
+- [ ] `GLOWUPAI_RATE_LIMIT_ENABLED=1` (default)
+- [ ] `GLOWUPAI_SLOW_THRESHOLD_MS=1000` (default)
 
 ## Deployment Steps
 
@@ -77,7 +77,7 @@ Use this checklist when deploying the GlowUp AI Backend with all production feat
 
 3. **Set Environment Variables**
    ```bash
-   railway variables set SKINPROOF_ENV=production
+   railway variables set GLOWUPAI_ENV=production
    railway variables set SENTRY_DSN=your-sentry-dsn
    # ... (see Required Variables above)
    ```
@@ -255,7 +255,7 @@ curl -H "Authorization: Bearer $ADMIN_TOKEN" \
 
 ### Environment
 
-- [ ] `SKINPROOF_ENV=production` (not development)
+- [ ] `GLOWUPAI_ENV=production` (not development)
 - [ ] Legacy key file is disabled
 - [ ] Secrets are not in logs
 - [ ] Secrets are not in version control
@@ -309,10 +309,10 @@ If specific features cause issues, disable them:
 
 ```bash
 # Disable rate limiting
-railway variables set SKINPROOF_RATE_LIMIT_ENABLED=0
+railway variables set GLOWUPAI_RATE_LIMIT_ENABLED=0
 
 # Disable caching
-railway variables set SKINPROOF_CACHE_ENABLED=0
+railway variables set GLOWUPAI_CACHE_ENABLED=0
 
 # Remove Sentry
 railway variables delete SENTRY_DSN

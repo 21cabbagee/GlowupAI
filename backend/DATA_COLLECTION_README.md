@@ -31,10 +31,10 @@ This data collection pipeline enables continuous improvement of our ML model by 
 cd /Users/21cabbage/GlowupAI/backend
 
 # Apply migration to add new tables
-sqlite3 skinproof.db < skinproof/migrations/003_data_collection_feedback.sql
+sqlite3 glowupai.db < glowupai/migrations/003_data_collection_feedback.sql
 
 # Verify tables created
-sqlite3 skinproof.db "SELECT name FROM sqlite_master WHERE type='table';"
+sqlite3 glowupai.db "SELECT name FROM sqlite_master WHERE type='table';"
 ```
 
 ### 2. Configure Environment Variables
@@ -59,10 +59,10 @@ SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
 ### 3. Verify Installation
 
 ```python
-from skinproof.data_collection import DataCollector
-from skinproof.feedback import FeedbackCollector
-from skinproof.ml_monitoring import ModelMonitor
-from skinproof.db import Database
+from glowupai.data_collection import DataCollector
+from glowupai.feedback import FeedbackCollector
+from glowupai.ml_monitoring import ModelMonitor
+from glowupai.db import Database
 
 db = Database()
 collector = DataCollector(db)
@@ -79,7 +79,7 @@ print("✅ All modules loaded successfully")
 #### Collect Data from a Capture
 
 ```python
-from skinproof.data_collection import DataCollector
+from glowupai.data_collection import DataCollector
 
 collector = DataCollector(db)
 
@@ -161,7 +161,7 @@ print(f"Cleaned up {deleted} old files")
 #### Submit Feedback
 
 ```python
-from skinproof.feedback import FeedbackCollector
+from glowupai.feedback import FeedbackCollector
 
 feedback = FeedbackCollector(db)
 
@@ -228,7 +228,7 @@ feedback.export_feedback_for_retraining(
 #### Track Predictions
 
 ```python
-from skinproof.ml_monitoring import ModelMonitor
+from glowupai.ml_monitoring import ModelMonitor
 import time
 
 monitor = ModelMonitor(db)
@@ -443,13 +443,13 @@ Add to crontab:
 
 ```cron
 # Check model health every hour
-0 * * * * python -c "from skinproof.ml_monitoring import ModelMonitor; from skinproof.db import Database; ModelMonitor(Database()).check_and_alert()"
+0 * * * * python -c "from glowupai.ml_monitoring import ModelMonitor; from glowupai.db import Database; ModelMonitor(Database()).check_and_alert()"
 
 # Cleanup old data weekly (every Sunday at 2 AM)
-0 2 * * 0 python -c "from skinproof.data_collection import DataCollector; from skinproof.db import Database; DataCollector(Database()).cleanup_old_data(365)"
+0 2 * * 0 python -c "from glowupai.data_collection import DataCollector; from glowupai.db import Database; DataCollector(Database()).cleanup_old_data(365)"
 
 # Generate daily report (every day at 8 AM)
-0 8 * * * python -c "from skinproof.ml_monitoring import ModelMonitor; from skinproof.db import Database; print(ModelMonitor(Database()).generate_daily_report())" | mail -s "Daily ML Report" team@glowupai.com
+0 8 * * * python -c "from glowupai.ml_monitoring import ModelMonitor; from glowupai.db import Database; print(ModelMonitor(Database()).generate_daily_report())" | mail -s "Daily ML Report" team@glowupai.com
 ```
 
 ### Background Worker
@@ -457,8 +457,8 @@ Add to crontab:
 ```python
 # worker.py
 import time
-from skinproof.db import Database
-from skinproof.ml_monitoring import ModelMonitor
+from glowupai.db import Database
+from glowupai.ml_monitoring import ModelMonitor
 
 def monitor_loop():
     db = Database()

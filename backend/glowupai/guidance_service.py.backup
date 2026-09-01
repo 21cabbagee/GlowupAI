@@ -1,0 +1,805 @@
+from __future__ import annotations
+
+import json
+import re
+import statistics
+import uuid
+from datetime import datetime, timedelta, timezone
+
+from .attribution import parse_time
+from .catalog import explain, parse_ingredients
+from .safety import triage
+from .service import now_iso, row_dict
+
+PREMIUM_FEATURES = {
+    "experiments",
+    "ingredient_analysis",
+    "long_history",
+    "qna",
+    "discover",
+    "root_cause",
+    "budget_optimizer",
+    "derm_export",
+    "product_prediction",
+}
+
+
+def uid() -> str:
+    return str(uuid.uuid4())
+
+
+def dump(value) -> str:
+    return json.dumps(value, separators=(",", ":"), sort_keys=True)
+
+
+def load(value, default=None):
+    try:
+        return json.loads(value)
+    except (TypeError, ValueError):
+        return default if default is not None else {}
+
+
+def as_date(value: str) -> datetime:
+    parsed = parse_time(value)
+    return parsed.astimezone(timezone.utc)
+
+
+class GuidanceService:
+    """Recommendations, Q&A, experiments, predictions, and commerce."""
+
+    def __init__(self, db, parent_service, insights, vision, jobs):
+        self.db = db
+        self.parent = parent_service
+        self.insights = insights
+        self.vision = vision
+        self.jobs = jobs
+
+    # -- experiments (Premium) ----------------------------------------------
+
+    def create_experiment(
+        self,
+        user_id: str,
+        name: str,
+        hypothesis: str | None,
+        product_id: str,
+        primary_metric: str = "redness_score",
+        target_days: int = 14,
+        require_premium_fn=None,
+        require_consent_fn=None,
+        audit_fn=None,
+    ) -> dict:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Experiments")
+        if require_consent_fn:
+            require_consent_fn(user_id)
+        if primary_metric not in {
+            "blemish_count",
+            "redness_score",
+            "darkspot_area",
+            "texture_score",
+        }:
+            raise ValueError("unsupported primary metric")
+        if target_days < 1 or target_days > 180:
+            raise ValueError("target_days must be between 1 and 180")
+        if not self.db.fetchone("SELECT id FROM products WHERE id=?", (product_id,)):
+            raise ValueError("product not found")
+        experiment_id = uid()
+        start = now_iso()
+        self.db.execute(
+            "INSERT INTO experiments (id,user_id,name,hypothesis,primary_metric,status,start_at,target_days) VALUES (?,?,?,?,?,?,?,?)",
+            (
+                experiment_id,
+                user_id,
+                name.strip(),
+                hypothesis,
+                primary_metric,
+                "running",
+                start,
+                target_days,
+            ),
+        )
+        self.db.execute(
+            "INSERT INTO experiment_products (experiment_id,product_id,role) VALUES (?,?, 'test')",
+            (experiment_id, product_id),
+        )
+        if audit_fn:
+            audit_fn(
+                "experiment_started",
+                "experiment",
+                experiment_id,
+                user_id,
+                {"product_id": product_id},
+            )
+        return self.experiment(experiment_id, user_id)
+
+    def _early_stop(self, user_id: str, experiment: dict) -> dict:
+        """Tell the user when evidence is already conclusive, before target_days."""
+
+        if experiment["status"] != "running" or not experiment["products"]:
+            return {
+                "conclusive": False,
+                "message": "Not applicable to a non-running experiment.",
+            }
+        product_id = experiment["products"][0]["product_id"]
+        try:
+            result = self.parent.attribution.evaluate_product(user_id, product_id)
+        except ValueError:
+            return {"conclusive": False, "message": "No product evidence yet."}
+        days_stable = result.evidence.get("days_stable", 0)
+        target_days = experiment["target_days"]
+        if result.label == "likely_useful" and days_stable < target_days:
+            return {
+                "conclusive": True,
+                "recommended_status": "completed",
+                "message": f"Evidence is already conclusive after {days_stable} of {target_days} planned days: {result.product_name} is likely useful. You can stop the experiment early.",
+            }
+        if result.label == "investigate" and days_stable < target_days:
+            return {
+                "conclusive": True,
+                "recommended_status": "investigate",
+                "message": f"Evidence already shows a worsening signal after {days_stable} of {target_days} planned days. Stop and investigate before waiting the full window.",
+            }
+        return {
+            "conclusive": False,
+            "message": "Not yet conclusive; keep the routine stable until the target day count.",
+        }
+
+    def experiment(self, experiment_id: str, user_id: str, history_fn=None) -> dict:
+        row = self.db.fetchone(
+            "SELECT * FROM experiments WHERE id=? AND user_id=?",
+            (experiment_id, user_id),
+        )
+        if not row:
+            raise ValueError("experiment not found")
+        result = row_dict(row)
+        result["products"] = [
+            row_dict(item)
+            for item in self.db.fetchall(
+                "SELECT ep.*, p.name, p.category FROM experiment_products ep JOIN products p ON p.id=ep.product_id WHERE ep.experiment_id=?",
+                (experiment_id,),
+            )
+        ]
+        result["events"] = [
+            row_dict(item)
+            for item in self.db.fetchall(
+                "SELECT e.*, p.name AS product_name FROM experiment_events x JOIN routine_events e ON e.id=x.routine_event_id JOIN products p ON p.id=e.product_id WHERE x.experiment_id=? ORDER BY e.timestamp",
+                (experiment_id,),
+            )
+        ]
+        result["captures"] = history_fn(user_id) if history_fn else []
+        result["early_stop"] = self._early_stop(user_id, result)
+        return result
+
+    def experiments(self, user_id: str, require_premium_fn=None) -> list[dict]:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Experiments")
+        return [
+            self.experiment(row["id"], user_id)
+            for row in self.db.fetchall(
+                "SELECT id FROM experiments WHERE user_id=? ORDER BY created_at DESC",
+                (user_id,),
+            )
+        ]
+
+    def set_experiment_status(
+        self, user_id: str, experiment_id: str, status: str, require_premium_fn=None
+    ) -> dict:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Experiments")
+        if status not in {"planned", "running", "paused", "completed", "cancelled"}:
+            raise ValueError("invalid experiment status")
+        self.db.execute(
+            "UPDATE experiments SET status=?, end_at=? WHERE id=? AND user_id=?",
+            (
+                status,
+                now_iso() if status in {"completed", "cancelled"} else None,
+                experiment_id,
+                user_id,
+            ),
+        )
+        return self.experiment(experiment_id, user_id)
+
+    # -- grounded Q&A (Premium) ------------------------------------------------
+
+    def _qna_evidence(
+        self, user_id: str, history: list[dict], events: list[dict]
+    ) -> dict:
+        verdicts = [
+            self.parent._decode_verdict(row)
+            for row in self.db.fetchall(
+                """SELECT v.*,p.name AS product_name FROM verdicts v
+                   JOIN products p ON p.id=v.product_id WHERE v.user_id=?
+                   ORDER BY v.generated_at DESC LIMIT 20""",
+                (user_id,),
+            )
+        ]
+        return {
+            "capture_count": len(history),
+            "captures": history[-8:],
+            "routine_events": events[-20:],
+            "verdicts": verdicts,
+        }
+
+    def _deterministic_qna_answer(
+        self, user_id: str, question: str, history: list[dict], events: list[dict], refresh_verdicts_fn=None, root_cause_fn=None
+    ) -> str:
+        lowered = question.casefold()
+        if "ingredient" in lowered or "inci" in lowered:
+            return "Ingredient explanations are grounded in the maintained catalog. Open a product's ingredient analysis to see reviewed purposes and cautions; unknown entries are explicitly marked unknown."
+        if "redness" in lowered and len(history) >= 2:
+            delta = float(history[-1]["redness_score"]) - float(
+                history[0]["redness_score"]
+            )
+            return f"Your measured redness changed by {delta:+.4f} from the first available capture to the latest. That is a measurement delta, not a diagnosis. I found {len(events)} routine events to compare against it."
+        if any(word in lowered for word in ("why", "pattern", "correlat")):
+            correlations = root_cause_fn(user_id) if root_cause_fn else []
+            if correlations:
+                top = correlations[0]
+                return f"The strongest pattern in your data: {top['message']}"
+            return "I did not find a repeatable pattern between your logged context events and your measurements yet. Log more sleep/travel/weather events or capture more consistently to sharpen this."
+        if any(word in lowered for word in ("work", "useful", "product", "keep")):
+            verdicts = refresh_verdicts_fn(user_id) if refresh_verdicts_fn else []
+            return (
+                "Your current evidence states are: "
+                + (
+                    ", ".join(
+                        f"{item['product_name']}: {item['label']}" for item in verdicts
+                    )
+                    if verdicts
+                    else "not enough clean post-stabilization evidence yet"
+                )
+                + "."
+            )
+        return f"I can ground this in {len(history)} captures and {len(events)} routine events. Ask about redness, a product, ingredients, cadence, patterns, or a specific date so I can cite the relevant evidence."
+
+    def ask(self, user_id: str, question: str, thread_id: str | None = None, require_premium_fn=None, history_fn=None, record_engagement_fn=None) -> dict:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Data Q&A")
+        scope = triage(question)
+        if thread_id:
+            thread = self.db.fetchone(
+                "SELECT * FROM qna_threads WHERE id=? AND user_id=?",
+                (thread_id, user_id),
+            )
+            if not thread:
+                raise ValueError("thread not found")
+        else:
+            thread_id = uid()
+            self.db.execute(
+                "INSERT INTO qna_threads (id,user_id,title) VALUES (?,?,?)",
+                (thread_id, user_id, question[:120]),
+            )
+        self.db.execute(
+            "INSERT INTO qna_messages (id,thread_id,role,content,scope) VALUES (?,?,?,?,?)",
+            (uid(), thread_id, "user", question, scope.scope),
+        )
+        citations = []
+        if scope.scope == "dermatology_review":
+            answer = scope.message
+        else:
+            history = history_fn(user_id) if history_fn else []
+            events = [
+                row_dict(row)
+                for row in self.db.fetchall(
+                    "SELECT e.timestamp,p.name,e.action FROM routine_events e JOIN products p ON p.id=e.product_id WHERE e.user_id=? ORDER BY e.timestamp",
+                    (user_id,),
+                )
+            ]
+            for item in history[-3:]:
+                citations.append(
+                    {"type": "capture", "date": item["captured_at"], "id": item["id"]}
+                )
+            provider_answer = getattr(self.insights, "answer", None)
+            answer = (
+                provider_answer(question, self._qna_evidence(user_id, history, events))
+                if callable(provider_answer)
+                else None
+            )
+            if not answer:
+                answer = self._deterministic_qna_answer(
+                    user_id, question, history, events
+                )
+        self.db.execute(
+            "INSERT INTO qna_messages (id,thread_id,role,content,citations_json,scope) VALUES (?,?,?,?,?,?)",
+            (uid(), thread_id, "assistant", answer, dump(citations), scope.scope),
+        )
+        if record_engagement_fn:
+            record_engagement_fn(user_id, "qna_answered", thread_id)
+        return {
+            "thread_id": thread_id,
+            "answer": answer,
+            "scope": scope.scope,
+            "citations": citations,
+        }
+
+    def qna_history(self, user_id: str, require_premium_fn=None) -> list[dict]:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Data Q&A")
+        return [
+            row_dict(row) | {"citations": load(row["citations_json"], [])}
+            for row in self.db.fetchall(
+                "SELECT m.*,t.title FROM qna_messages m JOIN qna_threads t ON t.id=m.thread_id WHERE t.user_id=? ORDER BY m.created_at",
+                (user_id,),
+            )
+        ]
+
+    # -- shelf scan → auto-logging (free) -------------------------------------
+
+    def _run_shelf_scan(self, image_bytes: bytes) -> dict:
+        if not self.vision:
+            return {
+                "candidates": [],
+                "message": "AI shelf-scan is not configured; add products manually.",
+            }
+        candidates = self.vision.extract_products(image_bytes)
+        return {
+            "candidates": candidates,
+            "message": (
+                f"Found {len(candidates)} candidate product(s). Review and confirm before they are added."
+                if candidates
+                else "No products were recognized in this photo. Try better lighting or a closer shot of the labels."
+            ),
+        }
+
+    def scan_shelf(self, user_id: str, image_bytes: bytes, record_engagement_fn=None) -> dict:
+        self.parent.require_user(user_id)
+        if not image_bytes:
+            raise ValueError("image is required")
+        job_id = self.jobs.submit(
+            "shelf_scan", self._run_shelf_scan, image_bytes, user_id=user_id
+        )
+        if record_engagement_fn:
+            record_engagement_fn(user_id, "shelf_scan_submitted", job_id)
+        return {"job_id": job_id, "status": "queued"}
+
+    def shelf_scan_status(self, user_id: str, job_id: str) -> dict:
+        self.parent.require_user(user_id)
+        job = self.jobs.get(job_id, user_id=user_id)
+        if not job:
+            raise ValueError("shelf-scan job not found")
+        return job
+
+    def confirm_shelf_scan(
+        self, user_id: str, job_id: str, selections: list[dict], record_engagement_fn=None
+    ) -> list[dict]:
+        self.parent.require_user(user_id)
+        job = self.jobs.get(job_id, user_id=user_id)
+        if not job or job["status"] != "completed":
+            raise ValueError("shelf-scan job is not ready")
+        created = []
+        for selection in selections[:20]:
+            name = str(selection.get("name") or "").strip()
+            if not name:
+                continue
+            created.append(
+                self.parent.create_product(
+                    name=name,
+                    barcode=None,
+                    category=str(selection.get("category") or "other"),
+                    ingredients=selection.get("ingredients"),
+                    stabilization_days=int(selection.get("stabilization_days") or 14),
+                )
+            )
+        if record_engagement_fn:
+            record_engagement_fn(
+                user_id, "shelf_scan_confirmed", job_id, {"created": len(created)}
+            )
+        return created
+
+    # -- pre-purchase prediction (Premium) ------------------------------------
+
+    def predict_product(self, user_id: str, product_id: str, require_premium_fn=None, refresh_verdicts_fn=None) -> dict:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Pre-purchase prediction")
+        product = self.db.fetchone("SELECT * FROM products WHERE id=?", (product_id,))
+        if not product:
+            raise ValueError("product not found")
+        if refresh_verdicts_fn:
+            refresh_verdicts_fn(user_id)
+        candidate_ingredients = {
+            i.casefold() for i in parse_ingredients(product["ingredients_json"])
+        }
+        own_verdicts = self.db.fetchall(
+            """SELECT v.label, p.ingredients_json, p.name FROM verdicts v JOIN products p ON p.id = v.product_id
+               WHERE v.user_id=? AND v.generated_at = (SELECT MAX(v2.generated_at) FROM verdicts v2 WHERE v2.user_id=v.user_id AND v2.product_id=v.product_id)""",
+            (user_id,),
+        )
+        investigate_hits, useful_hits = [], []
+        for row in own_verdicts:
+            other_ingredients = {
+                i.casefold() for i in parse_ingredients(row["ingredients_json"])
+            }
+            overlap = candidate_ingredients & other_ingredients
+            if not overlap:
+                continue
+            if row["label"] == "investigate":
+                investigate_hits.append(
+                    {"product_name": row["name"], "shared_ingredients": sorted(overlap)}
+                )
+            elif row["label"] == "likely_useful":
+                useful_hits.append(
+                    {"product_name": row["name"], "shared_ingredients": sorted(overlap)}
+                )
+        cohort_rows = self.db.fetchall(
+            """SELECT DISTINCT p.name, p.ingredients_json FROM verdicts v JOIN products p ON p.id=v.product_id WHERE v.label='likely_useful' AND v.user_id <> ?""",
+            (user_id,),
+        )
+        cohort_hits = []
+        for row in cohort_rows:
+            overlap = candidate_ingredients & {
+                i.casefold() for i in parse_ingredients(row["ingredients_json"])
+            }
+            if overlap:
+                cohort_hits.append(
+                    {"product_name": row["name"], "shared_ingredients": sorted(overlap)}
+                )
+        if investigate_hits:
+            headline = f"{len(investigate_hits)} of your own products that came back 'investigate' share an active ingredient with this one."
+        elif useful_hits:
+            headline = f"{len(useful_hits)} of your own products that came back 'likely useful' share an active ingredient with this one."
+        else:
+            headline = "No overlap with your own verdict history yet — this would be a new ingredient profile for you."
+        return {
+            "product_id": product_id,
+            "product_name": product["name"],
+            "ingredients": sorted(candidate_ingredients),
+            "overlap_with_investigate": investigate_hits[:10],
+            "overlap_with_likely_useful": useful_hits[:10],
+            "cohort_overlap": cohort_hits[:10],
+            "headline": headline,
+            "disclaimer": "This is an ingredient-overlap similarity signal from your own and cohort history, not a prediction of efficacy or safety. Only your own capture-based experiment can verify how this product performs for you.",
+        }
+
+    def lookup_product(self, barcode: str) -> dict | None:
+        normalized = re.sub(r"[^0-9A-Za-z-]", "", barcode or "").strip()
+        if not normalized:
+            raise ValueError("barcode is required")
+        row = self.db.fetchone("SELECT * FROM products WHERE barcode=?", (normalized,))
+        return row_dict(row) if row else None
+
+    def purchase_guidance(
+        self,
+        user_id: str,
+        name: str | None = None,
+        barcode: str | None = None,
+        ingredients=None,
+        category: str = "other",
+        price_cents: int | None = None,
+        currency: str = "INR",
+        require_premium_fn=None,
+        refresh_verdicts_fn=None,
+    ) -> dict:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Pre-purchase guidance")
+        normalized_barcode = re.sub(r"[^0-9A-Za-z-]", "", barcode or "").strip() or None
+        product = (
+            self.db.fetchone(
+                "SELECT * FROM products WHERE barcode=?", (normalized_barcode,)
+            )
+            if normalized_barcode
+            else None
+        )
+        candidate_name = (product["name"] if product else (name or "")).strip()
+        candidate_ingredients = parse_ingredients(
+            product["ingredients_json"] if product else ingredients
+        )
+        if not candidate_name:
+            raise ValueError("product name or a known barcode is required")
+        if not candidate_ingredients:
+            return {
+                "product_id": product["id"] if product else None,
+                "product_name": candidate_name,
+                "barcode": normalized_barcode,
+                "ingredients": [],
+                "signal": "missing_ingredients",
+                "headline": "Add the ingredient list to compare this product with your history.",
+                "next_action": "Paste the INCI list from the box or product page, then run the check again.",
+                "overlap_with_investigate": [],
+                "overlap_with_likely_useful": [],
+                "cohort_overlap": [],
+                "estimated_annual_cost_cents": None,
+                "currency": currency,
+                "disclaimer": "Ingredient overlap is a similarity signal, not a prediction of efficacy or safety.",
+            }
+        if refresh_verdicts_fn:
+            refresh_verdicts_fn(user_id)
+        candidate_set = {item.casefold() for item in candidate_ingredients}
+        rows = self.db.fetchall(
+            """SELECT v.label, p.ingredients_json, p.name FROM verdicts v JOIN products p ON p.id=v.product_id
+            WHERE v.user_id=? AND v.generated_at=(SELECT MAX(v2.generated_at) FROM verdicts v2 WHERE v2.user_id=v.user_id AND v2.product_id=v.product_id)""",
+            (user_id,),
+        )
+        investigate_hits, useful_hits = [], []
+        for row in rows:
+            overlap = candidate_set & {
+                item.casefold() for item in parse_ingredients(row["ingredients_json"])
+            }
+            if not overlap:
+                continue
+            hit = {"product_name": row["name"], "shared_ingredients": sorted(overlap)}
+            if row["label"] == "investigate":
+                investigate_hits.append(hit)
+            elif row["label"] in {"likely_useful", "keep"}:
+                useful_hits.append(hit)
+        cohort_rows = self.db.fetchall(
+            """SELECT DISTINCT p.name, p.ingredients_json FROM verdicts v JOIN products p ON p.id=v.product_id
+            WHERE v.label='likely_useful' AND v.user_id<>?""",
+            (user_id,),
+        )
+        cohort_hits = []
+        for row in cohort_rows:
+            overlap = candidate_set & {
+                item.casefold() for item in parse_ingredients(row["ingredients_json"])
+            }
+            if overlap:
+                cohort_hits.append(
+                    {"product_name": row["name"], "shared_ingredients": sorted(overlap)}
+                )
+        if investigate_hits:
+            signal = "caution"
+            headline = f"This shares ingredients with {len(investigate_hits)} product(s) that your history marked for investigation."
+            next_action = "Do not add it alongside another new product. If you test it, change one variable and wait for the stabilization window."
+        elif useful_hits:
+            signal = "promising_similarity"
+            headline = f"This shares ingredients with {len(useful_hits)} product(s) that looked useful in your history."
+            next_action = "It is a reasonable candidate, but only a controlled capture series can verify how it performs for you."
+        else:
+            signal = "new_profile"
+            headline = "No overlap with your own verdict history yet."
+            next_action = "Treat it as a new ingredient profile: capture a baseline, start one product, and keep the rest of the routine steady."
+        stabilization_days = int(product["stabilization_days"]) if product else 14
+        annual_cost = None
+        if price_cents is not None:
+            annual_cost = round(price_cents * (365 / max(stabilization_days * 3, 60)))
+        return {
+            "product_id": product["id"] if product else None,
+            "product_name": candidate_name,
+            "barcode": normalized_barcode,
+            "ingredients": sorted(candidate_set),
+            "signal": signal,
+            "headline": headline,
+            "next_action": next_action,
+            "overlap_with_investigate": investigate_hits[:10],
+            "overlap_with_likely_useful": useful_hits[:10],
+            "cohort_overlap": cohort_hits[:10],
+            "estimated_annual_cost_cents": annual_cost,
+            "currency": currency,
+            "disclaimer": "Ingredient overlap is a similarity signal from your own and cohort history, not a prediction of efficacy or safety. Only your own standardized capture series can verify this product for you.",
+        }
+
+    # -- routine budget optimizer (Premium) -----------------------------------
+
+    def budget_optimizer(self, user_id: str, require_premium_fn=None, refresh_verdicts_fn=None) -> dict:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Routine budget optimizer")
+        verdicts = refresh_verdicts_fn(user_id) if refresh_verdicts_fn else []
+        flagged = []
+        total_annual_cents = 0
+        for item in verdicts:
+            evidence = item.get("evidence", {})
+            if item["label"] not in ("keep",) or evidence.get("days_stable", 0) < 30:
+                continue
+            offer = self.db.fetchone(
+                "SELECT AVG(price_cents) AS avg_price, currency FROM affiliate_offers WHERE product_id=? AND price_cents IS NOT NULL",
+                (item["product_id"],),
+            )
+            usage_days = max(int(evidence.get("stabilization_days", 14)) * 3, 60)
+            annual_cents = None
+            if offer and offer["avg_price"]:
+                annual_cents = round(float(offer["avg_price"]) * (365 / usage_days))
+                total_annual_cents += annual_cents
+            flagged.append(
+                {
+                    "product_id": item["product_id"],
+                    "product_name": item["product_name"],
+                    "days_stable": evidence.get("days_stable", 0),
+                    "estimated_annual_cost_cents": annual_cents,
+                    "currency": (
+                        offer["currency"] if offer and offer["avg_price"] else None
+                    )
+                    or "USD",
+                    "reason": "No measurable improvement beyond the capture noise floor after at least 30 days.",
+                }
+            )
+        return {
+            "flagged": flagged,
+            "estimated_annual_waste_cents": total_annual_cents,
+            "currency": "USD",
+            "disclaimer": "Estimates use your logged stabilization window and any known offer price; products without a known price are flagged without a cost estimate.",
+        }
+
+    # -- dermatologist export (Premium) ---------------------------------------
+
+    def dermatologist_report(self, user_id: str, profile_fn, history_fn, require_premium_fn=None, refresh_verdicts_fn=None) -> dict:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Dermatologist export")
+        profile = profile_fn(user_id)
+        history = history_fn(user_id)
+        verdicts = refresh_verdicts_fn(user_id) if refresh_verdicts_fn else []
+        model_versions = sorted(
+            {item["model_version"] for item in history if item.get("model_version")}
+        )
+        summary_rows = "".join(
+            f"<tr><td>{v['product_name']}</td><td>{v['label']}</td><td>{v['evidence'].get('days_stable', 0)}</td><td>{v['evidence'].get('confidence', '')}</td></tr>"
+            for v in verdicts
+        )
+        printable_html = (
+            "<h1>SkinProof cosmetic measurement summary</h1>"
+            f"<p>Generated {now_iso()} for a consenting user. Cosmetic tracking only; not a diagnosis.</p>"
+            f"<p>{len(history)} captures across model version(s): {', '.join(model_versions) or 'n/a'}.</p>"
+            "<table border=1 cellpadding=4><tr><th>Product</th><th>Evidence label</th><th>Days stable</th><th>Confidence</th></tr>"
+            f"{summary_rows}</table>"
+        )
+        return {
+            "generated_at": now_iso(),
+            "capture_count": len(history),
+            "model_versions": model_versions,
+            "verdicts": verdicts,
+            "printable_html": printable_html,
+            "disclaimer": "This is a measurement history export for the user to optionally share, not a clinical or diagnostic document. SkinProof does not diagnose, treat, or rule out medical conditions.",
+        }
+
+    # -- discover / commerce ---------------------------------------------------
+
+    def discover(self, user_id: str, require_premium_fn=None) -> dict:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Discover")
+        rows = self.db.fetchall(
+            """SELECT p.id,p.name,p.category,v.label,v.evidence_json,v.user_id FROM verdicts v JOIN products p ON p.id=v.product_id WHERE v.label='likely_useful'"""
+        )
+        grouped = {}
+        for row in rows:
+            key = row["id"]
+            grouped.setdefault(
+                key,
+                {
+                    "product_id": key,
+                    "name": row["name"],
+                    "category": row["category"],
+                    "users": set(),
+                    "effects": [],
+                },
+            )
+            grouped[key]["users"].add(row["user_id"])
+            grouped[key]["effects"].append(
+                load(row["evidence_json"], {}).get("composite_effect", 0)
+            )
+        recommendations = []
+        for item in grouped.values():
+            if len(item["users"]) >= 3:
+                recommendations.append(
+                    {
+                        "product_id": item["product_id"],
+                        "name": item["name"],
+                        "category": item["category"],
+                        "sample_size": len(item["users"]),
+                        "average_effect": round(statistics.mean(item["effects"]), 3),
+                        "reason": "Observed as likely useful across at least three consenting users; this does not replace your own experiment.",
+                    }
+                )
+        return {
+            "recommendations": sorted(
+                recommendations, key=lambda item: item["average_effect"], reverse=True
+            )[:20],
+            "minimum_cohort_size": 3,
+            "disclaimer": "Discover is cohort evidence, never a personal verdict and never paid placement.",
+        }
+
+    def add_offer(
+        self,
+        product_id: str,
+        merchant: str,
+        url: str,
+        price_cents: int | None = None,
+        currency: str = "USD",
+    ) -> dict:
+        if not self.db.fetchone("SELECT id FROM products WHERE id=?", (product_id,)):
+            raise ValueError("product not found")
+        offer_id = uid()
+        self.db.execute(
+            "INSERT INTO affiliate_offers (id,product_id,merchant,url,price_cents,currency) VALUES (?,?,?,?,?,?)",
+            (offer_id, product_id, merchant, url, price_cents, currency),
+        )
+        return row_dict(
+            self.db.fetchone("SELECT * FROM affiliate_offers WHERE id=?", (offer_id,))
+        )
+
+    def offers(self, user_id: str, product_id: str | None = None) -> list[dict]:
+        self.parent.require_user(user_id)
+        sql = "SELECT o.*,p.name AS product_name FROM affiliate_offers o JOIN products p ON p.id=o.product_id WHERE o.active=1"
+        params = ()
+        if product_id:
+            sql += " AND o.product_id=?"
+            params = (product_id,)
+        return [
+            row_dict(row)
+            for row in self.db.fetchall(sql + " ORDER BY o.created_at DESC", params)
+        ]
+
+    def click_offer(self, user_id: str, offer_id: str, record_engagement_fn=None) -> dict:
+        self.parent.require_user(user_id)
+        offer = self.db.fetchone(
+            "SELECT * FROM affiliate_offers WHERE id=? AND active=1", (offer_id,)
+        )
+        if not offer:
+            raise ValueError("offer not found")
+        self.db.execute(
+            "INSERT INTO affiliate_clicks (id,user_id,offer_id) VALUES (?,?,?)",
+            (uid(), user_id, offer_id),
+        )
+        if record_engagement_fn:
+            record_engagement_fn(user_id, "affiliate_click", offer_id)
+        return row_dict(offer)
+
+    def ingredient_explainer(self, user_id: str, product_id: str, require_premium_fn=None) -> dict:
+        if require_premium_fn:
+            require_premium_fn(user_id, "Ingredient analysis")
+        product = self.db.fetchone("SELECT * FROM products WHERE id=?", (product_id,))
+        if not product:
+            raise ValueError("product not found")
+        return explain(product["name"], product["ingredients_json"])
+
+    def product_detail(self, user_id: str, product_id: str, is_premium: bool) -> dict:
+        product = self.db.fetchone("SELECT * FROM products WHERE id=?", (product_id,))
+        if not product:
+            raise ValueError("product not found")
+        result = row_dict(product)
+        result["offers"] = self.offers(user_id, product_id)
+        result["ingredient_analysis"] = (
+            self.ingredient_explainer(user_id, product_id)
+            if is_premium
+            else None
+        )
+        return result
+
+    def dashboard(
+        self,
+        user_id: str,
+        vertical: str = "skin",
+        profile_fn=None,
+        history_fn=None,
+        verdicts_for_user_fn=None,
+        experiments_fn=None,
+        engagement_fn=None,
+        analytics_fn=None,
+        weekly_recap_fn=None,
+        check_ins_fn=None,
+    ) -> dict:
+        profile = profile_fn(user_id) if profile_fn else {}
+        history = history_fn(user_id, vertical) if history_fn else []
+        plan = profile.get("entitlement", {}).get("plan", "free")
+        verdicts = verdicts_for_user_fn(user_id) if verdicts_for_user_fn else []
+        features = {feature: int(plan == "premium") for feature in PREMIUM_FEATURES}
+        features["product_verdicts_unlocked"] = int(
+            self._free_unlocked_product_id(user_id) is not None or plan == "premium"
+        )
+        return {
+            "profile": profile,
+            "vertical": vertical,
+            "history": history,
+            "verdicts": verdicts,
+            "experiments": experiments_fn(user_id) if experiments_fn and plan == "premium" else [],
+            "engagement": engagement_fn(user_id) if engagement_fn else {},
+            "analytics": analytics_fn(user_id) if analytics_fn else {},
+            "weekly_recap": weekly_recap_fn(user_id, vertical) if weekly_recap_fn else {},
+            "check_ins": check_ins_fn(user_id, limit=20) if check_ins_fn else [],
+            "routine_events": [
+                row_dict(row)
+                for row in self.db.fetchall(
+                    "SELECT e.*,p.name AS product_name FROM routine_events e JOIN products p ON p.id=e.product_id WHERE e.user_id=? ORDER BY e.timestamp DESC",
+                    (user_id,),
+                )
+            ],
+            "features": features,
+            "disclaimer": "Cosmetic tracking only; SkinProof does not diagnose, treat, or rule out medical conditions.",
+        }
+
+    def _free_unlocked_product_id(self, user_id: str) -> str | None:
+        row = self.db.fetchone(
+            "SELECT reference_id FROM engagement_events WHERE user_id=? AND event_type='free_verdict_unlocked' ORDER BY occurred_at LIMIT 1",
+            (user_id,),
+        )
+        return row["reference_id"] if row else None
+
+    def triage_question(self, text: str) -> dict:
+        return triage(text).as_dict()

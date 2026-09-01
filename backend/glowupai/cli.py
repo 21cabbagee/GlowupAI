@@ -6,13 +6,13 @@ import uvicorn
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="skinproof")
+    parser = argparse.ArgumentParser(prog="glowupai")
     parser.add_argument("command", choices=["serve"], nargs="?", default="serve")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
     if args.command == "serve":
-        uvicorn.run("skinproof.api:app", host=args.host, port=args.port, reload=False)
+        uvicorn.run("glowupai.api:app", host=args.host, port=args.port, reload=False)
 
 
 if __name__ == "__main__":

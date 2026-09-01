@@ -37,6 +37,7 @@ import kotlinx.coroutines.delay
 fun DataConsentRoute(
     onConsent: (Boolean) -> Unit,
     onBack: () -> Unit,
+    onPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isSubmitting by remember { mutableStateOf(false) }
@@ -47,6 +48,7 @@ fun DataConsentRoute(
             onConsent(granted)
         },
         onBack = onBack,
+        onPrivacyPolicy = onPrivacyPolicy,
         isSubmitting = isSubmitting,
         modifier = modifier,
     )
@@ -56,6 +58,7 @@ fun DataConsentRoute(
 private fun DataConsentScreen(
     onConsent: (Boolean) -> Unit,
     onBack: () -> Unit,
+    onPrivacyPolicy: () -> Unit,
     isSubmitting: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -231,11 +234,11 @@ private fun DataConsentScreen(
 
             // Privacy policy link
             TextButton(
-                onClick = { /* Open privacy policy */ },
+                onClick = onPrivacyPolicy,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             ) {
                 Text(
-                    text = "View our Data Collection Policy",
+                    text = "View our Privacy Policy",
                     style = MaterialTheme.typography.bodySmall,
                     color = LocalGlowColors.current.honey600,
                 )

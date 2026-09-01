@@ -96,7 +96,7 @@ All logs are output as JSON for easy parsing and aggregation:
 {
   "timestamp": "2026-08-31T10:15:30Z",
   "level": "INFO",
-  "logger": "skinproof.access",
+  "logger": "glowupai.access",
   "message": "POST /api/captures",
   "request_id": "abc123-def456-789",
   "endpoint": "POST /api/captures",
@@ -109,7 +109,7 @@ All logs are output as JSON for easy parsing and aggregation:
 
 ### Log Levels
 
-Configure via `SKINPROOF_LOG_LEVEL` environment variable:
+Configure via `GLOWUPAI_LOG_LEVEL` environment variable:
 - `DEBUG`: Detailed diagnostic information
 - `INFO`: General informational messages (default)
 - `WARNING`: Warning messages for potentially harmful situations
@@ -131,7 +131,7 @@ Watch for these important log events:
 ```json
 {
   "level": "INFO",
-  "message": "Initializing SkinProof application",
+  "message": "Initializing GlowupAI application",
   "version": "3.0.0"
 }
 ```
@@ -277,7 +277,7 @@ pip install opentelemetry-api opentelemetry-sdk \
 # Set environment variables
 OTEL_ENABLED=1
 OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
-OTEL_SERVICE_NAME=skinproof
+OTEL_SERVICE_NAME=glowupai
 ```
 
 **2. Supported Backends**:
@@ -553,7 +553,7 @@ For planned maintenance:
    railway logs --tail 100
    
    # Kubernetes
-   kubectl logs -l app=skinproof --tail=100
+   kubectl logs -l app=glowupai --tail=100
    ```
 
 2. **Check database**:
@@ -579,11 +579,11 @@ For planned maintenance:
 2. **Check connections**:
    ```sql
    SELECT count(*) FROM pg_stat_activity 
-   WHERE datname = 'skinproof_prod';
+   WHERE datname = 'glowupai_prod';
    ```
 
 3. **If connection pool exhausted**:
-   - Increase `SKINPROOF_DB_POOL_MAX_SIZE`
+   - Increase `GLOWUPAI_DB_POOL_MAX_SIZE`
    - Restart application
 
 ### High Memory Usage

@@ -245,7 +245,7 @@ CREATE INDEX IF NOT EXISTS idx_measurement_feedback_capture ON measurement_feedb
 class FullDatabase(Database):
     """Base schema plus the complete product schema."""
 
-    def __init__(self, path: str | Path = ".data/skinproof.sqlite3") -> None:
+    def __init__(self, path: str | Path = ".data/glowupai.sqlite3") -> None:
         super().__init__(path)
         with self._lock:
             self.connection.executescript(FULL_SCHEMA)

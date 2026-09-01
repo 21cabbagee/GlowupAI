@@ -15,7 +15,7 @@ Implemented face landmark detection and alignment using OpenCV to normalize face
 
 ## Changes Made
 
-### 1. New Module: `skinproof/face_alignment.py`
+### 1. New Module: `glowupai/face_alignment.py`
 
 **Key Functions:**
 - `align_face()` - Core alignment with face/eye detection
@@ -29,7 +29,7 @@ Implemented face landmark detection and alignment using OpenCV to normalize face
 4. Center face in output image (256x256)
 5. Fallback to resized original if detection fails
 
-### 2. Updated: `skinproof/metrics.py`
+### 2. Updated: `glowupai/metrics.py`
 
 **Changes:**
 ```python

@@ -33,10 +33,10 @@
    - **Dockerfile Path**: `./Dockerfile`
    - **Plan**: Free
 5. Add Environment Variables (from render-staging.yaml):
-   - `SKINPROOF_FIREBASE_PROJECT_ID=glowup-ai-38ae7`
-   - `SKINPROOF_PHOTOS_DIR=/app/photos`
-   - `SKINPROOF_RATE_LIMIT_ENABLED=1`
-   - `SKINPROOF_SKIP_QUALITY_CHECKS=0`
+   - `GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7`
+   - `GLOWUPAI_PHOTOS_DIR=/app/photos`
+   - `GLOWUPAI_RATE_LIMIT_ENABLED=1`
+   - `GLOWUPAI_SKIP_QUALITY_CHECKS=0`
    - `ENVIRONMENT=staging`
 6. Create Database:
    - Click "New +" → "PostgreSQL"

@@ -27,6 +27,28 @@ cd /Users/21cabbage/GlowupAI/backend
 ./scripts/verify-staging.sh
 ```
 
+## ⚙️ Pre-Deployment Setup (Required)
+
+Before deploying, you MUST set up the admin token for secure access to admin endpoints:
+
+### Generate Admin Token
+```bash
+# Generate secure random token (copy the output)
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+### Set Token in Render
+1. Go to your service in Render Dashboard
+2. Navigate to **Environment** tab
+3. Add variable: `GLOWUPAI_ADMIN_TOKEN` = `<paste-generated-token>`
+4. Click **Save Changes**
+
+**Protected Endpoints:**
+- `/api/metrics` - Application metrics
+- `/api/admin/audit` - Audit logs
+- `/api/admin/measurement-feedback` - User feedback summary
+- `/api/admin/analytics` - Analytics dashboard
+
 ## 🎯 What's Being Deployed
 
 ### New Features

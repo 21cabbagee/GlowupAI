@@ -29,14 +29,14 @@ Complete guide for deploying GlowUp AI Backend to production with security, moni
 
 ```bash
 # 1. Core configuration
-SKINPROOF_ENV=production
-SKINPROOF_FIREBASE_PROJECT_ID=your-firebase-project
-SKINPROOF_ALLOWED_ORIGINS=https://your-app.com
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_ENV=production
+GLOWUPAI_FIREBASE_PROJECT_ID=your-firebase-project
+GLOWUPAI_ALLOWED_ORIGINS=https://your-app.com
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
 
 # 2. API keys
 GEMINI_API_KEY=your_gemini_key
-SKINPROOF_ADMIN_TOKEN=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+GLOWUPAI_ADMIN_TOKEN=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
 
 # 3. Monitoring (recommended)
 SENTRY_DSN=https://...@sentry.io/...
@@ -72,7 +72,7 @@ Retry-After: 42
 
 **Configuration**:
 ```bash
-SKINPROOF_RATE_LIMIT_ENABLED=1  # Default: enabled
+GLOWUPAI_RATE_LIMIT_ENABLED=1  # Default: enabled
 REDIS_URL=redis://...           # Required for distributed limiting
 ```
 
@@ -181,8 +181,8 @@ curl -H "Authorization: Bearer $ADMIN_TOKEN" \
 
 **Configuration**:
 ```bash
-SKINPROOF_MAX_IMAGE_DIMENSION=1024  # Max width/height
-SKINPROOF_IMAGE_QUALITY=85          # JPEG quality (0-100)
+GLOWUPAI_MAX_IMAGE_DIMENSION=1024  # Max width/height
+GLOWUPAI_IMAGE_QUALITY=85          # JPEG quality (0-100)
 ```
 
 **Results**:
@@ -197,7 +197,7 @@ SKINPROOF_IMAGE_QUALITY=85          # JPEG quality (0-100)
 
 **Configuration**:
 ```bash
-SKINPROOF_CACHE_ENABLED=1  # Default: enabled
+GLOWUPAI_CACHE_ENABLED=1  # Default: enabled
 REDIS_URL=redis://...      # Required
 ```
 
@@ -217,7 +217,7 @@ X-Response-Time: 23.45ms
 
 **Configuration**:
 ```bash
-SKINPROOF_SLOW_THRESHOLD_MS=1000  # Log requests > 1 second
+GLOWUPAI_SLOW_THRESHOLD_MS=1000  # Log requests > 1 second
 ```
 
 **Logs**:
@@ -270,12 +270,12 @@ Automatically created by migration `0005_analytics_and_indexes.sql`:
 3. **Set Environment Variables**:
    ```bash
    # See ENV_VARS_REFERENCE.md for full list
-   railway variables set SKINPROOF_ENV=production
-   railway variables set SKINPROOF_FIREBASE_PROJECT_ID=your-project
-   railway variables set SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com
+   railway variables set GLOWUPAI_ENV=production
+   railway variables set GLOWUPAI_FIREBASE_PROJECT_ID=your-project
+   railway variables set GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com
    railway variables set GEMINI_API_KEY=your-key
    railway variables set SENTRY_DSN=your-sentry-dsn
-   railway variables set SKINPROOF_ADMIN_TOKEN=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+   railway variables set GLOWUPAI_ADMIN_TOKEN=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
    ```
 
 4. **Deploy**:
@@ -296,7 +296,7 @@ Automatically created by migration `0005_analytics_and_indexes.sql`:
 1. Connect GitHub repository
 2. Create Web Service
 3. Set build command: `pip install .`
-4. Set start command: `uvicorn skinproof.complete_api:app --host 0.0.0.0 --port $PORT`
+4. Set start command: `uvicorn glowupai.complete_api:app --host 0.0.0.0 --port $PORT`
 5. Add PostgreSQL and Redis add-ons
 6. Set environment variables (see ENV_VARS_REFERENCE.md)
 
@@ -308,7 +308,7 @@ FROM python:3.11-slim
 WORKDIR /app
 COPY . .
 RUN pip install .
-CMD ["uvicorn", "skinproof.complete_api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "glowupai.complete_api:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 **Docker Compose** (for local testing):
@@ -320,7 +320,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://user:pass@db:5432/skinproof
+      - DATABASE_URL=postgresql://user:pass@db:5432/glowupai
       - REDIS_URL=redis://redis:6379/0
       - SENTRY_DSN=your-sentry-dsn
     depends_on:
@@ -332,7 +332,7 @@ services:
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
-      POSTGRES_DB: skinproof
+      POSTGRES_DB: glowupai
   
   redis:
     image: redis:7-alpine
@@ -348,12 +348,12 @@ See `ENV_VARS_REFERENCE.md` for complete reference.
 
 **Critical (Must Set)**:
 ```bash
-SKINPROOF_ENV=production
-SKINPROOF_FIREBASE_PROJECT_ID=your-project
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.com
-SKINPROOF_DISABLE_LEGACY_KEY_FILE=1
+GLOWUPAI_ENV=production
+GLOWUPAI_FIREBASE_PROJECT_ID=your-project
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.com
+GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
 GEMINI_API_KEY=your-key
-SKINPROOF_ADMIN_TOKEN=your-token
+GLOWUPAI_ADMIN_TOKEN=your-token
 ```
 
 **Recommended**:
@@ -364,12 +364,12 @@ REDIS_URL=redis://...  # Auto-injected by Railway
 
 **Optional (Tuning)**:
 ```bash
-SKINPROOF_DB_POOL_MIN_SIZE=2
-SKINPROOF_DB_POOL_MAX_SIZE=20
-SKINPROOF_MAX_IMAGE_DIMENSION=1024
-SKINPROOF_IMAGE_QUALITY=85
-SKINPROOF_CACHE_ENABLED=1
-SKINPROOF_RATE_LIMIT_ENABLED=1
+GLOWUPAI_DB_POOL_MIN_SIZE=2
+GLOWUPAI_DB_POOL_MAX_SIZE=20
+GLOWUPAI_MAX_IMAGE_DIMENSION=1024
+GLOWUPAI_IMAGE_QUALITY=85
+GLOWUPAI_CACHE_ENABLED=1
+GLOWUPAI_RATE_LIMIT_ENABLED=1
 ```
 
 ---
@@ -442,40 +442,40 @@ SKINPROOF_RATE_LIMIT_ENABLED=1
 
 **Low Traffic** (< 100 concurrent users):
 ```bash
-SKINPROOF_DB_POOL_MIN_SIZE=1
-SKINPROOF_DB_POOL_MAX_SIZE=10
+GLOWUPAI_DB_POOL_MIN_SIZE=1
+GLOWUPAI_DB_POOL_MAX_SIZE=10
 ```
 
 **Medium Traffic** (100-1000 concurrent users):
 ```bash
-SKINPROOF_DB_POOL_MIN_SIZE=2
-SKINPROOF_DB_POOL_MAX_SIZE=20
+GLOWUPAI_DB_POOL_MIN_SIZE=2
+GLOWUPAI_DB_POOL_MAX_SIZE=20
 ```
 
 **High Traffic** (> 1000 concurrent users):
 ```bash
-SKINPROOF_DB_POOL_MIN_SIZE=5
-SKINPROOF_DB_POOL_MAX_SIZE=50
+GLOWUPAI_DB_POOL_MIN_SIZE=5
+GLOWUPAI_DB_POOL_MAX_SIZE=50
 ```
 
 ### Image Compression
 
 **Storage Priority** (minimize storage):
 ```bash
-SKINPROOF_MAX_IMAGE_DIMENSION=768
-SKINPROOF_IMAGE_QUALITY=75
+GLOWUPAI_MAX_IMAGE_DIMENSION=768
+GLOWUPAI_IMAGE_QUALITY=75
 ```
 
 **Quality Priority** (maximize quality):
 ```bash
-SKINPROOF_MAX_IMAGE_DIMENSION=2048
-SKINPROOF_IMAGE_QUALITY=95
+GLOWUPAI_MAX_IMAGE_DIMENSION=2048
+GLOWUPAI_IMAGE_QUALITY=95
 ```
 
 **Balanced** (recommended):
 ```bash
-SKINPROOF_MAX_IMAGE_DIMENSION=1024
-SKINPROOF_IMAGE_QUALITY=85
+GLOWUPAI_MAX_IMAGE_DIMENSION=1024
+GLOWUPAI_IMAGE_QUALITY=85
 ```
 
 ### Caching Strategy
@@ -485,7 +485,7 @@ SKINPROOF_IMAGE_QUALITY=85
 
 **Minimal Caching** (fast-changing data):
 ```bash
-SKINPROOF_CACHE_ENABLED=0  # Disable entirely
+GLOWUPAI_CACHE_ENABLED=0  # Disable entirely
 ```
 
 ---
@@ -494,10 +494,10 @@ SKINPROOF_CACHE_ENABLED=0  # Disable entirely
 
 ### Pre-Deployment
 
-- [ ] `SKINPROOF_ENV=production` set
-- [ ] `SKINPROOF_ALLOWED_ORIGINS` contains only production domains
-- [ ] `SKINPROOF_ADMIN_TOKEN` is strong (32+ characters)
-- [ ] `SKINPROOF_DISABLE_LEGACY_KEY_FILE=1` set
+- [ ] `GLOWUPAI_ENV=production` set
+- [ ] `GLOWUPAI_ALLOWED_ORIGINS` contains only production domains
+- [ ] `GLOWUPAI_ADMIN_TOKEN` is strong (32+ characters)
+- [ ] `GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1` set
 - [ ] `GEMINI_API_KEY` not exposed in logs/Git
 - [ ] `SENTRY_DSN` configured (for error tracking)
 - [ ] Database uses SSL/TLS connection
@@ -568,7 +568,7 @@ railway run df -h
 **Fix**:
 ```bash
 # Enable rate limiting
-railway variables set SKINPROOF_RATE_LIMIT_ENABLED=1
+railway variables set GLOWUPAI_RATE_LIMIT_ENABLED=1
 
 # Verify Redis
 railway run redis-cli -u $REDIS_URL ping
@@ -614,7 +614,7 @@ sentry_sdk.capture_message('Test from production')
 **Fix**:
 ```bash
 # Enable caching
-railway variables set SKINPROOF_CACHE_ENABLED=1
+railway variables set GLOWUPAI_CACHE_ENABLED=1
 railway variables set REDIS_URL=redis://...
 
 # Check slow queries in logs
@@ -648,7 +648,7 @@ railway run df -h
 railway logs | grep "Image compressed"
 
 # Reduce max dimension if needed
-railway variables set SKINPROOF_MAX_IMAGE_DIMENSION=768
+railway variables set GLOWUPAI_MAX_IMAGE_DIMENSION=768
 ```
 
 ---

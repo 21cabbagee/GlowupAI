@@ -22,15 +22,15 @@ cd backend
 
 ### Files You Might Need
 
-- `skinproof/face_alignment.py` - Alignment logic
-- `skinproof/metrics.py` - Analysis (calls alignment)
+- `glowupai/face_alignment.py` - Alignment logic
+- `glowupai/metrics.py` - Analysis (calls alignment)
 - `tests/test_core.py` - Test suite
 
 ### Quick Debug
 
 ```python
 # Check if alignment is working
-from skinproof.face_alignment import align_face_safe
+from glowupai.face_alignment import align_face_safe
 
 with open('test.jpg', 'rb') as f:
     original = f.read()
@@ -93,7 +93,7 @@ Watch for:
 ### Health Check
 
 ```bash
-python3 -c "from skinproof.face_alignment import align_face_safe; print('✓ OK')"
+python3 -c "from glowupai.face_alignment import align_face_safe; print('✓ OK')"
 ```
 
 ## For Product/PM
@@ -120,7 +120,7 @@ python3 -c "from skinproof.face_alignment import align_face_safe; print('✓ OK'
 If issues arise:
 
 ```python
-# In skinproof/metrics.py, line ~62:
+# In glowupai/metrics.py, line ~62:
 # Comment out alignment:
 aligned_bytes = image_bytes  # bypass alignment
 # aligned_bytes = align_face_safe(image_bytes, ...)

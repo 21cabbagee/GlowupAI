@@ -1,0 +1,75 @@
+{
+  "loading": true,
+  "architecture": true,
+  "inference": true,
+  "sample_prediction": {
+    "redness_score": 0.5659293532371521,
+    "blemish_count": 35,
+    "texture_score": 27.768184661865234,
+    "darkspot_area": 0.2602182924747467
+  },
+  "consistency": true,
+  "consistency_details": {
+    "redness_score": {
+      "variance": 0.0,
+      "std": 0.0
+    },
+    "blemish_count": {
+      "variance": 0.0,
+      "std": 0.0
+    },
+    "texture_score": {
+      "variance": 0.0,
+      "std": 0.0
+    },
+    "darkspot_area": {
+      "variance": 0.0,
+      "std": 0.0
+    }
+  },
+  "range_validation": true,
+  "range_violations": 0,
+  "placeholder_comparison": {
+    "is_different": true,
+    "differences": {
+      "redness_score": 0.0659293532371521,
+      "blemish_count": 25,
+      "texture_score": 12.768184661865234,
+      "darkspot_area": 0.06021829247474669
+    }
+  },
+  "variance": {
+    "redness_score": {
+      "variance": 2.0437588287904875e-05,
+      "std": 0.004520795094660327,
+      "range": [
+        0.5543619990348816,
+        0.5659293532371521
+      ]
+    },
+    "blemish_count": {
+      "variance": 3.4400000000000004,
+      "std": 1.854723699099141,
+      "range": [
+        30.0,
+        35.0
+      ]
+    },
+    "texture_score": {
+      "variance": 14.013764631381491,
+      "std": 3.743496311121662,
+      "range": [
+        18.180450439453125,
+        27.768184661865234
+      ]
+    },
+    "darkspot_area": {
+      "variance": 0.0015935611473956966,
+      "std": 0.03991943320484018,
+      "range": [
+        0.16566862165927887,
+        0.2679227292537689
+      ]
+    }
+  }
+}

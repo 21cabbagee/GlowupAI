@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: skinproof
-      POSTGRES_USER: skinproof
-      POSTGRES_PASSWORD: skinproof
+      POSTGRES_DB: glowupai
+      POSTGRES_USER: glowupai
+      POSTGRES_PASSWORD: glowupai
     ports:
       - "5432:5432"
     volumes:
-      - skinproof-postgres:/var/lib/postgresql/data
+      - glowupai-postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U skinproof -d skinproof"]
+      test: ["CMD-SHELL", "pg_isready -U glowupai -d glowupai"]
       interval: 5s
       timeout: 5s
       retries: 12
@@ -21,14 +21,14 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://skinproof:skinproof@postgres:5432/skinproof
-      SKINPROOF_ENV: production
-      SKINPROOF_DISABLE_LEGACY_KEY_FILE: "1"
+      DATABASE_URL: postgresql://glowupai:glowupai@postgres:5432/glowupai
+      GLOWUPAI_ENV: production
+      GLOWUPAI_DISABLE_LEGACY_KEY_FILE: "1"
       # Gemini is off by default for this local compose stack because no
       # GEMINI_API_KEY is provided here; shelf-scan/Q&A degrade gracefully.
       # Pass GEMINI_API_KEY (and drop this line, or set it to "1") to test
       # the Gemini-backed paths against real Postgres.
-      SKINPROOF_GEMINI_ENABLED: "0"
+      GLOWUPAI_GEMINI_ENABLED: "0"
       PORT: "8000"
     ports:
       - "8000:8000"
@@ -40,4 +40,4 @@ services:
       start_period: 15s
 
 volumes:
-  skinproof-postgres:
+  glowupai-postgres:

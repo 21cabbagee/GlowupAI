@@ -17,7 +17,7 @@ Four critical production features have been implemented:
 
 ### Implementation
 
-**File**: `skinproof/rate_limiter.py`
+**File**: `glowupai/rate_limiter.py`
 
 **Features**:
 - Redis-backed sliding window algorithm
@@ -51,7 +51,7 @@ Retry-After: 42
 
 **Configuration**:
 ```bash
-SKINPROOF_RATE_LIMIT_ENABLED=1  # Enable/disable
+GLOWUPAI_RATE_LIMIT_ENABLED=1  # Enable/disable
 REDIS_URL=redis://...           # Redis connection (optional)
 ```
 
@@ -61,7 +61,7 @@ REDIS_URL=redis://...           # Redis connection (optional)
 
 ### Implementation
 
-**File**: `skinproof/monitoring.py`
+**File**: `glowupai/monitoring.py`
 
 **Features**:
 - Automatic exception capture
@@ -95,8 +95,8 @@ SENTRY_PROFILES_SAMPLE_RATE=0.1  # 10% profiling
 
 ### Implementation
 
-**File**: `skinproof/analytics.py`
-**Migration**: `skinproof/migrations/0005_analytics_and_indexes.sql`
+**File**: `glowupai/analytics.py`
+**Migration**: `glowupai/migrations/0005_analytics_and_indexes.sql`
 
 **Events Tracked**:
 
@@ -160,7 +160,7 @@ CREATE TABLE analytics_events (
 
 ### 4.1 Image Compression
 
-**File**: `skinproof/performance.py` (`ImageCompressor`)
+**File**: `glowupai/performance.py` (`ImageCompressor`)
 
 **Features**:
 - Automatic resize to max dimension (default 1024px)
@@ -176,13 +176,13 @@ CREATE TABLE analytics_events (
 
 **Configuration**:
 ```bash
-SKINPROOF_MAX_IMAGE_DIMENSION=1024  # Max width/height
-SKINPROOF_IMAGE_QUALITY=85          # JPEG quality (0-100)
+GLOWUPAI_MAX_IMAGE_DIMENSION=1024  # Max width/height
+GLOWUPAI_IMAGE_QUALITY=85          # JPEG quality (0-100)
 ```
 
 ### 4.2 Response Caching
 
-**File**: `skinproof/performance.py` (`RedisCache`, `CacheMiddleware`)
+**File**: `glowupai/performance.py` (`RedisCache`, `CacheMiddleware`)
 
 **Features**:
 - Redis-backed cache with in-memory fallback
@@ -196,13 +196,13 @@ SKINPROOF_IMAGE_QUALITY=85          # JPEG quality (0-100)
 
 **Configuration**:
 ```bash
-SKINPROOF_CACHE_ENABLED=1  # Enable/disable
+GLOWUPAI_CACHE_ENABLED=1  # Enable/disable
 REDIS_URL=redis://...      # Redis connection (optional)
 ```
 
 ### 4.3 Request Timing
 
-**File**: `skinproof/performance.py` (`RequestTimingMiddleware`)
+**File**: `glowupai/performance.py` (`RequestTimingMiddleware`)
 
 **Features**:
 - Track all request durations
@@ -216,12 +216,12 @@ X-Response-Time: 123.45ms
 
 **Configuration**:
 ```bash
-SKINPROOF_SLOW_THRESHOLD_MS=1000  # Log requests slower than this
+GLOWUPAI_SLOW_THRESHOLD_MS=1000  # Log requests slower than this
 ```
 
 ### 4.4 Database Indexes
 
-**File**: `skinproof/migrations/0005_analytics_and_indexes.sql`
+**File**: `glowupai/migrations/0005_analytics_and_indexes.sql`
 
 **Indexes Added**:
 ```sql
@@ -248,29 +248,29 @@ ON users(firebase_uid);
 
 ### New Files Created
 
-1. **`skinproof/rate_limiter.py`** (280 lines)
+1. **`glowupai/rate_limiter.py`** (280 lines)
    - Redis-backed rate limiting middleware
    - Sliding window algorithm
    - Per-endpoint limits
 
-2. **`skinproof/monitoring.py`** (271 lines)
+2. **`glowupai/monitoring.py`** (271 lines)
    - Sentry integration
    - Error and performance monitoring
    - User context tracking
 
-3. **`skinproof/analytics.py`** (320 lines)
+3. **`glowupai/analytics.py`** (320 lines)
    - Analytics event tracking
    - Event aggregation
    - Streak calculation
    - Admin analytics endpoints
 
-4. **`skinproof/performance.py`** (340 lines)
+4. **`glowupai/performance.py`** (340 lines)
    - Image compression utilities
    - Redis cache implementation
    - Cache middleware
    - Request timing middleware
 
-5. **`skinproof/migrations/0005_analytics_and_indexes.sql`** (20 lines)
+5. **`glowupai/migrations/0005_analytics_and_indexes.sql`** (20 lines)
    - Analytics events table
    - Performance indexes
 
@@ -290,7 +290,7 @@ ON users(firebase_uid);
    - Added `redis>=5.0.0`
    - Added `sentry-sdk[fastapi]>=2.0.0`
 
-2. **`skinproof/complete_api.py`** (838 lines)
+2. **`glowupai/complete_api.py`** (838 lines)
    - Integrated all production features
    - Added Sentry initialization
    - Added analytics tracking to key endpoints
@@ -302,10 +302,10 @@ ON users(firebase_uid);
 3. **`ENV_VARS_REFERENCE.md`**
    - Added `SENTRY_DSN` documentation
    - Added `REDIS_URL` documentation
-   - Added `SKINPROOF_MAX_IMAGE_DIMENSION`
-   - Added `SKINPROOF_IMAGE_QUALITY`
-   - Added `SKINPROOF_CACHE_ENABLED`
-   - Added `SKINPROOF_SLOW_THRESHOLD_MS`
+   - Added `GLOWUPAI_MAX_IMAGE_DIMENSION`
+   - Added `GLOWUPAI_IMAGE_QUALITY`
+   - Added `GLOWUPAI_CACHE_ENABLED`
+   - Added `GLOWUPAI_SLOW_THRESHOLD_MS`
    - Added `SENTRY_TRACES_SAMPLE_RATE`
    - Added `SENTRY_PROFILES_SAMPLE_RATE`
 
@@ -329,10 +329,10 @@ pip install -e .
 ```bash
 # Run migration to create analytics table and indexes
 # This happens automatically on startup, but you can manually run:
-sqlite3 .data/skinproof.sqlite3 < skinproof/migrations/0005_analytics_and_indexes.sql
+sqlite3 .data/glowupai.sqlite3 < glowupai/migrations/0005_analytics_and_indexes.sql
 
 # Or for PostgreSQL:
-psql $DATABASE_URL -f skinproof/migrations/0005_analytics_and_indexes.sql
+psql $DATABASE_URL -f glowupai/migrations/0005_analytics_and_indexes.sql
 ```
 
 ---
@@ -343,11 +343,11 @@ psql $DATABASE_URL -f skinproof/migrations/0005_analytics_and_indexes.sql
 
 ```bash
 # Core (required)
-SKINPROOF_ENV=production
-SKINPROOF_FIREBASE_PROJECT_ID=your-project
-SKINPROOF_ALLOWED_ORIGINS=https://your-app.com
+GLOWUPAI_ENV=production
+GLOWUPAI_FIREBASE_PROJECT_ID=your-project
+GLOWUPAI_ALLOWED_ORIGINS=https://your-app.com
 GEMINI_API_KEY=your-key
-SKINPROOF_ADMIN_TOKEN=your-token
+GLOWUPAI_ADMIN_TOKEN=your-token
 
 # Monitoring (recommended)
 SENTRY_DSN=https://...@sentry.io/...

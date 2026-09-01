@@ -8,7 +8,7 @@ The GlowUp AI backend supports:
 - **SQLite**: Development and testing (default)
 - **PostgreSQL**: Production (recommended)
 
-Database schema is automatically created on first startup using migrations in `skinproof/migrations/`.
+Database schema is automatically created on first startup using migrations in `glowupai/migrations/`.
 
 ## Quick Start
 
@@ -17,25 +17,25 @@ Database schema is automatically created on first startup using migrations in `s
 No configuration needed - just run the app:
 
 ```bash
-# Uses .data/skinproof.sqlite3 by default
-uvicorn skinproof.api:app
+# Uses .data/glowupai.sqlite3 by default
+uvicorn glowupai.api:app
 ```
 
 ### Production (PostgreSQL)
 
 1. **Create Database**:
    ```bash
-   createdb skinproof_prod
+   createdb glowupai_prod
    ```
 
 2. **Configure Environment**:
    ```bash
-   export DATABASE_URL="postgresql://user:password@localhost:5432/skinproof_prod"
+   export DATABASE_URL="postgresql://user:password@localhost:5432/glowupai_prod"
    ```
 
 3. **Run Application**:
    ```bash
-   uvicorn skinproof.api:app
+   uvicorn glowupai.api:app
    ```
 
 Schema is created automatically on first run.
@@ -50,14 +50,14 @@ DATABASE_URL=postgresql://user:password@host:5432/dbname
 # or
 POSTGRES_URL=postgresql://user:password@host:5432/dbname
 # or
-SKINPROOF_DATABASE_URL=postgresql://user:password@host:5432/dbname
+GLOWUPAI_DATABASE_URL=postgresql://user:password@host:5432/dbname
 
 # Connection pool settings
-SKINPROOF_DB_POOL_MIN_SIZE=2           # Minimum connections in pool
-SKINPROOF_DB_POOL_MAX_SIZE=20          # Maximum connections in pool
-SKINPROOF_DB_CONNECT_TIMEOUT=10        # Connection timeout (seconds)
-SKINPROOF_DB_POOL_TIMEOUT=30           # Pool acquisition timeout (seconds)
-SKINPROOF_DB_STATEMENT_TIMEOUT=30000   # Query timeout (milliseconds)
+GLOWUPAI_DB_POOL_MIN_SIZE=2           # Minimum connections in pool
+GLOWUPAI_DB_POOL_MAX_SIZE=20          # Maximum connections in pool
+GLOWUPAI_DB_CONNECT_TIMEOUT=10        # Connection timeout (seconds)
+GLOWUPAI_DB_POOL_TIMEOUT=30           # Pool acquisition timeout (seconds)
+GLOWUPAI_DB_STATEMENT_TIMEOUT=30000   # Query timeout (milliseconds)
 ```
 
 ### Connection Pool Sizing
@@ -74,7 +74,7 @@ SKINPROOF_DB_STATEMENT_TIMEOUT=30000   # Query timeout (milliseconds)
 -- Check current connections
 SELECT count(*) as active_connections
 FROM pg_stat_activity
-WHERE datname = 'skinproof_prod';
+WHERE datname = 'glowupai_prod';
 
 -- Check connection pool stats (if using pgBouncer)
 SHOW POOLS;
@@ -156,7 +156,7 @@ ORDER BY idx_scan ASC;
 
 ### How Migrations Work
 
-1. Migration files in `skinproof/migrations/` (SQL files)
+1. Migration files in `glowupai/migrations/` (SQL files)
 2. Schema version tracked in `schema_migrations` table
 3. Migrations run automatically on startup
 4. Each migration runs exactly once
@@ -171,7 +171,7 @@ ORDER BY idx_scan ASC;
 1. **Create SQL file**:
    ```bash
    # Format: NNN_description.sql
-   touch skinproof/migrations/003_add_notifications.sql
+   touch glowupai/migrations/003_add_notifications.sql
    ```
 
 2. **Write migration**:
@@ -192,7 +192,7 @@ ORDER BY idx_scan ASC;
    ```bash
    # Test on fresh database
    rm .data/test.db
-   SKINPROOF_DB_PATH=.data/test.db uvicorn skinproof.api:app
+   GLOWUPAI_DB_PATH=.data/test.db uvicorn glowupai.api:app
    ```
 
 4. **Rollback planning**: Always plan how to rollback
@@ -223,7 +223,7 @@ ORDER BY idx_scan ASC;
 **1. Identify Slow Queries**:
 ```sql
 -- Enable slow query logging (PostgreSQL)
-ALTER DATABASE skinproof_prod SET log_min_duration_statement = 1000; -- 1 second
+ALTER DATABASE glowupai_prod SET log_min_duration_statement = 1000; -- 1 second
 
 -- View slow queries
 SELECT 
@@ -294,7 +294,7 @@ SELECT
     state,
     count(*) as connections
 FROM pg_stat_activity
-WHERE datname = 'skinproof_prod'
+WHERE datname = 'glowupai_prod'
 GROUP BY state;
 ```
 
@@ -364,8 +364,8 @@ pg_dump $DATABASE_URL -t captures > captures_backup.sql
 railway stop
 
 # Drop and recreate database
-dropdb skinproof_prod
-createdb skinproof_prod
+dropdb glowupai_prod
+createdb glowupai_prod
 
 # Restore
 psql $DATABASE_URL < backup_20260831.sql
@@ -378,8 +378,8 @@ railway restart
 ```bash
 # AWS RDS example
 aws rds restore-db-instance-to-point-in-time \
-    --source-db-instance-identifier skinproof-prod \
-    --target-db-instance-identifier skinproof-prod-restored \
+    --source-db-instance-identifier glowupai-prod \
+    --target-db-instance-identifier glowupai-prod-restored \
     --restore-time 2026-08-31T10:00:00Z
 ```
 
@@ -407,7 +407,7 @@ Configure via environment variables:
 
 ```bash
 # Raw photo retention (days)
-SKINPROOF_RAW_RETENTION_DAYS=730  # 2 years default
+GLOWUPAI_RAW_RETENTION_DAYS=730  # 2 years default
 ```
 
 ### Cleanup Tasks
@@ -472,7 +472,7 @@ For many concurrent connections:
 ```bash
 # pgbouncer.ini
 [databases]
-skinproof_prod = host=db.example.com port=5432 dbname=skinproof_prod
+glowupai_prod = host=db.example.com port=5432 dbname=glowupai_prod
 
 [pgbouncer]
 pool_mode = transaction
@@ -486,9 +486,9 @@ default_pool_size = 20
 
 ```sql
 -- Create read-only user for analytics
-CREATE USER skinproof_readonly WITH PASSWORD 'secure_password';
-GRANT CONNECT ON DATABASE skinproof_prod TO skinproof_readonly;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO skinproof_readonly;
+CREATE USER glowupai_readonly WITH PASSWORD 'secure_password';
+GRANT CONNECT ON DATABASE glowupai_prod TO glowupai_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO glowupai_readonly;
 ```
 
 ### Encryption
@@ -518,7 +518,7 @@ Error: Could not acquire connection from pool
 ```
 
 **Solution**:
-- Increase `SKINPROOF_DB_POOL_MAX_SIZE`
+- Increase `GLOWUPAI_DB_POOL_MAX_SIZE`
 - Check for connection leaks
 - Verify queries are being closed properly
 
@@ -551,7 +551,7 @@ Error: FATAL: remaining connection slots are reserved
 **Solution**:
 - Increase database `max_connections` setting
 - Use connection pooler (PgBouncer)
-- Reduce `SKINPROOF_DB_POOL_MAX_SIZE`
+- Reduce `GLOWUPAI_DB_POOL_MAX_SIZE`
 
 ## Migration from SQLite to PostgreSQL
 
@@ -559,7 +559,7 @@ To migrate production data from SQLite to PostgreSQL:
 
 ```bash
 # 1. Export from SQLite
-sqlite3 .data/skinproof.sqlite3 .dump > dump.sql
+sqlite3 .data/glowupai.sqlite3 .dump > dump.sql
 
 # 2. Convert to PostgreSQL format
 # (Handle syntax differences: datetime('now') -> now(), etc.)
@@ -574,7 +574,7 @@ psql $DATABASE_URL -c "SELECT count(*) FROM users;"
 Or use a migration tool:
 ```bash
 pip install pgloader
-pgloader .data/skinproof.sqlite3 $DATABASE_URL
+pgloader .data/glowupai.sqlite3 $DATABASE_URL
 ```
 
 ## Resources

@@ -29,7 +29,7 @@ python3 test_consistency.py
 # Test single image
 cd /Users/21cabbage/GlowupAI/backend
 USE_NEW_MODEL=1 python3 -c "
-from skinproof.ml_model import MLModelInference
+from glowupai.ml_model import MLModelInference
 model = MLModelInference()
 print('Model loaded successfully!')
 "
@@ -50,15 +50,15 @@ unset USE_NEW_MODEL
 echo "ML Model: $USE_NEW_MODEL (1=enabled, 0=disabled)"
 
 # Check model file exists
-ls -lh /Users/21cabbage/GlowupAI/backend/skinproof/models/
+ls -lh /Users/21cabbage/GlowupAI/backend/glowupai/models/
 
 ═══════════════════════════════════════════════════════════
   FILES CREATED
 ═══════════════════════════════════════════════════════════
 
 Backend Integration:
-  ✓ /Users/21cabbage/GlowupAI/backend/skinproof/ml_model.py
-  ✓ /Users/21cabbage/GlowupAI/backend/skinproof/metrics.py (updated)
+  ✓ /Users/21cabbage/GlowupAI/backend/glowupai/ml_model.py
+  ✓ /Users/21cabbage/GlowupAI/backend/glowupai/metrics.py (updated)
 
 Deployment Scripts:
   ✓ ./DEPLOY.sh

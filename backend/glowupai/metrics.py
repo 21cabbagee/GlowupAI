@@ -30,6 +30,8 @@ class MetricResult:
     def as_dict(self) -> dict:
         result = asdict(self)
         result["noise_floor"] = result.pop("noise_floors")
+        # Add smoothness_score as inverse of texture_score for backward compatibility
+        result["smoothness_score"] = round(100.0 - self.texture_score, 3)
         return result
 
 

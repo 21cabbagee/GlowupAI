@@ -18,7 +18,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 TRAIN_DIR="/Users/21cabbage/GlowupAI/backend/train_model"
-BACKEND_DIR="/Users/21cabbage/GlowupAI/backend/skinproof"
+BACKEND_DIR="/Users/21cabbage/GlowupAI/backend/glowupai"
 
 all_passed=true
 

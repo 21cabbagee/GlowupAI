@@ -3,6 +3,7 @@ package com.glowup.ai.feature.auth
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.glowup.ai.feature.legal.PrivacyPolicyRoute
 import com.glowup.ai.feature.shell.GlowDestination
 
 /**
@@ -22,5 +23,10 @@ fun NavGraphBuilder.authGraph(navController: NavController) {
     }
     composable<GlowDestination.SignIn> {
         SignInRoute(navController = navController)
+    }
+    composable<GlowDestination.PrivacyPolicy> {
+        PrivacyPolicyRoute(
+            onBack = { navController.navigateUp() }
+        )
     }
 }

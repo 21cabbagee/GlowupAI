@@ -41,7 +41,7 @@ class JobRunner:
     def __init__(self, db, max_workers: int = 4) -> None:
         self.db = db
         self._executor = ThreadPoolExecutor(
-            max_workers=max_workers, thread_name_prefix="skinproof-job",
+            max_workers=max_workers, thread_name_prefix="glowupai-job",
         )
 
     def submit(

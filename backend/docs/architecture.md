@@ -1,6 +1,6 @@
-# SkinProof complete architecture
+# GlowupAI complete architecture
 
-SkinProof is implemented as a complete modular product with a stable domain
+GlowupAI is implemented as a complete modular product with a stable domain
 boundary around the evidence engine. The browser workspace and HTTP API expose
 the full product lifecycle; cloud storage, mobile camera SDKs, app-store
 billing, KMS, and queue credentials are deployment adapters rather than

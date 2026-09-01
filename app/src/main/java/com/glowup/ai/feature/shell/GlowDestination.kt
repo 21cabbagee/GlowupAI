@@ -27,6 +27,8 @@ sealed interface GlowDestination {
 
     @Serializable data object SignIn : GlowDestination
 
+    @Serializable data object PrivacyPolicy : GlowDestination
+
     // ---- feature/onboarding ------------------------------------------------
     @Serializable data object Onboarding : GlowDestination
 
@@ -97,6 +99,7 @@ sealed interface GlowDestination {
                 Splash::class,
                 Welcome::class,
                 SignIn::class,
+                PrivacyPolicy::class,
                 Onboarding::class,
                 Consent::class,
                 Capture::class,

@@ -76,7 +76,7 @@ def make_token(
 
 
 class TokenVerificationTests(unittest.TestCase):
-    """Unit tests for skinproof.auth, independent of the HTTP layer."""
+    """Unit tests for glowupai.auth, independent of the HTTP layer."""
 
     def setUp(self):
         self.cache = _NetworkForbiddenCache({KID: PUBLIC_KEY})

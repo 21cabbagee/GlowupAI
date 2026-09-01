@@ -61,7 +61,7 @@ Test with sample image:
 ```bash
 cd /Users/21cabbage/GlowupAI/backend
 USE_NEW_MODEL=1 python3 << EOF
-from skinproof.ml_model import MLModelInference
+from glowupai.ml_model import MLModelInference
 model = MLModelInference()
 with open("test_image.jpg", 'rb') as f:
     result = model.predict(f.read(), 0.9)
@@ -86,7 +86,7 @@ System automatically falls back to deterministic model.
 
 ```
 backend/
-├── skinproof/
+├── glowupai/
 │   ├── ml_model.py           ← NEW: ML model integration
 │   ├── metrics.py            ← UPDATED: Model switching logic
 │   └── models/               ← Created by DEPLOY.sh

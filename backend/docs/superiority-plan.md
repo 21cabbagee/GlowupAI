@@ -1,4 +1,4 @@
-# SkinProof — features and migrations to do now
+# GlowupAI — features and migrations to do now
 
 Grounded in the code as of 2026-08-19. Ordered by what blocks what, not by
 appeal. Sections 0–2 are prerequisites; sections 3–5 are the product work that
@@ -21,8 +21,8 @@ model-pinning items remain open.
 ### 0.1 There is no authentication
 
 `user_id` is a path or body parameter on every endpoint
-(`skinproof/complete_api.py:145-283`). There is no `Depends`, no bearer token,
-no session, no cookie anywhere in `skinproof/`. The web client stores a raw
+(`glowupai/complete_api.py:145-283`). There is no `Depends`, no bearer token,
+no session, no cookie anywhere in `glowupai/`. The web client stores a raw
 user id in `localStorage` (`web/app/sign-in/page.tsx:65-78`) and sends it.
 
 Consequences as written:
@@ -32,7 +32,7 @@ Consequences as written:
   `DELETE /api/users/{user_id}`;
 - `GET /api/admin/audit` and `POST /api/admin/offers` are unauthenticated;
 - `allow_origins=["*"]` with `allow_methods=["*"]`
-  (`skinproof/complete_api.py:118`) makes every one of those callable from any
+  (`glowupai/complete_api.py:118`) makes every one of those callable from any
   origin in a browser.
 
 This is facial biometric data behind a consent flow the product advertises. It
@@ -52,7 +52,7 @@ in this document should ship first.
    stranger's data.
 4. Split admin routes onto a separate router with a distinct role check.
 5. Replace the CORS wildcard with an explicit allow-list from
-   `Settings` (`SKINPROOF_ALLOWED_ORIGINS`), and add `allow_credentials=True`
+   `Settings` (`GLOWUPAI_ALLOWED_ORIGINS`), and add `allow_credentials=True`
    only alongside that list.
 6. Rate-limit `POST /api/captures`, `/api/me/qna`, and auth endpoints.
 
@@ -72,7 +72,7 @@ There are three generations of the same application living side by side:
 
 `api.py` re-exports the runtime app and keeps an `atexit` hook that reaches
 into `complete_api` and `api_legacy` to close whichever databases happened to
-be constructed (`skinproof/api.py:31-49`). That hook exists only because three
+be constructed (`glowupai/api.py:31-49`). That hook exists only because three
 apps can each build their own pool.
 
 Roughly 340 lines are `.ai-previous` files that nothing imports, and the
@@ -101,12 +101,12 @@ guessed at.
 ### 0.3 Make analysis asynchronous
 
 `reprocess_jobs` is written, run, and completed inside the request
-(`skinproof/complete_service.py:361-377`). A user with 400 captures blocks a
+(`glowupai/complete_service.py:361-377`). A user with 400 captures blocks a
 worker for the whole reprocess and gets a timeout. The `analysis_jobs` table
 exists but is not used as a queue.
 
 **Migration**: put capture analysis and reprocessing behind a job table
-consumed by a worker process (`skinproof.worker`), with the API returning
+consumed by a worker process (`glowupai.worker`), with the API returning
 `202` plus a job id. This is a hard prerequisite for the vision features in
 §3 — those add seconds of model latency per capture and cannot run inline.
 
@@ -114,7 +114,7 @@ consumed by a worker process (`skinproof.worker`), with the API returning
 
 ## 1. Repackage the tiers
 
-Current split (`skinproof/complete_service.py:19`):
+Current split (`glowupai/complete_service.py:19`):
 
 ```python
 PREMIUM_FEATURES = {"experiments", "product_verdicts", "ingredient_analysis",
@@ -158,8 +158,8 @@ give away the first proof and sell the second.
 ## 2. Schema migrations to write now
 
 The Postgres runner is already versioned and ordered
-(`skinproof/postgres_db.py:100-125`), so these are additive files in
-`skinproof/migrations/`. Keep the SQLite DDL in step.
+(`glowupai/postgres_db.py:100-125`), so these are additive files in
+`glowupai/migrations/`. Keep the SQLite DDL in step.
 
 | File | Contents |
 |---|---|
@@ -178,7 +178,7 @@ a partial index on `jobs(status)` for the worker poll.
 ## 3. Vision AI — the features that change the product
 
 Today the only model call is text explanation of an already-computed verdict
-(`skinproof/google_ai.py`). The system prompt correctly forbids the model from
+(`glowupai/google_ai.py`). The system prompt correctly forbids the model from
 changing the label. **Keep that line absolute for everything below.** The
 moment a model invents a verdict, the evidence contract in
 `docs/metrics-and-verdicts.md:46` is worthless and so is the differentiation.
@@ -198,7 +198,7 @@ deterministic version first — it needs no model at all.
 
 Photo of the bathroom shelf → multimodal extraction of product names →
 existing catalog matching, INCI parsing, stabilization defaults
-(`skinproof/catalog.py`). Manual routine entry is the largest abandonment
+(`glowupai/catalog.py`). Manual routine entry is the largest abandonment
 cause in every tracker of this shape; this removes the onboarding cliff in one
 screen.
 
@@ -253,9 +253,9 @@ making them wait 90. Time-to-answer is the thing premium is actually selling.
 
 ## 5. Operational gaps to close alongside
 
-- **Photo storage**: AES-GCM local only (`skinproof/photos.py`). Needs the S3/
+- **Photo storage**: AES-GCM local only (`glowupai/photos.py`). Needs the S3/
   GCS adapter and KMS-held keys before real users, not after.
-- **Model pinning**: `SKINPROOF_GEMINI_MODEL` in `.env.example` names
+- **Model pinning**: `GLOWUPAI_GEMINI_MODEL` in `.env.example` names
   `gemini-3.5-flash-lite`. Verify that id against current provider docs before
   deploy, and record the resolved model id in verdict provenance so
   reprocessing stays reproducible.

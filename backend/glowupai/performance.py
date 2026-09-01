@@ -80,7 +80,7 @@ class ImageCompressor:
 
             return compressed_bytes
 
-        except Exception as exc:
+        except (OSError, IOError, ValueError) as exc:
             logger.error(f"Image compression failed: {exc}")
             # Return original if compression fails
             return image_bytes
@@ -107,10 +107,11 @@ class RedisCache:
                 )
                 self.redis_client.ping()
                 logger.info("Redis cache initialized successfully")
-            except (ImportError, Exception) as exc:
-                logger.warning(
-                    f"Redis unavailable, falling back to memory cache: {exc}",
-                )
+            except ImportError:
+                logger.warning("redis package not installed, falling back to memory cache")
+                self.redis_client = None
+            except (ConnectionError, TimeoutError, OSError) as exc:
+                logger.warning(f"Redis unavailable, falling back to memory cache: {exc}")
                 self.redis_client = None
 
     def get(self, key: str) -> Any | None:
@@ -128,7 +129,7 @@ class RedisCache:
                 if value:
                     return json.loads(value)
                 return None
-            except Exception as exc:
+            except (ConnectionError, TimeoutError, OSError, ValueError) as exc:
                 logger.error(f"Redis cache get failed: {exc}")
                 return None
         else:
@@ -159,7 +160,7 @@ class RedisCache:
             try:
                 self.redis_client.setex(key, ttl, json.dumps(value))
                 return True
-            except Exception as exc:
+            except (ConnectionError, TimeoutError, OSError, ValueError, TypeError) as exc:
                 logger.error(f"Redis cache set failed: {exc}")
                 return False
         else:
@@ -181,7 +182,7 @@ class RedisCache:
             try:
                 self.redis_client.delete(key)
                 return True
-            except Exception as exc:
+            except (ConnectionError, TimeoutError, OSError) as exc:
                 logger.error(f"Redis cache delete failed: {exc}")
                 return False
         else:
@@ -191,6 +192,42 @@ class RedisCache:
                     del self.cache_times[key]
                 return True
             return False
+
+    def delete_pattern(self, pattern: str) -> int:
+        """Delete all keys matching pattern.
+
+        Args:
+            pattern: Pattern to match (e.g., "cache:user:123:*")
+
+        Returns:
+            Number of keys deleted
+        """
+        deleted = 0
+        if self.redis_client:
+            try:
+                keys = list(self.redis_client.scan_iter(match=pattern))
+                if keys:
+                    deleted = self.redis_client.delete(*keys)
+                return deleted
+            except (ConnectionError, TimeoutError, OSError) as exc:
+                logger.error(f"Redis cache pattern delete failed: {exc}")
+                return 0
+        else:
+            # Memory cache - match pattern
+            to_delete = [k for k in self.memory_cache.keys() if self._matches_pattern(k, pattern)]
+            for key in to_delete:
+                del self.memory_cache[key]
+                if key in self.cache_times:
+                    del self.cache_times[key]
+                deleted += 1
+            return deleted
+
+    @staticmethod
+    def _matches_pattern(key: str, pattern: str) -> bool:
+        """Check if key matches wildcard pattern."""
+        import re
+        regex_pattern = pattern.replace("*", ".*").replace("?", ".")
+        return bool(re.match(f"^{regex_pattern}$", key))
 
     def clear(self) -> bool:
         """Clear all cache entries.
@@ -202,7 +239,7 @@ class RedisCache:
             try:
                 self.redis_client.flushdb()
                 return True
-            except Exception as exc:
+            except (ConnectionError, TimeoutError, OSError) as exc:
                 logger.error(f"Redis cache clear failed: {exc}")
                 return False
         else:
@@ -219,39 +256,94 @@ class CacheMiddleware(BaseHTTPMiddleware):
         self.cache = cache
         self.cacheable_paths = cacheable_paths or ["/api/dashboard", "/api/users/"]
 
+    @staticmethod
+    def invalidate_user_cache(cache: RedisCache, user_id: str) -> int:
+        """Invalidate all cache entries for a user.
+
+        Args:
+            cache: Cache instance
+            user_id: User ID whose cache to invalidate
+
+        Returns:
+            Number of cache entries deleted
+        """
+        pattern = f"cache:user:{user_id}:*"
+        deleted = cache.delete_pattern(pattern)
+        logger.info(f"Invalidated {deleted} cache entries for user {user_id}")
+        return deleted
+
+    @staticmethod
+    def invalidate_dashboard_cache(cache: RedisCache, user_id: str) -> int:
+        """Invalidate dashboard cache for a specific user.
+
+        Call this when user data changes (new capture, experiment result, etc.)
+
+        Args:
+            cache: Cache instance
+            user_id: User ID whose dashboard cache to invalidate
+
+        Returns:
+            Number of cache entries deleted
+        """
+        # Invalidate all cache for this user (dashboard, history, etc.)
+        return CacheMiddleware.invalidate_user_cache(cache, user_id)
+
     def _is_cacheable(self, path: str, method: str) -> bool:
         """Check if request is cacheable."""
         if method != "GET":
             return False
         return any(cacheable in path for cacheable in self.cacheable_paths)
 
+    @staticmethod
+    def generate_cache_key_for_user(user_id: str, path: str, query_params: str = "") -> str:
+        """Generate cache key for a specific user and path.
+
+        Args:
+            user_id: User ID
+            path: Request path (e.g., "/api/users/{user_id}/dashboard")
+            query_params: Query parameters string (default: "")
+
+        Returns:
+            Cache key string in format: cache:user:{user_id}:{hash}
+            This format allows efficient invalidation by user via pattern matching
+        """
+        key_parts = [path, query_params]
+        key_string = "|".join(key_parts)
+        key_hash = hashlib.sha256(key_string.encode()).hexdigest()[:12]
+        return f"cache:user:{user_id}:{key_hash}"
+
     def _generate_cache_key(self, request: Request) -> str:
         """Generate cache key from request."""
-        # Include user ID from auth header if available
-        auth_header = request.headers.get("authorization", "")
+        # Try to extract user_id from path first (e.g., /api/users/{user_id}/dashboard)
+        import re
+        path_match = re.search(r'/users/([^/]+)/', request.url.path)
         user_id = "anonymous"
 
-        if auth_header and "." in auth_header:
-            try:
-                import base64
-                token = auth_header.replace("Bearer ", "").strip()
-                payload = token.split(".")[1]
-                payload += "=" * (4 - len(payload) % 4)
-                decoded = json.loads(base64.urlsafe_b64decode(payload))
-                user_id = decoded.get("sub", "anonymous")
-            except Exception:
-                pass
+        if path_match:
+            # Use user_id from path if available
+            user_id = path_match.group(1)
+        else:
+            # Fall back to JWT token extraction
+            auth_header = request.headers.get("authorization", "")
+            if auth_header and "." in auth_header:
+                try:
+                    import base64
+                    token = auth_header.replace("Bearer ", "").strip()
+                    payload = token.split(".")[1]
+                    payload += "=" * (4 - len(payload) % 4)
+                    decoded = json.loads(base64.urlsafe_b64decode(payload))
+                    user_id = decoded.get("sub", "anonymous")
+                except (ValueError, KeyError, IndexError) as exc:
+                    # JWT parsing failed - use anonymous user
+                    logger.debug(f"Failed to extract user ID from JWT for cache key: {exc}")
+                    pass
 
         # Create cache key from path, query params, and user
-        key_parts = [
-            request.url.path,
-            str(request.query_params),
+        return self.generate_cache_key_for_user(
             user_id,
-        ]
-        key_string = "|".join(key_parts)
-        key_hash = hashlib.sha256(key_string.encode()).hexdigest()[:16]
-
-        return f"cache:{key_hash}"
+            request.url.path,
+            str(request.query_params)
+        )
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint,
@@ -266,11 +358,15 @@ class CacheMiddleware(BaseHTTPMiddleware):
         cached = self.cache.get(cache_key)
 
         if cached:
-            logger.debug(f"Cache hit: {cache_key}")
+            logger.info(f"Cache HIT: {request.url.path} (key: {cache_key[:16]}...)")
+            # Add cache status and control headers
+            headers = dict(cached.get("headers", {}))
+            headers["X-Cache-Status"] = "HIT"
+            headers["Cache-Control"] = f"public, max-age={self.cache.default_ttl}"
             return Response(
                 content=cached["content"],
                 status_code=cached["status_code"],
-                headers=dict(cached.get("headers", {})),
+                headers=headers,
                 media_type=cached.get("media_type"),
             )
 
@@ -279,29 +375,44 @@ class CacheMiddleware(BaseHTTPMiddleware):
 
         # Cache successful responses
         if response.status_code == 200:
-            # Read response body
-            body = b""
-            async for chunk in response.body_iterator:
-                body += chunk
+            try:
+                # Read response body - handle both body_iterator and body attributes
+                body = b""
+                if hasattr(response, "body_iterator"):
+                    async for chunk in response.body_iterator:
+                        body += chunk
+                elif hasattr(response, "body"):
+                    body = response.body
+                else:
+                    # Cannot cache this response type
+                    logger.warning(f"Cannot cache response: no body_iterator or body attribute")
+                    return response
 
-            # Store in cache
-            cache_data = {
-                "content": body.decode("utf-8") if body else "",
-                "status_code": response.status_code,
-                "headers": dict(response.headers),
-                "media_type": response.media_type,
-            }
-            self.cache.set(cache_key, cache_data)
+                # Store in cache
+                cache_data = {
+                    "content": body.decode("utf-8", errors="replace") if body else "",
+                    "status_code": response.status_code,
+                    "headers": dict(response.headers),
+                    "media_type": response.media_type,
+                }
+                self.cache.set(cache_key, cache_data)
 
-            logger.debug(f"Cache miss, stored: {cache_key}")
+                logger.info(f"Cache MISS: {request.url.path} (stored with key: {cache_key[:16]}...)")
 
-            # Return new response with body
-            return Response(
-                content=body,
-                status_code=response.status_code,
-                headers=dict(response.headers),
-                media_type=response.media_type,
-            )
+                # Return new response with body and cache status header
+                headers = dict(response.headers)
+                headers["X-Cache-Status"] = "MISS"
+                headers["Cache-Control"] = f"public, max-age={self.cache.default_ttl}"
+                return Response(
+                    content=body,
+                    status_code=response.status_code,
+                    headers=headers,
+                    media_type=response.media_type,
+                )
+            except Exception as exc:
+                logger.error(f"Cache storage failed: {exc}", exc_info=True)
+                # Return original response if caching fails
+                return response
 
         return response
 

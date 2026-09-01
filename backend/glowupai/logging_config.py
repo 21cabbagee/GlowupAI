@@ -62,7 +62,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         start_time = time.time()
 
         # Log request
-        logger = logging.getLogger("skinproof.access")
+        logger = logging.getLogger("glowupai.access")
         logger.info(
             f"{request.method} {request.url.path}",
             extra={
@@ -90,7 +90,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response.headers["X-Request-ID"] = req_id
             return response
 
-        except Exception as exc:
+        except (RuntimeError, ValueError, OSError, IOError, TimeoutError) as exc:
             duration_ms = round((time.time() - start_time) * 1000, 2)
             logger.exception(
                 f"Request failed: {exc}",
@@ -134,7 +134,7 @@ def setup_logging(log_level: str = "INFO", use_json: bool = True) -> None:
     root_logger.addHandler(handler)
 
     # Set specific logger levels
-    logging.getLogger("skinproof").setLevel(level)
+    logging.getLogger("glowupai").setLevel(level)
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)  # Reduce noise
     logging.getLogger("uvicorn.error").setLevel(logging.INFO)
 

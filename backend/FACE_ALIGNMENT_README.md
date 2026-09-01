@@ -30,12 +30,12 @@ The face alignment system:
 
 ### Files Modified
 
-1. **`skinproof/face_alignment.py`** (NEW)
+1. **`glowupai/face_alignment.py`** (NEW)
    - `align_face()` - Core alignment function
    - `align_face_safe()` - Safe wrapper with fallback
    - `FaceAlignmentError` - Custom exception
 
-2. **`skinproof/metrics.py`** (UPDATED)
+2. **`glowupai/metrics.py`** (UPDATED)
    - Added import: `from .face_alignment import align_face_safe`
    - Modified `analyze()` to apply alignment before processing
 
@@ -153,7 +153,7 @@ To verify alignment is working in production:
 Environment variables (optional):
 ```bash
 # Disable alignment for testing (not recommended)
-SKINPROOF_SKIP_ALIGNMENT=0  # 1 to disable
+GLOWUPAI_SKIP_ALIGNMENT=0  # 1 to disable
 
 # Adjust alignment parameters (advanced)
 FACE_ALIGNMENT_EYE_DISTANCE=80  # pixels

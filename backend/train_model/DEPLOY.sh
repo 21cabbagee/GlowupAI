@@ -18,7 +18,7 @@ echo "======================================"
 
 # Paths
 TRAIN_DIR="/Users/21cabbage/GlowupAI/backend/train_model"
-BACKEND_DIR="/Users/21cabbage/GlowupAI/backend/skinproof"
+BACKEND_DIR="/Users/21cabbage/GlowupAI/backend/glowupai"
 MODEL_SOURCE="$TRAIN_DIR/checkpoints/best_model.pth"
 MODEL_DEST="$BACKEND_DIR/models/skin_analysis_v2.pth"
 
@@ -64,7 +64,7 @@ import torch
 sys.path.insert(0, '/Users/21cabbage/GlowupAI/backend')
 
 try:
-    from skinproof.ml_model import MLModelInference
+    from glowupai.ml_model import MLModelInference
 
     # Try to load the model
     model = MLModelInference()
@@ -113,7 +113,7 @@ echo "To enable the ML model in production:"
 echo "  export USE_NEW_MODEL=1"
 echo ""
 echo "To test with a single capture:"
-echo "  USE_NEW_MODEL=1 python3 -m skinproof.cli analyze <image_path>"
+echo "  USE_NEW_MODEL=1 python3 -m glowupai.cli analyze <image_path>"
 echo ""
 echo "To rollback to deterministic model:"
 echo "  unset USE_NEW_MODEL"

@@ -1,7 +1,7 @@
 SKINPROOF — END-TO-END IMPLEMENTATION PLAN
 ==============================================
 
-SkinProof's thesis: skincare doesn't have an information problem, it has an
+GlowupAI's thesis: skincare doesn't have an information problem, it has an
 attribution problem. This plan translates that thesis into a buildable
 system — capture, computer vision, causal attribution, an honest weekly
 verdict, and the infrastructure to scale it from a beachhead of skincare
@@ -391,7 +391,7 @@ calibrated capture, longitudinal comparison, and causal attribution.
 
 
 ---
-Note: the source deck (SkinProof_YC_Deck) has placeholders — founder
+Note: the source deck (GlowupAI_YC_Deck) has placeholders — founder
 names, TAM, current MRR/users, and the fundraising ask — that this plan
 was built independent of. Slot those in once available; nothing above
 depends on them.

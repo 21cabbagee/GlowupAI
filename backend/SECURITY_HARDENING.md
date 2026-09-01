@@ -20,7 +20,7 @@ Before going to production:
 
 - [ ] HTTPS/TLS enabled (API behind HTTPS load balancer)
 - [ ] CORS configured with explicit origins (no `*`)
-- [ ] Authentication enabled (`SKINPROOF_AUTH_REQUIRED=1`)
+- [ ] Authentication enabled (`GLOWUPAI_AUTH_REQUIRED=1`)
 - [ ] Admin token set to strong random value
 - [ ] Database uses SSL/TLS connections
 - [ ] All secrets in environment variables (not in code)
@@ -57,8 +57,8 @@ curl -I https://api.glowup.ai/api/health
 
 **Setup**:
 ```bash
-SKINPROOF_FIREBASE_PROJECT_ID=your-project-id
-SKINPROOF_AUTH_REQUIRED=1
+GLOWUPAI_FIREBASE_PROJECT_ID=your-project-id
+GLOWUPAI_AUTH_REQUIRED=1
 ```
 
 **How it works**:
@@ -96,7 +96,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 **Configure**:
 ```bash
-SKINPROOF_ADMIN_TOKEN=<generated-token>
+GLOWUPAI_ADMIN_TOKEN=<generated-token>
 ```
 
 **Protected endpoints**:
@@ -123,30 +123,30 @@ CORS prevents malicious websites from making requests to your API on behalf of u
 
 **Bad** (allows any website to call your API):
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=*
+GLOWUPAI_ALLOWED_ORIGINS=*
 ```
 
 **Good** (only your frontend can call API):
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai,https://www.glowup.ai
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai,https://www.glowup.ai
 ```
 
 ### Configuration
 
 **Development** (permissive):
 ```bash
-# Defaults to localhost addresses when SKINPROOF_ENV=development
+# Defaults to localhost addresses when GLOWUPAI_ENV=development
 ```
 
 **Production** (strict):
 ```bash
-SKINPROOF_ENV=production
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai
+GLOWUPAI_ENV=production
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai
 ```
 
 **Multiple domains**:
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai,https://www.glowup.ai,https://staging.glowup.ai
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai,https://www.glowup.ai,https://staging.glowup.ai
 ```
 
 ### Security Settings
@@ -176,7 +176,7 @@ Rate limiting prevents:
 
 Enable rate limiting:
 ```bash
-SKINPROOF_RATE_LIMIT_ENABLED=1
+GLOWUPAI_RATE_LIMIT_ENABLED=1
 ```
 
 ### Current Limits
@@ -188,7 +188,7 @@ SKINPROOF_RATE_LIMIT_ENABLED=1
 
 ### Customizing Limits
 
-Edit `skinproof/middleware.py`:
+Edit `glowupai/middleware.py`:
 ```python
 self.limits = {
     "auth": (10, 20),  # (requests_per_minute, burst_size)
@@ -286,9 +286,9 @@ The codebase uses parameterized queries exclusively.
 
 **Create dedicated database user**:
 ```sql
-CREATE USER skinproof_app WITH PASSWORD 'secure_password';
-GRANT CONNECT ON DATABASE skinproof_prod TO skinproof_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO skinproof_app;
+CREATE USER glowupai_app WITH PASSWORD 'secure_password';
+GRANT CONNECT ON DATABASE glowupai_prod TO glowupai_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO glowupai_app;
 ```
 
 **Do NOT use**:
@@ -320,8 +320,8 @@ DATABASE_URL = "postgresql://user:password@host/db"  # NEVER DO THIS
 Docker container runs as non-root user (UID 10001):
 
 ```dockerfile
-RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin skinproof
-USER skinproof
+RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin glowupai
+USER glowupai
 ```
 
 **Benefits**:
@@ -342,13 +342,13 @@ Uses `python:3.12-slim`:
 
 ```bash
 # Using Docker built-in scanner
-docker scan skinproof:latest
+docker scan glowupai:latest
 
 # Using Trivy
-trivy image skinproof:latest
+trivy image glowupai:latest
 
 # Using Snyk
-snyk container test skinproof:latest
+snyk container test glowupai:latest
 ```
 
 **Set up automated scanning**:
@@ -362,10 +362,10 @@ snyk container test skinproof:latest
 ```bash
 # Using Docker Content Trust
 export DOCKER_CONTENT_TRUST=1
-docker push skinproof:latest
+docker push glowupai:latest
 
 # Using Cosign
-cosign sign skinproof:latest
+cosign sign glowupai:latest
 ```
 
 ## 8. Secrets Management
@@ -378,7 +378,7 @@ cosign sign skinproof:latest
 ```bash
 export GEMINI_API_KEY=<secret>
 export DATABASE_URL=postgresql://...
-export SKINPROOF_ADMIN_TOKEN=<secret>
+export GLOWUPAI_ADMIN_TOKEN=<secret>
 ```
 
 ❌ **Wrong**:
@@ -425,7 +425,7 @@ git ls-files | grep "\.env"
 
 Prevent resource exhaustion:
 ```bash
-SKINPROOF_REQUEST_TIMEOUT=30
+GLOWUPAI_REQUEST_TIMEOUT=30
 ```
 
 **Benefits**:
@@ -545,7 +545,7 @@ cat logs.json | jq 'select(.level=="ERROR")'
 **User Rights**:
 - ✅ Right to access: `GET /api/users/{user_id}/export`
 - ✅ Right to deletion: `DELETE /api/users/{user_id}`
-- ✅ Data retention: Configurable via `SKINPROOF_RAW_RETENTION_DAYS`
+- ✅ Data retention: Configurable via `GLOWUPAI_RAW_RETENTION_DAYS`
 - ✅ Consent tracking: `consent_events` table
 
 **Data Protection**:
@@ -558,7 +558,7 @@ cat logs.json | jq 'select(.level=="ERROR")'
 
 **Configure retention**:
 ```bash
-SKINPROOF_RAW_RETENTION_DAYS=730  # 2 years
+GLOWUPAI_RAW_RETENTION_DAYS=730  # 2 years
 ```
 
 **Implement cleanup**:
@@ -572,7 +572,7 @@ SKINPROOF_RAW_RETENTION_DAYS=730  # 2 years
 
 **Protect API key**:
 ```bash
-SKINPROOF_GEMINI_API_KEY=<secret>
+GLOWUPAI_GEMINI_API_KEY=<secret>
 ```
 
 **Best practices**:

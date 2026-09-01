@@ -42,7 +42,7 @@ Multi-stage preprocessing pipeline that normalizes images before analysis:
 
 FILES CREATED
 -------------
-1. /Users/21cabbage/GlowupAI/backend/skinproof/preprocessing.py
+1. /Users/21cabbage/GlowupAI/backend/glowupai/preprocessing.py
    - Main preprocessing module with all normalization functions
    - OpenCV-based pipeline for comprehensive preprocessing
    - PIL fallback for systems without OpenCV
@@ -65,28 +65,28 @@ FILES MODIFIED
    - Added opencv-python>=4.8.0 dependency
    - Added numpy>=1.24.0 dependency
 
-2. /Users/21cabbage/GlowupAI/backend/skinproof/service.py
+2. /Users/21cabbage/GlowupAI/backend/glowupai/service.py
    - Integrated preprocessing into process_analysis_job()
    - Applies preprocessing before calling analyze()
    - Graceful fallback to original image if preprocessing fails
-   - Controlled by SKINPROOF_ENABLE_PREPROCESSING environment variable
+   - Controlled by GLOWUPAI_ENABLE_PREPROCESSING environment variable
 
 3. /Users/21cabbage/GlowupAI/backend/ENV_VARS_REFERENCE.md
-   - Added SKINPROOF_ENABLE_PREPROCESSING documentation
-   - Added SKINPROOF_SKIP_QUALITY_CHECKS documentation
+   - Added GLOWUPAI_ENABLE_PREPROCESSING documentation
+   - Added GLOWUPAI_SKIP_QUALITY_CHECKS documentation
    - Updated production configuration templates
 
 ENVIRONMENT VARIABLES
 ---------------------
 New environment variables for controlling preprocessing:
 
-1. SKINPROOF_ENABLE_PREPROCESSING
+1. GLOWUPAI_ENABLE_PREPROCESSING
    - Default: 1 (enabled)
    - Values: 0 (disabled) | 1 (enabled)
    - Controls whether preprocessing is applied before analysis
    - Recommended: Keep enabled (1) in production
 
-2. SKINPROOF_SKIP_QUALITY_CHECKS (existing, now documented)
+2. GLOWUPAI_SKIP_QUALITY_CHECKS (existing, now documented)
    - Default: 0 (checks enabled)
    - Values: 0 (checks enabled) | 1 (checks disabled)
    - FOR TESTING ONLY - skips quality validation
@@ -136,10 +136,10 @@ Run all tests including preprocessing:
 
 Test specific functionality:
   # Test preprocessing availability
-  python -c "from skinproof.preprocessing import check_preprocessing_available; print(check_preprocessing_available())"
+  python -c "from glowupai.preprocessing import check_preprocessing_available; print(check_preprocessing_available())"
 
   # Test PIL fallback
-  python -c "from skinproof.preprocessing import preprocess_for_analysis_pil; print('PIL preprocessing available')"
+  python -c "from glowupai.preprocessing import preprocess_for_analysis_pil; print('PIL preprocessing available')"
 
 INTEGRATION
 -----------
@@ -193,16 +193,16 @@ PERFORMANCE IMPACT
 CONFIGURATION RECOMMENDATIONS
 ------------------------------
 Development:
-  SKINPROOF_ENABLE_PREPROCESSING=1
-  SKINPROOF_SKIP_QUALITY_CHECKS=0
+  GLOWUPAI_ENABLE_PREPROCESSING=1
+  GLOWUPAI_SKIP_QUALITY_CHECKS=0
 
 Testing:
-  SKINPROOF_ENABLE_PREPROCESSING=1  # Test both on/off
-  SKINPROOF_SKIP_QUALITY_CHECKS=1   # Allow test images
+  GLOWUPAI_ENABLE_PREPROCESSING=1  # Test both on/off
+  GLOWUPAI_SKIP_QUALITY_CHECKS=1   # Allow test images
 
 Production:
-  SKINPROOF_ENABLE_PREPROCESSING=1  # RECOMMENDED
-  SKINPROOF_SKIP_QUALITY_CHECKS=0   # REQUIRED
+  GLOWUPAI_ENABLE_PREPROCESSING=1  # RECOMMENDED
+  GLOWUPAI_SKIP_QUALITY_CHECKS=0   # REQUIRED
 
 MONITORING
 ----------
@@ -216,7 +216,7 @@ NEXT STEPS
 1. Install dependencies (opencv-python, numpy)
 2. Run verification script: python3 verify_preprocessing_setup.py
 3. Run tests: pytest tests/test_preprocessing.py -v
-4. Set environment variable: SKINPROOF_ENABLE_PREPROCESSING=1
+4. Set environment variable: GLOWUPAI_ENABLE_PREPROCESSING=1
 5. Deploy to production
 6. Monitor logs for preprocessing messages
 7. Compare metrics consistency before/after preprocessing
@@ -224,7 +224,7 @@ NEXT STEPS
 ROLLBACK PLAN
 -------------
 If issues occur after deployment:
-1. Set SKINPROOF_ENABLE_PREPROCESSING=0
+1. Set GLOWUPAI_ENABLE_PREPROCESSING=0
 2. Restart service
 3. System reverts to using original images
 4. No data loss or corruption possible

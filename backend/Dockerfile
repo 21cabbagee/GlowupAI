@@ -45,11 +45,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PORT=8000 \
     # Production defaults
-    SKINPROOF_ENV=production \
-    SKINPROOF_LOG_LEVEL=INFO \
-    SKINPROOF_JSON_LOGS=1 \
-    SKINPROOF_RATE_LIMIT_ENABLED=1 \
-    SKINPROOF_REQUEST_TIMEOUT=30
+    GLOWUPAI_ENV=production \
+    GLOWUPAI_LOG_LEVEL=INFO \
+    GLOWUPAI_JSON_LOGS=1 \
+    GLOWUPAI_RATE_LIMIT_ENABLED=1 \
+    GLOWUPAI_REQUEST_TIMEOUT=30
 
 WORKDIR /app
 
@@ -57,7 +57,7 @@ WORKDIR /app
 COPY --from=builder /root/.local /usr/local
 
 # Copy application code
-COPY skinproof ./skinproof
+COPY glowupai ./glowupai
 COPY pyproject.toml README.md ./
 
 # Install application (metadata only, no dependencies)
@@ -65,12 +65,12 @@ RUN pip install --no-cache-dir --no-deps .
 
 # Create non-root user and data directory
 # User ID 10001 is a common convention for non-root container users
-RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin skinproof \
+RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin glowupai \
     && mkdir -p /app/.data \
-    && chown -R skinproof:skinproof /app
+    && chown -R glowupai:glowupai /app
 
 # Switch to non-root user
-USER skinproof
+USER glowupai
 
 # Set PATH for non-root user
 ENV PATH=/usr/local/bin:$PATH
@@ -94,4 +94,4 @@ sys.exit(0 if response.status == 200 else 1)"
 # - port: From PORT env variable
 # - workers: Set via UVICORN_WORKERS env var (default: 1)
 # - log-config: Disabled, we use our own structured logging
-CMD ["sh", "-c", "uvicorn skinproof.api:app --host 0.0.0.0 --port ${PORT} --workers ${UVICORN_WORKERS:-1} --no-access-log"]
+CMD ["sh", "-c", "uvicorn glowupai.api:app --host 0.0.0.0 --port ${PORT} --workers ${UVICORN_WORKERS:-1} --no-access-log"]

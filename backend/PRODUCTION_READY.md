@@ -41,30 +41,30 @@ The backend now includes comprehensive production features:
 DATABASE_URL=postgresql://user:pass@host:5432/dbname
 
 # Environment
-SKINPROOF_ENV=production
+GLOWUPAI_ENV=production
 
 # CORS (REQUIRED)
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai
 
 # Authentication
-SKINPROOF_AUTH_REQUIRED=1
-SKINPROOF_FIREBASE_PROJECT_ID=your-project-id
+GLOWUPAI_AUTH_REQUIRED=1
+GLOWUPAI_FIREBASE_PROJECT_ID=your-project-id
 
 # Admin Access
-SKINPROOF_ADMIN_TOKEN=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
+GLOWUPAI_ADMIN_TOKEN=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
 
 # AI
-SKINPROOF_GEMINI_API_KEY=your-api-key
+GLOWUPAI_GEMINI_API_KEY=your-api-key
 ```
 
 ### 2. Build & Deploy
 
 ```bash
 # Build Docker image
-docker build -t skinproof:production .
+docker build -t glowupai:production .
 
 # Test locally
-docker run --env-file .env.production -p 8000:8000 skinproof:production
+docker run --env-file .env.production -p 8000:8000 glowupai:production
 
 # Deploy to platform
 railway up  # or your deployment method
@@ -118,8 +118,8 @@ Complete documentation for production deployment:
 
 **Configuration**:
 ```bash
-SKINPROOF_LOG_LEVEL=INFO
-SKINPROOF_JSON_LOGS=1
+GLOWUPAI_LOG_LEVEL=INFO
+GLOWUPAI_JSON_LOGS=1
 ```
 
 ### Enhanced Health Check
@@ -171,11 +171,11 @@ curl -H "Authorization: Bearer <admin-token>" \
 
 **Optimized connection management**:
 ```bash
-SKINPROOF_DB_POOL_MIN_SIZE=2
-SKINPROOF_DB_POOL_MAX_SIZE=20
-SKINPROOF_DB_CONNECT_TIMEOUT=10
-SKINPROOF_DB_POOL_TIMEOUT=30
-SKINPROOF_DB_STATEMENT_TIMEOUT=30000
+GLOWUPAI_DB_POOL_MIN_SIZE=2
+GLOWUPAI_DB_POOL_MAX_SIZE=20
+GLOWUPAI_DB_CONNECT_TIMEOUT=10
+GLOWUPAI_DB_POOL_TIMEOUT=30
+GLOWUPAI_DB_STATEMENT_TIMEOUT=30000
 ```
 
 **Benefits**:
@@ -317,7 +317,7 @@ curl -H "Authorization: Bearer <admin-token>" \
 
 **Explicit origin whitelist** (required in production):
 ```bash
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai
 ```
 
 **Never use `*` in production.**
@@ -388,7 +388,7 @@ DATABASE_URL=postgresql://...?sslmode=require
 
 **1. Service won't start**:
 ```
-Error: SKINPROOF_ALLOWED_ORIGINS must be configured
+Error: GLOWUPAI_ALLOWED_ORIGINS must be configured
 ```
 **Solution**: Set CORS origins for production
 

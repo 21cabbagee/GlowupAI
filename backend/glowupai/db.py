@@ -175,7 +175,7 @@ def json_dumps(value: Any) -> str:
 class Database:
     backend = "sqlite"
 
-    def __init__(self, path: str | Path = ".data/skinproof.sqlite3") -> None:
+    def __init__(self, path: str | Path = ".data/glowupai.sqlite3") -> None:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         # The API and background job runner intentionally share one SQLite connection. SQLite
@@ -217,6 +217,13 @@ class Database:
 
     def healthcheck(self) -> bool:
         return self.fetchone("SELECT 1 AS ok")["ok"] == 1
+
+    def count_tables(self) -> int:
+        """Count the number of user-created tables in the database."""
+        result = self.fetchone(
+            "SELECT COUNT(*) as count FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+        )
+        return result["count"] if result else 0
 
     def close(self) -> None:
         with self._lock:

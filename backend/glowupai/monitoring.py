@@ -75,7 +75,7 @@ def setup_sentry(
             "Sentry SDK not installed. Install with: pip install sentry-sdk[fastapi]",
         )
         return False
-    except Exception as exc:
+    except (RuntimeError, ValueError, OSError) as exc:
         logger.error(f"Failed to initialize Sentry: {exc}")
         return False
 
@@ -114,7 +114,7 @@ def capture_exception(exc: Exception, context: dict[str, Any] | None = None) -> 
 
     except ImportError:
         logger.debug("Sentry SDK not available, skipping exception capture")
-    except Exception as capture_exc:
+    except (RuntimeError, ValueError, OSError) as capture_exc:
         logger.error(f"Failed to capture exception in Sentry: {capture_exc}")
 
 
@@ -141,7 +141,7 @@ def capture_message(
 
     except ImportError:
         logger.debug("Sentry SDK not available, skipping message capture")
-    except Exception as capture_exc:
+    except (RuntimeError, ValueError, OSError) as capture_exc:
         logger.error(f"Failed to capture message in Sentry: {capture_exc}")
 
 
@@ -159,7 +159,7 @@ def set_user(user_id: str, email: str | None = None) -> None:
 
     except ImportError:
         pass
-    except Exception as exc:
+    except (RuntimeError, ValueError) as exc:
         logger.error(f"Failed to set Sentry user context: {exc}")
 
 
@@ -177,7 +177,7 @@ def set_tag(key: str, value: str) -> None:
 
     except ImportError:
         pass
-    except Exception as exc:
+    except (RuntimeError, ValueError) as exc:
         logger.error(f"Failed to set Sentry tag: {exc}")
 
 
@@ -198,7 +198,7 @@ def start_transaction(name: str, op: str) -> Any:
 
     except ImportError:
         return None
-    except Exception as exc:
+    except (RuntimeError, ValueError) as exc:
         logger.error(f"Failed to start Sentry transaction: {exc}")
         return None
 
@@ -229,7 +229,7 @@ class SentryMiddleware:
 
             except ImportError:
                 pass
-            except Exception as exc:
+            except (RuntimeError, ValueError, KeyError) as exc:
                 logger.error(f"Failed to set Sentry context: {exc}")
 
         await self.app(scope, receive, send)

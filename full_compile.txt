@@ -1,0 +1,162 @@
+Calculating task graph as no cached configuration is available for tasks: :app:assembleDebug
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateDebugBuildConfig
+> Task :app:processDebugGoogleServices
+> Task :app:generateDebugResources
+> Task :app:desugarDebugFileDependencies
+> Task :app:injectCrashlyticsMappingFileIdDebug
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:mapDebugSourceSetPaths
+> Task :app:extractDeepLinksDebug
+> Task :app:processDebugNavigationResources
+> Task :app:packageDebugResources
+> Task :app:compileDebugNavigationResources
+> Task :app:javaPreCompileDebug
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+> Task :app:mergeDebugAssets
+> Task :app:mergeDebugJniLibFolders
+> Task :app:checkDebugAarMetadata
+> Task :app:compressDebugAssets
+> Task :app:checkDebugDuplicateClasses
+> Task :app:parseDebugLocalResources
+> Task :app:generateDebugRFile
+> Task :app:mergeLibDexDebug
+> Task :app:processDebugMainManifest
+> Task :app:mergeDebugNativeLibs
+> Task :app:processDebugManifest
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libdatastore_shared_counter.so, libface_detector_v2_jni.so, libimage_processing_util_jni.so, libsurface_util_jni.so. Run with --info option to learn more.
+
+> Task :app:processDebugManifestForPackage
+> Task :app:generateDebugGlobalSynthetics
+> Task :app:mergeDebugResources
+> Task :app:processDebugResources
+> Task :app:l8DexDesugarLibDebug
+> Task :app:kspDebugKotlin
+> Task :app:mergeExtDexDebug
+> Task :app:compileDebugKotlin
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/design/GlowTheme.kt:185:20 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/design/GlowTheme.kt:192:20 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/AchievementGrid.kt:136:17 'fun CircularProgressIndicator(progress: Float, modifier: Modifier = ..., color: Color = ..., strokeWidth: Dp = ..., trackColor: Color = ..., strokeCap: StrokeCap = ...): Unit' is deprecated. Use the overload that takes `progress` as a lambda.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/AchievementGrid.kt:164:5 'fun ScrollableTabRow(selectedTabIndex: Int, modifier: Modifier = ..., containerColor: Color = ..., contentColor: Color = ..., edgePadding: Dp = ..., indicator: ComposableFunction1<List<TabPosition>, Unit> = ..., divider: ComposableFunction0<Unit> = ..., tabs: ComposableFunction0<Unit>): Unit' is deprecated. Replaced with PrimaryScrollableTabRow and SecondaryScrollableTabRow tab variants.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/AnimationUtils.kt:52:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/AnimationUtils.kt:268:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/AnimationUtils.kt:313:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/AnimationUtils.kt:348:30 'fun KeyframesSpec.KeyframeEntity<Float>.with(easing: Easing): Unit' is deprecated. Use version that returns an instance of the entity so it can be re-used in other keyframe builders.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/AnimationUtils.kt:349:30 'fun KeyframesSpec.KeyframeEntity<Float>.with(easing: Easing): Unit' is deprecated. Use version that returns an instance of the entity so it can be re-used in other keyframe builders.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/AnimationUtils.kt:350:30 'fun KeyframesSpec.KeyframeEntity<Float>.with(easing: Easing): Unit' is deprecated. Use version that returns an instance of the entity so it can be re-used in other keyframe builders.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/AnimationUtils.kt:377:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/EmptyStates.kt:144:29 'val Icons.Filled.EventNote: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.EventNote.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/EmptyStates.kt:161:29 'val Icons.Filled.TrendingUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingUp.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/GlowButton.kt:113:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/GlowButtons.kt:118:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/GlowButtons.kt:127:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/GlowButtons.kt:257:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/GlowButtons.kt:266:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/GlowButtons.kt:376:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/GlowButtons.kt:386:11 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/GlowTextField.kt:54:50 Elvis operator (?:) always returns the left operand of non-nullable type 'String'.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/GlowTopBar.kt:50:36 'fun centerAlignedTopAppBarColors(containerColor: Color = ..., scrolledContainerColor: Color = ..., navigationIconContentColor: Color = ..., titleContentColor: Color = ..., actionIconContentColor: Color = ...): TopAppBarColors' is deprecated. Use topAppBarColors instead.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/ShimmerSkeleton.kt:50:30 'fun SemanticsPropertyReceiver.invisibleToUser(): Unit' is deprecated. Use `hideFromAccessibility()` instead.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/ShimmerSkeleton.kt:82:26 'fun SemanticsPropertyReceiver.invisibleToUser(): Unit' is deprecated. Use `hideFromAccessibility()` instead.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/StreakCounter.kt:163:17 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/StreakCounter.kt:198:17 'fun Divider(modifier: Modifier = ..., thickness: Dp = ..., color: Color = ...): Unit' is deprecated. Renamed to HorizontalDivider.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/core/ui/TrendChart.kt:69:37 'fun build(dispatcher: CoroutineDispatcher = ..., transaction: (CartesianChartModelProducer.Transaction.() -> Unit)? = ...): CartesianChartModelProducer' is deprecated. To create a `CartesianChartModelProducer`, use the constructor. Rather than passing a `CoroutineDispatcher`, use `runTransaction` with a `CoroutineContext` that includes the `CoroutineDispatcher`. Also use `runTransaction` to run an initial `Transaction`. More information: https://patrykandpatrick.com/vico/releases/2.0.0-alpha.22.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/data/local/CaptureOutboxStore.kt:94:45 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/data/repository/HomeRepository.kt:68:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to property.
+- To opt in to applying to both value parameter and property, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/data/telemetry/Telemetry.kt:47:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/data/telemetry/Telemetry.kt:50:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to property.
+- To opt in to applying to both value parameter and property, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/data/work/AndroidReminderNotifier.kt:21:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/data/work/WorkScheduler.kt:28:41 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/domain/model/Achievement.kt:125:29 'val Icons.Filled.CompareArrows: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.CompareArrows.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/account/AccountScreen.kt:266:40 'val Icons.Filled.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/account/DataAndPrivacyViewModel.kt:73:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/account/SettingsScreen.kt:803:44 'val Icons.Filled.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/account/SettingsViewModel.kt:82:5 This annotation is currently applied to the value parameter only, but in the future it will also be applied to field.
+- To opt in to applying to both value parameter and field, add '-Xannotation-default-target=param-property' to your compiler arguments.
+- To keep applying to the value parameter only, use the '@param:' annotation target.
+
+See https://youtrack.jetbrains.com/issue/KT-73255 for more details.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/AnalyticsScreen.kt:161:72 'fun String.capitalize(): String' is deprecated. Use replaceFirstChar instead.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/AnalyticsScreen.kt:226:73 'fun String.capitalize(): String' is deprecated. Use replaceFirstChar instead.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/AnalyticsScreen.kt:361:56 'fun String.capitalize(): String' is deprecated. Use replaceFirstChar instead.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/AnalyticsScreen.kt:430:44 'val Icons.Filled.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/AnalyticsScreen.kt:459:61 'val Icons.Filled.TrendingDown: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingDown.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/AnalyticsScreen.kt:459:92 'val Icons.Filled.TrendingUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingUp.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/AnalyticsViewModel.kt:193:76 No cast needed.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/AnalyticsViewModel.kt:348:93 'fun String.capitalize(): String' is deprecated. Use replaceFirstChar instead.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/components/InsightCard.kt:41:26 'val Icons.Filled.TrendingUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingUp.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/components/LineChart.kt:194:29 'fun quadraticBezierTo(x1: Float, y1: Float, x2: Float, y2: Float): Unit' is deprecated. Use quadraticTo() for consistency with cubicTo().
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/components/MetricCard.kt:142:43 'val Icons.Filled.TrendingUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingUp.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/components/MetricCard.kt:143:45 'val Icons.Filled.TrendingDown: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingDown.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/components/MetricCard.kt:144:47 'val Icons.Filled.TrendingFlat: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingFlat.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/components/ProductEffectivenessCard.kt:46:37 'val Icons.Filled.TrendingUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingUp.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/components/ProductEffectivenessCard.kt:47:37 'val Icons.Filled.TrendingDown: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingDown.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/analytics/components/ProductEffectivenessCard.kt:48:30 'val Icons.Filled.TrendingFlat: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingFlat.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/capture/CaptureScreen.kt:211:26 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/capture/CaptureScreen.kt:314:26 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/capture/CaptureViewModel.kt:55:10 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/capture/PhotoComparisonScreen.kt:189:48 'val Icons.Filled.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/capture/PhotoGridScreen.kt:195:5 'fun ScrollableTabRow(selectedTabIndex: Int, modifier: Modifier = ..., containerColor: Color = ..., contentColor: Color = ..., edgePadding: Dp = ..., indicator: ComposableFunction1<List<TabPosition>, Unit> = ..., divider: ComposableFunction0<Unit> = ..., tabs: ComposableFunction0<Unit>): Unit' is deprecated. Replaced with PrimaryScrollableTabRow and SecondaryScrollableTabRow tab variants.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/comparison/ComparisonScreen.kt:222:48 'val Icons.Filled.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/comparison/ComparisonScreen.kt:456:48 'val Icons.Filled.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/comparison/ComparisonScreen.kt:495:33 'val Icons.Filled.ArrowForward: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowForward.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/home/HomeScreen.kt:251:45 Unnecessary safe call on a non-null receiver of type 'Streak'.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/home/HomeScreen.kt:337:47 Unnecessary safe call on a non-null receiver of type 'String'.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/home/HomeScreen.kt:375:55 Unnecessary safe call on a non-null receiver of type 'String'.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/home/MonthlyRecapScreen.kt:217:37 'val Icons.Filled.TrendingUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingUp.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/insights/InsightsEnhancedScreen.kt:343:3 'val Icons.Filled.TrendingUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingUp.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/insights/InsightsEnhancedScreen.kt:343:71 'val Icons.Filled.TrendingDown: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingDown.
+w: file:///Users/21cabbage/GlowupAI/app/src/main/java/com/glowup/ai/feature/onboarding/EnhancedOnboardingScreen.kt:168:23 Unchecked cast of 'AnimationSpec<Float>' to 'AnimationSpec<Dp>'.
+
+> Task :app:processDebugJavaRes
+> Task :app:mergeDebugJavaResource
+> Task :app:compileDebugJavaWithJavac
+> Task :app:hiltCollectClassesDebug
+> Task :app:hiltAggregateDepsDebug
+> Task :app:hiltJavaCompileDebug
+> Task :app:transformDebugClassesWithAsm
+> Task :app:dexBuilderDebug
+> Task :app:mergeProjectDexDebug
+> Task :app:packageDebug
+> Task :app:assembleDebug
+> Task :app:createDebugApkListingFileRedirect
+w: Detected multiple Kotlin daemon sessions at 
+
+BUILD SUCCESSFUL in 3m 2s
+45 actionable tasks: 45 executed
+Configuration cache entry stored.

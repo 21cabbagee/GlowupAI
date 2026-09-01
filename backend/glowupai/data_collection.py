@@ -102,7 +102,7 @@ class DataCollector:
 
             # Generate anonymous filename
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            anonymous_id = hashlib.md5(capture_id.encode()).hexdigest()[:12]
+            anonymous_id = hashlib.sha256(capture_id.encode()).hexdigest()[:12]
             filename = f"{face_id}_{timestamp}_{anonymous_id}"
 
             # Copy image to collection storage

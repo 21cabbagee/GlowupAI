@@ -1,4 +1,4 @@
-# SkinProof UI Revamp — End-to-End Plan
+# GlowupAI UI Revamp — End-to-End Plan
 
 Status: **implemented and verified.** See `web/README.md` to run it.
 Scope: presentation layer only. The FastAPI domain (35 `/api` endpoints) is unchanged.
@@ -13,7 +13,7 @@ Scope: presentation layer only. The FastAPI domain (35 `/api` endpoints) is unch
 | Fonts | Tuned system stack, no webfonts | fonts.googleapis.com and fonts.gstatic.com are TLS-blocked here; a webfont build would fail. |
 | Native Compose | Deferred, not cancelled | Port once `ANDROID_HOME` exists. The design tokens are authored to translate 1:1 to a Compose `ColorScheme`. |
 
-The old `skinproof/static/index.html` is retained as a fallback until the new UI reaches parity.
+The old `glowupai/static/index.html` is retained as a fallback until the new UI reaches parity.
 
 ## 2. Design language
 
@@ -113,7 +113,7 @@ real service:
   "applied" tick. The Routine screen had a four-value action list that would
   have 400'd on every submit. A routine event marks a *change to the variable*.
 - **`rewrites()` is baked at build time.** Building without
-  `SKINPROOF_API_ORIGIN` and then setting it for `next start` silently proxied
+  `GLOWUPAI_API_ORIGIN` and then setting it for `next start` silently proxied
   the whole app to whatever else was on port 8000.
 - **The capture quality gate is stricter than it looks.** `inspect_image`
   measures sharpness on a 64×64 downsample, so seed frames need structure at

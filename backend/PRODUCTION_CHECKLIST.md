@@ -9,45 +9,45 @@ This checklist covers everything needed to deploy the GlowUp AI backend to produ
 ```bash
 # Database Configuration
 DATABASE_URL=postgresql://user:password@host:5432/dbname
-SKINPROOF_DB_POOL_MIN_SIZE=2
-SKINPROOF_DB_POOL_MAX_SIZE=20
-SKINPROOF_DB_CONNECT_TIMEOUT=10
-SKINPROOF_DB_STATEMENT_TIMEOUT=30000  # 30 seconds
-SKINPROOF_DB_POOL_TIMEOUT=30
+GLOWUPAI_DB_POOL_MIN_SIZE=2
+GLOWUPAI_DB_POOL_MAX_SIZE=20
+GLOWUPAI_DB_CONNECT_TIMEOUT=10
+GLOWUPAI_DB_STATEMENT_TIMEOUT=30000  # 30 seconds
+GLOWUPAI_DB_POOL_TIMEOUT=30
 
 # Environment
-SKINPROOF_ENV=production
+GLOWUPAI_ENV=production
 
 # CORS Configuration (REQUIRED IN PRODUCTION)
-SKINPROOF_ALLOWED_ORIGINS=https://app.glowup.ai,https://www.glowup.ai
+GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai,https://www.glowup.ai
 
 # Authentication
-SKINPROOF_AUTH_REQUIRED=1
-SKINPROOF_FIREBASE_PROJECT_ID=your-firebase-project-id
+GLOWUPAI_AUTH_REQUIRED=1
+GLOWUPAI_FIREBASE_PROJECT_ID=your-firebase-project-id
 
 # Admin Access
-SKINPROOF_ADMIN_TOKEN=<generate-secure-random-token>
+GLOWUPAI_ADMIN_TOKEN=<generate-secure-random-token>
 
 # AI/Gemini API
-SKINPROOF_GEMINI_API_KEY=<your-api-key>
-SKINPROOF_GEMINI_MODEL=gemini-3.5-flash-lite
-SKINPROOF_GEMINI_ENABLED=1
+GLOWUPAI_GEMINI_API_KEY=<your-api-key>
+GLOWUPAI_GEMINI_MODEL=gemini-3.5-flash-lite
+GLOWUPAI_GEMINI_ENABLED=1
 
 # Logging
-SKINPROOF_LOG_LEVEL=INFO
-SKINPROOF_JSON_LOGS=1
+GLOWUPAI_LOG_LEVEL=INFO
+GLOWUPAI_JSON_LOGS=1
 
 # Rate Limiting & Timeouts
-SKINPROOF_RATE_LIMIT_ENABLED=1
-SKINPROOF_REQUEST_TIMEOUT=30
+GLOWUPAI_RATE_LIMIT_ENABLED=1
+GLOWUPAI_REQUEST_TIMEOUT=30
 
 # Photo Storage (if using local storage)
-SKINPROOF_PHOTO_DIR=/app/photos
+GLOWUPAI_PHOTO_DIR=/app/photos
 
 # Optional: OpenTelemetry
 OTEL_ENABLED=0  # Set to 1 if you have observability backend
 OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
-OTEL_SERVICE_NAME=skinproof
+OTEL_SERVICE_NAME=glowupai
 
 # Uvicorn Workers (for horizontal scaling)
 UVICORN_WORKERS=2  # Adjust based on CPU cores
@@ -60,11 +60,11 @@ UVICORN_WORKERS=2  # Adjust based on CPU cores
   python -c "import secrets; print(secrets.token_urlsafe(32))"
   ```
 
-- [ ] **CORS Origins**: Set `SKINPROOF_ALLOWED_ORIGINS` to your actual frontend domains
+- [ ] **CORS Origins**: Set `GLOWUPAI_ALLOWED_ORIGINS` to your actual frontend domains
   - Never use `*` in production
   - Include all subdomains if needed
 
-- [ ] **Authentication**: Enable `SKINPROOF_AUTH_REQUIRED=1` when Firebase is configured
+- [ ] **Authentication**: Enable `GLOWUPAI_AUTH_REQUIRED=1` when Firebase is configured
 
 - [ ] **Database Credentials**: Use strong passwords and rotate regularly
 
@@ -78,16 +78,16 @@ UVICORN_WORKERS=2  # Adjust based on CPU cores
 
 - [ ] **Docker Security**:
   - [ ] Image runs as non-root user (already configured)
-  - [ ] Scan image for vulnerabilities: `docker scan skinproof:latest`
+  - [ ] Scan image for vulnerabilities: `docker scan glowupai:latest`
   - [ ] Use image signing/verification if available
 
 ### Database Setup
 
 - [ ] **Create Production Database**
   ```sql
-  CREATE DATABASE skinproof_prod;
-  CREATE USER skinproof_user WITH PASSWORD 'secure-password';
-  GRANT ALL PRIVILEGES ON DATABASE skinproof_prod TO skinproof_user;
+  CREATE DATABASE glowupai_prod;
+  CREATE USER glowupai_user WITH PASSWORD 'secure-password';
+  GRANT ALL PRIVILEGES ON DATABASE glowupai_prod TO glowupai_user;
   ```
 
 - [ ] **Run Migrations**
@@ -179,17 +179,17 @@ UVICORN_WORKERS=2  # Adjust based on CPU cores
 
 ```bash
 cd backend
-docker build -t skinproof:latest .
+docker build -t glowupai:latest .
 
 # Optional: Scan for vulnerabilities
-docker scan skinproof:latest
+docker scan glowupai:latest
 ```
 
 ### 2. Test Locally with Production Config
 
 ```bash
 # Create .env.production file with production settings
-docker run --env-file .env.production -p 8000:8000 skinproof:latest
+docker run --env-file .env.production -p 8000:8000 glowupai:latest
 
 # Test health check
 curl http://localhost:8000/api/health
@@ -205,7 +205,7 @@ curl -X POST http://localhost:8000/api/users \
 #### Railway
 ```bash
 railway up
-railway variables set SKINPROOF_ENV=production
+railway variables set GLOWUPAI_ENV=production
 # Set other environment variables via Railway dashboard
 ```
 
@@ -269,7 +269,7 @@ If issues occur after deployment:
    railway rollback
    
    # Kubernetes
-   kubectl rollout undo deployment/skinproof
+   kubectl rollout undo deployment/glowupai
    ```
 
 2. **Database Rollback** (if schema changed)
@@ -304,7 +304,7 @@ Run these before each production deployment:
 
 ```bash
 # Scan Docker image
-docker scan skinproof:latest
+docker scan glowupai:latest
 
 # Scan Python dependencies
 pip install safety
@@ -315,7 +315,7 @@ git secrets --scan
 
 # SAST scanning (example with Bandit)
 pip install bandit
-bandit -r skinproof/
+bandit -r glowupai/
 ```
 
 ## Compliance & Privacy

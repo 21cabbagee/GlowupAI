@@ -15,13 +15,13 @@ SOLUTION:
 FILES MODIFIED
 ================================================================================
 
-1. backend/skinproof/face_alignment.py [NEW - 6.2KB]
+1. backend/glowupai/face_alignment.py [NEW - 6.2KB]
    - align_face() - Core alignment with eye detection
    - align_face_safe() - Safe wrapper with fallback
    - Uses OpenCV Haar Cascades for face/eye detection
    - Rotates, scales, and centers face to canonical position
 
-2. backend/skinproof/metrics.py [MODIFIED]
+2. backend/glowupai/metrics.py [MODIFIED]
    - Added: from .face_alignment import align_face_safe
    - Updated analyze() to apply alignment before processing
    - Line ~62: aligned_bytes = align_face_safe(image_bytes, ...)
@@ -116,7 +116,7 @@ Test angle consistency:
   ./venv/bin/python3 verify_alignment.py --test-angles
 
 Check imports:
-  python3 -c "from skinproof.face_alignment import align_face_safe; print('OK')"
+  python3 -c "from glowupai.face_alignment import align_face_safe; print('OK')"
 
 ================================================================================
 DEPLOYMENT STATUS
@@ -156,7 +156,7 @@ ROLLBACK PLAN
 
 If issues occur:
 
-1. Edit backend/skinproof/metrics.py line ~62:
+1. Edit backend/glowupai/metrics.py line ~62:
 
    # Comment out alignment:
    aligned_bytes = image_bytes  # bypass
@@ -196,7 +196,7 @@ Testing:
   - verify_alignment.py (verification tool)
 
 Health check:
-  ./venv/bin/python3 -c "from skinproof.face_alignment import align_face_safe; print('OK')"
+  ./venv/bin/python3 -c "from glowupai.face_alignment import align_face_safe; print('OK')"
 
 ================================================================================
 END OF SUMMARY
