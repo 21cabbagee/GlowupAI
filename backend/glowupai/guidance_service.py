@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from typing import Any, Callable, Dict, List, Optional
 
@@ -423,7 +424,6 @@ class GuidanceService:
         weekly_recap_fn: Optional[Callable] = None,
         check_ins_fn: Optional[Callable] = None,
     ) -> Dict[str, Any]:
-        import logging
         logger = logging.getLogger(__name__)
 
         # Safely call each function with error handling
