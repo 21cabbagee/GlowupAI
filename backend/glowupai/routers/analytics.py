@@ -65,7 +65,7 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
         )
 
     @router.get("/users/{user_id}/context-events")
-    def context_events(user_id: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    def context_events(user_id: str, authorization: Optional[str] = Header(default=None)) -> List[Dict[str, Any]]:
         require_owner(user_id, authorization)
         return run_handler(service.context_events, user_id)
 

@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from .attribution import parse_time
 from .metrics import analyze
-from .service import now_iso, row_dict
+from .service import GlowupAIService, now_iso, row_dict
 
 VERTICALS = ("skin",)
 CAPTURE_PROTOCOL_VERSION = "standardized-v1"

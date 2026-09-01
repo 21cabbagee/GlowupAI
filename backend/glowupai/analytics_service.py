@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 from .attribution import parse_time
-from .service import now_iso, row_dict
+from .service import GlowupAIService, now_iso, row_dict
 
 METRIC_LABELS = {
     "redness_score": "redness",

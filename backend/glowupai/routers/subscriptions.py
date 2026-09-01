@@ -232,7 +232,7 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         return run_handler(service.ask, user_id, payload.question, payload.thread_id)
 
     @router.get("/users/{user_id}/qna")
-    def qna_history(user_id: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    def qna_history(user_id: str, authorization: Optional[str] = Header(default=None)) -> List[Dict[str, Any]]:
         require_owner(user_id, authorization)
         return run_handler(service.qna_history, user_id)
 

@@ -122,7 +122,7 @@ class SubscriptionService:
     def list_subscriptions(self, limit: int = 100) -> List[Dict[str, Any]]:
         """List all subscriptions (admin endpoint)."""
         rows = self.db.fetchall(
-            "SELECT * FROM entitlements ORDER BY created_at DESC LIMIT ?", (limit,)
+            "SELECT * FROM entitlements ORDER BY started_at DESC LIMIT ?", (limit,)
         )
         return [row_dict(row) for row in rows]
 

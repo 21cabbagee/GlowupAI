@@ -161,7 +161,7 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
         user_id: str,
         vertical: str = "skin",
         authorization: Optional[str] = Header(default=None),
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         require_owner(user_id, authorization)
         result = run_handler(service.history, user_id, vertical)
 
@@ -175,7 +175,7 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
     @router.get("/users/{user_id}/check-ins")
     def check_ins(
         user_id: str, limit: int = 30, authorization: Optional[str] = Header(default=None)
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         require_owner(user_id, authorization)
         return run_handler(service.check_ins, user_id, limit)
 
@@ -214,7 +214,7 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
         )
 
     @router.get("/users/{user_id}/labels")
-    def labels(user_id: str, authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    def labels(user_id: str, authorization: Optional[str] = Header(default=None)) -> List[Dict[str, Any]]:
         require_owner(user_id, authorization)
         return run_handler(service.labels, user_id)
 
