@@ -1,6 +1,7 @@
 *.iml
 .gradle
 /local.properties
+/.idea/
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
@@ -16,3 +17,27 @@ local.properties
 keystore.properties
 *.keystore
 google-services.json
+
+# Build artifacts and logs
+*.log
+build_output.log
+clean_compile.txt
+compile_output*.txt
+compile.log
+full_build.log
+full_compile.txt
+
+# Test artifacts
+load_test_results/
+load_test_env/
+
+# Kotlin compiler errors
+.kotlin/errors/
+
+# Session transcripts
+my-session.md
+
+# Temp files
+*.tmp
+*.swp
+*.bak
