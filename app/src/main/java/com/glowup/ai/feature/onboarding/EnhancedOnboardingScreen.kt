@@ -210,3 +210,12 @@ private fun EnhancedOnboardingContent(
                             .padding(top = GlowSpacing.sm),
                 ) {
                     Text(
+                        text = "Skip",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = glow.ink600,
+                    )
+                }
+            }
+        }
+    }
+}
