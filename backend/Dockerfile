@@ -101,3 +101,4 @@ sys.exit(0 if response.status == 200 else 1)"
 # - workers: Set via UVICORN_WORKERS env var (default: 1)
 # - log-config: Disabled, we use our own structured logging
 CMD ["sh", "-c", "uvicorn glowupai.complete_api:app --host 0.0.0.0 --port ${PORT} --workers ${UVICORN_WORKERS:-1} --no-access-log"]
+# Force rebuild - Tue Sep  1 18:27:05 IST 2026
