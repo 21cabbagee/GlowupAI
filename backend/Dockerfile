@@ -3,7 +3,7 @@
 # =============================================================================
 # Stage 1: Builder - Install dependencies
 # =============================================================================
-FROM python:3.12-slim AS builder
+FROM python:3.12.7-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -12,37 +12,54 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install build dependencies (needed for some Python packages + opencv)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install build dependencies and security updates
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
     gcc \
     python3-dev \
     libgl1-mesa-glx \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Install Python dependencies with security patches
 # Hardcoded list ensures layer only invalidates when dependencies change
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 RUN pip install --user --no-cache-dir \
-        "fastapi>=0.110" \
-        "uvicorn[standard]>=0.29" \
-        "pillow>=10.0" \
-        "opencv-python>=4.8.0" \
-        "numpy>=1.24.0" \
-        "cryptography>=42.0" \
+        "fastapi>=0.115.0" \
+        "uvicorn[standard]>=0.32.0" \
+        "pillow>=10.4.0" \
+        "opencv-python>=4.10.0.84" \
+        "numpy>=1.26.0" \
+        "cryptography>=43.0.3" \
         "google-genai>=1.0.0" \
-        "psycopg[binary,pool]>=3.2" \
-        "PyJWT[crypto]>=2.8" \
-        "redis>=5.0.0" \
-        "sentry-sdk[fastapi]>=2.0.0"
+        "psycopg[binary,pool]>=3.2.3" \
+        "PyJWT[crypto]>=2.9.0" \
+        "redis>=5.2.0" \
+        "sentry-sdk[fastapi]>=2.17.0"
 
 # =============================================================================
 # Stage 2: Runtime - Minimal production image
 # =============================================================================
-FROM python:3.12-slim AS runtime
+FROM python:3.12.7-slim AS runtime
 
-# Security: Install security updates
-RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+# Security metadata
+LABEL maintainer="GlowupAI Team" \
+      security.scan="trivy" \
+      security.non-root="true" \
+      version="3.0.0"
+
+# Security: Install security updates and runtime dependencies
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    # Remove unnecessary setuid/setgid binaries to reduce attack surface
+    find / -xdev -perm /6000 -type f -exec chmod a-s {} \; 2>/dev/null || true
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -64,7 +81,7 @@ COPY --from=builder /root/.local /usr/local
 
 # Copy application code
 COPY glowupai ./glowupai
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 
 # Install application (metadata only, no dependencies)
 RUN pip install --no-cache-dir --no-deps .
