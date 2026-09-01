@@ -53,9 +53,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Copy Python dependencies from builder
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+# Copy Python dependencies from builder to shared location
+COPY --from=builder /root/.local /usr/local
 
 # Copy application code
 COPY skinproof ./skinproof
@@ -72,6 +71,9 @@ RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin skinproof \
 
 # Switch to non-root user
 USER skinproof
+
+# Set PATH for non-root user
+ENV PATH=/usr/local/bin:$PATH
 
 # Expose port
 EXPOSE 8000
