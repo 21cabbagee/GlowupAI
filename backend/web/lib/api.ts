@@ -1,5 +1,5 @@
 /**
- * Typed client for the SkinProof FastAPI surface.
+ * Typed client for the GlowUp AI FastAPI surface.
  *
  * Requests go to relative `/api/*` paths; `next.config.ts` rewrites them to the
  * uvicorn origin, so there is no base URL or CORS handling here.

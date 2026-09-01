@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 /**
- * Registers the service worker that makes SkinProof installable on Android.
+ * Registers the service worker that makes GlowUp AI installable on Android.
  * Development is skipped so an aggressive cache never shadows a hot reload.
  */
 export function ServiceWorker() {

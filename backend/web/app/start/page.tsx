@@ -113,7 +113,7 @@ export default function StartPage() {
       <section className="relative hidden flex-col justify-between bg-primary p-12 text-on-primary lg:flex">
         <Link href="/" className="flex items-center gap-2.5">
           <span className="grid size-8 place-items-center rounded-[9px] bg-ink-900"><CheckIcon size={19} className="text-honey-500" /></span>
-          <span className="display-sm text-[19px]">SkinProof</span>
+          <span className="display-sm text-[19px]">GlowUp AI</span>
         </Link>
         <div>
           <h2 className="display text-[clamp(30px,3.4vw,44px)]">A model of one person.<br />You.</h2>

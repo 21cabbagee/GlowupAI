@@ -5,7 +5,7 @@ import { LogoMark } from "@/components/icons";
 import { LandingReveal } from "@/components/landing-reveal";
 
 export const metadata: Metadata = {
-  title: "SkinProof — Measured, not remembered",
+  title: "GlowUp AI — Measured, not remembered",
 };
 
 const STEPS = [
@@ -93,7 +93,7 @@ export default function LandingPage() {
               not remembered.
             </h1>
             <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-muted">
-              Skincare advice is mostly memory and marketing. SkinProof builds the
+              Skincare advice is mostly memory and marketing. GlowUp AI builds the
               other thing: a calibrated record of your own appearance, and honest
               verdicts about what actually moved it.
             </p>
@@ -184,7 +184,7 @@ export default function LandingPage() {
               </h2>
               <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-ink-900/80">
                 Most products in most routines never earn a confident verdict.
-                SkinProof says so instead of inventing a story, because a made-up
+                GlowUp AI says so instead of inventing a story, because a made-up
                 result costs you months.
               </p>
             </div>
@@ -284,7 +284,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-[var(--content-max)] flex-wrap items-center gap-4 px-5 py-8 lg:px-10">
           <div className="flex items-center gap-2.5">
             <LogoMark size={24} />
-            <span className="text-[13px] font-bold">SkinProof</span>
+            <span className="text-[13px] font-bold">GlowUp AI</span>
           </div>
           <p className="text-[12px] text-subtle">
             Cosmetic appearance tracking, never diagnosis. Recommendations are not

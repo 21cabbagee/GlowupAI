@@ -306,7 +306,7 @@ export default function AccountPage() {
           <Card>
             <CardTitle>Device access</CardTitle>
             <p className="text-[13px] leading-relaxed text-muted">
-              SkinProof currently restores profiles by local ID. This is for
+              GlowUp AI currently restores profiles by local ID. This is for
               development only; it is not a password or production authentication.
             </p>
             <Field label="Local profile ID" className="mt-4">

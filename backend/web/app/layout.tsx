@@ -6,14 +6,14 @@ import { THEME_SCRIPT, ThemeProvider } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: {
-    default: "SkinProof — Measured, not remembered",
-    template: "%s · SkinProof",
+    default: "GlowUp AI — Measured, not remembered",
+    template: "%s · GlowUp AI",
   },
   description:
     "Calibrated captures, one-variable routine experiments, and honest product verdicts built from your own appearance history.",
-  applicationName: "SkinProof",
+  applicationName: "GlowUp AI",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "SkinProof", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "GlowUp AI", statusBarStyle: "default" },
   icons: {
     // app/favicon.ico supplies the multi-resolution browser icon. Keep this
     // explicit because the PWA images live in /public rather than app/.

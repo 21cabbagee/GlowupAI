@@ -183,7 +183,7 @@ export default function SignInPage() {
         <div className="mt-6 flex gap-3 rounded-[var(--radius)] border border-line bg-surface-2 p-4">
           <ShieldIcon size={18} className="mt-0.5 shrink-0 text-honey-700" />
           <p className="text-[12.5px] leading-relaxed text-muted">
-            SkinProof does not yet have server-side authentication. Do not use a
+            GlowUp AI does not yet have server-side authentication. Do not use a
             profile ID as a production credential or share it outside a trusted
             development environment.
           </p>

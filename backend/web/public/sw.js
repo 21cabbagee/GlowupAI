@@ -1,5 +1,5 @@
 /**
- * SkinProof service worker.
+ * GlowUp AI service worker.
  *
  * Deliberately conservative: it makes the app installable and keeps the shell
  * available offline, but it never caches `/api/*`. Appearance data is

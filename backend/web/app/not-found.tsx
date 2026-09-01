@@ -4,7 +4,7 @@ import { LogoMark } from "@/components/icons";
 
 export const metadata: Metadata = {
   title: "Page not found",
-  description: "The requested SkinProof page could not be found.",
+  description: "The requested GlowUp AI page could not be found.",
 };
 
 /** Root-level fallback for unknown URLs and route-level notFound() calls. */
@@ -26,7 +26,7 @@ export default function NotFound() {
         </h1>
         <p className="mt-4 text-[15px] leading-relaxed text-muted">
           The link may be out of date, or the page may have moved. Return to a
-          familiar part of SkinProof to continue.
+          familiar part of GlowUp AI to continue.
         </p>
         <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
           <Link

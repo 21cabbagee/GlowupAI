@@ -516,7 +516,7 @@ export default function CapturePage() {
       </div>
 
       <p className="mt-6 text-[12px] leading-relaxed text-subtle">
-        SkinProof tracks cosmetic appearance. It does not diagnose, treat, or rule
+        GlowUp AI tracks cosmetic appearance. It does not diagnose, treat, or rule
         out any medical condition.
       </p>
     </>

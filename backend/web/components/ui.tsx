@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * SkinProof primitives. Every screen composes from these so spacing, radii,
+ * GlowUp AI primitives. Every screen composes from these so spacing, radii,
  * motion and colour stay consistent. Colours come only from globals.css tokens.
  */
 
