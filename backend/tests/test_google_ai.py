@@ -4,9 +4,9 @@ from pathlib import Path
 from types import SimpleNamespace
 import unittest
 
-from skinproof.config import Settings
-from skinproof.google_ai import GoogleGeminiInsightService, build_insight_service
-from skinproof.insights import GroundedInsightService
+from glowupai.config import Settings
+from glowupai.google_ai import GoogleGeminiInsightService, build_insight_service
+from glowupai.insights import GroundedInsightService
 
 
 class FakeModels:

@@ -68,7 +68,7 @@ class GlowupUser(HttpUser):
         )
 
         if response.status_code == 200:
-            self.user_id = response.json()["id"]
+            self.user_id = response.json()["user"]["id"]
 
             # Grant consent
             self.client.post(
@@ -182,7 +182,8 @@ class GlowupUser(HttpUser):
         )
 
         if product_response.status_code == 200:
-            product_id = product_response.json()["id"]
+            product_data = product_response.json()
+            product_id = product_data.get("id") or product_data.get("product", {}).get("id")
 
             # Start using product
             self.client.post(
@@ -235,7 +236,7 @@ class MobileAppUser(HttpUser):
                 name="/api/users [login attempt]"
             )
             if response.status_code == 200:
-                self.user_id = response.json()["id"]
+                self.user_id = response.json()["user"]["id"]
 
     @task(8)
     def daily_capture(self):
@@ -291,23 +292,7 @@ class MobileAppUser(HttpUser):
 
 
 # Run configurations for different scenarios
-
-class QuickTest(HttpUser):
-    """Quick test configuration for rapid testing."""
-    tasks = [GlowupUser]
-    wait_time = between(0.5, 1.5)
-
-
-class StressTest(HttpUser):
-    """Stress test configuration for peak load."""
-    tasks = [GlowupUser, MobileAppUser]
-    wait_time = between(0.1, 0.5)
-
-
-class SoakTest(HttpUser):
-    """Soak test configuration for sustained load."""
-    tasks = [GlowupUser, MobileAppUser]
-    wait_time = between(3, 8)
+# Note: These are not meant to be used directly, just documented patterns
 
 
 if __name__ == "__main__":

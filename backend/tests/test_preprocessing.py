@@ -9,8 +9,8 @@ from unittest.mock import patch
 import numpy as np
 from PIL import Image, ImageDraw
 
-from skinproof.metrics import analyze
-from skinproof.preprocessing import (
+from glowupai.metrics import analyze
+from glowupai.preprocessing import (
     apply_clahe,
     apply_white_balance,
     check_preprocessing_available,

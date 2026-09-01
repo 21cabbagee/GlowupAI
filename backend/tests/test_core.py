@@ -8,12 +8,12 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from skinproof.capture import CaptureQuality
-from skinproof.db import Database
-from skinproof.face_alignment import align_face_safe, FaceAlignmentError
-from skinproof.metrics import analyze
-from skinproof.photos import MemoryPhotoStore
-from skinproof.service import SkinProofService
+from glowupai.capture import CaptureQuality
+from glowupai.db import Database
+from glowupai.face_alignment import align_face_safe, FaceAlignmentError
+from glowupai.metrics import analyze
+from glowupai.photos import MemoryPhotoStore
+from glowupai.service import GlowupAIService
 
 
 def image_bytes(red_spot: bool = False, dark_spot: bool = False) -> bytes:
@@ -42,7 +42,7 @@ class CoreTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.db = Database(Path(self.temp.name) / "test.sqlite3")
-        self.service = SkinProofService(self.db, photos=MemoryPhotoStore())
+        self.service = GlowupAIService(self.db, photos=MemoryPhotoStore())
 
     def tearDown(self):
         self.db.close()

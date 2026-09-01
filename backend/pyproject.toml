@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "skinproof"
+name = "glowupai"
 version = "3.0.0"
 description = "A complete privacy-conscious personal appearance evidence workspace"
 requires-python = ">=3.11"
@@ -41,13 +41,13 @@ otel = [
 ]
 
 [project.scripts]
-skinproof = "skinproof.cli:main"
+glowupai = "glowupai.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["skinproof*"]
+include = ["glowupai*"]
 
 [tool.setuptools.package-data]
-skinproof = ["static/*.html", "static/*.css", "static/*.js", "migrations/*.sql"]
+glowupai = ["static/*.html", "static/*.css", "static/*.js", "migrations/*.sql"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -60,7 +60,7 @@ addopts = "--strict-markers -v"
 asyncio_mode = "auto"
 
 [tool.coverage.run]
-source = ["skinproof"]
+source = ["glowupai"]
 omit = [
   "*/tests/*",
   "*/venv/*",

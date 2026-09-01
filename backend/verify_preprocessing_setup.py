@@ -59,7 +59,7 @@ def test_preprocessing():
     print("-" * 50)
 
     try:
-        from skinproof.preprocessing import (
+        from glowupai.preprocessing import (
             check_preprocessing_available,
             preprocess_for_analysis_pil,
         )
@@ -86,7 +86,7 @@ def test_preprocessing():
         print(f"✓ PIL preprocessing - OK (output: {len(result)} bytes)")
 
         if opencv_available:
-            from skinproof.preprocessing import preprocess_for_analysis
+            from glowupai.preprocessing import preprocess_for_analysis
 
             result = preprocess_for_analysis(img_bytes)
             print(f"✓ OpenCV preprocessing - OK (output: {len(result)} bytes)")

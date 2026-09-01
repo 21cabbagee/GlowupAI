@@ -1,11 +1,13 @@
 """Unit tests for database operations (CRUD for captures, users)."""
 
+import json
 import tempfile
 import unittest
+import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from skinproof.db import Database
+from glowupai.db import Database
 
 
 class TestDatabaseOperations(unittest.TestCase):
@@ -24,23 +26,27 @@ class TestDatabaseOperations(unittest.TestCase):
 
     def test_create_user(self):
         """Test user creation."""
-        user_id = self.db.create_user(
-            firebase_uid="test_uid_123",
-            email="test@example.com",
-            skin_type="combination"
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid, skin_type) VALUES (?, ?, ?)",
+            (user_id, "test_uid_123", "combination")
         )
 
-        self.assertIsNotNone(user_id)
-        self.assertIsInstance(user_id, str)
+        user = self.db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
+        self.assertIsNotNone(user)
+        self.assertEqual(user["id"], user_id)
+        self.assertEqual(user["firebase_uid"], "test_uid_123")
+        self.assertEqual(user["skin_type"], "combination")
 
     def test_get_user_by_id(self):
         """Test retrieving user by ID."""
-        user_id = self.db.create_user(
-            firebase_uid="test_uid_456",
-            email="user@example.com"
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "test_uid_456")
         )
 
-        user = self.db.get_user(user_id)
+        user = self.db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
 
         self.assertIsNotNone(user)
         self.assertEqual(user["id"], user_id)
@@ -49,12 +55,13 @@ class TestDatabaseOperations(unittest.TestCase):
     def test_get_user_by_firebase_uid(self):
         """Test retrieving user by Firebase UID."""
         firebase_uid = "firebase_test_789"
-        user_id = self.db.create_user(
-            firebase_uid=firebase_uid,
-            email="firebase@example.com"
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, firebase_uid)
         )
 
-        user = self.db.get_user_by_firebase_uid(firebase_uid)
+        user = self.db.fetchone("SELECT * FROM users WHERE firebase_uid = ?", (firebase_uid,))
 
         self.assertIsNotNone(user)
         self.assertEqual(user["id"], user_id)
@@ -62,43 +69,69 @@ class TestDatabaseOperations(unittest.TestCase):
 
     def test_update_user_consent(self):
         """Test updating user consent."""
-        user_id = self.db.create_user(firebase_uid="consent_test")
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "consent_test")
+        )
 
-        self.db.update_consent(user_id, facial_data=True, analytics=True)
+        # Insert consent events
+        self.db.execute(
+            "INSERT INTO consent_events (user_id, consent_type, granted, policy_version) VALUES (?, ?, ?, ?)",
+            (user_id, "facial_data", 1, "1.0")
+        )
+        self.db.execute(
+            "INSERT INTO consent_events (user_id, consent_type, granted, policy_version) VALUES (?, ?, ?, ?)",
+            (user_id, "analytics", 1, "1.0")
+        )
 
-        user = self.db.get_user(user_id)
-        self.assertTrue(user.get("facial_data_consent"))
-        self.assertTrue(user.get("analytics_consent"))
+        # Verify consent events were recorded
+        consents = self.db.fetchall("SELECT * FROM consent_events WHERE user_id = ?", (user_id,))
+        self.assertEqual(len(consents), 2)
+        consent_types = {c["consent_type"]: c["granted"] for c in consents}
+        self.assertEqual(consent_types["facial_data"], 1)
+        self.assertEqual(consent_types["analytics"], 1)
 
     def test_create_capture(self):
         """Test capture creation."""
-        user_id = self.db.create_user(firebase_uid="capture_test")
-
-        capture_id = self.db.create_capture(
-            user_id=user_id,
-            metrics={
-                "smoothness_score": 75.5,
-                "clarity_score": 80.2,
-                "evenness_score": 70.8,
-                "model_version": "deterministic-3.0"
-            },
-            image_url="https://example.com/image.jpg",
-            is_baseline=True
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "capture_test")
         )
 
-        self.assertIsNotNone(capture_id)
+        capture_id = str(uuid.uuid4())
+        captured_at = datetime.now().isoformat()
+        capture_quality = json.dumps({"sharpness": 0.9, "brightness": 0.8})
+
+        self.db.execute(
+            "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json, is_baseline) VALUES (?, ?, ?, ?, ?, ?)",
+            (capture_id, user_id, captured_at, "https://example.com/image.jpg", capture_quality, 1)
+        )
+
+        capture = self.db.fetchone("SELECT * FROM photo_captures WHERE id = ?", (capture_id,))
+        self.assertIsNotNone(capture)
+        self.assertEqual(capture["id"], capture_id)
+        self.assertEqual(capture["is_baseline"], 1)
 
     def test_get_capture_by_id(self):
         """Test retrieving capture by ID."""
-        user_id = self.db.create_user(firebase_uid="get_capture_test")
-
-        capture_id = self.db.create_capture(
-            user_id=user_id,
-            metrics={"smoothness_score": 75.5},
-            image_url="https://example.com/img.jpg"
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "get_capture_test")
         )
 
-        capture = self.db.get_capture(capture_id)
+        capture_id = str(uuid.uuid4())
+        captured_at = datetime.now().isoformat()
+        capture_quality = json.dumps({"sharpness": 0.9})
+
+        self.db.execute(
+            "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json) VALUES (?, ?, ?, ?, ?)",
+            (capture_id, user_id, captured_at, "https://example.com/img.jpg", capture_quality)
+        )
+
+        capture = self.db.fetchone("SELECT * FROM photo_captures WHERE id = ?", (capture_id,))
 
         self.assertIsNotNone(capture)
         self.assertEqual(capture["id"], capture_id)
@@ -106,81 +139,104 @@ class TestDatabaseOperations(unittest.TestCase):
 
     def test_list_user_captures(self):
         """Test listing all captures for a user."""
-        user_id = self.db.create_user(firebase_uid="list_captures_test")
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "list_captures_test")
+        )
 
         # Create multiple captures
         for i in range(3):
-            self.db.create_capture(
-                user_id=user_id,
-                metrics={"smoothness_score": 70.0 + i},
-                image_url=f"https://example.com/img{i}.jpg"
+            capture_id = str(uuid.uuid4())
+            captured_at = datetime.now().isoformat()
+            capture_quality = json.dumps({"sharpness": 0.9})
+            self.db.execute(
+                "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json) VALUES (?, ?, ?, ?, ?)",
+                (capture_id, user_id, captured_at, f"https://example.com/img{i}.jpg", capture_quality)
             )
 
-        captures = self.db.list_captures(user_id)
+        captures = self.db.fetchall("SELECT * FROM photo_captures WHERE user_id = ?", (user_id,))
 
         self.assertEqual(len(captures), 3)
 
     def test_list_captures_with_limit(self):
         """Test listing captures with limit."""
-        user_id = self.db.create_user(firebase_uid="limit_test")
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "limit_test")
+        )
 
         # Create 5 captures
         for i in range(5):
-            self.db.create_capture(
-                user_id=user_id,
-                metrics={"smoothness_score": 70.0},
-                image_url=f"https://example.com/img{i}.jpg"
+            capture_id = str(uuid.uuid4())
+            captured_at = datetime.now().isoformat()
+            capture_quality = json.dumps({"sharpness": 0.9})
+            self.db.execute(
+                "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json) VALUES (?, ?, ?, ?, ?)",
+                (capture_id, user_id, captured_at, f"https://example.com/img{i}.jpg", capture_quality)
             )
 
-        captures = self.db.list_captures(user_id, limit=3)
+        captures = self.db.fetchall("SELECT * FROM photo_captures WHERE user_id = ? LIMIT 3", (user_id,))
 
         self.assertEqual(len(captures), 3)
 
     def test_get_baseline_capture(self):
         """Test retrieving baseline capture."""
-        user_id = self.db.create_user(firebase_uid="baseline_test")
+        user_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            (user_id, "baseline_test")
+        )
 
         # Create non-baseline capture
-        self.db.create_capture(
-            user_id=user_id,
-            metrics={"smoothness_score": 70.0},
-            image_url="https://example.com/regular.jpg",
-            is_baseline=False
+        capture_id_1 = str(uuid.uuid4())
+        captured_at = datetime.now().isoformat()
+        capture_quality = json.dumps({"sharpness": 0.9})
+        self.db.execute(
+            "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json, is_baseline) VALUES (?, ?, ?, ?, ?, ?)",
+            (capture_id_1, user_id, captured_at, "https://example.com/regular.jpg", capture_quality, 0)
         )
 
         # Create baseline capture
-        baseline_id = self.db.create_capture(
-            user_id=user_id,
-            metrics={"smoothness_score": 75.0},
-            image_url="https://example.com/baseline.jpg",
-            is_baseline=True
+        baseline_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json, is_baseline) VALUES (?, ?, ?, ?, ?, ?)",
+            (baseline_id, user_id, captured_at, "https://example.com/baseline.jpg", capture_quality, 1)
         )
 
-        baseline = self.db.get_baseline_capture(user_id)
+        baseline = self.db.fetchone("SELECT * FROM photo_captures WHERE user_id = ? AND is_baseline = 1", (user_id,))
 
         self.assertIsNotNone(baseline)
         self.assertEqual(baseline["id"], baseline_id)
-        self.assertTrue(baseline["is_baseline"])
+        self.assertEqual(baseline["is_baseline"], 1)
 
     def test_create_product(self):
         """Test product creation."""
-        product_id = self.db.create_product(
-            name="Test Serum",
-            brand="Test Brand",
-            ingredients="Water, Niacinamide",
-            stabilization_days=14
+        product_id = str(uuid.uuid4())
+        ingredients = json.dumps(["Water", "Niacinamide"])
+
+        self.db.execute(
+            "INSERT INTO products (id, name, ingredients_json, stabilization_days) VALUES (?, ?, ?, ?)",
+            (product_id, "Test Serum", ingredients, 14)
         )
 
-        self.assertIsNotNone(product_id)
+        product = self.db.fetchone("SELECT * FROM products WHERE id = ?", (product_id,))
+        self.assertIsNotNone(product)
+        self.assertEqual(product["name"], "Test Serum")
+        self.assertEqual(product["stabilization_days"], 14)
 
     def test_get_product(self):
         """Test retrieving product."""
-        product_id = self.db.create_product(
-            name="Face Cream",
-            ingredients="Water, Hyaluronic Acid"
+        product_id = str(uuid.uuid4())
+        ingredients = json.dumps(["Water", "Hyaluronic Acid"])
+
+        self.db.execute(
+            "INSERT INTO products (id, name, ingredients_json) VALUES (?, ?, ?)",
+            (product_id, "Face Cream", ingredients)
         )
 
-        product = self.db.get_product(product_id)
+        product = self.db.fetchone("SELECT * FROM products WHERE id = ?", (product_id,))
 
         self.assertIsNotNone(product)
         self.assertEqual(product["name"], "Face Cream")

@@ -9,10 +9,10 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw
 
-from skinproof.api import create_app
-from skinproof.db import Database
-from skinproof.photos import MemoryPhotoStore
-from skinproof.service import SkinProofService
+from glowupai.api import create_app
+from glowupai.db import Database
+from glowupai.photos import MemoryPhotoStore
+from glowupai.service import GlowupAIService
 
 
 def png() -> str:
@@ -40,7 +40,7 @@ class ApiTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.db = Database(Path(self.temp.name) / "api.sqlite3")
-        app = create_app(SkinProofService(self.db, photos=MemoryPhotoStore()))
+        app = create_app(GlowupAIService(self.db, photos=MemoryPhotoStore()))
         self.client = TestClient(app)
 
     def tearDown(self):

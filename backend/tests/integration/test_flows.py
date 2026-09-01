@@ -10,10 +10,10 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw
 
-from skinproof.api import create_app
-from skinproof.db import Database
-from skinproof.photos import MemoryPhotoStore
-from skinproof.service import SkinProofService
+from glowupai.api import create_app
+from glowupai.db import Database
+from glowupai.photos import MemoryPhotoStore
+from glowupai.service import GlowupAIService
 
 
 def create_test_image(size=(240, 240), color=(210, 165, 145)):
@@ -45,7 +45,7 @@ class TestCompleteUserFlow(unittest.TestCase):
         """Set up test client and database."""
         self.temp = tempfile.TemporaryDirectory()
         self.db = Database(Path(self.temp.name) / "integration.sqlite3")
-        app = create_app(SkinProofService(self.db, photos=MemoryPhotoStore()))
+        app = create_app(GlowupAIService(self.db, photos=MemoryPhotoStore()))
         self.client = TestClient(app)
 
     def tearDown(self):
@@ -268,7 +268,7 @@ class TestErrorHandling(unittest.TestCase):
         """Set up test client."""
         self.temp = tempfile.TemporaryDirectory()
         self.db = Database(Path(self.temp.name) / "errors.sqlite3")
-        app = create_app(SkinProofService(self.db, photos=MemoryPhotoStore()))
+        app = create_app(GlowupAIService(self.db, photos=MemoryPhotoStore()))
         self.client = TestClient(app)
 
     def tearDown(self):
@@ -366,7 +366,7 @@ class TestRateLimiting(unittest.TestCase):
         """Set up test client with rate limiting enabled."""
         self.temp = tempfile.TemporaryDirectory()
         self.db = Database(Path(self.temp.name) / "ratelimit.sqlite3")
-        app = create_app(SkinProofService(self.db, photos=MemoryPhotoStore()))
+        app = create_app(GlowupAIService(self.db, photos=MemoryPhotoStore()))
         self.client = TestClient(app)
 
     def tearDown(self):

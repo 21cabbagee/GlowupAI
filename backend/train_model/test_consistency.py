@@ -13,7 +13,7 @@ import numpy as np
 # Add backend to path
 sys.path.insert(0, '/Users/21cabbage/GlowupAI/backend')
 
-from skinproof.ml_model import MLModelInference
+from glowupai.ml_model import MLModelInference
 
 
 def test_consistency(model_path: str = None, num_trials: int = 10):

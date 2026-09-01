@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 from PIL import Image, ImageDraw
 
-from skinproof.metrics import analyze_frame
-from skinproof.pipeline import analyze_capture
+from glowupai.metrics import analyze
+from glowupai.pipeline import analyze_capture
 
 
 def create_test_image(size=(240, 240), color=(210, 165, 145)):
@@ -29,6 +29,31 @@ def image_to_base64(image: Image.Image) -> str:
     output = io.BytesIO()
     image.save(output, format="PNG")
     return base64.b64encode(output.getvalue()).decode()
+
+
+def image_to_bytes(image: Image.Image) -> bytes:
+    """Convert PIL image to bytes."""
+    output = io.BytesIO()
+    image.save(output, format="PNG")
+    return output.getvalue()
+
+
+def analyze_frame(array: np.ndarray) -> dict:
+    """Wrapper to convert numpy array to the format expected by analyze()."""
+    # Convert numpy array to PIL Image, then to bytes
+    image = Image.fromarray(array.astype('uint8'), 'RGB')
+    image_bytes = image_to_bytes(image)
+
+    # Call the actual analyze function with quality_score=1.0
+    result = analyze(image_bytes, quality_score=1.0)
+
+    # Convert MetricResult to dict format expected by tests
+    return {
+        "smoothness_score": 100.0 - result.texture_score,  # Invert texture to smoothness
+        "clarity_score": result.confidence * 100,
+        "evenness_score": (1.0 - result.darkspot_area) * 100,
+        "model_version": result.model_version,
+    }
 
 
 class TestAnalysisPipeline(unittest.TestCase):
@@ -145,7 +170,7 @@ class TestFaceDetection(unittest.TestCase):
 
     def test_quality_gates_check_face_presence(self):
         """Test that quality gates verify face presence."""
-        from skinproof.capture import validate_quality
+        from glowupai.capture import validate_quality
 
         quality_with_face = {
             "face_present": True,

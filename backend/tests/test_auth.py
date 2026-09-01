@@ -6,16 +6,16 @@ import unittest
 from pathlib import Path
 
 import jwt
-import skinproof.auth as auth_module
+import glowupai.auth as auth_module
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
-from skinproof.auth import AuthError, JWKSCache, verify_id_token
-from skinproof.complete_api import create_complete_app
-from skinproof.complete_db import FullDatabase
-from skinproof.complete_service import CompleteSkinProofService
-from skinproof.config import Settings
-from skinproof.photos import MemoryPhotoStore
+from glowupai.auth import AuthError, JWKSCache, verify_id_token
+from glowupai.complete_api import create_complete_app
+from glowupai.complete_db import FullDatabase
+from glowupai.complete_service import CompleteGlowupAIService
+from glowupai.config import Settings
+from glowupai.photos import MemoryPhotoStore
 
 PROJECT_ID = "glowup-test"
 KID = "test-key-1"
@@ -151,7 +151,7 @@ class _BaseAppTest(unittest.TestCase):
             auth_required=self.auth_required,
             admin_token=self.admin_token,
         )
-        self.service = CompleteSkinProofService(
+        self.service = CompleteGlowupAIService(
             self.db, settings=self.settings, photos=MemoryPhotoStore()
         )
         self.client = TestClient(create_complete_app(self.service))
@@ -335,7 +335,7 @@ class AdminBoundaryTests(_BaseAppTest):
 
 
 class AdminBoundaryWithoutTokenConfiguredTests(_BaseAppTest):
-    """When SKINPROOF_ADMIN_TOKEN is unset, admin routes must refuse everyone."""
+    """When GLOWUPAI_ADMIN_TOKEN is unset, admin routes must refuse everyone."""
 
     admin_token = None
 

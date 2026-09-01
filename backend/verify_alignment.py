@@ -23,8 +23,8 @@ from PIL import Image
 
 def verify_alignment(image_path: str):
     """Verify face alignment on a real image."""
-    from skinproof.face_alignment import align_face_safe, FaceAlignmentError
-    from skinproof.metrics import analyze
+    from glowupai.face_alignment import align_face_safe, FaceAlignmentError
+    from glowupai.metrics import analyze
 
     if not Path(image_path).exists():
         print(f"❌ Error: File not found: {image_path}")
@@ -93,7 +93,7 @@ def verify_alignment(image_path: str):
 
 def test_with_multiple_angles():
     """Test alignment consistency with the same face at different angles."""
-    from skinproof.metrics import analyze
+    from glowupai.metrics import analyze
     from PIL import Image, ImageDraw
     import io
 

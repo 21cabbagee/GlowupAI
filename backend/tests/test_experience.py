@@ -6,11 +6,11 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from skinproof.complete_api import create_complete_app
-from skinproof.complete_db import FullDatabase
-from skinproof.complete_service import CompleteSkinProofService
-from skinproof.config import Settings
-from skinproof.photos import MemoryPhotoStore
+from glowupai.complete_api import create_complete_app
+from glowupai.complete_db import FullDatabase
+from glowupai.complete_service import CompleteGlowupAIService
+from glowupai.config import Settings
+from glowupai.photos import MemoryPhotoStore
 
 
 class ExperienceTests(unittest.TestCase):
@@ -19,7 +19,7 @@ class ExperienceTests(unittest.TestCase):
         db_path = Path(self.temp.name) / "experience.sqlite3"
         self.db = FullDatabase(db_path)
         settings = Settings(db_path=db_path, photo_dir=None, gemini_enabled=False)
-        self.service = CompleteSkinProofService(
+        self.service = CompleteGlowupAIService(
             self.db, settings=settings, photos=MemoryPhotoStore()
         )
         self.client = TestClient(create_complete_app(self.service))

@@ -8,7 +8,7 @@ import sys
 
 def test_alignment():
     """Test face alignment with a sample image."""
-    from skinproof.face_alignment import align_face_safe, FaceAlignmentError
+    from glowupai.face_alignment import align_face_safe, FaceAlignmentError
 
     # Create a simple test image with two "eyes" (circles)
     # This is a basic test - in production it will use real face photos
@@ -67,7 +67,7 @@ def test_alignment():
 
 def test_with_no_face():
     """Test that alignment handles images with no face gracefully."""
-    from skinproof.face_alignment import align_face_safe
+    from glowupai.face_alignment import align_face_safe
 
     # Create blank image
     blank_img = Image.new('RGB', (200, 200), color='blue')

@@ -9,11 +9,11 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw
 
-from skinproof.complete_api import create_complete_app
-from skinproof.complete_db import FullDatabase
-from skinproof.complete_service import CompleteSkinProofService
-from skinproof.config import Settings
-from skinproof.photos import MemoryPhotoStore
+from glowupai.complete_api import create_complete_app
+from glowupai.complete_db import FullDatabase
+from glowupai.complete_service import CompleteGlowupAIService
+from glowupai.config import Settings
+from glowupai.photos import MemoryPhotoStore
 
 
 def image_b64() -> str:
@@ -39,7 +39,7 @@ class NewFeatureTests(unittest.TestCase):
             gemini_enabled=False,
             admin_token="test-admin-token",
         )
-        self.service = CompleteSkinProofService(
+        self.service = CompleteGlowupAIService(
             self.db, settings=settings, photos=MemoryPhotoStore()
         )
         self.client = TestClient(create_complete_app(self.service))
