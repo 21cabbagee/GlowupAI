@@ -278,7 +278,7 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
 
     # Create FastAPI app
     app = FastAPI(
-        title="GlowUp AI",
+        title="GlowUpAI",
         version="3.0.0",
         description="A complete personal appearance measurement system. Cosmetic tracking, never diagnosis.",
     )

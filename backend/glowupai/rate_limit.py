@@ -1,4 +1,4 @@
-"""Simple in-memory rate limiting for GlowUp AI API.
+"""Simple in-memory rate limiting for GlowUpAI API.
 
 For production, consider using Redis-backed rate limiting (slowapi with Redis)
 or a cloud-native solution (Cloud Armor, AWS WAF, Cloudflare).

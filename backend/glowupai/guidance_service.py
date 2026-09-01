@@ -393,7 +393,7 @@ class GuidanceService:
             for v in verdicts
         )
         printable_html = (
-            "<h1>GlowUp AI cosmetic measurement summary</h1>"
+            "<h1>GlowUpAI cosmetic measurement summary</h1>"
             f"<p>Generated {now_iso()} for a consenting user. Cosmetic tracking only; not a diagnosis.</p>"
             f"<p>{len(history)} captures across model version(s): {', '.join(model_versions) or 'n/a'}.</p>"
             "<table border=1 cellpadding=4><tr><th>Product</th><th>Evidence label</th><th>Days stable</th><th>Confidence</th></tr>"
@@ -405,7 +405,7 @@ class GuidanceService:
             "model_versions": model_versions,
             "verdicts": verdicts,
             "printable_html": printable_html,
-            "disclaimer": "This is a measurement history export for the user to optionally share, not a clinical or diagnostic document. GlowUp AI does not diagnose, treat, or rule out medical conditions.",
+            "disclaimer": "This is a measurement history export for the user to optionally share, not a clinical or diagnostic document. GlowUpAI does not diagnose, treat, or rule out medical conditions.",
         }
 
     # -- dashboard and misc ---------------------------------------------------
@@ -449,7 +449,7 @@ class GuidanceService:
                 )
             ],
             "features": features,
-            "disclaimer": "Cosmetic tracking only; GlowUp AI does not diagnose, treat, or rule out medical conditions.",
+            "disclaimer": "Cosmetic tracking only; GlowUpAI does not diagnose, treat, or rule out medical conditions.",
         }
 
     def _free_unlocked_product_id(self, user_id: str) -> Optional[str]:

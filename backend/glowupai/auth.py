@@ -1,4 +1,4 @@
-"""Firebase ID token verification for GlowUp AI.
+"""Firebase ID token verification for GlowUpAI.
 
 Why JWKS verification instead of the `firebase-admin` SDK: `firebase-admin`
 pulls in `google-cloud-firestore`, `google-cloud-storage`,

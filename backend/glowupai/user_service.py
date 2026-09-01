@@ -120,7 +120,7 @@ class UserService:
         email_verified: bool = False,
         name: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Exchange a verified Firebase uid for a GlowUp AI profile.
+        """Exchange a verified Firebase uid for a GlowUpAI profile.
 
         Idempotent per `firebase_uid`: the first call creates the user,
         appearance profile, and free entitlement exactly like `create_user`
