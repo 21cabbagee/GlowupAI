@@ -12,10 +12,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install build dependencies (needed for some Python packages)
+# Install build dependencies (needed for some Python packages + opencv)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     python3-dev \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -25,10 +27,14 @@ RUN pip install --user --no-cache-dir \
         "fastapi>=0.110" \
         "uvicorn[standard]>=0.29" \
         "pillow>=10.0" \
+        "opencv-python>=4.8.0" \
+        "numpy>=1.24.0" \
         "cryptography>=42.0" \
         "google-genai>=1.0.0" \
         "psycopg[binary,pool]>=3.2" \
-        "PyJWT[crypto]>=2.8"
+        "PyJWT[crypto]>=2.8" \
+        "redis>=5.0.0" \
+        "sentry-sdk[fastapi]>=2.0.0"
 
 # =============================================================================
 # Stage 2: Runtime - Minimal production image
@@ -94,4 +100,4 @@ sys.exit(0 if response.status == 200 else 1)"
 # - port: From PORT env variable
 # - workers: Set via UVICORN_WORKERS env var (default: 1)
 # - log-config: Disabled, we use our own structured logging
-CMD ["sh", "-c", "uvicorn glowupai.api:app --host 0.0.0.0 --port ${PORT} --workers ${UVICORN_WORKERS:-1} --no-access-log"]
+CMD ["sh", "-c", "uvicorn glowupai.complete_api:app --host 0.0.0.0 --port ${PORT} --workers ${UVICORN_WORKERS:-1} --no-access-log"]
