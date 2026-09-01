@@ -204,7 +204,7 @@ class AnalyticsService:
             else {"confounded": False, "active_windows": []}
         )
         # Call base service method directly to avoid infinite recursion
-        event = super(type(self.parent), self.parent).add_routine_event(
+        event = GlowupAIService.add_routine_event(self.parent, 
             user_id, product_id, action, timestamp, slot, dose, frequency, notes
         )
         if experiment_id:

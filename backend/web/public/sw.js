@@ -6,7 +6,7 @@
  * personal and time-sensitive, and a stale metric is worse than no metric.
  */
 
-const CACHE = "skinproof-shell-v1";
+const CACHE = "glowupai-shell-v1";
 const SHELL = ["/", "/home", "/manifest.webmanifest", "/icon-192.png"];
 
 self.addEventListener("install", (event) => {

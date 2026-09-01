@@ -27,7 +27,7 @@ import javax.inject.Inject
 
 /**
  * `GET /dashboard` is fetched as the single initial snapshot — it already embeds `weekly_recap`
- * and `check_ins` (verified against `backend/skinproof/complete_api.py` / `backend/web/lib/api.ts`
+ * and `check_ins` (verified against `backend/glowupai/complete_api.py` / `backend/web/lib/api.ts`
  * `Dashboard` shape), so this ViewModel never makes separate `weekly-recap`/`check-ins` round
  * trips just to render Home. `GET /history` is fetched alongside it purely for the trend chart's
  * extra fields (`noise_floor`, `redness_delta`, per-item `capture_quality`) that the embedded

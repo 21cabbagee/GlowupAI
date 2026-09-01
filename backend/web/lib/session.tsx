@@ -10,7 +10,7 @@ import {
 } from "react";
 import { api, type Profile } from "./api";
 
-const USER_KEY = "skinproof_user_id";
+const USER_KEY = "glowupai_user_id";
 
 interface SessionValue {
   userId: string | null;

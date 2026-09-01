@@ -1,0 +1,180 @@
+================================================================================
+PYTHON IMPORT VERIFICATION REPORT
+GlowUpAI Backend - /Users/21cabbage/GlowupAI/backend
+Generated: 2026-09-01
+================================================================================
+
+EXECUTIVE SUMMARY
+================================================================================
+✓ All required dependencies are installed and working
+✓ Main application imports successfully: glowupai.complete_api.app
+✓ All core services import successfully
+✓ All routers import successfully
+✓ 55 out of 56 modules tested import successfully
+
+⚠ 1 Optional import issue: glowupai.ml_model requires PyTorch (not critical)
+
+================================================================================
+
+REQUIRED DEPENDENCIES (from pyproject.toml)
+================================================================================
+All INSTALLED and versions verified:
+
+✓ fastapi: 0.141.1 (>= 0.110)
+✓ uvicorn: 0.52.4 (>= 0.29)
+✓ pillow: 12.3.0 (>= 10.0)
+✓ opencv-python: 5.0.0.93 (>= 4.8.0)
+✓ numpy: 2.5.2 (>= 1.24.0)
+✓ cryptography: 50.0.1 (>= 42.0)
+✓ google-genai: 2.21.0 (>= 1.0.0)
+✓ psycopg[binary,pool]: 3.3.5 (>= 3.2)
+✓ PyJWT[crypto]: 2.13.0 (>= 2.8)
+✓ redis: 8.1.0 (>= 5.0.0)
+✓ sentry-sdk[fastapi]: 2.68.1 (>= 2.0.0)
+
+DEPENDENCY CHECK STATUS: ✓ pip check reports no broken requirements
+
+================================================================================
+
+MAIN APPLICATION ENTRY POINT
+================================================================================
+✓ from glowupai.complete_api import app
+  - Application: GlowUpAI v3.0.0
+  - All routers registered successfully:
+    • Users router
+    • Captures router
+    • Analytics router
+    • Subscriptions router
+    • Admin router
+
+================================================================================
+
+CORE SERVICES
+================================================================================
+✓ glowupai.user_service (UserService)
+✓ glowupai.capture_service (CaptureService)
+✓ glowupai.guidance_service (GuidanceService)
+✓ glowupai.analytics_service (AnalyticsService)
+✓ glowupai.commerce_service
+✓ glowupai.subscription_service
+✓ glowupai.complete_service (CompleteGlowupAIService)
+
+================================================================================
+
+CORE MODULES
+================================================================================
+✓ glowupai.auth (FirebaseIdentity, JWKSCache, AuthError)
+✓ glowupai.config (Settings)
+✓ glowupai.db (Database)
+✓ glowupai.full_db
+✓ glowupai.complete_db
+✓ glowupai.postgres_db
+✓ glowupai.middleware (RateLimitMiddleware)
+✓ glowupai.logging_config
+✓ glowupai.monitoring
+✓ glowupai.observability
+✓ glowupai.metrics
+✓ glowupai.ml_monitoring
+✓ glowupai.google_ai
+✓ glowupai.preprocessing
+✓ glowupai.face_alignment
+✓ glowupai.pipeline
+✓ glowupai.rate_limiter
+✓ glowupai.cache_diagnostics
+✓ glowupai.data_collection
+✓ glowupai.feedback
+✓ glowupai.safety
+✓ glowupai.html_sanitize
+
+================================================================================
+
+ROUTERS
+================================================================================
+✓ glowupai.routers.users
+✓ glowupai.routers.captures
+✓ glowupai.routers.analytics
+✓ glowupai.routers.subscriptions
+✓ glowupai.routers.admin
+
+================================================================================
+
+OPTIONAL DEPENDENCIES
+================================================================================
+Dev dependencies (all installed):
+✓ pytest: 8.3.8
+✓ pytest-cov: 7.0.3
+✓ pytest-asyncio: 0.27.0
+✓ httpx: 0.28.1
+✓ black: 26.5.1
+✓ mypy: 2.3.1
+✓ bandit: 1.9.4
+✓ safety: 3.4.3
+⚠ locust: 2.46.4 (has known gevent/ssl patching warning - non-critical)
+
+================================================================================
+
+MISSING DEPENDENCIES
+================================================================================
+
+⚠ PyTorch (torch, torchvision) - OPTIONAL
+  Status: NOT INSTALLED
+  Impact: LOW - Not critical for application
+  
+  Details:
+  - Used by: glowupai/ml_model.py
+  - Only loaded when: USE_NEW_MODEL=1 environment variable is set
+  - Fallback: Application falls back to deterministic model when ML model unavailable
+  - The import is wrapped in try-except with graceful fallback
+  - Application starts and runs successfully without PyTorch
+
+  File locations:
+  - /Users/21cabbage/GlowupAI/backend/glowupai/ml_model.py (imports torch)
+  - /Users/21cabbage/GlowupAI/backend/glowupai/metrics.py (optional import)
+
+  To install (if ML model needed):
+    pip install torch torchvision
+
+================================================================================
+
+VERSION CONFLICTS
+================================================================================
+✓ No version conflicts detected (pip check passed)
+
+================================================================================
+
+SUGGESTED ACTIONS
+================================================================================
+
+NONE REQUIRED - All critical dependencies are installed and working.
+
+Optional (if ML model needed):
+  1. Add torch and torchvision to pyproject.toml under optional dependencies:
+     
+     [project.optional-dependencies]
+     ml = [
+       "torch>=2.0.0",
+       "torchvision>=0.15.0"
+     ]
+  
+  2. Install with: pip install -e ".[ml]"
+  
+  3. Set environment variable: USE_NEW_MODEL=1
+
+================================================================================
+
+TEST RESULTS SUMMARY
+================================================================================
+Total modules tested: 56
+Successfully imported: 55 (98.2%)
+Failed (critical): 0 (0%)
+Failed (optional): 1 (1.8%)
+
+✓ APPLICATION IS READY TO RUN
+
+All required dependencies are installed correctly.
+No missing packages for core functionality.
+No version conflicts detected.
+
+================================================================================
+END OF REPORT
+================================================================================

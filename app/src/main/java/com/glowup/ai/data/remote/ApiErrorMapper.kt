@@ -78,7 +78,7 @@ object ApiErrorMapper {
      *  - `require_premium`:  "<feature> requires Premium; upgrade the plan to unlock it"
      *  - `require_consent`:  "explicit facial-data consent is required before using photo capture"
      * Anything else (e.g. an ownership-mismatch 403 under
-     * `SKINPROOF_AUTH_REQUIRED=1`) falls back to [ApiError.Unauthorized] —
+     * `GLOWUPAI_AUTH_REQUIRED=1`) falls back to [ApiError.Unauthorized] —
      * the safest generic treatment for "you may not do this as the current
      * identity."
      */

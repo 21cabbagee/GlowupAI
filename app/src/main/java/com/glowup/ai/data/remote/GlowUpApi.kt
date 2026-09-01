@@ -70,7 +70,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
- * Retrofit surface for every route in `backend/skinproof/complete_api.py`
+ * Retrofit surface for every route in `backend/glowupai/complete_api.py`
  * (ANDROID_PLAN.md Task 2.3 — ~56 routes, no exceptions). Suspend functions
  * throw `retrofit2.HttpException` on any non-2xx response; callers should
  * always go through the `apiCall`/`apiCallNoContent` helpers in
@@ -80,7 +80,7 @@ import retrofit2.http.Query
  * `Authorization: Bearer <idToken>` is attached by [AuthInterceptor] for
  * every request; routes that are documented as open (health, triage,
  * product search/lookup, `POST /api/users`, `POST /api/auth/session`)
- * simply ignore it server-side unless `SKINPROOF_AUTH_REQUIRED=1`.
+ * simply ignore it server-side unless `GLOWUPAI_AUTH_REQUIRED=1`.
  */
 interface GlowUpApi {
     // -- Startup ------------------------------------------------------------
@@ -91,7 +91,7 @@ interface GlowUpApi {
     // -- Authentication -------------------------------------------------------
 
     /** Exchange the current Firebase ID token (attached by [AuthInterceptor])
-     * for a SkinProof profile. Idempotent per Firebase uid. */
+     * for a GlowUpAI profile. Idempotent per Firebase uid. */
     @POST("auth/session")
     suspend fun authSession(): ProfileResponseDto
 
@@ -408,7 +408,7 @@ interface GlowUpApi {
 
     // -- Admin (NOT FOR APP USE) ----------------------------------------------------
     //
-    // Requires `Authorization: Bearer <SKINPROOF_ADMIN_TOKEN>`, a secret this
+    // Requires `Authorization: Bearer <GLOWUPAI_ADMIN_TOKEN>`, a secret this
     // app must never hold. Declared here only for complete route coverage —
     // no repository may call these. See domain.model.AdminAuditEntry doc.
 

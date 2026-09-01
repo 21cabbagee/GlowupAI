@@ -101,7 +101,7 @@ class UserService:
         """
         # Call base service method directly to avoid infinite recursion
         # Use super() to bypass the overridden method in CompleteGlowupAIService
-        user = super(type(self.parent), self.parent).create_user(skin_type)
+        user = GlowupAIService.create_user(self.parent, skin_type)
         self.db.execute(
             "INSERT INTO entitlements (user_id, plan) VALUES (?, 'free')", (user["id"],)
         )
@@ -185,7 +185,7 @@ class UserService:
             Updated user profile dictionary.
         """
         # Call base service method directly to avoid infinite recursion
-        result = super(type(self.parent), self.parent).grant_consent(user_id, facial_data, policy_version)
+        result = GlowupAIService.grant_consent(self.parent, user_id, facial_data, policy_version)
         self._audit(
             "consent_granted" if facial_data else "consent_declined",
             "user",

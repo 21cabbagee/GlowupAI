@@ -114,7 +114,7 @@ data class DashboardDto(
     @SerialName("check_ins") val checkIns: List<CheckInDto> = emptyList(),
     @SerialName("routine_events") val routineEvents: List<DashboardRoutineEventDto> = emptyList(),
     val features: DashboardFeaturesDto = DashboardFeaturesDto(),
-    val disclaimer: String = "Cosmetic tracking only; SkinProof does not diagnose, treat, or rule out medical conditions.",
+    val disclaimer: String = "Cosmetic tracking only; GlowUpAI does not diagnose, treat, or rule out medical conditions.",
 )
 
 fun DashboardDto.toDomain(): Dashboard =

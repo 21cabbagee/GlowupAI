@@ -133,7 +133,7 @@ object SessionStateMachine {
                 when (val error = result.error) {
                     // frontend-api-map.md "Startup and session recovery": "Call
                     // GET /api/users/{user_id}/profile; if it returns 400 user not
-                    // found, clear only the SkinProof session key and restart at
+                    // found, clear only the GlowUpAI session key and restart at
                     // welcome." Missing entities are 400, not 404, in this API
                     // (frontend-api-map.md line ~38-39 / ANDROID_PLAN.md trap #5),
                     // and the only documented error for this call is exactly this

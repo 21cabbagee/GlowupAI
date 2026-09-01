@@ -1,0 +1,19 @@
+{"timestamp": "2026-09-01 18:00:02,847", "level": "INFO", "logger": "glowupai.complete_api", "message": "Initializing GlowupAI application", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,849", "level": "INFO", "logger": "glowupai.observability", "message": "OpenTelemetry instrumentation disabled (set OTEL_ENABLED=1 to enable)", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,849", "level": "INFO", "logger": "glowupai.shutdown", "message": "Signal handlers registered for graceful shutdown", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,849", "level": "INFO", "logger": "glowupai.complete_api", "message": "Middleware configured: rate_limit=True, cache=True, timeout=30s, slow_threshold=1000.0ms", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,860", "level": "INFO", "logger": "glowupai.complete_api", "message": "Users router registered", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,867", "level": "INFO", "logger": "glowupai.complete_api", "message": "Captures router registered", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,870", "level": "INFO", "logger": "glowupai.complete_api", "message": "Analytics router registered", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,878", "level": "INFO", "logger": "glowupai.complete_api", "message": "Subscriptions router registered", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,883", "level": "INFO", "logger": "glowupai.complete_api", "message": "Admin router registered", "request_id": null}
+INFO:     Started server process [31499]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('0.0.0.0', 8000): address already in use
+INFO:     Waiting for application shutdown.
+{"timestamp": "2026-09-01 18:00:02,905", "level": "INFO", "logger": "glowupai.shutdown", "message": "Starting graceful shutdown...", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,905", "level": "INFO", "logger": "glowupai.complete_api", "message": "Closing database connections", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,905", "level": "INFO", "logger": "glowupai.shutdown", "message": "Cleanup handler completed: cleanup_db", "request_id": null}
+{"timestamp": "2026-09-01 18:00:02,905", "level": "INFO", "logger": "glowupai.shutdown", "message": "Graceful shutdown complete", "request_id": null}
+INFO:     Application shutdown complete.

@@ -83,7 +83,7 @@ export default function AccountPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "skinproof-export.json";
+      a.download = "glowupai-export.json";
       document.body.appendChild(a);
       a.click();
       a.remove();

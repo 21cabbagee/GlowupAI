@@ -83,8 +83,8 @@ def setup_captures_router(service, analytics, compressor, run_handler, require_o
         # Compress image before processing
         compressed_image = compressor.compress_image(
             image,
-            max_dimension=int(os.getenv("SKINPROOF_MAX_IMAGE_DIMENSION", "1024")),
-            quality=int(os.getenv("SKINPROOF_IMAGE_QUALITY", "85")),
+            max_dimension=int(os.getenv("GLOWUPAI_MAX_IMAGE_DIMENSION", "1024")),
+            quality=int(os.getenv("GLOWUPAI_IMAGE_QUALITY", "85")),
         )
 
         result = run_handler(

@@ -2,7 +2,7 @@ package com.glowup.ai.domain.model
 
 /**
  * NOT FOR APP USE. The `/api/admin` routes require `Authorization: Bearer
- * <SKINPROOF_ADMIN_TOKEN>` — a secret the app must never hold. These models
+ * <GLOWUPAI_ADMIN_TOKEN>` — a secret the app must never hold. These models
  * exist only so [com.glowup.ai.data.remote.GlowUpApi] can declare complete
  * route coverage per ANDROID_PLAN.md Task 2.3. No repository may call the
  * corresponding endpoints; there is deliberately no repository-facing mapper

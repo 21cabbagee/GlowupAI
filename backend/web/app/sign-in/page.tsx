@@ -8,9 +8,9 @@ import { useSession } from "@/lib/session";
 import { Button, Field, Notice, inputClass } from "@/components/ui";
 import { LogoMark, ShieldIcon } from "@/components/icons";
 
-const DEMO_USERNAME = "skinproof-demo";
+const DEMO_USERNAME = "glowupai-demo";
 const DEMO_ACCESS_CODE = "temporary-access-2026";
-const DEMO_PROFILE_KEY = "skinproof_demo_profile_id";
+const DEMO_PROFILE_KEY = "glowupai_demo_profile_id";
 
 export default function SignInPage() {
   const router = useRouter();

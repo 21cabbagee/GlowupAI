@@ -254,7 +254,7 @@ class CaptureService:
         ):
             raise ValueError("experiment not found")
         # Call base service method directly to avoid infinite recursion
-        result = super(type(self.parent), self.parent).create_capture(
+        result = GlowupAIService.create_capture(self.parent, 
             user_id, image_bytes, quality_data, captured_at, device_meta, is_baseline
         )
         metric = result["metric"] or {}

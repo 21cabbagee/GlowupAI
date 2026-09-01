@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 class UserCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    name: Optional[str] = Field(default=None, max_length=80)
+    focus: Optional[str] = None
     skin_type: Optional[str] = None
 
 
@@ -40,7 +42,8 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
 
     @router.post("/users")
     def create_user(payload: UserCreate) -> Dict[str, Any]:
-        return service.create_user(payload.skin_type)
+        # Create user - frontend will update profile separately
+        return run_handler(service.create_user, payload.skin_type)
 
     @router.post("/auth/session")
     def auth_session(authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:

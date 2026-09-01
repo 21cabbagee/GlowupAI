@@ -7,11 +7,11 @@
   const toasts = document.getElementById("toasts");
   const capturePicker = document.getElementById("capturePicker");
 
-  const USER_KEY = "skinproof_user_id";
-  const DRAFT_KEY = "skinproof_onboarding";
-  const ROUTE_KEY = "skinproof_route";
-  const DEMO_PROFILE_KEY = "skinproof_demo_profile_id";
-  const DEMO_USERNAME = "skinproof-demo";
+  const USER_KEY = "glowupai_user_id";
+  const DRAFT_KEY = "glowupai_onboarding";
+  const ROUTE_KEY = "glowupai_route";
+  const DEMO_PROFILE_KEY = "glowupai_demo_profile_id";
+  const DEMO_USERNAME = "glowupai-demo";
   const DEMO_ACCESS_CODE = "temporary-access-2026";
   const VERTICALS = ["skin", "hair", "scalp", "beard", "body"];
   const GOALS = {
@@ -600,7 +600,7 @@
         await patchProfile({ display_name: document.getElementById("editName").value, focus_vertical: document.getElementById("editFocus").value, goals }); closeSheet(); await refreshAndRender("Profile updated."); return;
       }
       if (action === "export-data") {
-        const data = await api(`/api/users/${state.id}/export`); const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })); const link = document.createElement("a"); link.href = url; link.download = "skinproof-export.json"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); return;
+        const data = await api(`/api/users/${state.id}/export`); const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })); const link = document.createElement("a"); link.href = url; link.download = "glowupai-export.json"; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); return;
       }
       if (action === "reprocess") { const result = await api(`/api/users/${state.id}/reprocess`, { method: "POST", body: JSON.stringify({ model_version: document.getElementById("reprocessModel").value }) }); closeSheet(); toast(`${result.processed_count} captures reprocessed.`, "success"); return; }
       if (action === "delete-profile") {

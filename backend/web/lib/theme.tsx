@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 
 type Mode = "light" | "dark" | "system";
 
-const KEY = "skinproof_theme";
+const KEY = "glowupai_theme";
 
 const ThemeContext = createContext<{
   mode: Mode;
