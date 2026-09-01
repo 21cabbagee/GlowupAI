@@ -106,3 +106,54 @@
 -keep @kotlinx.serialization.Serializable class com.glowup.ai.domain.model.** { *; }
 -keep class com.glowup.ai.data.remote.dto.** { <fields>; }
 -keep class com.glowup.ai.domain.model.** { <fields>; }
+
+# ---------------------------------------------------------------------------
+# Compose - Keep all composable functions and ViewModels
+# ---------------------------------------------------------------------------
+-keep @androidx.compose.runtime.Composable class * { *; }
+-keep class androidx.compose.** { *; }
+-keep class androidx.lifecycle.ViewModel { *; }
+-keep class * extends androidx.lifecycle.ViewModel {
+    <init>(...);
+}
+-keepclassmembers class * extends androidx.lifecycle.ViewModel {
+    <init>(...);
+}
+
+# ---------------------------------------------------------------------------
+# Additional app classes that might be stripped
+# ---------------------------------------------------------------------------
+-keep class com.glowup.ai.** { *; }
+-keep interface com.glowup.ai.** { *; }
+-keep enum com.glowup.ai.** { *; }
+
+# Keep all ViewModels
+-keep class * extends androidx.lifecycle.ViewModel {
+    <init>(...);
+    public <methods>;
+}
+
+# Keep navigation arguments
+-keepnames class androidx.navigation.fragment.NavHostFragment
+-keep class * extends androidx.navigation.** { *; }
+
+# Keep Coil image loading
+-keep class coil.** { *; }
+-dontwarn coil.**
+
+# ---------------------------------------------------------------------------
+# Prevent crashes on startup - keep all app entry points
+# ---------------------------------------------------------------------------
+-keep class com.glowup.ai.GlowUpApplication { *; }
+-keep class com.glowup.ai.MainActivity { *; }
+-keep class com.glowup.ai.data.** { *; }
+-keep class com.glowup.ai.feature.** { *; }
+-keep class com.glowup.ai.core.** { *; }
+
+# Keep all data classes with @Serializable
+-keepclassmembers class com.glowup.ai.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Debugging - print what's being removed (comment out for production)
+# -whyareyoukeeping class com.glowup.ai.**
