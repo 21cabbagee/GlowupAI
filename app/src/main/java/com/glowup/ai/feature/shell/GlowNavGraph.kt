@@ -9,6 +9,7 @@ import com.glowup.ai.feature.account.accountGraph
 import com.glowup.ai.feature.achievements.achievementsGraph
 import com.glowup.ai.feature.auth.authGraph
 import com.glowup.ai.feature.capture.captureGraph
+import com.glowup.ai.feature.comparison.comparisonGraph
 import com.glowup.ai.feature.discover.discoverGraph
 import com.glowup.ai.feature.home.homeGraph
 import com.glowup.ai.feature.insights.insightsGraph
@@ -39,6 +40,7 @@ fun GlowNavGraph(navController: NavHostController) {
         homeGraph(navController)
         achievementsGraph(navController)
         captureGraph(navController)
+        comparisonGraph(navController)
         routineGraph(navController)
         insightsGraph(navController)
         discoverGraph(navController)

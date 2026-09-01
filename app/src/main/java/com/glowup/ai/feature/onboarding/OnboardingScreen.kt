@@ -62,6 +62,12 @@ private val carouselPages = listOf(
         body = "Log what you use, then see which changes actually correlate with your results.",
     ),
     CarouselPage(
+        title = "We'll need a few permissions",
+        body = "• Camera: Take consistent photos to track your skin\n" +
+            "• Photo access: See your progress with before/after comparisons\n" +
+            "• Notifications: Optional reminders for your daily capture",
+    ),
+    CarouselPage(
         title = "Your photos, your choice",
         body = "Nothing is analyzed until you explicitly say yes on the next screen — and you " +
             "can change your mind at any time.",

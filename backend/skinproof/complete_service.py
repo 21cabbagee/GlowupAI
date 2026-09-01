@@ -2075,3 +2075,132 @@ class CompleteSkinProofService(SkinProofService):
 
     def triage_question(self, text: str) -> dict:
         return triage(text).as_dict()
+
+    # Data Collection, Feedback, and Monitoring Methods
+
+    def submit_capture_feedback(
+        self,
+        capture_id: str,
+        user_id: str,
+        feedback_type: str,
+        issues: list[str] | None = None,
+        corrections: dict[str, float] | None = None,
+        comment: str | None = None
+    ) -> dict:
+        """Submit user feedback on a capture."""
+        from .feedback import FeedbackCollector
+
+        feedback_collector = FeedbackCollector(self.db)
+        feedback_id = feedback_collector.submit_feedback(
+            capture_id=capture_id,
+            user_id=user_id,
+            feedback_type=feedback_type,
+            issues=issues,
+            corrections=corrections,
+            comment=comment
+        )
+
+        return {
+            "feedback_id": feedback_id,
+            "message": "Feedback submitted successfully"
+        }
+
+    def get_feedback_stats(self) -> dict:
+        """Get feedback statistics for admin."""
+        from .feedback import FeedbackCollector
+
+        feedback_collector = FeedbackCollector(self.db)
+        return feedback_collector.get_feedback_stats()
+
+    def get_feedback_corrections(self, limit: int = 100) -> list[dict]:
+        """Get feedback corrections for retraining."""
+        from .feedback import FeedbackCollector
+
+        feedback_collector = FeedbackCollector(self.db)
+        return feedback_collector.get_pending_corrections(limit=limit)
+
+    def get_metric_accuracy_analysis(self) -> dict:
+        """Get metric accuracy analysis."""
+        from .feedback import FeedbackCollector
+
+        feedback_collector = FeedbackCollector(self.db)
+        return feedback_collector.get_metric_accuracy_analysis()
+
+    def get_model_health_status(self) -> dict:
+        """Get model health monitoring status."""
+        from .ml_monitoring import ModelMonitor
+
+        monitor = ModelMonitor(self.db)
+        return monitor.get_health_status()
+
+    def generate_monitoring_daily_report(self) -> dict:
+        """Generate daily monitoring report."""
+        from .ml_monitoring import ModelMonitor
+
+        monitor = ModelMonitor(self.db)
+        return monitor.generate_daily_report()
+
+    def get_collection_stats(self) -> dict:
+        """Get data collection statistics."""
+        from .data_collection import DataCollector
+
+        collector = DataCollector(self.db)
+        return collector.get_collection_stats()
+
+    def export_training_dataset(
+        self,
+        output_dir: str,
+        min_quality: float = 0.75,
+        max_samples: int | None = None
+    ) -> dict:
+        """Export collected data as training dataset."""
+        from .data_collection import DataCollector
+
+        collector = DataCollector(self.db)
+        stats = collector.export_training_dataset(
+            output_dir=output_dir,
+            min_quality=min_quality,
+            max_samples=max_samples
+        )
+
+        return {
+            "message": "Dataset exported successfully",
+            "stats": stats
+        }
+
+    def cleanup_old_data(self, retention_days: int = 365) -> dict:
+        """Cleanup old collected data."""
+        from .data_collection import DataCollector
+
+        collector = DataCollector(self.db)
+        deleted_count = collector.cleanup_old_data(retention_days=retention_days)
+
+        return {
+            "message": f"Cleaned up {deleted_count} old data files",
+            "deleted_count": deleted_count
+        }
+
+    def record_data_collection_consent(
+        self,
+        user_id: str,
+        granted: bool,
+        policy_version: str = "1.0"
+    ) -> dict:
+        """Record user consent for data collection."""
+        self.db.execute(
+            """
+            INSERT INTO consent_events (
+                user_id,
+                consent_type,
+                granted,
+                policy_version
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (user_id, "data_collection", 1 if granted else 0, policy_version)
+        )
+
+        return {
+            "message": "Consent recorded successfully",
+            "user_id": user_id,
+            "granted": granted
+        }

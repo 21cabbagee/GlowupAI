@@ -60,6 +60,14 @@ data class AppearanceMetric(
     val confidenceLabel: String?,
 )
 
+data class BaselineComparison(
+    val hasBaseline: Boolean,
+    val rednessChangePct: Double?,
+    val blemishChangePct: Double?,
+    val darkspotChangePct: Double?,
+    val textureChangePct: Double?,
+)
+
 data class CaptureResult(
     val id: String,
     val capturedAt: String,
@@ -69,6 +77,7 @@ data class CaptureResult(
     val analysisJobId: String?,
     val metric: AppearanceMetric,
     val vertical: String,
+    val baselineComparison: BaselineComparison? = null,
 )
 
 data class HistoryItem(
@@ -86,6 +95,7 @@ data class HistoryItem(
     val noiseFloor: Map<String, Double>,
     val appearanceMetrics: Map<String, Double>,
     val confidenceLabel: String?,
+    val baselineComparison: BaselineComparison? = null,
 )
 
 data class CaptureGuide(

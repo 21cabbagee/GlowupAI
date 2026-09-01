@@ -1,6 +1,7 @@
 package com.glowup.ai.data.remote.dto
 
 import com.glowup.ai.domain.model.AppearanceMetric
+import com.glowup.ai.domain.model.BaselineComparison
 import com.glowup.ai.domain.model.CaptureCreateRequest
 import com.glowup.ai.domain.model.CaptureGuide
 import com.glowup.ai.domain.model.CaptureGuideState
@@ -124,6 +125,25 @@ data class MeasurementExplanationDto(
 )
 
 @Serializable
+data class BaselineComparisonDto(
+    @SerialName("has_baseline") val hasBaseline: Boolean = false,
+    @SerialName("redness_change_pct") val rednessChangePct: Double? = null,
+    @SerialName("blemish_change_pct") val blemishChangePct: Double? = null,
+    @SerialName("darkspot_change_pct") val darkspotChangePct: Double? = null,
+    @SerialName("texture_change_pct") val textureChangePct: Double? = null,
+)
+
+fun BaselineComparisonDto?.toDomain(): BaselineComparison? = this?.let {
+    BaselineComparison(
+        hasBaseline = hasBaseline,
+        rednessChangePct = rednessChangePct,
+        blemishChangePct = blemishChangePct,
+        darkspotChangePct = darkspotChangePct,
+        textureChangePct = textureChangePct,
+    )
+}
+
+@Serializable
 data class CaptureResponseDto(
     val id: String = "",
     @SerialName("captured_at") val capturedAt: String = "",
@@ -134,6 +154,7 @@ data class CaptureResponseDto(
     val metric: MetricDto? = null,
     val measurement: MeasurementExplanationDto? = null,
     val vertical: String = "skin",
+    @SerialName("baseline_comparison") val baselineComparison: BaselineComparisonDto? = null,
 )
 
 fun CaptureResponseDto.toDomain(): CaptureResult = CaptureResult(
@@ -145,6 +166,7 @@ fun CaptureResponseDto.toDomain(): CaptureResult = CaptureResult(
     analysisJobId = analysisJobId,
     metric = metric.toDomain(measurement?.confidenceLabel),
     vertical = vertical,
+    baselineComparison = baselineComparison.toDomain(),
 )
 
 @Serializable
@@ -163,6 +185,7 @@ data class HistoryItemDto(
     @SerialName("noise_floor") val noiseFloor: Map<String, Double>? = null,
     @SerialName("appearance_metrics") val appearanceMetrics: Map<String, Double>? = null,
     @SerialName("confidence_label") val confidenceLabel: String? = null,
+    @SerialName("baseline_comparison") val baselineComparison: BaselineComparisonDto? = null,
 )
 
 fun HistoryItemDto.toDomain(): HistoryItem = HistoryItem(
@@ -180,6 +203,7 @@ fun HistoryItemDto.toDomain(): HistoryItem = HistoryItem(
     noiseFloor = noiseFloor ?: emptyMap(),
     appearanceMetrics = appearanceMetrics ?: emptyMap(),
     confidenceLabel = confidenceLabel,
+    baselineComparison = baselineComparison.toDomain(),
 )
 
 @Serializable

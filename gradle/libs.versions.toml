@@ -39,6 +39,9 @@ mlkitFaceDetection = "16.1.7"
 # Images
 coil = "3.0.4"
 
+# Charts
+vico = "2.0.0-alpha.28"
+
 # Firebase
 firebaseBom = "33.7.0"
 googleServicesPlugin = "4.4.2"
@@ -113,6 +116,11 @@ mlkit-face-detection = { group = "com.google.mlkit", name = "face-detection", ve
 # Images
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+
+# Charts
+vico-compose = { group = "com.patrykandpatrick.vico", name = "compose", version.ref = "vico" }
+vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
+vico-core = { group = "com.patrykandpatrick.vico", name = "core", version.ref = "vico" }
 
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }

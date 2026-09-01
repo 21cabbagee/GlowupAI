@@ -38,6 +38,9 @@ sealed interface GlowDestination {
     @Serializable data object Capture : GlowDestination
     @Serializable data class CaptureResult(val captureId: String) : GlowDestination
 
+    // ---- feature/comparison --------------------------------------------------
+    @Serializable data object Comparison : GlowDestination
+
     // ---- feature/routine ------------------------------------------------------
     @Serializable data object Routine : GlowDestination
     @Serializable data class ProductDetail(val productId: String) : GlowDestination

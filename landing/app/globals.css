@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --honey-gradient: linear-gradient(135deg, #FFB84D 0%, #FF8C42 100%);
+}
+
+body {
+  @apply bg-white text-gray-900;
+}
+
+@layer utilities {
+  .text-gradient {
+    background: var(--honey-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-honey {
+    background: var(--honey-gradient);
+  }
+}

@@ -117,6 +117,15 @@ enum class AchievementType(
         requirement = AchievementRequirement.HasConsent
     ),
 
+    // Comparison achievements
+    BEFORE_AFTER(
+        id = "before_after",
+        title = "Before & After",
+        description = "Used comparison mode to track progress",
+        icon = Icons.Filled.CompareArrows,
+        requirement = AchievementRequirement.UsedComparison
+    ),
+
     // Social achievements
     SHARED_PROGRESS(
         id = "shared_progress",
@@ -141,7 +150,7 @@ enum class AchievementType(
     val tier: AchievementTier
         get() = when (this) {
             FIRST_CAPTURE, FIRST_PRODUCT, BASELINE_SET, CONSENT_GIVEN -> AchievementTier.BRONZE
-            WEEK_STREAK, TENTH_CAPTURE, FIRST_EXPERIMENT, FULL_ROUTINE -> AchievementTier.SILVER
+            WEEK_STREAK, TENTH_CAPTURE, FIRST_EXPERIMENT, FULL_ROUTINE, BEFORE_AFTER -> AchievementTier.SILVER
             MONTH_STREAK, FIFTIETH_CAPTURE, COMPLETED_EXPERIMENT, SHARED_PROGRESS -> AchievementTier.GOLD
             QUARTER_STREAK, HUNDREDTH_CAPTURE, PREMIUM_UPGRADE -> AchievementTier.PLATINUM
         }
@@ -158,6 +167,7 @@ sealed class AchievementRequirement {
     data class CompletedExperimentCount(val count: Int) : AchievementRequirement()
     object HasBaseline : AchievementRequirement()
     object HasConsent : AchievementRequirement()
+    object UsedComparison : AchievementRequirement()
     object SharedProgress : AchievementRequirement()
     object IsPremium : AchievementRequirement()
 }

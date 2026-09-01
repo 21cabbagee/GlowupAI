@@ -126,24 +126,31 @@ object GlowDarkColors {
 object GlowSpacing {
     /** Extra small - 4dp */
     val XS: Dp = 4.dp
+    val xs get() = XS  // Lowercase alias for backwards compatibility
 
     /** Small - 8dp (base unit) */
     val S: Dp = 8.dp
+    val sm get() = S  // Lowercase alias for backwards compatibility
 
     /** Medium - 16dp */
     val M: Dp = 16.dp
+    val md get() = M  // Lowercase alias for backwards compatibility
 
     /** Large - 24dp */
     val L: Dp = 24.dp
+    val lg get() = L  // Lowercase alias for backwards compatibility
 
     /** Extra large - 32dp */
     val XL: Dp = 32.dp
+    val xl get() = XL  // Lowercase alias for backwards compatibility
 
     /** 2X large - 48dp */
     val XXL: Dp = 48.dp
+    val xxl get() = XXL  // Lowercase alias for backwards compatibility
 
     /** 3X large - 64dp */
     val XXXL: Dp = 64.dp
+    val xxxl get() = XXXL  // Lowercase alias for backwards compatibility
 
     /** 4X large - 80dp */
     val XXXXL: Dp = 80.dp

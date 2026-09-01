@@ -30,8 +30,11 @@ import com.glowup.ai.core.ui.GlowCard
 import com.glowup.ai.core.ui.GlowTextField
 import com.glowup.ai.core.ui.GlowTopBar
 import com.glowup.ai.core.ui.MetricBar
+import com.glowup.ai.core.ui.StatDelta
+import com.glowup.ai.core.ui.StatDeltaDirection
 import com.glowup.ai.core.ui.StatTile
 import com.glowup.ai.domain.model.AppearanceMetric
+import com.glowup.ai.domain.model.BaselineComparison
 import com.glowup.ai.domain.model.CaptureResult
 import com.glowup.ai.domain.model.MeasurementAgreement
 import java.util.Locale
@@ -123,7 +126,10 @@ private fun CaptureResultContent(
             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
         )
 
-        MetricsGrid(metric = result.metric)
+        MetricsGrid(
+            metric = result.metric,
+            baselineComparison = result.baselineComparison
+        )
 
         DisclaimerNote(
             modifier = Modifier.padding(top = 16.dp),
@@ -156,18 +162,23 @@ private fun CaptureResultContent(
 }
 
 @Composable
-private fun MetricsGrid(metric: AppearanceMetric) {
+private fun MetricsGrid(
+    metric: AppearanceMetric,
+    baselineComparison: BaselineComparison?
+) {
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatTile(
                 modifier = Modifier.weight(1f),
                 label = "Redness",
                 value = metric.rednessScore.formatOrPending(),
+                delta = baselineComparison?.rednessChangePct?.let { createDelta(it, isLowerBetter = true) }
             )
             StatTile(
                 modifier = Modifier.weight(1f),
                 label = "Blemishes",
                 value = metric.blemishCount?.let { formatWhole(it) } ?: "Pending",
+                delta = baselineComparison?.blemishChangePct?.let { createDelta(it, isLowerBetter = true) }
             )
         }
         Row(
@@ -178,11 +189,13 @@ private fun MetricsGrid(metric: AppearanceMetric) {
                 modifier = Modifier.weight(1f),
                 label = "Dark spots",
                 value = metric.darkspotArea.formatOrPending(),
+                delta = baselineComparison?.darkspotChangePct?.let { createDelta(it, isLowerBetter = true) }
             )
             StatTile(
                 modifier = Modifier.weight(1f),
                 label = "Texture",
                 value = metric.textureScore.formatOrPending(),
+                delta = baselineComparison?.textureChangePct?.let { createDelta(it, isLowerBetter = false) }
             )
         }
 
@@ -209,6 +222,19 @@ private fun Double?.formatOrPending(): String =
     this?.let { String.format(Locale.US, "%.2f", it) } ?: "Pending"
 
 private fun formatWhole(value: Double): String = value.toInt().toString()
+
+private fun createDelta(changePct: Double, isLowerBetter: Boolean): StatDelta {
+    val sign = if (changePct > 0) "+" else ""
+    val text = String.format(Locale.US, "%s%.1f%%", sign, changePct)
+
+    val direction = when {
+        changePct == 0.0 -> StatDeltaDirection.Flat
+        changePct < 0 -> if (isLowerBetter) StatDeltaDirection.Down else StatDeltaDirection.Up
+        else -> if (isLowerBetter) StatDeltaDirection.Up else StatDeltaDirection.Down
+    }
+
+    return StatDelta(text = text, direction = direction)
+}
 
 @Composable
 private fun MeasurementFeedbackSection(

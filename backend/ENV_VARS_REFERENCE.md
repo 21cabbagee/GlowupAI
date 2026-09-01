@@ -59,6 +59,16 @@ SKINPROOF_RAW_RETENTION_DAYS=730
 | `SKINPROOF_SKIP_QUALITY_CHECKS` | No | 0 | Skip quality validation (testing only, 0 or 1) |
 | **RUNTIME** ||||
 | `PORT` | Auto | 8000 | Server port (Railway auto-injects) |
+| **MONITORING** ||||
+| `SENTRY_DSN` | Recommended | - | Sentry DSN for error monitoring |
+| `SENTRY_TRACES_SAMPLE_RATE` | No | 0.1 | Percentage of traces to capture (0.0-1.0) |
+| `SENTRY_PROFILES_SAMPLE_RATE` | No | 0.1 | Percentage of profiles to capture (0.0-1.0) |
+| **PERFORMANCE** ||||
+| `REDIS_URL` | Recommended | - | Redis URL for caching and rate limiting |
+| `SKINPROOF_CACHE_ENABLED` | No | 1 | Enable response caching (0 or 1) |
+| `SKINPROOF_SLOW_THRESHOLD_MS` | No | 1000 | Threshold for logging slow requests (ms) |
+| `SKINPROOF_MAX_IMAGE_DIMENSION` | No | 1024 | Max image dimension for compression (px) |
+| `SKINPROOF_IMAGE_QUALITY` | No | 85 | JPEG quality for compression (0-100) |
 
 ---
 
@@ -496,6 +506,109 @@ SKINPROOF_ENABLE_PREPROCESSING=0
 ```
 
 **Note:** Preprocessing improves consistency across different lighting conditions and reduces false variations in metrics. Keep enabled in production for best results.
+
+---
+
+### SENTRY_DSN
+**Required:** Recommended for production
+
+**Format:** Sentry DSN URL
+
+**Description:** Sentry Data Source Name for error monitoring and performance tracking.
+
+**Get your DSN:**
+1. Sign up at https://sentry.io
+2. Create a new project (FastAPI/Python)
+3. Copy the DSN from project settings
+
+**Example:**
+```bash
+SENTRY_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
+```
+
+**Benefits:**
+- Automatic error capture and stack traces
+- Performance monitoring for slow endpoints
+- User context and breadcrumbs
+- Real-time alerts for errors
+
+**If not set:** Error monitoring is disabled, errors only logged locally.
+
+---
+
+### REDIS_URL
+**Required:** Recommended for production
+
+**Format:** Redis connection URL
+
+**Description:** Redis URL for rate limiting and response caching. Improves performance and prevents API abuse.
+
+**For Railway:**
+1. Add Redis service to your project
+2. Railway auto-injects `REDIS_URL` or `REDIS_PRIVATE_URL`
+3. No manual configuration needed
+
+**For other providers:**
+```bash
+REDIS_URL=redis://localhost:6379/0
+# OR
+REDIS_URL=rediss://user:password@host:6379/0  # TLS
+```
+
+**Features enabled:**
+- Redis-backed rate limiting (more accurate than in-memory)
+- Response caching for dashboard endpoints (5-minute TTL)
+- Distributed rate limiting across multiple instances
+
+**Fallback:** If Redis is unavailable, falls back to in-memory rate limiting and caching.
+
+---
+
+### SKINPROOF_MAX_IMAGE_DIMENSION
+**Required:** No
+
+**Default:** 1024
+
+**Description:** Maximum image dimension (width or height) in pixels before compression. Images larger than this are resized while maintaining aspect ratio.
+
+**Examples:**
+```bash
+# Default - good balance of quality and storage
+SKINPROOF_MAX_IMAGE_DIMENSION=1024
+
+# Higher quality, more storage
+SKINPROOF_MAX_IMAGE_DIMENSION=2048
+
+# Lower quality, less storage
+SKINPROOF_MAX_IMAGE_DIMENSION=768
+```
+
+**Impact:**
+- 1024px: ~150-300KB per photo
+- 2048px: ~500KB-1MB per photo
+- 768px: ~100-200KB per photo
+
+---
+
+### SKINPROOF_IMAGE_QUALITY
+**Required:** No
+
+**Default:** 85
+
+**Values:** 0-100
+
+**Description:** JPEG compression quality. Higher = better quality but larger files.
+
+**Recommendations:**
+- 95-100: Minimal compression, very large files
+- 85-95: High quality, good balance (recommended)
+- 70-85: Good quality, smaller files
+- Below 70: Noticeable quality loss
+
+**Example:**
+```bash
+SKINPROOF_IMAGE_QUALITY=85
+```
 
 ---
 

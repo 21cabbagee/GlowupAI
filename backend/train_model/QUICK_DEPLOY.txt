@@ -1,0 +1,86 @@
+═══════════════════════════════════════════════════════════
+  QUICK DEPLOYMENT REFERENCE
+═══════════════════════════════════════════════════════════
+
+📍 LOCATION: /Users/21cabbage/GlowupAI/backend/train_model
+
+═══════════════════════════════════════════════════════════
+  WHEN TRAINING COMPLETES - RUN THESE COMMANDS:
+═══════════════════════════════════════════════════════════
+
+cd /Users/21cabbage/GlowupAI/backend/train_model
+
+# 1. Validate everything is ready (30 seconds)
+./PRE_DEPLOY_CHECK.sh
+
+# 2. Deploy model (1 minute)
+./DEPLOY.sh
+
+# 3. Enable ML model
+export USE_NEW_MODEL=1
+
+═══════════════════════════════════════════════════════════
+  TESTING
+═══════════════════════════════════════════════════════════
+
+# Test consistency
+python3 test_consistency.py
+
+# Test single image
+cd /Users/21cabbage/GlowupAI/backend
+USE_NEW_MODEL=1 python3 -c "
+from skinproof.ml_model import MLModelInference
+model = MLModelInference()
+print('Model loaded successfully!')
+"
+
+═══════════════════════════════════════════════════════════
+  ROLLBACK (IF NEEDED)
+═══════════════════════════════════════════════════════════
+
+export USE_NEW_MODEL=0
+# or
+unset USE_NEW_MODEL
+
+═══════════════════════════════════════════════════════════
+  STATUS CHECK
+═══════════════════════════════════════════════════════════
+
+# Check if ML model is enabled
+echo "ML Model: $USE_NEW_MODEL (1=enabled, 0=disabled)"
+
+# Check model file exists
+ls -lh /Users/21cabbage/GlowupAI/backend/skinproof/models/
+
+═══════════════════════════════════════════════════════════
+  FILES CREATED
+═══════════════════════════════════════════════════════════
+
+Backend Integration:
+  ✓ /Users/21cabbage/GlowupAI/backend/skinproof/ml_model.py
+  ✓ /Users/21cabbage/GlowupAI/backend/skinproof/metrics.py (updated)
+
+Deployment Scripts:
+  ✓ ./DEPLOY.sh
+  ✓ ./PRE_DEPLOY_CHECK.sh
+  ✓ ./test_consistency.py
+
+Documentation:
+  ✓ ./DEPLOYMENT_GUIDE.md (complete guide)
+  ✓ ./DEPLOY_README.md (quick start)
+  ✓ ./QUICK_DEPLOY.txt (this file)
+
+═══════════════════════════════════════════════════════════
+  DEPLOYMENT FLOW
+═══════════════════════════════════════════════════════════
+
+Training → PRE_DEPLOY_CHECK → DEPLOY → Enable → Test → Monitor
+
+═══════════════════════════════════════════════════════════
+  SUPPORT
+═══════════════════════════════════════════════════════════
+
+Issues? See DEPLOYMENT_GUIDE.md troubleshooting section
+Questions? Check DEPLOY_README.md
+
+═══════════════════════════════════════════════════════════

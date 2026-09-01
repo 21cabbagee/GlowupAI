@@ -12,6 +12,11 @@ Track what actually works for YOUR skin. Scientific experiments. Privacy-first. 
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-Latest-blue.svg)](https://developer.android.com/jetpack/compose)
 [![API](https://img.shields.io/badge/Min%20SDK-26-orange.svg)](https://developer.android.com/studio/releases/platforms)
 
+[![Backend CI](https://github.com/piyushxpc7/GlowupAI/workflows/Backend%20CI/badge.svg)](https://github.com/piyushxpc7/GlowupAI/actions/workflows/backend-ci.yml)
+[![Android CI](https://github.com/piyushxpc7/GlowupAI/workflows/Android%20CI/badge.svg)](https://github.com/piyushxpc7/GlowupAI/actions/workflows/android-ci.yml)
+[![Security Scanning](https://github.com/piyushxpc7/GlowupAI/workflows/Security%20Scanning/badge.svg)](https://github.com/piyushxpc7/GlowupAI/actions/workflows/security.yml)
+[![codecov](https://codecov.io/gh/piyushxpc7/GlowupAI/branch/main/graph/badge.svg)](https://codecov.io/gh/piyushxpc7/GlowupAI)
+
 [Features](#-features) • [Architecture](#-architecture) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Contributing](#-contributing)
 
 </div>

@@ -246,6 +246,17 @@ private fun HomeContent(
             )
         }
 
+        // Milestone progress - gamification element
+        item {
+            val currentStreak = state.streak?.currentStreak ?: 0
+            val nextMilestone = listOf(3, 7, 14, 30, 60, 90, 180, 365)
+                .firstOrNull { it > currentStreak } ?: (currentStreak + 30)
+            com.glowup.ai.core.ui.MilestoneProgressCard(
+                currentStreak = currentStreak,
+                nextMilestone = nextMilestone
+            )
+        }
+
         // Metric cards grid - clear, data-focused display
         item {
             MetricCardGrid(
@@ -267,6 +278,18 @@ private fun HomeContent(
                     onNavigate(GlowDestination.Capture)
                 }
             )
+        }
+
+        // Comparison button - compare progress over time
+        if (sortedHistory.size >= 2) {
+            item {
+                com.glowup.ai.core.ui.GlowButton(
+                    text = "Compare Progress",
+                    onClick = { onNavigate(GlowDestination.Comparison) },
+                    modifier = Modifier.fillMaxWidth(),
+                    variant = com.glowup.ai.core.ui.GlowButtonVariant.Secondary
+                )
+            }
         }
 
         // Achievements section - celebrate wins

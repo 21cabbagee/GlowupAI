@@ -231,4 +231,13 @@ enum class PrimaryMetric {
         TEXTURE_SCORE -> "texture_score"
         UNKNOWN -> "redness_score"
     }
+
+    val displayName: String
+        get() = when (this) {
+            BLEMISH_COUNT -> "Blemishes"
+            REDNESS_SCORE -> "Redness"
+            DARKSPOT_AREA -> "Dark Spots"
+            TEXTURE_SCORE -> "Texture"
+            UNKNOWN -> "Unknown"
+        }
 }

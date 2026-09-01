@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 from dataclasses import asdict, dataclass
 
 from PIL import Image
@@ -59,6 +60,19 @@ def analyze(
     model_version: str = "deterministic-3.0",
 ) -> MetricResult:
     """Compute transparent longitudinal cosmetic measurements."""
+
+    # Check if ML model is enabled
+    use_ml_model = os.getenv("USE_NEW_MODEL", "0") == "1"
+
+    if use_ml_model:
+        # Use new ML model
+        try:
+            from .ml_model import analyze_with_ml
+            return analyze_with_ml(image_bytes, quality_score, baseline)
+        except Exception as exc:
+            # Fall back to deterministic model if ML model fails
+            import logging
+            logging.warning(f"ML model failed, falling back to deterministic: {exc}")
 
     # Apply face alignment before analysis for consistency
     # This aligns eyes to horizontal, scales to consistent distance, and centers face

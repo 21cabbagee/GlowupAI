@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from .analytics import AnalyticsTracker
 from .auth import AuthError, verify_id_token
 from .complete_service import CompleteSkinProofService
 from .config import Settings
@@ -22,17 +23,24 @@ from .complete_db import build_full_database
 from .logging_config import RequestLoggingMiddleware, setup_logging
 from .middleware import (
     ErrorHandlingMiddleware,
-    RateLimitMiddleware,
     TimeoutMiddleware,
     create_health_checker,
 )
+from .monitoring import setup_sentry
 from .observability import (
     MetricsCollector,
     MetricsMiddleware,
     setup_opentelemetry,
     instrument_fastapi,
 )
+from .performance import (
+    ImageCompressor,
+    RedisCache,
+    CacheMiddleware,
+    RequestTimingMiddleware,
+)
 from .photos import build_photo_store
+from .rate_limiter import ProductionRateLimitMiddleware
 from .shutdown import create_shutdown_handler
 
 logger = logging.getLogger(__name__)
@@ -199,9 +207,34 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
     )
     app.state.skinproof = active
 
+    # Setup Sentry error monitoring
+    sentry_dsn = os.getenv("SENTRY_DSN", "").strip() or None
+    sentry_environment = os.getenv("SKINPROOF_ENV", "production")
+    if sentry_dsn:
+        setup_sentry(
+            dsn=sentry_dsn,
+            environment=sentry_environment,
+            traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+            profiles_sample_rate=float(os.getenv("SENTRY_PROFILES_SAMPLE_RATE", "0.1")),
+        )
+        logger.info("Sentry error monitoring enabled")
+
+    # Initialize analytics tracker
+    analytics = AnalyticsTracker(active.db)
+    app.state.analytics = analytics
+
     # Initialize metrics collector
     metrics_collector = MetricsCollector()
     app.state.metrics = metrics_collector
+
+    # Initialize Redis cache
+    redis_url = os.getenv("REDIS_URL", "").strip() or os.getenv("REDIS_PRIVATE_URL", "").strip() or None
+    cache = RedisCache(redis_url, default_ttl=300)  # 5-minute TTL
+    app.state.cache = cache
+
+    # Initialize image compressor
+    compressor = ImageCompressor()
+    app.state.compressor = compressor
 
     # Setup OpenTelemetry (if enabled)
     otel_enabled = os.getenv("OTEL_ENABLED", "0") == "1"
@@ -239,19 +272,29 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
     # 3. Request logging (log all requests)
     app.add_middleware(RequestLoggingMiddleware)
 
-    # 4. Metrics collection
+    # 4. Request timing (track slow endpoints)
+    slow_threshold_ms = float(os.getenv("SKINPROOF_SLOW_THRESHOLD_MS", "1000"))
+    app.add_middleware(RequestTimingMiddleware, slow_threshold_ms=slow_threshold_ms)
+
+    # 5. Metrics collection
     app.add_middleware(MetricsMiddleware, collector=metrics_collector)
 
-    # 5. Rate limiting (check limits)
-    rate_limit_enabled = os.getenv("SKINPROOF_RATE_LIMIT_ENABLED", "1") == "1"
-    app.add_middleware(RateLimitMiddleware, enabled=rate_limit_enabled)
+    # 6. Response caching (for dashboard and other GET endpoints)
+    cache_enabled = os.getenv("SKINPROOF_CACHE_ENABLED", "1") == "1"
+    if cache_enabled:
+        app.add_middleware(CacheMiddleware, cache=cache)
 
-    # 6. Request timeout (innermost, closest to handlers)
+    # 7. Rate limiting (Redis-backed)
+    rate_limit_enabled = os.getenv("SKINPROOF_RATE_LIMIT_ENABLED", "1") == "1"
+    app.add_middleware(ProductionRateLimitMiddleware, redis_url=redis_url, enabled=rate_limit_enabled)
+
+    # 8. Request timeout (innermost, closest to handlers)
     timeout_seconds = int(os.getenv("SKINPROOF_REQUEST_TIMEOUT", "30"))
     app.add_middleware(TimeoutMiddleware, timeout_seconds=timeout_seconds)
 
     logger.info(
-        f"Middleware configured: rate_limit={rate_limit_enabled}, timeout={timeout_seconds}s"
+        f"Middleware configured: rate_limit={rate_limit_enabled}, cache={cache_enabled}, "
+        f"timeout={timeout_seconds}s, slow_threshold={slow_threshold_ms}ms"
     )
 
     def run(callable_, *args, **kwargs):
@@ -363,13 +406,23 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
     @app.post("/api/auth/session")
     def auth_session(authorization: str | None = Header(default=None)):
         identity = _bearer_identity(authorization)
-        return run(
+        result = run(
             active.session_for_identity,
             identity.uid,
             identity.email,
             identity.email_verified,
             identity.name,
         )
+
+        # Track user signup if new user
+        if result.get("created"):
+            analytics.track_user_signup(
+                user_id=result["user_id"],
+                method="google" if identity.email else "anonymous",
+                email=identity.email,
+            )
+
+        return result
 
     @app.get("/api/users/{user_id}/profile")
     def profile(user_id: str, authorization: str | None = Header(default=None)):
@@ -493,10 +546,18 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
             raise HTTPException(
                 status_code=400, detail="image_base64 must be valid base64"
             ) from exc
-        return run(
+
+        # Compress image before processing
+        compressed_image = compressor.compress_image(
+            image,
+            max_dimension=int(os.getenv("SKINPROOF_MAX_IMAGE_DIMENSION", "1024")),
+            quality=int(os.getenv("SKINPROOF_IMAGE_QUALITY", "85")),
+        )
+
+        result = run(
             active.create_capture,
             payload.user_id,
-            image,
+            compressed_image,
             payload.quality,
             payload.captured_at,
             payload.device_meta,
@@ -504,6 +565,23 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
             payload.vertical,
             payload.experiment_id,
         )
+
+        # Track analytics
+        capture_id = result.get("capture_id")
+        if capture_id:
+            analytics.track_capture_created(
+                user_id=payload.user_id,
+                capture_id=capture_id,
+                is_baseline=payload.is_baseline,
+                metrics=result.get("metrics"),
+            )
+
+            # Check for streak milestone
+            streak = analytics.get_user_streak(payload.user_id)
+            if streak in [3, 7, 14, 30, 60, 90]:
+                analytics.track_streak_milestone(payload.user_id, streak)
+
+        return result
 
     @app.get("/api/users/{user_id}/capture-guide")
     def capture_guide(
@@ -530,7 +608,14 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
         authorization: str | None = Header(default=None),
     ):
         _require_owner(user_id, authorization)
-        return run(active.history, user_id, vertical)
+        result = run(active.history, user_id, vertical)
+
+        # Track comparison viewed
+        if result and len(result.get("captures", [])) > 1:
+            capture_ids = [c.get("id") for c in result.get("captures", [])]
+            analytics.track_comparison_viewed(user_id, capture_ids)
+
+        return result
 
     @app.get("/api/users/{user_id}/engagement")
     def engagement(user_id: str, authorization: str | None = Header(default=None)):
@@ -823,6 +908,144 @@ def create_complete_app(service: CompleteSkinProofService | None = None) -> Fast
     def measurement_feedback_summary(authorization: str | None = Header(default=None)):
         _require_admin(authorization)
         return active.measurement_feedback_summary()
+
+    @app.get("/api/admin/analytics")
+    def admin_analytics(
+        days: int = 7,
+        authorization: str | None = Header(default=None)
+    ):
+        """Get analytics summary for admins."""
+        _require_admin(authorization)
+        return analytics.get_analytics_summary(days)
+
+    @app.get("/api/admin/analytics/daily")
+    def admin_analytics_daily(
+        days: int = 30,
+        authorization: str | None = Header(default=None)
+    ):
+        """Get daily analytics stats for admins."""
+        _require_admin(authorization)
+        return analytics.get_daily_stats(days)
+
+    @app.get("/api/admin/analytics/events")
+    def admin_analytics_events(
+        event_type: str | None = None,
+        days: int = 7,
+        authorization: str | None = Header(default=None)
+    ):
+        """Get event counts by type for admins."""
+        _require_admin(authorization)
+        return analytics.get_event_counts(days, event_type)
+
+    @app.post("/api/captures/{capture_id}/feedback")
+    def submit_feedback(
+        capture_id: str,
+        payload: dict,
+        authorization: str | None = Header(default=None)
+    ):
+        """Submit feedback for a capture."""
+        # Extract user_id from authorization
+        uid = verify_id_token(authorization.replace("Bearer ", ""))["uid"] if authorization else None
+        if not uid:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
+        return run(
+            active.submit_capture_feedback,
+            capture_id,
+            uid,
+            payload.get("feedback_type"),
+            payload.get("issues"),
+            payload.get("corrections"),
+            payload.get("comment")
+        )
+
+    @app.get("/api/admin/feedback")
+    def admin_feedback(
+        limit: int = 100,
+        authorization: str | None = Header(default=None)
+    ):
+        """Get feedback statistics for admin dashboard."""
+        _require_admin(authorization)
+        return run(active.get_feedback_stats)
+
+    @app.get("/api/admin/feedback/corrections")
+    def admin_feedback_corrections(
+        limit: int = 100,
+        authorization: str | None = Header(default=None)
+    ):
+        """Get feedback corrections for retraining."""
+        _require_admin(authorization)
+        return run(active.get_feedback_corrections, limit)
+
+    @app.get("/api/admin/feedback/accuracy")
+    def admin_feedback_accuracy(
+        authorization: str | None = Header(default=None)
+    ):
+        """Get metric accuracy analysis."""
+        _require_admin(authorization)
+        return run(active.get_metric_accuracy_analysis)
+
+    @app.get("/api/admin/monitoring")
+    def admin_monitoring(
+        authorization: str | None = Header(default=None)
+    ):
+        """Get model health monitoring status."""
+        _require_admin(authorization)
+        return run(active.get_model_health_status)
+
+    @app.get("/api/admin/monitoring/daily-report")
+    def admin_monitoring_daily(
+        authorization: str | None = Header(default=None)
+    ):
+        """Get daily monitoring report."""
+        _require_admin(authorization)
+        return run(active.generate_monitoring_daily_report)
+
+    @app.get("/api/admin/data-collection/stats")
+    def admin_data_collection_stats(
+        authorization: str | None = Header(default=None)
+    ):
+        """Get data collection statistics."""
+        _require_admin(authorization)
+        return run(active.get_collection_stats)
+
+    @app.post("/api/admin/data-collection/export")
+    def admin_data_collection_export(
+        payload: dict,
+        authorization: str | None = Header(default=None)
+    ):
+        """Export collected data as training dataset."""
+        _require_admin(authorization)
+        return run(
+            active.export_training_dataset,
+            payload.get("output_dir"),
+            payload.get("min_quality", 0.75),
+            payload.get("max_samples")
+        )
+
+    @app.post("/api/admin/data-collection/cleanup")
+    def admin_data_collection_cleanup(
+        payload: dict,
+        authorization: str | None = Header(default=None)
+    ):
+        """Cleanup old collected data (GDPR/CCPA compliance)."""
+        _require_admin(authorization)
+        return run(active.cleanup_old_data, payload.get("retention_days", 365))
+
+    @app.post("/api/users/{user_id}/consent/data-collection")
+    def consent_data_collection(
+        user_id: str,
+        payload: dict,
+        authorization: str | None = Header(default=None)
+    ):
+        """Record user consent for data collection."""
+        _require_owner(user_id, authorization)
+        return run(
+            active.record_data_collection_consent,
+            user_id,
+            payload.get("granted", False),
+            payload.get("policy_version", "1.0")
+        )
 
     static_dir = Path(__file__).parent / "static"
     app.mount("/assets", StaticFiles(directory=static_dir), name="assets")
