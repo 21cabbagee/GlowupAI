@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: glowupai-backend-staging
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    branch: staging
+    healthCheckPath: /api/health
+    envVars:
+      - key: SKINPROOF_FIREBASE_PROJECT_ID
+        value: glowup-ai-38ae7
+      - key: SKINPROOF_PHOTOS_DIR
+        value: /app/photos
+      - key: SKINPROOF_RATE_LIMIT_ENABLED
+        value: "1"
+      - key: SKINPROOF_SKIP_QUALITY_CHECKS
+        value: "0"
+      - key: ENVIRONMENT
+        value: staging
+      - key: DATABASE_URL
+        fromDatabase:
+          name: glowupai-db-staging
+          property: connectionString
+databases:
+  - name: glowupai-db-staging
+    plan: free
+    databaseName: glowupai_staging
+    user: glowupai_staging
