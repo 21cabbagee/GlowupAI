@@ -123,11 +123,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         client_id = request.client.host if request.client else "unknown"
 
         try:
-            max_requests, remaining, reset_timestamp = (
-                await self.limiter.check_rate_limit(
-                    client_id,
-                    request.url.path,
-                )
+            (
+                max_requests,
+                remaining,
+                reset_timestamp,
+            ) = await self.limiter.check_rate_limit(
+                client_id,
+                request.url.path,
             )
 
             # Add rate limit headers to response
@@ -250,7 +252,7 @@ def create_health_checker(db, settings) -> Callable:
 
     async def health_check() -> dict:
         """Comprehensive health check."""
-        checks = {"status": "healthy", "checks": {}}
+        checks: dict[str, Any] = {"status": "healthy", "checks": {}}
 
         # Database check
         try:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import statistics
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from .db import Database
 
@@ -193,12 +194,12 @@ class AttributionEngine:
         }
         if worsening and not improvements:
             label = "investigate"
-            evidence["worst_metric"] = min(worsening, key=worsening.get)
+            evidence["worst_metric"] = min(worsening, key=lambda k: worsening[k])
         elif improvements and composite >= 1.5 and confidence >= 0.55:
             label = "likely_useful"
             evidence["best_improvement_metric"] = max(
                 improvements,
-                key=improvements.get,
+                key=lambda k: improvements[k],
             )
         elif confidence >= 0.55:
             label = "keep"
@@ -222,10 +223,11 @@ class AttributionEngine:
         )
 
 
-def json_load(value: str) -> dict:
+def json_load(value: str) -> dict[Any, Any]:
     import json
 
     try:
-        return json.loads(value)
+        result: dict[Any, Any] = json.loads(value)
+        return result
     except (TypeError, ValueError):
         return {}

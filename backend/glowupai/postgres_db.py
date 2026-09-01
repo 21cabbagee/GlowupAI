@@ -82,16 +82,21 @@ class PostgresDatabase:
         return result
 
     def fetchone(self, sql: str, params: tuple[Any, ...] = ()) -> dict[str, Any] | None:
-        with self.pool.connection() as connection:
-            with connection.cursor(row_factory=self._dict_row) as cursor:
-                cursor.execute(self._sql(sql), self._params(params))
-                return cursor.fetchone()
+        with (
+            self.pool.connection() as connection,
+            connection.cursor(row_factory=self._dict_row) as cursor,
+        ):
+            cursor.execute(self._sql(sql), self._params(params))
+            result: dict[str, Any] | None = cursor.fetchone()
+            return result
 
     def fetchall(self, sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
-        with self.pool.connection() as connection:
-            with connection.cursor(row_factory=self._dict_row) as cursor:
-                cursor.execute(self._sql(sql), self._params(params))
-                return list(cursor.fetchall())
+        with (
+            self.pool.connection() as connection,
+            connection.cursor(row_factory=self._dict_row) as cursor,
+        ):
+            cursor.execute(self._sql(sql), self._params(params))
+            return list(cursor.fetchall())
 
     @contextmanager
     def transaction(self) -> Iterator[Any]:

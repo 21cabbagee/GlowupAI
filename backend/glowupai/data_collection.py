@@ -188,7 +188,8 @@ class DataCollector:
             logger.info(f"Collected anonymized data: {filename}")
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            # Catch-all for robustness in data collection
             logger.error(f"Failed to collect data: {e}")
             return False
 

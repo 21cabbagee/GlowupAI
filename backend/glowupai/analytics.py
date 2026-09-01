@@ -356,20 +356,22 @@ class AnalyticsTracker:
         since = (datetime.now(UTC) - timedelta(days=days)).isoformat()
 
         # Total events
-        total_events = self.db.fetchone(
+        total_events_row = self.db.fetchone(
             "SELECT COUNT(*) as count FROM analytics_events WHERE created_at >= ?",
             (since,),
-        )["count"]
+        )
+        total_events = total_events_row["count"] if total_events_row else 0
 
         # Unique users
-        unique_users = self.db.fetchone(
+        unique_users_row = self.db.fetchone(
             """
             SELECT COUNT(DISTINCT user_id) as count
             FROM analytics_events
             WHERE created_at >= ? AND user_id IS NOT NULL
             """,
             (since,),
-        )["count"]
+        )
+        unique_users = unique_users_row["count"] if unique_users_row else 0
 
         # Event counts by type
         event_counts = self.get_event_counts(days)

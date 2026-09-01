@@ -83,7 +83,7 @@ def setup_admin_router(
     @router.get("/admin/audit")
     def audit(
         limit: int = 100, authorization: str | None = Header(default=None)
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, Any]]:
         require_admin(authorization)
         return service.admin_audit(limit)
 

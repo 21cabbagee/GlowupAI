@@ -185,14 +185,17 @@ def preprocess_for_analysis_pil(
         Preprocessed image as bytes (PNG format)
     """
     try:
-        with Image.open(io.BytesIO(image_bytes)) as img:
+        from PIL.Image import Resampling
+
+        with Image.open(io.BytesIO(image_bytes)) as img_file:
             # Convert to RGB if needed
+            img: Image.Image = img_file
             if img.mode != "RGB":
                 img = img.convert("RGB")
 
             # Resize if needed
             if not preserve_original_size and img.size != (512, 512):
-                img = img.resize((512, 512), Image.LANCZOS)
+                img = img.resize((512, 512), Resampling.LANCZOS)
 
             # Save as PNG for lossless quality
             output = io.BytesIO()

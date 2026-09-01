@@ -63,7 +63,7 @@ class GoogleGeminiInsightService:
     ) -> None:
         self.model = model
         self.fallback = fallback or GroundedInsightService()
-        self.client = client
+        self.client: Any = client
         if self.client is None:
             from google import genai
 
@@ -91,7 +91,7 @@ class GoogleGeminiInsightService:
     def generate(self, evidence: dict) -> str:
         try:
             return self._generate(_VERDICT_SYSTEM_INSTRUCTION, {"evidence": evidence})
-        except Exception:
+        except Exception:  # noqa: BLE001  # Catch-all for LLM API errors with fallback
             return self.fallback.generate(evidence)
 
     def answer(self, question: str, evidence: dict) -> str | None:
@@ -100,7 +100,7 @@ class GoogleGeminiInsightService:
                 _QNA_SYSTEM_INSTRUCTION,
                 {"question": question, "evidence": evidence},
             )
-        except Exception:
+        except Exception:  # noqa: BLE001  # Catch-all for LLM API errors
             return None
 
 
@@ -109,7 +109,7 @@ class GoogleGeminiVisionService:
 
     def __init__(self, api_key: str, model: str, client: Any | None = None) -> None:
         self.model = model
-        self.client = client
+        self.client: Any = client
         if self.client is None:
             from google import genai
 
@@ -182,7 +182,7 @@ def build_vision_service(settings) -> GoogleGeminiVisionService | None:
             api_key=api_key,
             model=getattr(settings, "gemini_model", "gemini-3.5-flash-lite"),
         )
-    except Exception:
+    except Exception:  # noqa: BLE001  # Catch-all for service initialization with fallback
         return None
 
 
@@ -201,5 +201,5 @@ def build_insight_service(
             api_key=api_key,
             model=getattr(settings, "gemini_model", "gemini-3.5-flash-lite"),
         )
-    except Exception:
+    except Exception:  # noqa: BLE001  # Catch-all for service initialization with fallback
         return GroundedInsightService()

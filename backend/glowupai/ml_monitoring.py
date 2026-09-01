@@ -108,7 +108,7 @@ class ModelMonitor:
                 continue
 
         # Calculate variance for captures with multiple predictions
-        variances = {
+        variances: dict[str, list[float]] = {
             "blemish_count": [],
             "redness_score": [],
             "texture_score": [],
@@ -119,7 +119,7 @@ class ModelMonitor:
             if len(pred_list) < 2:
                 continue
 
-            for metric in variances:
+            for metric in variances:  # noqa: PLC0206
                 values = [p.get(metric, 0) for p in pred_list]
                 if values:
                     variance = np.var(values)
@@ -240,7 +240,9 @@ class ModelMonitor:
         if not result or result["total"] == 0:
             return 0.0
 
-        return result["errors"] / result["total"]
+        errors: float = float(result["errors"]) if result["errors"] else 0.0
+        total: float = float(result["total"])
+        return errors / total
 
     def get_processing_time_stats(
         self, time_window_hours: int = 24
@@ -283,7 +285,7 @@ class ModelMonitor:
 
         Returns comprehensive health report.
         """
-        health = {
+        health: dict[str, Any] = {
             "timestamp": datetime.now(UTC).isoformat(),
             "status": "healthy",
             "issues": [],
@@ -349,41 +351,36 @@ class ModelMonitor:
 
     def send_email_alert(self, subject: str, body: str) -> bool:
         """Send email alert."""
-        email_config = {
-            "smtp_host": os.getenv("SMTP_HOST", "smtp.gmail.com"),
-            "smtp_port": int(os.getenv("SMTP_PORT", "587")),
-            "smtp_user": os.getenv("SMTP_USER"),
-            "smtp_pass": os.getenv("SMTP_PASSWORD"),
-            "alert_email": os.getenv("ALERT_EMAIL"),
-        }
+        smtp_host: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
+        smtp_port: int = int(os.getenv("SMTP_PORT", "587"))
+        smtp_user: str | None = os.getenv("SMTP_USER")
+        smtp_pass: str | None = os.getenv("SMTP_PASSWORD")
+        alert_email: str | None = os.getenv("ALERT_EMAIL")
 
-        if not all(
-            [
-                email_config["smtp_user"],
-                email_config["smtp_pass"],
-                email_config["alert_email"],
-            ]
-        ):
+        if not all([smtp_user, smtp_pass, alert_email]):
             logger.warning("Email not configured, skipping alert")
             return False
+
+        # Type narrowing: all values are guaranteed to be non-None after the check above
+        assert smtp_user is not None
+        assert smtp_pass is not None
+        assert alert_email is not None
 
         try:
             msg = MIMEText(body)
             msg["Subject"] = f"[GlowupAI] {subject}"
-            msg["From"] = email_config["smtp_user"]
-            msg["To"] = email_config["alert_email"]
+            msg["From"] = smtp_user
+            msg["To"] = alert_email
 
-            with smtplib.SMTP(
-                email_config["smtp_host"], email_config["smtp_port"]
-            ) as server:
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
                 server.starttls()
-                server.login(email_config["smtp_user"], email_config["smtp_pass"])
+                server.login(smtp_user, smtp_pass)
                 server.send_message(msg)
 
             logger.info(f"Email alert sent: {subject}")
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001  # Catch-all for alert sending resilience
             logger.error(f"Failed to send email alert: {e}")
             return False
 
@@ -405,7 +402,7 @@ class ModelMonitor:
             logger.info("Slack alert sent")
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001  # Catch-all for alert sending resilience
             logger.error(f"Failed to send Slack alert: {e}")
             return False
 
@@ -424,18 +421,18 @@ class ModelMonitor:
 Model Health Report
 ==================
 
-Status: {health['status'].upper()}
+Status: {health["status"].upper()}
 
 Issues:
-{chr(10).join(f"- {issue}" for issue in health['issues'])}
+{chr(10).join(f"- {issue}" for issue in health["issues"])}
 
-Variance: {health['variance']['current']}
-Error Rate: {health['error_rate']['current']:.2%}
-Drift Scores: {health['drift']['current']}
+Variance: {health["variance"]["current"]}
+Error Rate: {health["error_rate"]["current"]:.2%}
+Drift Scores: {health["drift"]["current"]}
 
-Processing Time (p95): {health['processing_time']['p95']:.1f}ms
+Processing Time (p95): {health["processing_time"]["p95"]:.1f}ms
 
-Timestamp: {health['timestamp']}
+Timestamp: {health["timestamp"]}
             """
 
             # Send email for critical issues
@@ -444,10 +441,10 @@ Timestamp: {health['timestamp']}
 
             # Send Slack for all issues
             slack_message = f"""
-*Status:* {health['status'].upper()}
-*Issues:* {len(health['issues'])}
+*Status:* {health["status"].upper()}
+*Issues:* {len(health["issues"])}
 
-{chr(10).join(f"• {issue}" for issue in health['issues'])}
+{chr(10).join(f"• {issue}" for issue in health["issues"])}
             """
             self.send_slack_alert(slack_message)
 

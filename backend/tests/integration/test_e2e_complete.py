@@ -480,7 +480,7 @@ class TestE2EErrorScenarios(unittest.TestCase):
 
         # Create user with consent
         signup_response = self.client.post(
-            "/api/users", json={"firebase_uid": "quality_test_user"}
+            "/api/users", json={"name": "Quality Test User"}
         )
         response_data = signup_response.json()
         user_id = response_data.get("user", {}).get("id") or response_data.get("id")
@@ -531,7 +531,7 @@ class TestE2EPerformance(unittest.TestCase):
 
         # Create user with consent
         signup_response = self.client.post(
-            "/api/users", json={"firebase_uid": "perf_test_user"}
+            "/api/users", json={"name": "Perf Test User"}
         )
         response_data = signup_response.json()
         user_id = response_data.get("user", {}).get("id") or response_data.get("id")

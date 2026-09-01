@@ -43,7 +43,8 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
     @router.post("/users")
     def create_user(payload: UserCreate) -> dict[str, Any]:
         # Create user - frontend will update profile separately
-        return run_handler(service.create_user, payload.skin_type)
+        result: dict[str, Any] = run_handler(service.create_user, payload.skin_type)
+        return result
 
     @router.post("/auth/session")
     def auth_session(
@@ -73,21 +74,24 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
                 email=identity.email,
             )
 
-        return result
+        final_result: dict[str, Any] = result
+        return final_result
 
     @router.get("/users/{id}")
     def get_user(
         id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(id, authorization)
-        return run_handler(service.profile, id)
+        result: dict[str, Any] = run_handler(service.profile, id)
+        return result
 
     @router.get("/users/{user_id}/profile")
     def profile(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.profile, user_id)
+        result: dict[str, Any] = run_handler(service.profile, user_id)
+        return result
 
     @router.patch("/users/{user_id}/profile", tags=["profile"])
     def update_experience_profile(
@@ -96,7 +100,8 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.update_profile, user_id, **payload.model_dump())
+        result: dict[str, Any] = run_handler(service.update_profile, user_id, **payload.model_dump())
+        return result
 
     @router.post("/users/{user_id}/consent")
     def consent(
@@ -105,9 +110,10 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.grant_consent, user_id, payload.facial_data, payload.policy_version
         )
+        return result
 
     @router.post("/users/{user_id}/consent/data-collection")
     def consent_data_collection(
@@ -117,19 +123,21 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
     ) -> dict[str, Any]:
         """Record user consent for data collection."""
         require_owner(user_id, authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.record_data_collection_consent,
             user_id,
             payload.get("granted", False),
             payload.get("policy_version", "1.0"),
         )
+        return result
 
     @router.get("/users/{user_id}/export")
     def export_user(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.export_user, user_id)
+        result: dict[str, Any] = run_handler(service.export_user, user_id)
+        return result
 
     @router.delete("/users/{user_id}", status_code=204)
     def delete_user(

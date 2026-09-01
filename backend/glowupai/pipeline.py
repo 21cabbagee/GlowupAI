@@ -82,6 +82,7 @@ class CaptureProcessingPipeline:
             output_path = str(path.parent / f"{path.stem}_processed{path.suffix}")
 
         # Step 1: Face alignment
+        aligned_image: np.ndarray | None = None
         if self.enable_face_alignment and self.face_aligner:
             logger.info("  → Face alignment")
             aligned_image = self.face_aligner.align_face(image_path, self.output_size)
@@ -107,15 +108,16 @@ class CaptureProcessingPipeline:
             cv2.imwrite(output_path, processed_image)
         else:
             # If no preprocessing, just copy aligned image
-            if self.enable_face_alignment:
+            if self.enable_face_alignment and aligned_image is not None:
                 cv2.imwrite(output_path, aligned_image)
             else:
                 # No processing at all, just resize
                 image = cv2.imread(image_path)
-                resized = cv2.resize(
-                    image, self.output_size, interpolation=cv2.INTER_LANCZOS4
-                )
-                cv2.imwrite(output_path, resized)
+                if image is not None:
+                    resized = cv2.resize(
+                        image, self.output_size, interpolation=cv2.INTER_LANCZOS4
+                    )
+                    cv2.imwrite(output_path, resized)
 
         # Clean up temporary files
         if self.enable_face_alignment:
@@ -142,6 +144,8 @@ class CaptureProcessingPipeline:
 
         # Load and return
         processed = cv2.imread(temp_path)
+        if processed is None:
+            raise RuntimeError(f"Failed to read processed image from {temp_path}")
 
         # Clean up
         Path(temp_path).unlink()

@@ -18,6 +18,10 @@ on:
       - 'gradle/**'
       - '.github/workflows/android-ci.yml'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build:
     name: Build & Test
@@ -43,23 +47,16 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Run Lint
+        id: lint
         run: ./gradlew lintDebug --stacktrace
 
       - name: Run Unit Tests
+        id: test
         run: ./gradlew testDebugUnitTest --stacktrace
 
       - name: Build Debug APK
+        id: build
         run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload Lint Results

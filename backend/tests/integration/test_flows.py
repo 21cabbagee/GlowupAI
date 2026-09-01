@@ -312,8 +312,10 @@ class TestErrorHandling(unittest.TestCase):
 
     def test_missing_required_fields(self):
         """Test handling of missing required fields."""
-        # Missing firebase_uid
-        response = self.client.post("/api/users", json={"email": "test@test.com"})
+        # Test capture without required user_id field
+        response = self.client.post(
+            "/api/captures", json={"image_base64": create_test_image()}
+        )
         self.assertIn(response.status_code, [400, 422])
 
     def test_duplicate_baseline(self):

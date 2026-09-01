@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
 from .analytics import AnalyticsTracker
 from .auth import AuthError, verify_id_token
@@ -47,6 +48,12 @@ from .routers import (
 from .shutdown import create_shutdown_handler
 
 logger = logging.getLogger(__name__)
+
+
+class TriageCreate(BaseModel):
+    """Request model for triage endpoint."""
+
+    text: str = Field(min_length=1, max_length=2000)
 
 
 def setup_monitoring(
@@ -213,8 +220,8 @@ def register_routes(
             status_code = 200 if health_status["status"] == "healthy" else 503
             return JSONResponse(content=health_status, status_code=status_code)
 
-        except (OSError, RuntimeError) as exc:
-            logger.exception("Health check failed: %s", exc)
+        except (OSError, RuntimeError):
+            logger.exception("Health check failed")
             return JSONResponse(
                 content={
                     "status": "unhealthy",
@@ -223,6 +230,12 @@ def register_routes(
                 },
                 status_code=503,
             )
+
+    # Public triage endpoint (no authentication required)
+    @app.post("/api/triage")
+    def triage(payload: TriageCreate):
+        """AI triage endpoint - publicly accessible for user help."""
+        return active.triage_question(payload.text)
 
     # Register routers
     users_router = setup_users_router(active, analytics, run, _require_owner)

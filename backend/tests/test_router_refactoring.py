@@ -133,7 +133,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         )
         return response.json()
 
-    def test_endpoint(
+    def _check_endpoint(
         self,
         router: str,
         name: str,
@@ -184,7 +184,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_users_01_create_user(self):
         """POST /api/users"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "users", "create_user", "POST", "/api/users", json={"skin_type": "oily"}
         )
         self.assertIn("user", response.json())
@@ -192,14 +192,14 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_users_02_auth_session(self):
         """POST /api/auth/session"""
         # This requires a valid Firebase token, so we expect 401 without proper auth
-        self.test_endpoint(
+        self._check_endpoint(
             "users", "auth_session", "POST", "/api/auth/session", expected_status=401
         )
 
     def test_users_03_get_user(self):
         """GET /api/users/{id}"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "users", "get_user", "GET", f"/api/users/{user_id}"
         )
         result = response.json()
@@ -211,15 +211,17 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_users_04_get_profile(self):
         """GET /api/users/{user_id}/profile"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "users", "get_profile", "GET", f"/api/users/{user_id}/profile"
         )
-        self.assertIn("id", response.json())
+        result = response.json()
+        self.assertIn("user", result)
+        self.assertIn("id", result["user"])
 
     def test_users_05_update_profile(self):
         """PATCH /api/users/{user_id}/profile"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "users",
             "update_profile",
             "PATCH",
@@ -235,7 +237,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_users_06_consent(self):
         """POST /api/users/{user_id}/consent"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "users",
             "consent",
             "POST",
@@ -247,7 +249,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_users_07_consent_data_collection(self):
         """POST /api/users/{user_id}/consent/data-collection"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "users",
             "consent_data_collection",
             "POST",
@@ -259,7 +261,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_users_08_export_user(self):
         """GET /api/users/{user_id}/export"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "users", "export_user", "GET", f"/api/users/{user_id}/export"
         )
         self.assertIn("user", response.json())
@@ -267,7 +269,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_users_09_delete_user(self):
         """DELETE /api/users/{user_id}"""
         user_id = self.create_test_user()
-        self.test_endpoint(
+        self._check_endpoint(
             "users",
             "delete_user",
             "DELETE",
@@ -282,7 +284,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_captures_01_create_capture(self):
         """POST /api/captures"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "create_capture",
             "POST",
@@ -302,7 +304,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         capture_id = capture["capture_id"]
 
         # This endpoint requires proper auth with Firebase token
-        self.test_endpoint(
+        self._check_endpoint(
             "captures",
             "submit_feedback",
             "POST",
@@ -318,7 +320,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_captures_03_capture_guide(self):
         """GET /api/users/{user_id}/capture-guide"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "capture_guide",
             "GET",
@@ -329,7 +331,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_captures_04_dashboard(self):
         """GET /api/users/{user_id}/dashboard"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "dashboard",
             "GET",
@@ -340,7 +342,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_captures_05_history(self):
         """GET /api/users/{user_id}/history"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures", "history", "GET", f"/api/users/{user_id}/history?vertical=skin"
         )
         self.assertIn("captures", response.json())
@@ -348,7 +350,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_captures_06_get_check_ins(self):
         """GET /api/users/{user_id}/check-ins"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures", "get_check_ins", "GET", f"/api/users/{user_id}/check-ins"
         )
         self.assertIsInstance(response.json(), list)
@@ -356,7 +358,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_captures_07_create_check_in(self):
         """POST /api/users/{user_id}/check-ins"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "create_check_in",
             "POST",
@@ -372,7 +374,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_captures_08_weekly_recap(self):
         """GET /api/users/{user_id}/weekly-recap"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "weekly_recap",
             "GET",
@@ -384,7 +386,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         """POST /api/users/{user_id}/measurement-feedback"""
         user_id = self.create_test_user()
         capture = self.create_test_capture(user_id)
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "measurement_feedback",
             "POST",
@@ -400,7 +402,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_captures_10_get_labels(self):
         """GET /api/users/{user_id}/labels"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures", "get_labels", "GET", f"/api/users/{user_id}/labels"
         )
         self.assertIsInstance(response.json(), list)
@@ -411,7 +413,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         capture = self.create_test_capture(user_id)
         photo_id = capture["photo_id"]
 
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "add_label",
             "POST",
@@ -428,7 +430,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_captures_12_reprocess(self):
         """POST /api/users/{user_id}/reprocess"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "reprocess",
             "POST",
@@ -446,7 +448,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         )
         job_id = reprocess_response.json()["job_id"]
 
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "reprocess_status",
             "GET",
@@ -457,7 +459,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_captures_14_shelf_scan(self):
         """POST /api/users/{user_id}/shelf-scan"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "shelf_scan",
             "POST",
@@ -474,7 +476,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         )
         job_id = scan_response.json()["job_id"]
 
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "shelf_scan_status",
             "GET",
@@ -490,7 +492,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         )
         job_id = scan_response.json()["job_id"]
 
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "captures",
             "shelf_scan_confirm",
             "POST",
@@ -506,7 +508,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_analytics_01_analytics(self):
         """GET /api/users/{user_id}/analytics"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "analytics", "analytics", "GET", f"/api/users/{user_id}/analytics"
         )
         self.assertIn("captures_this_week", response.json())
@@ -514,7 +516,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_analytics_02_get_engagement(self):
         """GET /api/users/{user_id}/engagement"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "analytics", "get_engagement", "GET", f"/api/users/{user_id}/engagement"
         )
         self.assertIsInstance(response.json(), list)
@@ -522,7 +524,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_analytics_03_engagement_event(self):
         """POST /api/users/{user_id}/engagement"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "analytics",
             "engagement_event",
             "POST",
@@ -538,7 +540,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_analytics_04_get_context_events(self):
         """GET /api/users/{user_id}/context-events"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "analytics",
             "get_context_events",
             "GET",
@@ -549,7 +551,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_analytics_05_add_context_event(self):
         """POST /api/users/{user_id}/context-events"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "analytics",
             "add_context_event",
             "POST",
@@ -565,7 +567,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_analytics_06_root_cause(self):
         """GET /api/users/{user_id}/root-cause"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "analytics",
             "root_cause",
             "GET",
@@ -576,7 +578,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_analytics_07_budget_optimizer(self):
         """GET /api/users/{user_id}/budget-optimizer"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "analytics",
             "budget_optimizer",
             "GET",
@@ -587,7 +589,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_analytics_08_derm_export(self):
         """GET /api/users/{user_id}/derm-export"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "analytics", "derm_export", "GET", f"/api/users/{user_id}/derm-export"
         )
         self.assertIn("report", response.json())
@@ -599,7 +601,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_subscriptions_01_subscription(self):
         """GET /api/users/{user_id}/subscription"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions", "subscription", "GET", f"/api/users/{user_id}/subscription"
         )
         self.assertIn("plan", response.json())
@@ -607,7 +609,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_subscriptions_02_upgrade(self):
         """POST /api/users/{user_id}/subscription/upgrade"""
         user_id = self.create_test_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "upgrade",
             "POST",
@@ -619,7 +621,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_subscriptions_03_cancel_subscription(self):
         """POST /api/users/{user_id}/subscription/cancel"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "cancel_subscription",
             "POST",
@@ -630,7 +632,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_subscriptions_04_create_product(self):
         """POST /api/products"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "create_product",
             "POST",
@@ -646,14 +648,14 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_subscriptions_05_search_products(self):
         """GET /api/products/search"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions", "search_products", "GET", "/api/products/search?q=serum"
         )
         self.assertIsInstance(response.json(), list)
 
     def test_subscriptions_06_lookup_product(self):
         """GET /api/products/lookup"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "lookup_product",
             "GET",
@@ -665,7 +667,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         """GET /api/products/{product_id}"""
         user_id = self.create_test_user()
         product = self.create_test_product()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "product_detail",
             "GET",
@@ -677,7 +679,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         """GET /api/products/{product_id}/ingredient-explainer"""
         user_id = self.create_premium_user()
         product = self.create_test_product()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "ingredient_explainer",
             "GET",
@@ -689,7 +691,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         """GET /api/products/{product_id}/predict"""
         user_id = self.create_premium_user()
         product = self.create_test_product()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "predict_product",
             "GET",
@@ -700,7 +702,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_subscriptions_10_purchase_guidance(self):
         """POST /api/users/{user_id}/purchase-guidance"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "purchase_guidance",
             "POST",
@@ -719,7 +721,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         """POST /api/routine-events"""
         user_id = self.create_test_user()
         product = self.create_test_product()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "routine_event",
             "POST",
@@ -736,7 +738,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_subscriptions_12_confound_check(self):
         """GET /api/users/{user_id}/confound-check"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "confound_check",
             "GET",
@@ -748,7 +750,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         """POST /api/experiments"""
         user_id = self.create_premium_user()
         product = self.create_test_product()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "create_experiment",
             "POST",
@@ -767,7 +769,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_subscriptions_14_experiments(self):
         """GET /api/users/{user_id}/experiments"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions", "experiments", "GET", f"/api/users/{user_id}/experiments"
         )
         self.assertIsInstance(response.json(), list)
@@ -787,7 +789,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         )
         experiment_id = exp_response.json()["id"]
 
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "experiment_detail",
             "GET",
@@ -810,7 +812,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         )
         experiment_id = exp_response.json()["id"]
 
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "experiment_status",
             "POST",
@@ -822,7 +824,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_subscriptions_17_qna(self):
         """POST /api/users/{user_id}/qna"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "qna",
             "POST",
@@ -834,7 +836,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_subscriptions_18_qna_history(self):
         """GET /api/users/{user_id}/qna"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions", "qna_history", "GET", f"/api/users/{user_id}/qna"
         )
         self.assertIsInstance(response.json(), list)
@@ -842,7 +844,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_subscriptions_19_discover(self):
         """GET /api/users/{user_id}/discover"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions", "discover", "GET", f"/api/users/{user_id}/discover"
         )
         self.assertIn("cards", response.json())
@@ -850,7 +852,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_subscriptions_20_offers(self):
         """GET /api/users/{user_id}/commerce/offers"""
         user_id = self.create_premium_user()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions", "offers", "GET", f"/api/users/{user_id}/commerce/offers"
         )
         self.assertIsInstance(response.json(), list)
@@ -873,7 +875,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         )
         offer_id = offer_response.json()["id"]
 
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "subscriptions",
             "click_offer",
             "POST",
@@ -888,7 +890,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_01_metrics(self):
         """GET /api/metrics"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin", "metrics", "GET", "/api/metrics", headers=self.admin_headers
         )
         self.assertIn("requests", response.json())
@@ -896,7 +898,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
     def test_admin_02_add_offer(self):
         """POST /api/admin/offers"""
         product = self.create_test_product()
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "add_offer",
             "POST",
@@ -914,7 +916,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_03_triage_question(self):
         """POST /api/triage"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "triage_question",
             "POST",
@@ -925,7 +927,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_04_audit(self):
         """GET /api/admin/audit"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "audit",
             "GET",
@@ -936,7 +938,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_05_measurement_feedback_summary(self):
         """GET /api/admin/measurement-feedback"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "measurement_feedback_summary",
             "GET",
@@ -947,7 +949,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_06_admin_analytics(self):
         """GET /api/admin/analytics"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_analytics",
             "GET",
@@ -958,7 +960,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_07_admin_analytics_daily(self):
         """GET /api/admin/analytics/daily"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_analytics_daily",
             "GET",
@@ -969,7 +971,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_08_admin_analytics_events(self):
         """GET /api/admin/analytics/events"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_analytics_events",
             "GET",
@@ -980,7 +982,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_09_admin_feedback(self):
         """GET /api/admin/feedback"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_feedback",
             "GET",
@@ -991,7 +993,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_10_admin_feedback_corrections(self):
         """GET /api/admin/feedback/corrections"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_feedback_corrections",
             "GET",
@@ -1002,7 +1004,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_11_admin_feedback_accuracy(self):
         """GET /api/admin/feedback/accuracy"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_feedback_accuracy",
             "GET",
@@ -1013,7 +1015,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_12_admin_monitoring(self):
         """GET /api/admin/monitoring"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_monitoring",
             "GET",
@@ -1024,7 +1026,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_13_admin_monitoring_daily(self):
         """GET /api/admin/monitoring/daily-report"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_monitoring_daily",
             "GET",
@@ -1035,7 +1037,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_14_admin_data_collection_stats(self):
         """GET /api/admin/data-collection/stats"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_data_collection_stats",
             "GET",
@@ -1046,7 +1048,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_15_admin_data_collection_export(self):
         """POST /api/admin/data-collection/export"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_data_collection_export",
             "POST",
@@ -1058,7 +1060,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_admin_16_admin_data_collection_cleanup(self):
         """POST /api/admin/data-collection/cleanup"""
-        response = self.test_endpoint(
+        response = self._check_endpoint(
             "admin",
             "admin_data_collection_cleanup",
             "POST",

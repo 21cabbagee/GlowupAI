@@ -21,7 +21,9 @@ class RedisRateLimiter:
     def __init__(self, redis_url: str | None = None):
         self.redis_url = redis_url
         self.redis_client = None
-        self.fallback_memory = {}  # Fallback for when Redis is unavailable
+        self.fallback_memory: dict[
+            str, list[float]
+        ] = {}  # Fallback for when Redis is unavailable
 
         # Rate limits: (requests_per_minute, window_seconds)
         self.limits = {
@@ -44,7 +46,8 @@ class RedisRateLimiter:
                 # Test connection
                 self.redis_client.ping()
                 logger.info("Redis rate limiter initialized successfully")
-            except (ImportError, Exception) as exc:
+            except (ImportError, Exception) as exc:  # noqa: BLE001
+                # Catch-all for Redis initialization with fallback
                 logger.warning(
                     f"Redis unavailable, falling back to memory-based rate limiting: {exc}",
                 )
@@ -107,6 +110,8 @@ class RedisRateLimiter:
         window_seconds: int,
     ) -> tuple[bool, int | None, int, int]:
         """Check rate limit using Redis sliding window."""
+        assert self.redis_client is not None, "Redis client must be initialized"
+
         try:
             key = f"ratelimit:{limit_type}:{client_id}"
             now = time.time()
@@ -121,7 +126,7 @@ class RedisRateLimiter:
             # Get oldest entry for reset calculation
             oldest = self.redis_client.zrange(key, 0, 0, withscores=True)
             reset_timestamp = (
-                int(oldest[0][1] + window_seconds)
+                int(float(oldest[0][1]) + window_seconds)
                 if oldest
                 else int(now + window_seconds)
             )
@@ -135,7 +140,7 @@ class RedisRateLimiter:
             else:
                 # Calculate retry after
                 if oldest:
-                    retry_after = int(oldest[0][1] + window_seconds - now) + 1
+                    retry_after = int(float(oldest[0][1]) + window_seconds - now) + 1
                 else:
                     retry_after = window_seconds
                 return False, retry_after, 0, reset_timestamp
@@ -225,12 +230,15 @@ class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
                 )
 
         # Check rate limit
-        allowed, retry_after, remaining, reset_timestamp = (
-            await self.limiter.check_rate_limit(
-                client_id,
-                request.url.path,
-                request.method,
-            )
+        (
+            allowed,
+            retry_after,
+            remaining,
+            reset_timestamp,
+        ) = await self.limiter.check_rate_limit(
+            client_id,
+            request.url.path,
+            request.method,
         )
 
         limit_type = self.limiter._get_limit_type(request.url.path, request.method)

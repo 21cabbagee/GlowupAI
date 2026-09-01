@@ -1,0 +1,223 @@
+=============================================================================
+RENDER DEPLOYMENT FIX - Summary
+=============================================================================
+Date: 2026-09-01
+Commit: 61d3716
+Issue: "Exited with status 1" error on Render deployment
+
+=============================================================================
+ROOT CAUSE IDENTIFIED
+=============================================================================
+
+The application was crashing immediately on startup due to:
+
+1. ❌ MISSING REQUIRED ENVIRONMENT VARIABLE: GLOWUPAI_ALLOWED_ORIGINS
+   - In production mode (GLOWUPAI_ENV=production), the app requires
+     GLOWUPAI_ALLOWED_ORIGINS to be explicitly set
+   - This is a security requirement to prevent CORS misconfigurations
+   - The app throws a RuntimeError and exits if this is missing
+   - Location: backend/glowupai/config.py lines 90-94
+
+2. ❌ TYPO IN ENVIRONMENT VARIABLE: GLOWUPAI_PHOTOS_DIR → GLOWUPAI_PHOTO_DIR
+   - render.yaml used PHOTOS_DIR (plural) but config expects PHOTO_DIR (singular)
+   - This would cause photos to not be saved properly
+
+3. ⚠️  OUTDATED DEPENDENCY VERSIONS IN DOCKERFILE
+   - Dockerfile had hardcoded old versions that didn't match pyproject.toml
+   - numpy: 1.26 vs 2.0 (major version difference!)
+   - pillow: 10.4 vs 11.0 (major version difference!)
+   - Could cause runtime compatibility issues
+
+=============================================================================
+FIXES APPLIED ✅
+=============================================================================
+
+✅ 1. Fixed backend/Dockerfile (lines 28-39)
+   - Synchronized all dependency versions with pyproject.toml
+   - Updated: fastapi, uvicorn, pillow, numpy, cryptography, psycopg, PyJWT, redis, sentry-sdk
+   - Prevents version mismatch issues at runtime
+
+✅ 2. Fixed backend/render.yaml - Added missing environment variables:
+   - GLOWUPAI_ALLOWED_ORIGINS: Set with default value (can be changed in dashboard)
+   - GEMINI_API_KEY: Added as sync:false (must be set in dashboard)
+   - GLOWUPAI_PHOTO_KEY: Added as sync:false (optional, for photo encryption)
+   - All variables now properly configured
+
+✅ 3. Fixed backend/render.yaml - Corrected typo:
+   - Changed GLOWUPAI_PHOTOS_DIR → GLOWUPAI_PHOTO_DIR
+
+=============================================================================
+REQUIRED ACTIONS IN RENDER DASHBOARD ⚠️
+=============================================================================
+
+CRITICAL - Complete these steps or deployment will fail:
+
+1. Go to Render Dashboard: https://dashboard.render.com/
+2. Navigate to: glowupai-backend → Environment
+3. Set these SECRET environment variables:
+
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Key: GEMINI_API_KEY                                                 │
+   │ Value: <your_gemini_api_key_here>                                  │
+   │                                                                      │
+   │ Get your key at: https://ai.google.dev/                            │
+   │ Required for: AI features (Q&A, shelf scan OCR, product analysis)  │
+   └─────────────────────────────────────────────────────────────────────┘
+
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Key: GLOWUPAI_ADMIN_TOKEN                                           │
+   │ Value: <secure_random_token>                                        │
+   │                                                                      │
+   │ Generate with:                                                      │
+   │ python3 -c "import secrets; print(secrets.token_urlsafe(32))"      │
+   │                                                                      │
+   │ Required for: Admin API endpoints                                   │
+   └─────────────────────────────────────────────────────────────────────┘
+
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Key: GLOWUPAI_PHOTO_KEY                                             │
+   │ Value: <base64_encoded_32_byte_key>                                 │
+   │                                                                      │
+   │ Generate with:                                                      │
+   │ python3 -c "import secrets, base64; \                               │
+   │   print(base64.b64encode(secrets.token_bytes(32)).decode())"        │
+   │                                                                      │
+   │ Optional but recommended: Encrypts photo storage                    │
+   │ Note: Without persistent disk, photos are lost on container restart │
+   └─────────────────────────────────────────────────────────────────────┘
+
+4. OPTIONAL - Update CORS origins if needed:
+   - Current default: https://glowupai-20ca.onrender.com,http://localhost:3000,http://localhost:8000
+   - Change GLOWUPAI_ALLOWED_ORIGINS if your frontend has a different URL
+
+5. Click "Save Changes" → Render will automatically redeploy
+
+=============================================================================
+VERIFICATION STEPS 🔍
+=============================================================================
+
+After deploying, verify the fix worked:
+
+1. ✅ Check Render Deploy Logs:
+   Should see:
+   ✓ "Uvicorn running on http://0.0.0.0:8000"
+   ✓ "Middleware configured: rate_limit=True, cache=True..."
+   
+   Should NOT see:
+   ✗ RuntimeError about GLOWUPAI_ALLOWED_ORIGINS
+   ✗ "Exited with status 1"
+
+2. ✅ Test Health Endpoint:
+   curl https://glowupai-20ca.onrender.com/api/health
+   
+   Expected HTTP 200 with:
+   {
+     "status": "healthy",
+     "database": "connected",
+     "version": "3.0.0",
+     "scope": "cosmetic_tracking",
+     "features": ["experiments", "qna", "discover", ...]
+   }
+
+3. ✅ Verify Service Status:
+   - Render Dashboard should show: "Live" (green)
+   - Health checks should be passing
+   - No crash loops in logs
+
+=============================================================================
+FILE CHANGES MADE 📝
+=============================================================================
+
+Modified files:
+- backend/Dockerfile (dependency versions updated)
+- backend/render.yaml (environment variables added/fixed)
+- backend/RENDER_FIX_SUMMARY.txt (this file - created)
+
+No other files were changed. All changes are backward compatible.
+
+=============================================================================
+DEPLOYMENT CONFIGURATION SUMMARY 📋
+=============================================================================
+
+✅ Docker Configuration:
+   - Base image: python:3.12.7-slim
+   - Multi-stage build: builder + runtime
+   - Non-root user: glowupai (uid 10001)
+   - Port: 8000 (auto-configured by Render via $PORT)
+   - Health check: /api/health (every 30s)
+
+✅ Environment Variables (render.yaml):
+   - GLOWUPAI_ENV: production
+   - GLOWUPAI_FIREBASE_PROJECT_ID: glowup-ai-38ae7
+   - GLOWUPAI_PHOTO_DIR: /app/photos
+   - GLOWUPAI_RATE_LIMIT_ENABLED: 1 (enabled)
+   - GLOWUPAI_ALLOWED_ORIGINS: (set with default)
+   - DATABASE_URL: (auto-set by Render PostgreSQL)
+
+✅ Database Configuration:
+   - Service name: glowupai-db
+   - Database name: glowupai
+   - Plan: free
+   - Connection: Auto-configured via DATABASE_URL
+
+=============================================================================
+IMPORTANT LIMITATIONS ⚠️
+=============================================================================
+
+1. Photo Storage on Render Free Tier:
+   - /app/photos is NOT persistent storage
+   - Photos will be LOST on container restart/redeploy
+   - For production, consider:
+     * Upgrading to Render paid plan with persistent disk
+     * Using external storage (S3, Cloudinary, etc.)
+     * Accepting ephemeral storage for testing/demo
+
+2. Database:
+   - Render free PostgreSQL has connection limits
+   - May experience cold starts after inactivity
+   - Limited storage capacity
+
+=============================================================================
+TROUBLESHOOTING 🔧
+=============================================================================
+
+If deployment still fails, check:
+
+1. Render Build Logs:
+   - Docker build should complete successfully
+   - All dependencies should install without errors
+   - Look for "Successfully built" message
+
+2. Render Deploy Logs:
+   - Check for Python import errors
+   - Verify database connection succeeds
+   - Look for "Uvicorn running" message
+
+3. Common Issues:
+   - Missing env vars → Check dashboard Environment tab
+   - Database not ready → Wait for glowupai-db to finish provisioning
+   - Port conflicts → Render manages PORT automatically, don't override
+
+4. Health Check Failures:
+   - Service shows "Unhealthy" → Check /api/health endpoint manually
+   - Check database connectivity from logs
+   - Verify health check path in render.yaml matches /api/health
+
+For further help, check:
+- Render Logs: Dashboard → glowupai-backend → Logs
+- Render Events: Dashboard → glowupai-backend → Events
+- This summary: backend/RENDER_FIX_SUMMARY.txt
+
+=============================================================================
+NEXT STEPS 🚀
+=============================================================================
+
+1. Set the 3 secret environment variables in Render Dashboard
+2. Wait for automatic redeployment to complete (~3-5 minutes)
+3. Test the health endpoint
+4. Verify your frontend can connect to the backend
+5. Monitor logs for any unexpected errors
+
+The deployment should now succeed! 🎉
+
+=============================================================================

@@ -17,7 +17,7 @@ from .service import GlowupAIService
 
 class UserCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    firebase_uid: str
+    firebase_uid: str | None = None
     email: str | None = None
     skin_type: str | None = None
 

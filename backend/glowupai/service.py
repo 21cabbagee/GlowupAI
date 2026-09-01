@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import uuid
 from datetime import UTC, datetime
@@ -20,6 +21,8 @@ from .preprocessing import (
     preprocess_for_analysis_pil,
 )
 from .safety import triage
+
+logger = logging.getLogger(__name__)
 
 
 def now_iso() -> str:
@@ -64,9 +67,12 @@ class GlowupAIService:
             "INSERT INTO users (id, skin_type) VALUES (?, ?)",
             (user_id, skin_type),
         )
-        return row_dict(
+        result = row_dict(
             self.db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,)),
         )
+        if result is None:
+            raise RuntimeError("Failed to create user")
+        return result
 
     def grant_consent(
         self,
@@ -84,9 +90,12 @@ class GlowupAIService:
             "INSERT INTO consent_events (user_id, consent_type, granted, policy_version) VALUES (?, 'facial_data', ?, ?)",
             (user_id, int(facial_data), policy_version or self.settings.policy_version),
         )
-        return row_dict(
+        result = row_dict(
             self.db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,)),
         )
+        if result is None:
+            raise RuntimeError("Failed to fetch user after consent update")
+        return result
 
     def require_user(self, user_id: str) -> dict[str, Any]:
         user = row_dict(
@@ -136,19 +145,23 @@ class GlowupAIService:
             if "UNIQUE" in str(exc).upper():
                 raise ValueError("barcode already exists") from exc
             raise
-        return row_dict(
+        result = row_dict(
             self.db.fetchone("SELECT * FROM products WHERE id = ?", (product_id,)),
         )
+        if result is None:
+            raise RuntimeError("Failed to fetch product after creation")
+        return result
 
     def search_products(self, query: str) -> list[dict[str, Any]]:
         pattern = f"%{query.strip()}%"
-        return [
+        results = [
             row_dict(row)
             for row in self.db.fetchall(
                 "SELECT * FROM products WHERE name LIKE ? OR barcode LIKE ? ORDER BY name LIMIT 30",
                 (pattern, pattern),
             )
         ]
+        return [r for r in results if r is not None]
 
     def add_routine_event(
         self,
@@ -183,9 +196,12 @@ class GlowupAIService:
                 notes,
             ),
         )
-        return row_dict(
+        result = row_dict(
             self.db.fetchone("SELECT * FROM routine_events WHERE id = ?", (event_id,)),
         )
+        if result is None:
+            raise RuntimeError("Failed to fetch routine event after creation")
+        return result
 
     def create_capture(
         self,
@@ -212,10 +228,13 @@ class GlowupAIService:
         capture_id = new_id()
         capture_time = captured_at or now_iso()
         parse_time(capture_time)
-        existing = self.db.fetchone(
+        existing_row = self.db.fetchone(
             "SELECT COUNT(*) AS count FROM photo_captures WHERE user_id = ?",
             (user_id,),
-        )["count"]
+        )
+        if existing_row is None:
+            raise RuntimeError("Failed to count existing captures")
+        existing = existing_row["count"]
         baseline = bool(is_baseline or existing == 0)
         raw_ref = self.photos.save(user_id, capture_id, image_bytes)
         self.db.execute(
@@ -242,6 +261,8 @@ class GlowupAIService:
                 "SELECT * FROM photo_captures WHERE id = ?", (capture_id,)
             ),
         )
+        if capture is None:
+            raise RuntimeError("Failed to fetch capture after creation")
         capture["capture_quality"] = json.loads(capture.pop("capture_quality_json"))
         capture["device_meta"] = json.loads(capture.pop("device_meta_json"))
         capture["analysis_job_id"] = job_id
@@ -263,6 +284,8 @@ class GlowupAIService:
             "SELECT * FROM photo_captures WHERE id = ?",
             (job["capture_id"],),
         )
+        if not capture:
+            raise ValueError("photo capture not found for job")
         try:
             self.db.execute(
                 "UPDATE analysis_jobs SET status = 'running', started_at = ? WHERE id = ?",
@@ -289,11 +312,7 @@ class GlowupAIService:
                 except (OSError, ValueError, RuntimeError) as exc:
                     # If preprocessing fails, continue with original image
                     # but log the error for monitoring
-                    import logging
-
-                    logging.warning(
-                        f"Preprocessing failed, using original image: {exc}"
-                    )
+                    logger.warning(f"Preprocessing failed, using original image: {exc}")
 
             baseline_row = self.db.fetchone(
                 """SELECT m.* FROM metric_snapshots m JOIN photo_captures c ON c.id = m.photo_id
@@ -343,9 +362,7 @@ class GlowupAIService:
             )
         except (OSError, ValueError, RuntimeError, sqlite3.Error) as exc:
             # Catch specific job failure types for proper error tracking
-            import logging
-
-            logging.error(f"Analysis job {job_id} failed: {exc}")
+            logger.error(f"Analysis job {job_id} failed: {exc}")
             self.db.execute(
                 "UPDATE analysis_jobs SET status = 'failed', error = ?, completed_at = ? WHERE id = ?",
                 (str(exc), now_iso(), job_id),
@@ -395,6 +412,8 @@ class GlowupAIService:
     @staticmethod
     def _decode_verdict(row: Any) -> dict[str, Any]:
         result = row_dict(row)
+        if result is None:
+            raise RuntimeError("Failed to decode verdict row")
         result["evidence"] = json.loads(result.pop("evidence_json"))
         return result
 
@@ -402,13 +421,14 @@ class GlowupAIService:
         user = self.require_user(user_id)
         verdicts = self.refresh_verdicts(user_id)
         history = self.history(user_id)
-        events = [
+        event_rows = [
             row_dict(row)
             for row in self.db.fetchall(
                 "SELECT e.*, p.name AS product_name FROM routine_events e JOIN products p ON p.id = e.product_id WHERE e.user_id = ? ORDER BY e.timestamp DESC",
                 (user_id,),
             )
         ]
+        events = [e for e in event_rows if e is not None]
         return {
             "user": user,
             "history": history,
@@ -430,6 +450,8 @@ class GlowupAIService:
         result = []
         for row in rows:
             item = row_dict(row)
+            if item is None:
+                continue
             item["capture_quality"] = json.loads(item.pop("capture_quality_json"))
             item["noise_floor"] = json.loads(item.pop("noise_floor_json"))
             # Add smoothness_score for backward compatibility
@@ -439,24 +461,26 @@ class GlowupAIService:
 
     def export_user(self, user_id: str) -> dict[str, Any]:
         user = self.require_user(user_id)
+        consent_events_raw = [
+            row_dict(row)
+            for row in self.db.fetchall(
+                "SELECT * FROM consent_events WHERE user_id = ? ORDER BY recorded_at",
+                (user_id,),
+            )
+        ]
+        routine_events_raw = [
+            row_dict(row)
+            for row in self.db.fetchall(
+                "SELECT * FROM routine_events WHERE user_id = ? ORDER BY timestamp",
+                (user_id,),
+            )
+        ]
         return {
             "export_version": "1",
             "exported_at": now_iso(),
             "user": user,
-            "consent_events": [
-                row_dict(row)
-                for row in self.db.fetchall(
-                    "SELECT * FROM consent_events WHERE user_id = ? ORDER BY recorded_at",
-                    (user_id,),
-                )
-            ],
-            "routine_events": [
-                row_dict(row)
-                for row in self.db.fetchall(
-                    "SELECT * FROM routine_events WHERE user_id = ? ORDER BY timestamp",
-                    (user_id,),
-                )
-            ],
+            "consent_events": [e for e in consent_events_raw if e is not None],
+            "routine_events": [e for e in routine_events_raw if e is not None],
             "captures_and_metrics": self.history(user_id),
             "verdicts": [
                 self._decode_verdict(row)

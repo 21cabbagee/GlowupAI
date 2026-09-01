@@ -25,6 +25,10 @@ on:
           - staging
         default: release
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   pre-flight:
     name: Pre-flight Checks
@@ -88,16 +92,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Decode and setup keystore
         run: |
           echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
@@ -133,14 +127,15 @@ jobs:
         run: |
           echo "✅ APK signed successfully with release keystore"
           if [ "${{ inputs.build_type }}" = "staging" ]; then
-            APK_PATH=$(find app/build/outputs/apk/staging -name "*.apk" -type f)
+            APK_PATH=$(find app/build/outputs/apk/staging -name "*.apk" -type f | head -n 1)
           else
-            APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" -type f)
+            APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" -type f | head -n 1)
           fi
           echo "APK located at: $APK_PATH"
 
-          # Verify APK signature
-          $ANDROID_HOME/build-tools/*/apksigner verify --print-certs "$APK_PATH"
+          # Verify APK signature - use the latest build-tools version
+          BUILD_TOOLS_VERSION=$(ls $ANDROID_HOME/build-tools | sort -V | tail -n 1)
+          $ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner verify --print-certs "$APK_PATH"
 
       - name: Generate APK metadata
         id: apk_info
@@ -234,7 +229,7 @@ jobs:
           draft: false
           prerelease: ${{ contains(inputs.version_name, '-') }}
           files: |
-            ./artifacts/app-${{ inputs.build_type }}.apk
+            ./artifacts/*.apk
 
       - name: Create release notes file
         run: |

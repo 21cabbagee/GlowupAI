@@ -67,7 +67,7 @@ class JobRunner:
                 "UPDATE jobs SET status='completed', result_json=?, completed_at=? WHERE id=?",
                 (dump(result), now_iso(), job_id),
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001  # Catch-all for job execution resilience
             self.db.execute(
                 "UPDATE jobs SET status='failed', error=?, completed_at=? WHERE id=?",
                 (f"{exc}\n{traceback.format_exc(limit=3)}", now_iso(), job_id),

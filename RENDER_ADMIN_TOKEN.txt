@@ -1,0 +1,73 @@
+# 🔐 RENDER ADMIN TOKEN SETUP INSTRUCTIONS
+
+## ⚠️ KEEP THIS FILE SECURE - DO NOT COMMIT TO GIT
+
+---
+
+## 📋 STEP-BY-STEP GUIDE
+
+### Step 1: Copy the Admin Token
+```
+GLOWUPAI_ADMIN_TOKEN=UENJZs05stm5G2YFdD-KX-Fnvg2auro63HKJo67TM7Q
+```
+
+### Step 2: Add to Render Dashboard
+
+1. **Open Render Dashboard**:
+   https://dashboard.render.com
+
+2. **Navigate to Your Service**:
+   - Click on "glowupai-backend" service
+   - Or go directly to your backend service URL
+
+3. **Go to Environment Variables**:
+   - Click on "Environment" tab in the left sidebar
+   - Or scroll down to "Environment Variables" section
+
+4. **Add New Environment Variable**:
+   - Click "Add Environment Variable" button
+   - **Key**: `GLOWUPAI_ADMIN_TOKEN`
+   - **Value**: `UENJZs05stm5G2YFdD-KX-Fnvg2auro63HKJo67TM7Q`
+   - Click "Save Changes"
+
+5. **Trigger Redeploy**:
+   - Your service will automatically redeploy with the new variable
+   - Wait 2-3 minutes for deployment to complete
+   - Check deployment logs to ensure it succeeded
+
+### Step 3: Verify Configuration
+
+Test the admin endpoint:
+```bash
+curl -H "Authorization: Bearer UENJZs05stm5G2YFdD-KX-Fnvg2auro63HKJo67TM7Q" \
+  https://glowupai-20ca.onrender.com/api/admin/audit
+```
+
+Expected response: JSON with admin data (not 401 Unauthorized)
+
+---
+
+## 🔒 SECURITY NOTES
+
+- This token grants FULL ADMIN ACCESS to your backend
+- Store it securely (password manager recommended)
+- NEVER commit this file to git (.gitignore includes it)
+- Rotate the token if compromised:
+  ```bash
+  python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+  ```
+
+---
+
+## ✅ CHECKLIST
+
+- [ ] Token added to Render dashboard
+- [ ] Service redeployed successfully
+- [ ] Admin endpoints tested and working
+- [ ] Token stored in password manager
+- [ ] This file deleted after setup (or kept secure)
+
+---
+
+**Generated**: 2026-09-01
+**Token Valid**: Until rotated manually

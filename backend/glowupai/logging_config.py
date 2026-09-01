@@ -91,10 +91,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response.headers["X-Request-ID"] = req_id
             return response
 
-        except (RuntimeError, ValueError, OSError, TimeoutError) as exc:
+        except (RuntimeError, ValueError, OSError, TimeoutError):
             duration_ms = round((time.time() - start_time) * 1000, 2)
             logger.exception(
-                f"Request failed: {exc}",
+                "Request failed",
                 extra={
                     "duration_ms": duration_ms,
                     "endpoint": f"{request.method} {request.url.path}",
@@ -124,6 +124,7 @@ def setup_logging(log_level: str = "INFO", use_json: bool = True) -> None:
     handler.setLevel(level)
 
     # Set formatter
+    formatter: logging.Formatter
     if use_json:
         formatter = StructuredFormatter()
     else:

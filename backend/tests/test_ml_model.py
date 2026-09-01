@@ -15,13 +15,18 @@ from PIL import Image
 # Skip all tests in this module if torch is not available
 torch = pytest.importorskip("torch", reason="torch not installed")
 
-from glowupai.metrics import MetricResult
-from glowupai.ml_model import (
-    MLModelInference,
-    SkinAnalysisModel,
-    analyze_with_ml,
-    get_ml_model,
-)
+# Import after torch check to avoid import errors
+try:
+    from glowupai.metrics import MetricResult
+    from glowupai.ml_model import (
+        MLModelInference,
+        SkinAnalysisModel,
+        analyze_with_ml,
+        get_ml_model,
+    )
+except ImportError:
+    # If imports fail (e.g., due to torch dependency), skip all tests
+    pytest.skip("ML model dependencies not available", allow_module_level=True)
 
 
 def create_test_image(width: int = 224, height: int = 224) -> bytes:

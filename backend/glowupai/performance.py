@@ -39,12 +39,12 @@ class ImageCompressor:
         """
         try:
             # Open image
-            img = Image.open(io.BytesIO(image_bytes))
+            img: Any = Image.open(io.BytesIO(image_bytes))
 
             # Convert RGBA to RGB if saving as JPEG
             if format.upper() == "JPEG" and img.mode in ("RGBA", "LA", "P"):
                 # Create white background
-                background = Image.new("RGB", img.size, (255, 255, 255))
+                background: Any = Image.new("RGB", img.size, (255, 255, 255))
                 if img.mode == "P":
                     img = img.convert("RGBA")
                 background.paste(
@@ -56,7 +56,7 @@ class ImageCompressor:
             original_size = img.size
             if max(img.size) > max_dimension:
                 ratio = max_dimension / max(img.size)
-                new_size = tuple(int(dim * ratio) for dim in img.size)
+                new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
                 img = img.resize(new_size, Image.Resampling.LANCZOS)
                 logger.debug(f"Image resized from {original_size} to {new_size}")
 
@@ -93,8 +93,8 @@ class RedisCache:
     def __init__(self, redis_url: str | None = None, default_ttl: int = 300):
         self.redis_url = redis_url
         self.redis_client = None
-        self.memory_cache = {}  # Fallback memory cache
-        self.cache_times = {}  # Track expiration for memory cache
+        self.memory_cache: dict[str, Any] = {}  # Fallback memory cache
+        self.cache_times: dict[str, float] = {}  # Track expiration for memory cache
         self.default_ttl = default_ttl
 
         if redis_url:
@@ -404,7 +404,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
                     async for chunk in response.body_iterator:
                         body += chunk
                 elif hasattr(response, "body"):
-                    body = response.body
+                    body = bytes(response.body)
                 else:
                     # Cannot cache this response type
                     logger.warning(
@@ -435,8 +435,8 @@ class CacheMiddleware(BaseHTTPMiddleware):
                     headers=headers,
                     media_type=response.media_type,
                 )
-            except Exception as exc:
-                logger.error(f"Cache storage failed: {exc}", exc_info=True)
+            except Exception:
+                logger.exception("Cache storage failed")
                 # Return original response if caching fails
                 return response
 

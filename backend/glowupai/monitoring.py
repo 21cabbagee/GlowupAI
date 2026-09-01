@@ -61,7 +61,7 @@ def setup_sentry(
             # Additional context
             attach_stacktrace=True,
             # Filter out health check transactions
-            before_send_transaction=_filter_transactions,
+            before_send_transaction=_filter_transactions,  # type: ignore[arg-type]
         )
 
         logger.info(
@@ -136,9 +136,9 @@ def capture_message(
             with sentry_sdk.push_scope() as scope:
                 for key, value in context.items():
                     scope.set_context(key, value)
-                sentry_sdk.capture_message(message, level=level)
+                sentry_sdk.capture_message(message, level=level)  # type: ignore[arg-type]
         else:
-            sentry_sdk.capture_message(message, level=level)
+            sentry_sdk.capture_message(message, level=level)  # type: ignore[arg-type]
 
     except ImportError:
         logger.debug("Sentry SDK not available, skipping message capture")

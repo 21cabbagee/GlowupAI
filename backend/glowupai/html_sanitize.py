@@ -213,9 +213,5 @@ def sanitize_derm_export(html_content: str) -> str:
     This should be called on the backend before sending HTML to the client.
     """
     # Try bleach first (more secure), fall back to regex
-    try:
-        import bleach
-
-        return sanitize_html_bleach(html_content)
-    except ImportError:
-        return sanitize_html(html_content)
+    # sanitize_html_bleach already handles ImportError internally
+    return sanitize_html_bleach(html_content)

@@ -180,7 +180,7 @@ def verify_id_token(
     try:
         claims = jwt.decode(
             token,
-            key=public_key,
+            key=public_key,  # type: ignore[arg-type]
             algorithms=["RS256"],
             audience=project_id,
             issuer=f"https://securetoken.google.com/{project_id}",

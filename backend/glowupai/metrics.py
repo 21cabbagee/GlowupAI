@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import io
+import logging
 import os
 from dataclasses import asdict, dataclass
 
 from PIL import Image
 
 from .face_alignment import align_face_safe
+
+logger = logging.getLogger(__name__)
 
 NOISE_FLOORS = {
     "blemish_count": 1.5,
@@ -72,11 +75,9 @@ def analyze(
             from .ml_model import analyze_with_ml
 
             return analyze_with_ml(image_bytes, quality_score, baseline)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001  # Catch-all for ML model failures with fallback
             # Fall back to deterministic model if ML model fails
-            import logging
-
-            logging.warning(f"ML model failed, falling back to deterministic: {exc}")
+            logger.warning(f"ML model failed, falling back to deterministic: {exc}")
 
     # Apply face alignment before analysis for consistency
     # This aligns eyes to horizontal, scales to consistent distance, and centers face

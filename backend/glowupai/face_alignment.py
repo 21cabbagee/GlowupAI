@@ -30,7 +30,7 @@ def _detect_eyes_with_cascade(
     gray: np.ndarray,
 ) -> tuple[tuple[int, int], tuple[int, int]] | None:
     """Detect left and right eye centers using Haar Cascade."""
-    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
+    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")  # type: ignore[attr-defined]
 
     eyes = eye_cascade.detectMultiScale(
         gray, scaleFactor=1.1, minNeighbors=5, minSize=(20, 20)
@@ -59,8 +59,8 @@ def _detect_eyes_with_cascade(
 def _detect_face_region(image: np.ndarray) -> tuple[int, int, int, int] | None:
     """Detect face bounding box using Haar Cascade."""
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    face_cascade = cv2.CascadeClassifier(
-        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    face_cascade = cv2.CascadeClassifier(  # type: ignore[attr-defined]
+        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"  # type: ignore[attr-defined]
     )
 
     faces = face_cascade.detectMultiScale(
@@ -190,7 +190,7 @@ def align_face_safe(
     """
     try:
         return align_face(image_bytes, target_eye_distance, output_size)
-    except (FaceAlignmentError, Exception):
+    except (FaceAlignmentError, OSError, ValueError, RuntimeError):
         # If alignment fails, return resized original image
         with Image.open(io.BytesIO(image_bytes)) as img:
             resized = img.convert("RGB").resize(output_size, Image.Resampling.LANCZOS)

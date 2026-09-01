@@ -91,16 +91,18 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
     ) -> dict[str, Any]:
         """Create or upgrade a subscription."""
         require_owner(payload.user_id, authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.create_subscription, payload.user_id, payload.plan, payload.source
         )
+        return result
 
     @router.get("/users/{user_id}/subscription")
     def subscription(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.entitlement, user_id)
+        result: dict[str, Any] = run_handler(service.entitlement, user_id)
+        return result
 
     @router.post("/users/{user_id}/subscription/upgrade")
     def upgrade(
@@ -109,18 +111,20 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.upgrade, user_id, payload.source)
+        result: dict[str, Any] = run_handler(service.upgrade, user_id, payload.source)
+        return result
 
     @router.post("/users/{user_id}/subscription/cancel")
     def cancel_subscription(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.downgrade, user_id)
+        result: dict[str, Any] = run_handler(service.downgrade, user_id)
+        return result
 
     @router.post("/products")
     def create_product(payload: ProductCreate) -> dict[str, Any]:
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.create_product,
             payload.name,
             payload.barcode,
@@ -128,35 +132,41 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
             payload.ingredients,
             payload.stabilization_days,
         )
+        return result
 
     @router.get("/products/search")
     def search_products(q: str = "") -> list[dict[str, Any]]:
-        return run_handler(service.search_products, q)
+        result: list[dict[str, Any]] = run_handler(service.search_products, q)
+        return result
 
     @router.get("/products/lookup")
     def lookup_product(barcode: str) -> dict[str, Any]:
-        return run_handler(service.lookup_product, barcode)
+        result: dict[str, Any] = run_handler(service.lookup_product, barcode)
+        return result
 
     @router.get("/products/{product_id}")
     def product_detail(
         product_id: str, user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.product_detail, user_id, product_id)
+        result: dict[str, Any] = run_handler(service.product_detail, user_id, product_id)
+        return result
 
     @router.get("/products/{product_id}/ingredient-explainer")
     def ingredient_explainer(
         product_id: str, user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.ingredient_explainer, user_id, product_id)
+        result: dict[str, Any] = run_handler(service.ingredient_explainer, user_id, product_id)
+        return result
 
     @router.get("/products/{product_id}/predict")
     def predict_product(
         product_id: str, user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.predict_product, user_id, product_id)
+        result: dict[str, Any] = run_handler(service.predict_product, user_id, product_id)
+        return result
 
     @router.post("/users/{user_id}/purchase-guidance")
     def purchase_guidance(
@@ -165,14 +175,16 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.purchase_guidance, user_id, **payload.model_dump())
+        result: dict[str, Any] = run_handler(service.purchase_guidance, user_id, **payload.model_dump())
+        return result
 
     @router.post("/routine-events")
     def routine_event(
         payload: RoutineEventCreate, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(payload.user_id, authorization)
-        return run_handler(service.add_routine_event, **payload.model_dump())
+        result: dict[str, Any] = run_handler(service.add_routine_event, **payload.model_dump())
+        return result
 
     @router.get("/users/{user_id}/confound-check")
     def confound_check(
@@ -181,14 +193,15 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.confound_check, user_id, exclude_product_id)
+        result: dict[str, Any] = run_handler(service.confound_check, user_id, exclude_product_id)
+        return result
 
     @router.post("/experiments")
     def experiment(
         payload: ExperimentCreate, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(payload.user_id, authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.create_experiment,
             payload.user_id,
             payload.name,
@@ -197,13 +210,15 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
             payload.primary_metric,
             payload.target_days,
         )
+        return result
 
     @router.get("/users/{user_id}/experiments")
     def experiments(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.experiments, user_id)
+        result: dict[str, Any] = run_handler(service.experiments, user_id)
+        return result
 
     @router.get("/users/{user_id}/experiments/{experiment_id}")
     def experiment_detail(
@@ -212,7 +227,8 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.experiment, experiment_id, user_id)
+        result: dict[str, Any] = run_handler(service.experiment, experiment_id, user_id)
+        return result
 
     @router.post("/users/{user_id}/experiments/{experiment_id}/status")
     def experiment_status(
@@ -224,9 +240,10 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         require_owner(user_id, authorization)
         if payload.user_id != user_id:
             raise HTTPException(status_code=400, detail="user_id mismatch")
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.set_experiment_status, user_id, experiment_id, payload.status
         )
+        return result
 
     @router.post("/users/{user_id}/qna")
     def qna(
@@ -235,21 +252,24 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.ask, user_id, payload.question, payload.thread_id)
+        result: dict[str, Any] = run_handler(service.ask, user_id, payload.question, payload.thread_id)
+        return result
 
     @router.get("/users/{user_id}/qna")
     def qna_history(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
-        return run_handler(service.qna_history, user_id)
+        result: list[dict[str, Any]] = run_handler(service.qna_history, user_id)
+        return result
 
     @router.get("/users/{user_id}/discover")
     def discover(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.discover, user_id)
+        result: dict[str, Any] = run_handler(service.discover, user_id)
+        return result
 
     @router.get("/users/{user_id}/commerce/offers")
     def offers(
@@ -258,13 +278,15 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.offers, user_id, product_id)
+        result: dict[str, Any] = run_handler(service.offers, user_id, product_id)
+        return result
 
     @router.post("/users/{user_id}/commerce/offers/{offer_id}/click")
     def click_offer(
         user_id: str, offer_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.click_offer, user_id, offer_id)
+        result: dict[str, Any] = run_handler(service.click_offer, user_id, offer_id)
+        return result
 
     return router

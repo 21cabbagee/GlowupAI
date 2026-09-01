@@ -9,8 +9,10 @@ services:
     envVars:
       - key: GLOWUPAI_FIREBASE_PROJECT_ID
         value: glowup-ai-38ae7
-      - key: GLOWUPAI_PHOTOS_DIR
+      - key: GLOWUPAI_PHOTO_DIR
         value: /app/photos
+      - key: GLOWUPAI_PHOTO_KEY
+        sync: false  # Optional: Base64-encoded 32-byte encryption key for photo storage
       - key: GLOWUPAI_RATE_LIMIT_ENABLED
         value: "1"  # ENABLED for production security
       - key: GLOWUPAI_SKIP_QUALITY_CHECKS
@@ -19,6 +21,8 @@ services:
         value: "production"
       - key: GLOWUPAI_ALLOWED_ORIGINS
         value: "https://glowupai-20ca.onrender.com,http://localhost:3000,http://localhost:8000"  # Production + local development
+      - key: GEMINI_API_KEY
+        sync: false  # Set via Render dashboard for AI features
       - key: GLOWUPAI_ADMIN_TOKEN
         sync: false  # Set via Render dashboard for security
       - key: DATABASE_URL

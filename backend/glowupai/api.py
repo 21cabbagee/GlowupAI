@@ -1,10 +1,11 @@
 """Default complete application with legacy constructor compatibility."""
 
 import atexit
+from typing import Any
 
 from .complete_api import app, create_complete_app
 
-_legacy_apps = []
+_legacy_apps: list[Any] = []
 ROADMAP = [
     {
         "phase": "Measure",
@@ -77,13 +78,15 @@ def _close_databases() -> None:
         from . import complete_api
 
         apps.append(complete_api.app)
-    except Exception:  # nosec B110 - intentional fallback if module unavailable
+    except (ImportError, ModuleNotFoundError, AttributeError):
+        # Intentional fallback if module unavailable or has initialization issues
         pass
     try:
         from . import api_legacy
 
         apps.append(api_legacy.app)
-    except Exception:  # nosec B110 - intentional fallback if module unavailable
+    except (ImportError, ModuleNotFoundError, AttributeError):
+        # Intentional fallback if module unavailable or has initialization issues
         pass
     apps.extend(_legacy_apps)
     seen = set()
