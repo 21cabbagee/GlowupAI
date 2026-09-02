@@ -47,7 +47,9 @@ jobs:
 
       - name: Build with Gradle (for Kotlin)
         if: matrix.language == 'java-kotlin'
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        env:
+          GRADLE_OPTS: -Xmx4g -XX:MaxMetaspaceSize=1g -Dorg.gradle.daemon=false
+        run: ./gradlew assembleDebug -x lint -x lintVitalAnalyzeRelease --no-daemon --stacktrace
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
