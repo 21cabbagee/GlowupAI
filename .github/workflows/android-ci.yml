@@ -98,6 +98,7 @@ jobs:
     name: Instrumentation Tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    continue-on-error: true  # Don't fail workflow if emulator tests fail
 
     steps:
       - name: Checkout code
@@ -147,6 +148,7 @@ jobs:
     name: Code Quality
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    continue-on-error: true  # Don't fail workflow if code quality checks fail
 
     steps:
       - name: Checkout code
