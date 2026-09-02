@@ -219,7 +219,7 @@ jobs:
           DATABASE_URL: postgresql://glowup_test:test_password@localhost:5432/glowup_test
           JWT_SECRET_KEY: test-secret-key-for-ci
           ENCRYPTION_KEY: test-encryption-key-32-bytes-long
-          SKINPROOF_RATE_LIMIT_ENABLED: "0"
+          GLOWUPAI_RATE_LIMIT_ENABLED: "0"
         run: |
           # Run integration tests if they exist
           if pytest tests/ -v -m "integration or not unit" --collect-only -q 2>/dev/null | grep -q "test"; then
