@@ -20,6 +20,10 @@ RUN apt-get update && \
     python3-dev \
     libgl1 \
     libglib2.0-0 \
+    libgomp1 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies from pyproject.toml
@@ -55,6 +59,10 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
+    libgomp1 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
     && apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
@@ -86,10 +94,10 @@ COPY pyproject.toml ./
 # Install application (metadata only, no dependencies)
 RUN pip install --no-cache-dir --no-deps .
 
-# Create non-root user and data directory
+# Create non-root user and data directories
 # User ID 10001 is a common convention for non-root container users
 RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin glowupai \
-    && mkdir -p /app/.data \
+    && mkdir -p /app/.data /app/photos \
     && chown -R glowupai:glowupai /app
 
 # Switch to non-root user

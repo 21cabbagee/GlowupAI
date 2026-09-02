@@ -55,7 +55,7 @@ test_*.py
 # Test results
 *.json
 *.csv
-*.html
+# *.html - DO NOT exclude, needed for glowupai/static/index.html
 test_results/
 htmlcov/
 .coverage
