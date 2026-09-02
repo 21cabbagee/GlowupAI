@@ -282,7 +282,6 @@ jobs:
           echo "Building Docker image for security scan..."
           docker build -t glowup-backend:scan .
           echo "Docker image built successfully"
-          docker images | grep glowup-backend:scan
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0
