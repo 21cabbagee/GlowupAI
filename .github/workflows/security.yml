@@ -108,6 +108,7 @@ jobs:
 
       - name: Install Python security tools
         run: |
+          pip install --upgrade setuptools>=83.0
           pip install bandit safety
 
       - name: Run Bandit (Python Security Linter)
@@ -115,15 +116,15 @@ jobs:
         run: |
           bandit -r glowupai \
             -f json -o bandit-report.json \
-            -ll -i  # Low confidence, ignore informational
+            -ll -i
           bandit -r glowupai -ll
 
       - name: Run Safety Check (Python Dependencies)
         working-directory: backend
         run: |
           pip install -e .
-          safety check --json > safety-report.json || true
-          safety check
+          safety scan --json > safety-report.json || true
+          safety scan
 
       - name: Upload Security Reports
         if: always()
@@ -273,7 +274,11 @@ jobs:
 
       - name: Build Docker image
         working-directory: backend
-        run: docker build -t glowup-backend:scan .
+        run: |
+          echo "Building Docker image for security scan..."
+          docker build -t glowup-backend:scan .
+          echo "Docker image built successfully"
+          docker images | grep glowup-backend:scan
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
@@ -286,6 +291,18 @@ jobs:
           exit-code: '0'
           ignore-unfixed: true
 
+      - name: Check SARIF file exists
+        if: always()
+        run: |
+          if [ -f trivy-results.sarif ]; then
+            echo "SARIF file created successfully"
+            echo "SARIF_EXISTS=true" >> $GITHUB_ENV
+            ls -lh trivy-results.sarif
+          else
+            echo "WARNING: SARIF file not created by Trivy"
+            echo "SARIF_EXISTS=false" >> $GITHUB_ENV
+          fi
+
       - name: Run Trivy vulnerability scanner (table format)
         uses: aquasecurity/trivy-action@0.28.0
         if: always()
@@ -297,7 +314,8 @@ jobs:
           ignore-unfixed: true
 
       - name: Upload Trivy results to GitHub Security
-        if: always()
+        if: always() && env.SARIF_EXISTS == 'true'
         uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
         with:
           sarif_file: 'trivy-results.sarif'
