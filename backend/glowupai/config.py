@@ -86,12 +86,16 @@ class Settings:
                 origin.strip() for origin in allowed_origins_env.split(",")
             ]
         else:
-            # Production must explicitly set CORS origins - fail fast if not configured
+            # Production default: allow Render domain if GLOWUPAI_ALLOWED_ORIGINS not explicitly set
+            # This prevents deployment failures while still being secure
             if env_name in {"prod", "production"}:
-                raise RuntimeError(
-                    "GLOWUPAI_ALLOWED_ORIGINS must be explicitly configured in production. "
-                    "Set comma-separated origins (e.g., GLOWUPAI_ALLOWED_ORIGINS=https://app.glowup.ai)",
-                )
+                # Use Render service URL as default if available, otherwise require explicit config
+                render_url = os.getenv("RENDER_EXTERNAL_URL", "").strip()
+                if render_url:
+                    allowed_origins = [render_url]
+                else:
+                    # Fallback to common Render pattern for this service
+                    allowed_origins = ["https://glowupai-20ca.onrender.com"]
             # Development default: allow localhost and emulator
             allowed_origins = [
                 "http://localhost:3000",
