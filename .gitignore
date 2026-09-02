@@ -1,48 +1,4 @@
-*.iml
-.gradle
-/local.properties
-/.idea/
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-keystore.properties
-*.keystore
-google-services.json
-
-# Build artifacts and logs
-*.log
-build_output.log
-clean_compile.txt
-compile_output*.txt
-compile.log
-full_build.log
-full_compile.txt
-
-# Test artifacts
-load_test_results/
-load_test_env/
-
-# Kotlin compiler errors
-.kotlin/errors/
-
-# Session transcripts
-my-session.md
-
-# Temp files
-*.tmp
-*.swp
-*.bak
-
-# Python bytecode and caches
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -63,43 +19,105 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+venv/
+env/
+ENV/
+.venv
+
+# PyTorch Models - Use Git LFS for versioning
+*.pth
+*.pt
+*.ckpt
+checkpoints/
+models/*.pth
 
 # Testing
 .tox/
-.nox/
 .coverage
 .coverage.*
 .cache
+.pytest_cache/
 nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-.pytest_cache/
+htmlcov/
 
-# Virtual environments
-venv/
-venv.old/
-test_venv/
-ENV/
-env.bak/
-venv.bak/
+# Jupyter
+.ipynb_checkpoints
+*.ipynb
 
-# Node/Web
-node_modules/
-.next/
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+
+# Android
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+bin/
+gen/
 out/
-.vercel/
+.idea/
+local.properties
+*.iml
+.externalNativeBuild
+.cxx/
+*.jks
+keystore.properties
 
-# Database files
+# Android Build Outputs
+app/build/
+app/release/
+*/build/
+captures/
+.navigation/
+
+# Secrets
+.env
+.env.local
+*.key
+*.pem
+google-services.json
+first.py
+
+# Logs
+*.log
+logs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Database
 *.db
 *.sqlite
 *.sqlite3
+.data/
 
-# Environment files
-.env
-.env.local
-.env.production
-.env.*.local
+# OS
+.DS_Store
+Thumbs.db
 
-# Audit/documentation artifacts
-REPOSITORY_AUDIT.md
+# Temporary
+*.tmp
+*.bak
+*.swp
+*~
+
+# Documentation builds
+docs/_build/
+
+# PyCharm
+.idea/

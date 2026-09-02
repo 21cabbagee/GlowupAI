@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/piyushxpc7/GlowupAI/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📖 Documentation
+    url: https://github.com/piyushxpc7/GlowupAI/blob/main/README.md
+    about: Read the documentation for setup and usage guides
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/piyushxpc7/GlowupAI/security/advisories/new
+    about: Report security vulnerabilities privately
