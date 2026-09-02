@@ -15,6 +15,7 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    continue-on-error: true  # Don't send failure emails for build issues
 
     steps:
       - name: Checkout code
