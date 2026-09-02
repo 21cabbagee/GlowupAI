@@ -63,7 +63,7 @@ jobs:
         id: pytest
         working-directory: backend
         env:
-          SKINPROOF_RATE_LIMIT_ENABLED: "0"
+          GLOWUPAI_RATE_LIMIT_ENABLED: "0"
         run: |
           pytest tests/ \
             --cov=glowupai \
