@@ -122,10 +122,12 @@ jobs:
       - name: Run Safety Check (Python Dependencies)
         working-directory: backend
         continue-on-error: true
+        env:
+          SAFETY_DB_DIR: /tmp/safety
         run: |
           pip install -e .
-          safety scan --json > safety-report.json || true
-          safety scan || true
+          safety scan --stage cicd --json > safety-report.json || true
+          safety scan --stage cicd || true
 
       - name: Upload Security Reports
         if: always()
@@ -282,7 +284,7 @@ jobs:
           docker images | grep glowup-backend:scan
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.36.0
         continue-on-error: true
         with:
           image-ref: 'glowup-backend:scan'
@@ -305,7 +307,7 @@ jobs:
           fi
 
       - name: Run Trivy vulnerability scanner (table format)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.36.0
         if: always()
         continue-on-error: true
         with:

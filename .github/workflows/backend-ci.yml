@@ -74,18 +74,16 @@ jobs:
             -v
 
       - name: Upload Coverage to Codecov
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v4
+        continue-on-error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: backend/coverage.xml
           flags: backend
           name: backend-${{ matrix.python-version }}
           fail_ci_if_error: false
-
-      - name: Codecov Token Warning
-        if: ${{ secrets.CODECOV_TOKEN == '' }}
-        run: echo "::warning::CODECOV_TOKEN not set, skipping coverage upload"
 
       - name: Upload Test Results
         if: always()
@@ -271,15 +269,15 @@ jobs:
           max_retries=3
           retry_count=0
 
-          while [ $retry_count -lt $max_retries ]; do
+          while [ "$retry_count" -lt "$max_retries" ]; do
             response=$(curl -s -o /dev/null -w "%{http_code}" https://glowupai-20ca.onrender.com/api/roadmap)
-            if [ $response -eq 200 ]; then
+            if [ "$response" -eq 200 ]; then
               echo "✅ Health check passed!"
               exit 0
             else
               retry_count=$((retry_count + 1))
               echo "⚠️ Health check returned status $response (attempt $retry_count/$max_retries)"
-              if [ $retry_count -lt $max_retries ]; then
+              if [ "$retry_count" -lt "$max_retries" ]; then
                 echo "Waiting 10 seconds before retry..."
                 sleep 10
               fi
