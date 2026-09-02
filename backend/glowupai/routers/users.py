@@ -100,7 +100,9 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.update_profile, user_id, **payload.model_dump())
+        result: dict[str, Any] = run_handler(
+            service.update_profile, user_id, **payload.model_dump()
+        )
         return result
 
     @router.post("/users/{user_id}/consent")

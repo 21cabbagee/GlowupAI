@@ -21,9 +21,9 @@ class RedisRateLimiter:
     def __init__(self, redis_url: str | None = None):
         self.redis_url = redis_url
         self.redis_client = None
-        self.fallback_memory: dict[
-            str, list[float]
-        ] = {}  # Fallback for when Redis is unavailable
+        self.fallback_memory: dict[str, list[float]] = (
+            {}
+        )  # Fallback for when Redis is unavailable
 
         # Rate limits: (requests_per_minute, window_seconds)
         self.limits = {

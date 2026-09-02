@@ -32,25 +32,29 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
 
     @router.get("/analytics/summary")
     def analytics_summary(user_id: str) -> dict[str, Any]:
-        return run_handler(service.summary, user_id)
+        result: dict[str, Any] = run_handler(service.summary, user_id)
+        return result
 
     @router.get("/analytics/trends")
     def analytics_trends(user_id: str, vertical: str = "skin") -> dict[str, Any]:
-        return run_handler(service.trends, user_id, vertical)
+        result: dict[str, Any] = run_handler(service.trends, user_id, vertical)
+        return result
 
     @router.get("/users/{user_id}/analytics")
     def analytics(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.analytics, user_id)
+        result: dict[str, Any] = run_handler(service.analytics, user_id)
+        return result
 
     @router.get("/users/{user_id}/engagement")
     def engagement(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.engagement, user_id)
+        result: dict[str, Any] = run_handler(service.engagement, user_id)
+        return result
 
     @router.post("/users/{user_id}/engagement")
     def engagement_event(
@@ -59,20 +63,22 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.record_engagement,
             user_id,
             payload.event_type,
             payload.reference_id,
             payload.metadata,
         )
+        return result
 
     @router.get("/users/{user_id}/context-events")
     def context_events(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
-        return run_handler(service.context_events, user_id)
+        result: list[dict[str, Any]] = run_handler(service.context_events, user_id)
+        return result
 
     @router.post("/users/{user_id}/context-events")
     def add_context_event(
@@ -81,7 +87,7 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.add_context_event,
             user_id,
             payload.event_type,
@@ -89,6 +95,7 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
             payload.occurred_at,
             payload.notes,
         )
+        return result
 
     @router.get("/users/{user_id}/root-cause")
     def root_cause(
@@ -97,20 +104,23 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.root_cause_search, user_id, metric)
+        result: dict[str, Any] = run_handler(service.root_cause_search, user_id, metric)
+        return result
 
     @router.get("/users/{user_id}/budget-optimizer")
     def budget_optimizer(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.budget_optimizer, user_id)
+        result: dict[str, Any] = run_handler(service.budget_optimizer, user_id)
+        return result
 
     @router.get("/users/{user_id}/derm-export")
     def derm_export(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.dermatologist_report, user_id)
+        result: dict[str, Any] = run_handler(service.dermatologist_report, user_id)
+        return result
 
     return router

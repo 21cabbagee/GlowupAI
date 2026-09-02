@@ -182,7 +182,9 @@ def build_vision_service(settings) -> GoogleGeminiVisionService | None:
             api_key=api_key,
             model=getattr(settings, "gemini_model", "gemini-3.5-flash-lite"),
         )
-    except Exception:  # noqa: BLE001  # Catch-all for service initialization with fallback
+    except (
+        Exception
+    ):  # noqa: BLE001  # Catch-all for service initialization with fallback
         return None
 
 
@@ -201,5 +203,7 @@ def build_insight_service(
             api_key=api_key,
             model=getattr(settings, "gemini_model", "gemini-3.5-flash-lite"),
         )
-    except Exception:  # noqa: BLE001  # Catch-all for service initialization with fallback
+    except (
+        Exception
+    ):  # noqa: BLE001  # Catch-all for service initialization with fallback
         return GroundedInsightService()

@@ -475,7 +475,9 @@ class GuidanceService:
                 if fn:
                     return fn(*args)
                 return default
-            except Exception as e:  # noqa: BLE001  # Catch-all for dashboard feature resilience
+            except (
+                Exception
+            ) as e:  # noqa: BLE001  # Catch-all for dashboard feature resilience
                 logger.error(f"Dashboard {label} failed for user {user_id}: {e!s}")
                 return default
 
@@ -491,7 +493,9 @@ class GuidanceService:
             features["product_verdicts_unlocked"] = int(
                 self._free_unlocked_product_id(user_id) is not None or plan == "premium"
             )
-        except Exception as e:  # noqa: BLE001  # Catch-all for dashboard feature resilience
+        except (
+            Exception
+        ) as e:  # noqa: BLE001  # Catch-all for dashboard feature resilience
             logger.error(f"Dashboard features check failed for user {user_id}: {e!s}")
             features["product_verdicts_unlocked"] = 0
 
@@ -504,7 +508,9 @@ class GuidanceService:
                     (user_id,),
                 )
             ]
-        except Exception as e:  # noqa: BLE001  # Catch-all for dashboard feature resilience
+        except (
+            Exception
+        ) as e:  # noqa: BLE001  # Catch-all for dashboard feature resilience
             logger.error(f"Dashboard routine_events failed for user {user_id}: {e!s}")
             routine_events = []
 

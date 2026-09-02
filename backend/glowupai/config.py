@@ -96,14 +96,15 @@ class Settings:
                 else:
                     # Fallback to common Render pattern for this service
                     allowed_origins = ["https://glowupai-20ca.onrender.com"]
-            # Development default: allow localhost and emulator
-            allowed_origins = [
-                "http://localhost:3000",
-                "http://localhost:8000",
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:8000",
-                "http://10.0.2.2:8000",  # Android emulator
-            ]
+            else:
+                # Development default: allow localhost and emulator
+                allowed_origins = [
+                    "http://localhost:3000",
+                    "http://localhost:8000",
+                    "http://127.0.0.1:3000",
+                    "http://127.0.0.1:8000",
+                    "http://10.0.2.2:8000",  # Android emulator
+                ]
         return cls(
             db_path=db_path,
             photo_dir=Path(photo_dir_value) if photo_dir_value else None,

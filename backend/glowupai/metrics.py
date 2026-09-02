@@ -75,7 +75,9 @@ def analyze(
             from .ml_model import analyze_with_ml
 
             return analyze_with_ml(image_bytes, quality_score, baseline)
-        except Exception as exc:  # noqa: BLE001  # Catch-all for ML model failures with fallback
+        except (
+            Exception
+        ) as exc:  # noqa: BLE001  # Catch-all for ML model failures with fallback
             # Fall back to deterministic model if ML model fails
             logger.warning(f"ML model failed, falling back to deterministic: {exc}")
 

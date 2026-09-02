@@ -149,7 +149,9 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         product_id: str, user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.product_detail, user_id, product_id)
+        result: dict[str, Any] = run_handler(
+            service.product_detail, user_id, product_id
+        )
         return result
 
     @router.get("/products/{product_id}/ingredient-explainer")
@@ -157,7 +159,9 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         product_id: str, user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.ingredient_explainer, user_id, product_id)
+        result: dict[str, Any] = run_handler(
+            service.ingredient_explainer, user_id, product_id
+        )
         return result
 
     @router.get("/products/{product_id}/predict")
@@ -165,7 +169,9 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         product_id: str, user_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.predict_product, user_id, product_id)
+        result: dict[str, Any] = run_handler(
+            service.predict_product, user_id, product_id
+        )
         return result
 
     @router.post("/users/{user_id}/purchase-guidance")
@@ -175,7 +181,9 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.purchase_guidance, user_id, **payload.model_dump())
+        result: dict[str, Any] = run_handler(
+            service.purchase_guidance, user_id, **payload.model_dump()
+        )
         return result
 
     @router.post("/routine-events")
@@ -183,7 +191,9 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         payload: RoutineEventCreate, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(payload.user_id, authorization)
-        result: dict[str, Any] = run_handler(service.add_routine_event, **payload.model_dump())
+        result: dict[str, Any] = run_handler(
+            service.add_routine_event, **payload.model_dump()
+        )
         return result
 
     @router.get("/users/{user_id}/confound-check")
@@ -193,7 +203,9 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.confound_check, user_id, exclude_product_id)
+        result: dict[str, Any] = run_handler(
+            service.confound_check, user_id, exclude_product_id
+        )
         return result
 
     @router.post("/experiments")
@@ -252,7 +264,9 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.ask, user_id, payload.question, payload.thread_id)
+        result: dict[str, Any] = run_handler(
+            service.ask, user_id, payload.question, payload.thread_id
+        )
         return result
 
     @router.get("/users/{user_id}/qna")

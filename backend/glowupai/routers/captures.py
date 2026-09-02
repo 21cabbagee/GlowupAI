@@ -89,7 +89,7 @@ def setup_captures_router(
             quality=int(os.getenv("GLOWUPAI_IMAGE_QUALITY", "85")),
         )
 
-        result = run_handler(
+        result: dict[str, Any] = run_handler(
             service.create_capture,
             payload.user_id,
             compressed_image,
@@ -126,18 +126,19 @@ def setup_captures_router(
     ) -> dict[str, Any]:
         """Submit feedback for a capture."""
         # Extract user_id from authorization
-        uid = (
+        token_result = (
             verify_id_token(
                 authorization.replace("Bearer ", ""),
                 service.settings.firebase_project_id,
-            )["uid"]
+            )
             if authorization
             else None
         )
+        uid = token_result.uid if token_result else None
         if not uid:
             raise HTTPException(status_code=401, detail="Unauthorized")
 
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.submit_capture_feedback,
             capture_id,
             uid,
@@ -146,6 +147,7 @@ def setup_captures_router(
             payload.get("corrections"),
             payload.get("comment"),
         )
+        return result
 
     @router.get("/users/{user_id}/capture-guide")
     def capture_guide(
@@ -154,7 +156,8 @@ def setup_captures_router(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.capture_guide, user_id, vertical)
+        result: dict[str, Any] = run_handler(service.capture_guide, user_id, vertical)
+        return result
 
     @router.get("/users/{user_id}/dashboard")
     def dashboard(
@@ -163,16 +166,17 @@ def setup_captures_router(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.dashboard, user_id, vertical)
+        result: dict[str, Any] = run_handler(service.dashboard, user_id, vertical)
+        return result
 
     @router.get("/users/{user_id}/history")
     def history(
         user_id: str,
         vertical: str = "skin",
         authorization: str | None = Header(default=None),
-    ) -> list[dict[str, Any]]:
+    ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        result = run_handler(service.history, user_id, vertical)
+        result: dict[str, Any] = run_handler(service.history, user_id, vertical)
 
         # Track comparison viewed
         if result and len(result.get("captures", [])) > 1:
@@ -186,7 +190,8 @@ def setup_captures_router(
         user_id: str, limit: int = 30, authorization: str | None = Header(default=None)
     ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
-        return run_handler(service.check_ins, user_id, limit)
+        result: list[dict[str, Any]] = run_handler(service.check_ins, user_id, limit)
+        return result
 
     @router.post("/users/{user_id}/check-ins")
     def create_check_in(
@@ -195,7 +200,10 @@ def setup_captures_router(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.create_check_in, user_id, **payload.model_dump())
+        result: dict[str, Any] = run_handler(
+            service.create_check_in, user_id, **payload.model_dump()
+        )
+        return result
 
     @router.get("/users/{user_id}/weekly-recap")
     def weekly_recap(
@@ -205,7 +213,10 @@ def setup_captures_router(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.weekly_recap, user_id, vertical, as_of)
+        result: dict[str, Any] = run_handler(
+            service.weekly_recap, user_id, vertical, as_of
+        )
+        return result
 
     @router.post("/users/{user_id}/measurement-feedback")
     def measurement_feedback(
@@ -214,20 +225,22 @@ def setup_captures_router(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.add_measurement_feedback,
             user_id,
             payload.capture_id,
             payload.agreement,
             payload.note,
         )
+        return result
 
     @router.get("/users/{user_id}/labels")
     def labels(
         user_id: str, authorization: str | None = Header(default=None)
     ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
-        return run_handler(service.labels, user_id)
+        result: list[dict[str, Any]] = run_handler(service.labels, user_id)
+        return result
 
     @router.post("/users/{user_id}/labels")
     def add_label(
@@ -236,7 +249,7 @@ def setup_captures_router(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.add_label,
             user_id,
             payload.photo_id,
@@ -245,6 +258,7 @@ def setup_captures_router(
             payload.confidence,
             payload.notes,
         )
+        return result
 
     @router.post("/users/{user_id}/reprocess")
     def reprocess(
@@ -253,14 +267,18 @@ def setup_captures_router(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.reprocess, user_id, payload.model_version)
+        result: dict[str, Any] = run_handler(
+            service.reprocess, user_id, payload.model_version
+        )
+        return result
 
     @router.get("/users/{user_id}/reprocess/{job_id}")
     def reprocess_status(
         user_id: str, job_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.reprocess_status, user_id, job_id)
+        result: dict[str, Any] = run_handler(service.reprocess_status, user_id, job_id)
+        return result
 
     @router.post("/users/{user_id}/shelf-scan")
     def shelf_scan(
@@ -275,14 +293,16 @@ def setup_captures_router(
             raise HTTPException(
                 status_code=400, detail="image_base64 must be valid base64"
             ) from exc
-        return run_handler(service.scan_shelf, user_id, image)
+        result: dict[str, Any] = run_handler(service.scan_shelf, user_id, image)
+        return result
 
     @router.get("/users/{user_id}/shelf-scan/{job_id}")
     def shelf_scan_status(
         user_id: str, job_id: str, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(service.shelf_scan_status, user_id, job_id)
+        result: dict[str, Any] = run_handler(service.shelf_scan_status, user_id, job_id)
+        return result
 
     @router.post("/users/{user_id}/shelf-scan/{job_id}/confirm")
     def shelf_scan_confirm(
@@ -292,8 +312,9 @@ def setup_captures_router(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_owner(user_id, authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.confirm_shelf_scan, user_id, job_id, payload.selections
         )
+        return result
 
     return router

@@ -35,7 +35,8 @@ def setup_admin_router(
     def metrics(authorization: str | None = Header(default=None)) -> dict[str, Any]:
         """Get application metrics (admin only)."""
         require_admin(authorization)
-        return metrics_collector.get_metrics()
+        result: dict[str, Any] = metrics_collector.get_metrics()
+        return result
 
     @router.get("/cache/diagnostics", tags=["monitoring"])
     def cache_diagnostics(
@@ -63,7 +64,7 @@ def setup_admin_router(
         payload: OfferCreate, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         require_admin(authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.add_offer,
             payload.product_id,
             payload.merchant,
@@ -71,6 +72,7 @@ def setup_admin_router(
             payload.price_cents,
             payload.currency,
         )
+        return result
 
     @router.post("/triage")
     def triage_question(
@@ -78,21 +80,24 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """AI triage endpoint - requires authentication to prevent abuse."""
         require_admin(authorization)  # Protect against AI service abuse
-        return service.triage_question(payload.text)
+        result: dict[str, Any] = service.triage_question(payload.text)
+        return result
 
     @router.get("/admin/audit")
     def audit(
         limit: int = 100, authorization: str | None = Header(default=None)
     ) -> list[dict[str, Any]]:
         require_admin(authorization)
-        return service.admin_audit(limit)
+        result: list[dict[str, Any]] = service.admin_audit(limit)
+        return result
 
     @router.get("/admin/measurement-feedback")
     def measurement_feedback_summary(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         require_admin(authorization)
-        return service.measurement_feedback_summary()
+        result: dict[str, Any] = service.measurement_feedback_summary()
+        return result
 
     @router.get("/admin/analytics")
     def admin_analytics(
@@ -100,7 +105,8 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Get analytics summary for admins."""
         require_admin(authorization)
-        return analytics.get_analytics_summary(days)
+        result: dict[str, Any] = analytics.get_analytics_summary(days)
+        return result
 
     @router.get("/admin/analytics/daily")
     def admin_analytics_daily(
@@ -108,7 +114,8 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Get daily analytics stats for admins."""
         require_admin(authorization)
-        return analytics.get_daily_stats(days)
+        result: dict[str, Any] = analytics.get_daily_stats(days)
+        return result
 
     @router.get("/admin/analytics/events")
     def admin_analytics_events(
@@ -118,7 +125,8 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Get event counts by type for admins."""
         require_admin(authorization)
-        return analytics.get_event_counts(days, event_type)
+        result: dict[str, Any] = analytics.get_event_counts(days, event_type)
+        return result
 
     @router.get("/admin/feedback")
     def admin_feedback(
@@ -126,7 +134,8 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Get feedback statistics for admin dashboard."""
         require_admin(authorization)
-        return run_handler(service.get_feedback_stats)
+        result: dict[str, Any] = run_handler(service.get_feedback_stats)
+        return result
 
     @router.get("/admin/feedback/corrections")
     def admin_feedback_corrections(
@@ -134,7 +143,8 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Get feedback corrections for retraining."""
         require_admin(authorization)
-        return run_handler(service.get_feedback_corrections, limit)
+        result: dict[str, Any] = run_handler(service.get_feedback_corrections, limit)
+        return result
 
     @router.get("/admin/feedback/accuracy")
     def admin_feedback_accuracy(
@@ -142,7 +152,8 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Get metric accuracy analysis."""
         require_admin(authorization)
-        return run_handler(service.get_metric_accuracy_analysis)
+        result: dict[str, Any] = run_handler(service.get_metric_accuracy_analysis)
+        return result
 
     @router.get("/admin/monitoring")
     def admin_monitoring(
@@ -150,7 +161,8 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Get model health monitoring status."""
         require_admin(authorization)
-        return run_handler(service.get_model_health_status)
+        result: dict[str, Any] = run_handler(service.get_model_health_status)
+        return result
 
     @router.get("/admin/monitoring/daily-report")
     def admin_monitoring_daily(
@@ -158,7 +170,8 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Get daily monitoring report."""
         require_admin(authorization)
-        return run_handler(service.generate_monitoring_daily_report)
+        result: dict[str, Any] = run_handler(service.generate_monitoring_daily_report)
+        return result
 
     @router.get("/admin/data-collection/stats")
     def admin_data_collection_stats(
@@ -166,7 +179,8 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Get data collection statistics."""
         require_admin(authorization)
-        return run_handler(service.get_collection_stats)
+        result: dict[str, Any] = run_handler(service.get_collection_stats)
+        return result
 
     @router.post("/admin/data-collection/export")
     def admin_data_collection_export(
@@ -174,12 +188,13 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Export collected data as training dataset."""
         require_admin(authorization)
-        return run_handler(
+        result: dict[str, Any] = run_handler(
             service.export_training_dataset,
             payload.get("output_dir"),
             payload.get("min_quality", 0.75),
             payload.get("max_samples"),
         )
+        return result
 
     @router.post("/admin/data-collection/cleanup")
     def admin_data_collection_cleanup(
@@ -187,6 +202,9 @@ def setup_admin_router(
     ) -> dict[str, Any]:
         """Cleanup old collected data (GDPR/CCPA compliance)."""
         require_admin(authorization)
-        return run_handler(service.cleanup_old_data, payload.get("retention_days", 365))
+        result: dict[str, Any] = run_handler(
+            service.cleanup_old_data, payload.get("retention_days", 365)
+        )
+        return result
 
     return router
