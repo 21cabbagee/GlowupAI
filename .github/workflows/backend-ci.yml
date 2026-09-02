@@ -288,31 +288,14 @@ jobs:
           echo "❌ Health check failed after $max_retries attempts"
           exit 1
 
-      - name: Notify deployment success
+      - name: Log deployment success
         if: success()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const healthCheckPassed = '${{ steps.health_check.outcome }}' === 'success';
-            let message = '🚀 Backend deployed successfully to Render!';
-            if (!healthCheckPassed) {
-              message += '\n\n⚠️ Note: Health check did not pass, but deployment was triggered.';
-            }
-            github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-              body: message
-            });
+        run: |
+          echo "✅ Backend deployed successfully to Render!"
+          echo "Health check status: ${{ steps.health_check.outcome }}"
 
-      - name: Notify deployment issues
+      - name: Log deployment issues
         if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-              body: '❌ Backend deployment encountered issues. Check the workflow logs for details.'
-            });
+        run: |
+          echo "❌ Backend deployment encountered issues."
+          echo "Check the workflow logs and Render dashboard for details."
