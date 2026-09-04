@@ -276,8 +276,8 @@ fun AchievementBadge(
                                             Color.White.copy(alpha = 0.4f),
                                             Color.Transparent,
                                         ),
-                                    start = Offset(shimmerTranslate * size.width, 0f),
-                                    end = Offset(shimmerTranslate * size.width + size.width, size.height),
+                                    start = Offset(shimmerTranslate * this.size.width, 0f),
+                                    end = Offset(shimmerTranslate * this.size.width + this.size.width, this.size.height),
                                 )
                             drawRect(brush = shimmerBrush)
                         }
