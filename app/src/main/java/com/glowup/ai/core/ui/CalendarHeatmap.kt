@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -63,9 +64,11 @@ fun CalendarHeatmap(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                val configuration = LocalConfiguration.current
+                val locale = configuration.locales[0]
                 Text(
                     text =
-                        currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault()) +
+                        currentMonth.month.getDisplayName(TextStyle.FULL, locale) +
                             " ${currentMonth.year}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,

@@ -1,5 +1,6 @@
 package com.glowup.ai.di
 
+import com.glowup.ai.data.local.SessionStore
 import com.glowup.ai.data.work.ReminderNotifier
 import com.glowup.ai.data.work.WorkModule
 import dagger.Module
@@ -22,15 +23,7 @@ object TestWorkModule {
     @Provides
     @Singleton
     fun provideReminderNotifier(): ReminderNotifier = object : ReminderNotifier {
-        override suspend fun scheduleReminder(userId: String, timeMillis: Long) {
-            // No-op for tests
-        }
-
-        override suspend fun cancelReminder(userId: String) {
-            // No-op for tests
-        }
-
-        override suspend fun showImmediateNotification(title: String, message: String) {
+        override suspend fun notifyCaptureDue(settings: SessionStore.ReminderSettings) {
             // No-op for tests
         }
     }

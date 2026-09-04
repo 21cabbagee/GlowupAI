@@ -7,6 +7,7 @@ import com.glowup.ai.testing.MockResponses
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlin.Result
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockWebServer
 import retrofit2.Retrofit
-import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import okhttp3.MediaType.Companion.toMediaType
 import javax.inject.Singleton
 import com.glowup.ai.di.NetworkModule
@@ -37,8 +37,7 @@ object TestNetworkModule {
     @Provides
     @Singleton
     fun provideTokenProvider(): TokenProvider = object : TokenProvider {
-        override suspend fun getToken(): String = "test_token"
-        override suspend fun refreshToken(): String = "test_token"
+        override suspend fun idToken(forceRefresh: Boolean): String = "test_token"
     }
 
     @Provides

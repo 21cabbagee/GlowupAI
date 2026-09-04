@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.GlowSpacing
@@ -113,6 +114,8 @@ private fun OfferCard(
     onCtaClick: () -> Unit,
     onRetryOpen: () -> Unit,
 ) {
+    val configuration = LocalConfiguration.current
+    val locale = configuration.locales[0]
     val glow = LocalGlowColors.current
     GlowCard(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -131,7 +134,7 @@ private fun OfferCard(
                 )
             }
             Text(
-                text = formatPrice(offer.priceCents, offer.currency),
+                text = formatPrice(offer.priceCents, offer.currency, locale),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = glow.ink900,
@@ -197,8 +200,9 @@ private fun OfferCard(
 private fun formatPrice(
     priceCents: Int?,
     currency: String,
+    locale: java.util.Locale,
 ): String {
     if (priceCents == null) return "Price varies"
     val amount = priceCents / 100.0
-    return String.format(Locale.getDefault(), "%s %.2f", currency, amount)
+    return String.format(locale, "%s %.2f", currency, amount)
 }

@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,6 +43,8 @@ fun MonthlyRecapScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val configuration = LocalConfiguration.current
+    val locale = configuration.locales[0]
     val glowColors = LocalGlowColors.current
     val honeyColor = glowColors.honey500
     val inkColor = glowColors.ink900
@@ -49,7 +52,7 @@ fun MonthlyRecapScreen(
     Scaffold(
         topBar = {
             GlowTopBar(
-                title = "Your ${month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} Journey",
+                title = "Your ${month.month.getDisplayName(TextStyle.FULL, locale)} Journey",
                 onBack = onBackClick,
             )
         },

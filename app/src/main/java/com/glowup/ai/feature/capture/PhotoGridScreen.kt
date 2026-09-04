@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,8 @@ fun PhotoGridScreen(
     onCompareClick: (Capture, Capture) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val configuration = LocalConfiguration.current
+    val locale = configuration.locales[0]
     var selectedFilter by remember { mutableStateOf(PhotoGridFilter.ALL) }
     var selectionMode by remember { mutableStateOf(false) }
     var selectedCaptures by remember { mutableStateOf(setOf<String>()) }
@@ -110,7 +113,7 @@ fun PhotoGridScreen(
 
             // Grid
             val filteredCaptures = filterCaptures(captures, selectedFilter)
-            val groupedByMonth = groupCapturesByMonth(filteredCaptures)
+            val groupedByMonth = groupCapturesByMonth(filteredCaptures, locale)
 
             if (groupedByMonth.isEmpty()) {
                 // Empty state
@@ -371,10 +374,10 @@ private fun filterCaptures(
 /**
  * Helper: Group captures by month
  */
-private fun groupCapturesByMonth(captures: List<Capture>): Map<String, List<Capture>> =
+private fun groupCapturesByMonth(captures: List<Capture>, locale: java.util.Locale): Map<String, List<Capture>> =
     captures
         .sortedByDescending { it.capturedAt }
         .groupBy {
             val date = LocalDate.parse(it.capturedAt.take(10))
-            "${date.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${date.year}"
+            "${date.month.getDisplayName(TextStyle.FULL, locale)} ${date.year}"
         }

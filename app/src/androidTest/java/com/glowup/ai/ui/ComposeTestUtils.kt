@@ -5,11 +5,11 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.isNotOn
 import androidx.compose.ui.test.isOn
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 
 /**
  * Compose UI test utilities and extension functions for GlowUp AI tests.
@@ -19,6 +19,20 @@ import androidx.compose.ui.test.onNodeWithText
  * - Offering flexible matchers
  * - Handling common test scenarios
  */
+
+// ================================================================================================
+// Semantic Matcher Helpers
+// ================================================================================================
+
+/**
+ * Creates a SemanticsMatcher that matches nodes that are NOT in the "on" state.
+ * This is the inverse of isOn().
+ */
+fun isNotOn(): SemanticsMatcher {
+    return SemanticsMatcher("is not on") { node ->
+        !isOn().matches(node)
+    }
+}
 
 // ================================================================================================
 // Extension Functions for Better Readability
