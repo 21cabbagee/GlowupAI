@@ -37,7 +37,7 @@ cameraX = "1.4.1"
 mlkitFaceDetection = "16.1.7"
 
 # Images
-coil = "3.0.4"
+coil = "3.6.0"
 
 # Charts
 vico = "2.5.2"
