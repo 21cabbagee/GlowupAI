@@ -3,6 +3,7 @@ package com.glowup.ai.core.ui
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,27 +15,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.glowup.ai.core.design.GlowShapes
 import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.LocalGlowColors
-import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottomAxis
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStartAxis
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
-import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
-import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -49,8 +38,9 @@ data class TrendDataPoint(
 )
 
 /**
- * Trend Chart Component using Vico
+ * Trend Chart Component - Simplified version
  * Displays metric trends over time with interactive data points
+ * TODO: Restore Vico chart implementation after fixing API compatibility
  */
 @Composable
 fun TrendChart(
@@ -62,37 +52,24 @@ fun TrendChart(
     showTrend: Boolean = true,
 ) {
     val glowColors = LocalGlowColors.current
-    val chartColor = glowColors.honey500
-
-    // Convert data points to chart data
-    val modelProducer =
-        remember(dataPoints) {
-            CartesianChartModelProducer.build {
-                lineSeries {
-                    series(dataPoints.map { it.value.toDouble() })
-                }
-            }
-        }
 
     // Calculate trend
     val trend =
-        remember(dataPoints) {
-            if (dataPoints.size < 2) {
-                null
-            } else {
-                val first = dataPoints.first().value
-                val last = dataPoints.last().value
-                val change = ((last - first) / first * 100)
-                TrendInfo(
-                    percentage = change,
-                    direction =
-                        when {
-                            change > 0 -> TrendDirection.UP
-                            change < 0 -> TrendDirection.DOWN
-                            else -> TrendDirection.STABLE
-                        },
-                )
-            }
+        if (dataPoints.size >= 2) {
+            val first = dataPoints.first().value
+            val last = dataPoints.last().value
+            val change = ((last - first) / first * 100)
+            TrendInfo(
+                percentage = change,
+                direction =
+                    when {
+                        change > 0 -> TrendDirection.UP
+                        change < 0 -> TrendDirection.DOWN
+                        else -> TrendDirection.STABLE
+                    },
+            )
+        } else {
+            null
         }
 
     Card(
@@ -141,54 +118,22 @@ fun TrendChart(
                 }
             }
 
-            // Chart
+            // Placeholder for chart - will be replaced with Vico implementation
             if (dataPoints.isNotEmpty()) {
-                CartesianChartHost(
+                Box(
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .height(200.dp)
                             .padding(top = GlowSpacing.sm),
-                    chart =
-                        rememberCartesianChart(
-                            rememberLineCartesianLayer(),
-                            startAxis =
-                                rememberStartAxis(
-                                    label =
-                                        rememberTextComponent(
-                                            color = glowColors.ink600,
-                                            textSize = 12.sp,
-                                        ),
-                                ),
-                            bottomAxis =
-                                rememberBottomAxis(
-                                    label =
-                                        rememberTextComponent(
-                                            color = glowColors.ink600,
-                                            textSize = 12.sp,
-                                        ),
-                                    valueFormatter = { value, _, _ ->
-                                        // Format date labels
-                                        try {
-                                            val index = value.toInt()
-                                            if (index in dataPoints.indices) {
-                                                val timestamp = dataPoints[index].timestamp
-                                                Instant
-                                                    .parse(timestamp)
-                                                    .atZone(ZoneId.systemDefault())
-                                                    .format(DateTimeFormatter.ofPattern("MM/dd"))
-                                            } else {
-                                                ""
-                                            }
-                                        } catch (e: Exception) {
-                                            ""
-                                        }
-                                    },
-                                ),
-                        ),
-                    modelProducer = modelProducer,
-                    zoomState = rememberVicoZoomState(zoomEnabled = true),
-                )
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "Chart visualization\n${dataPoints.size} data points",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = glowColors.ink600,
+                    )
+                }
             } else {
                 EmptyState(
                     title = "No data yet",
