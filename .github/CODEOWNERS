@@ -1,0 +1,27 @@
+# GlowupAI Code Owners
+# These owners will be automatically requested for review when someone opens a PR
+
+# Global owners (applies to everything unless overridden)
+* @21cabbagee @piyushxpc7
+
+# Backend (Python/FastAPI)
+/backend/ @21cabbagee @piyushxpc7
+/backend/glowupai/ @21cabbagee
+/backend/tests/ @21cabbagee
+
+# Android (Kotlin/Compose)
+/app/ @21cabbagee @piyushxpc7
+/app/src/main/ @21cabbagee
+
+# CI/CD Workflows
+/.github/ @21cabbagee
+/.github/workflows/ @21cabbagee
+
+# Documentation
+/README.md @21cabbagee @piyushxpc7
+/CONTRIBUTING.md @21cabbagee @piyushxpc7
+/SECURITY.md @21cabbagee
+
+# Configuration
+/pyproject.toml @21cabbagee
+/build.gradle.kts @21cabbagee
