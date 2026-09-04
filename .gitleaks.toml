@@ -1,0 +1,62 @@
+# GlowupAI Gitleaks Configuration
+# Allowlists for false positives in documentation and examples
+
+title = "GlowupAI Secret Scanning Config"
+
+# Allowlist documentation files with example tokens
+[[rules]]
+id = "ignore-documentation-examples"
+description = "Ignore example tokens in documentation"
+regex = '''(?i)(api[_-]?key|token|secret|password)\s*[:=]\s*["']?[a-zA-Z0-9_-]+["']?'''
+paths = [
+    '''ENV_VARS_REFERENCE\.md$''',
+    '''CACHE_QUICKSTART\.md$''',
+    '''RAILWAY_DEPLOY\.md$''',
+    '''SECURITY_DEPLOYMENT_CHECKLIST\.md$''',
+    '''TESTING_SECURITY_CHECKLIST\.md$''',
+    '''FIX_VERIFICATION\.md$''',
+]
+
+# Allowlist .env.example files (templates, not real secrets)
+[[rules]]
+id = "ignore-env-examples"
+description = "Ignore placeholder values in .env.example files"
+paths = [
+    '''\.env\.example$''',
+    '''\.env\.template$''',
+]
+
+# Allowlist backend CI test values
+[[rules]]
+id = "ignore-ci-test-values"
+description = "Ignore test encryption keys in CI workflows"
+paths = [
+    '''\.github/workflows/backend-ci\.yml$''',
+]
+
+# Allowlist deleted sensitive files (already removed from current code)
+[[rules]]
+id = "ignore-deleted-files"
+description = "Ignore secrets in files that have been deleted"
+paths = [
+    '''RENDER_ADMIN_TOKEN\.txt$''',
+    '''my-session\.md$''',
+]
+
+# Global allowlist for REDACTED placeholders
+[allowlist]
+description = "Global allowlists for common false positives"
+regexes = [
+    '''REDACTED''',
+    '''<generate-.*>''',
+    '''<base64-encoded-.*>''',
+    '''example[_-]?token''',
+    '''test[_-]?(token|key|secret)''',
+    '''Bearer\s+test''',
+]
+paths = [
+    '''.*\.md$''',              # All markdown documentation
+    '''.*\.example$''',         # All example files
+    '''.*_test\..*$''',         # Test files
+    '''.*/tests?/.*$''',        # Test directories
+]
