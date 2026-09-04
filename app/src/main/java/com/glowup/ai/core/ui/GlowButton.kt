@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +24,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.contentDescription
@@ -101,6 +104,7 @@ fun GlowButton(
     loading: Boolean = false,
     contentDescription: String? = null,
 ) {
+    val glow = LocalGlowColors.current
     val colors = colorsFor(variant)
     val isInteractive = enabled && !loading
     val interactionSource = remember { MutableInteractionSource() }
@@ -126,14 +130,40 @@ fun GlowButton(
         label = "buttonPressScale",
     )
 
+    // Elevation animation: reduce shadow on press
+    val elevation by animateFloatAsState(
+        targetValue = if (isPressed && isInteractive) 1f else 3f,
+        animationSpec =
+            GlowMotion.respectingReducedMotion(
+                GlowMotion.fast,
+                reducedMotion,
+            ) as androidx.compose.animation.core.AnimationSpec<Float>,
+        label = "buttonPressElevation",
+    )
+
     Box(
         modifier =
             modifier
                 .scale(scale)
                 .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
-                .background(
-                    color = if (isInteractive) colors.background else colors.background.copy(alpha = 0.5f),
+                .shadow(
+                    elevation = elevation.dp,
                     shape = GlowShapes.md,
+                )
+                .then(
+                    if (variant == GlowButtonVariant.Primary && isInteractive) {
+                        Modifier.background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(glow.honey500, glow.honey600)
+                            ),
+                            shape = GlowShapes.md,
+                        )
+                    } else {
+                        Modifier.background(
+                            color = if (isInteractive) colors.background else colors.background.copy(alpha = 0.5f),
+                            shape = GlowShapes.md,
+                        )
+                    },
                 ).then(
                     if (colors.border != null) {
                         Modifier.border(1.dp, colors.border, GlowShapes.md)

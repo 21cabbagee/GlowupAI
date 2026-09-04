@@ -48,7 +48,7 @@ export function buttonClass(
   return cx(
     "inline-flex items-center justify-center gap-2 font-semibold whitespace-nowrap",
     "transition-colors duration-[var(--dur-fast)] ease-[var(--ease)]",
-    "active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45",
+    "active:scale-90 disabled:pointer-events-none disabled:opacity-45",
     VARIANTS[variant],
     SIZES[size],
     block && "w-full",
@@ -241,7 +241,70 @@ export function Tag({
 }
 
 export function VerdictTag({ label }: { label: VerdictLabel }) {
-  return <Tag tone={label}>{VERDICT_COPY[label] ?? label}</Tag>;
+  // Dynamic import to avoid circular dependency
+  const getIcon = () => {
+    switch (label) {
+      case "keep":
+        return (
+          <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M5 12.8l4.2 4.2L19 7.2" />
+          </svg>
+        );
+      case "likely_useful":
+        return (
+          <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z" />
+          </svg>
+        );
+      case "evidence_unclear":
+        return (
+          <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M9.4 9.2a2.8 2.8 0 0 1 5 1.8c0 1.9-2.8 2.8-2.8 2.8" />
+            <path d="M12 17h.01" strokeWidth={2.4} />
+          </svg>
+        );
+      case "investigate":
+        return (
+          <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M12 8v4" strokeWidth={2} />
+            <path d="M12 16h.01" strokeWidth={2.4} />
+          </svg>
+        );
+      case "locked":
+        return (
+          <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="4.8" y="10.5" width="14.4" height="9.7" rx="2.2" />
+            <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Gradient backgrounds for each verdict type
+  const gradientStyles: Record<VerdictLabel, string> = {
+    keep: "bg-gradient-to-br from-keep-bg to-[#ffe8a0] text-keep border-transparent",
+    likely_useful: "bg-gradient-to-br from-useful-bg to-[#d4ede0] text-useful border-transparent",
+    evidence_unclear: "bg-gradient-to-br from-unclear-bg to-[#fce7b8] text-unclear border-transparent",
+    investigate: "bg-gradient-to-br from-investigate-bg to-[#f8d9d7] text-investigate border-transparent",
+    locked: "bg-surface-2 text-subtle border-line",
+  };
+
+  return (
+    <span
+      className={cx(
+        "inline-flex items-center gap-1.5 rounded-[var(--radius-full)] border px-2.5 py-1",
+        "text-[11px] font-bold tracking-wide whitespace-nowrap",
+        gradientStyles[label],
+      )}
+    >
+      {getIcon()}
+      {VERDICT_COPY[label] ?? label}
+    </span>
+  );
 }
 
 /* ------------------------------------------------------------------- Field */

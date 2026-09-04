@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { motion, useAnimation } from "motion/react";
 import {
   METRIC_LABELS,
   api,
@@ -26,7 +27,9 @@ import {
   VerdictTag,
   cx,
 } from "@/components/ui";
-import { CameraIcon, ChevronRightIcon, TrendIcon } from "@/components/icons";
+import { ArrowDownIcon, ArrowUpIcon, CameraIcon, ChevronRightIcon, TrendIcon } from "@/components/icons";
+import { AnimatedRefreshIcon } from "@/components/animated-icons";
+import { successHaptic } from "@/lib/haptic";
 
 const METRICS: MetricKey[] = [
   "redness_score",
@@ -85,13 +88,16 @@ export default function HomePage() {
         eyebrow={`${vertical} · your evidence`}
         title="Measured, not remembered."
         action={
-          // Mobile already has the capture FAB in the tab bar.
-          <span className="hidden lg:block">
-            <ButtonLink href="/capture">
-              <CameraIcon size={18} />
-              Guided capture
-            </ButtonLink>
-          </span>
+          <div className="flex items-center gap-2">
+            <AnimatedRefreshIcon onClick={load} aria-label="Refresh dashboard" />
+            {/* Mobile already has the capture FAB in the tab bar. */}
+            <span className="hidden lg:block">
+              <ButtonLink href="/capture">
+                <CameraIcon size={18} />
+                Guided capture
+              </ButtonLink>
+            </span>
+          </div>
         }
       >
         Every number is compared against your own history — never a population
@@ -411,15 +417,39 @@ function WeeklyRecapCard({ recap }: { recap: Dashboard["weekly_recap"] }) {
       <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-muted">{recap.body}</p>
       {recap.metric_summaries.length > 0 && (
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {recap.metric_summaries.map((item) => (
-            <div key={item.metric} className="rounded-[var(--radius)] border border-honey-200 bg-surface/70 p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-subtle">{item.label}</span>
-                <Tag tone={item.direction === "improved" ? "likely_useful" : item.direction === "increased" ? "investigate" : "neutral"}>{item.direction}</Tag>
+          {recap.metric_summaries.map((item) => {
+            const isImproved = item.direction === "improved";
+            const isIncreased = item.direction === "increased";
+            const isDecreased = item.direction === "decreased";
+            const ArrowIcon = isIncreased || isImproved ? ArrowUpIcon : isDecreased ? ArrowDownIcon : null;
+            const arrowColor = isImproved ? "text-useful" : isIncreased ? "text-investigate" : "text-muted";
+            const bgTint = isImproved
+              ? "bg-useful/10"
+              : isIncreased
+              ? "bg-investigate/10"
+              : "";
+
+            return (
+              <div
+                key={item.metric}
+                className={cx(
+                  "rounded-[var(--radius)] border border-honey-200 p-3",
+                  bgTint || "bg-surface/70"
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-subtle">{item.label}</span>
+                  <div className="flex items-center gap-1.5">
+                    {ArrowIcon && <ArrowIcon size={16} className={arrowColor} />}
+                    <span className={cx("text-[12px] font-bold capitalize", arrowColor)}>
+                      {item.direction}
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-2 text-[12px] leading-relaxed text-muted">{item.sentence}</p>
               </div>
-              <p className="mt-2 text-[12px] leading-relaxed text-muted">{item.sentence}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-honey-200 pt-3">
@@ -437,6 +467,22 @@ function QuickCheckIn({ onSaved }: { onSaved: () => Promise<void> }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedSection, setExpandedSection] = useState<"skin" | "routine" | null>(null);
+  const submitControls = useAnimation();
+
+  const skinFeelOptions = [
+    { value: "better" as const, emoji: "😊", label: "Better" },
+    { value: "same" as const, emoji: "😐", label: "Same" },
+    { value: "worse" as const, emoji: "😟", label: "Worse" },
+    { value: "not_sure" as const, emoji: "🤷", label: "Not sure" },
+  ];
+
+  const routineStateOptions = [
+    { value: "steady" as const, emoji: "✅", label: "Steady" },
+    { value: "changed" as const, emoji: "🔄", label: "Changed" },
+    { value: "missed" as const, emoji: "❌", label: "Missed" },
+    { value: "not_sure" as const, emoji: "🤷", label: "Not sure" },
+  ];
 
   const submit = async () => {
     if (!userId || saving) return;
@@ -446,6 +492,13 @@ function QuickCheckIn({ onSaved }: { onSaved: () => Promise<void> }) {
       await api.createCheckIn(userId, { routine_state: routineState, skin_feel: skinFeel });
       setSaved(true);
       await onSaved();
+      // Celebration animation + haptic
+      successHaptic();
+      await submitControls.start({
+        scale: [1, 1.15, 1],
+        rotate: [0, -5, 5, 0],
+        transition: { duration: 0.5, ease: "easeOut" }
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save your check-in");
     } finally {
@@ -460,24 +513,110 @@ function QuickCheckIn({ onSaved }: { onSaved: () => Promise<void> }) {
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div>
           <p className="mb-2 text-[12px] font-bold tracking-wide text-muted">How does your skin feel?</p>
-          <div className="flex flex-wrap gap-2">
-            {(["better", "same", "worse", "not_sure"] as const).map((value) => (
-              <button key={value} type="button" aria-pressed={skinFeel === value} onClick={() => setSkinFeel(value)} className={cx("rounded-[var(--radius-full)] border px-3 py-2 text-[12px] font-semibold capitalize", skinFeel === value ? "border-ink-900 bg-ink-900 text-paper" : "border-line text-muted hover:border-line-strong")}>{value.replace("_", " ")}</button>
-            ))}
+          <button
+            type="button"
+            onClick={() => setExpandedSection(expandedSection === "skin" ? null : "skin")}
+            className="w-full rounded-[var(--radius)] border border-line bg-surface px-4 py-3 text-left transition-all hover:border-line-strong"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2 text-[14px] font-semibold">
+                <span className="text-[20px]">{skinFeelOptions.find(o => o.value === skinFeel)?.emoji}</span>
+                {skinFeelOptions.find(o => o.value === skinFeel)?.label}
+              </span>
+              <ChevronRightIcon
+                size={16}
+                className={cx(
+                  "transition-transform duration-300",
+                  expandedSection === "skin" ? "rotate-90" : ""
+                )}
+              />
+            </div>
+          </button>
+          <div
+            className={cx(
+              "overflow-hidden transition-all duration-300 ease-in-out",
+              expandedSection === "skin" ? "mt-2 max-h-[200px] opacity-100" : "max-h-0 opacity-0"
+            )}
+          >
+            <div className="flex flex-col gap-2">
+              {skinFeelOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setSkinFeel(option.value);
+                    setExpandedSection(null);
+                  }}
+                  className={cx(
+                    "flex items-center gap-3 rounded-[var(--radius)] border px-4 py-2.5 text-left transition-all",
+                    skinFeel === option.value
+                      ? "border-ink-900 bg-ink-900 text-paper"
+                      : "border-line bg-surface hover:border-line-strong hover:bg-surface-2"
+                  )}
+                >
+                  <span className="text-[20px]">{option.emoji}</span>
+                  <span className="text-[13px] font-semibold">{option.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         <div>
           <p className="mb-2 text-[12px] font-bold tracking-wide text-muted">Was your routine steady?</p>
-          <div className="flex flex-wrap gap-2">
-            {(["steady", "changed", "missed", "not_sure"] as const).map((value) => (
-              <button key={value} type="button" aria-pressed={routineState === value} onClick={() => setRoutineState(value)} className={cx("rounded-[var(--radius-full)] border px-3 py-2 text-[12px] font-semibold capitalize", routineState === value ? "border-ink-900 bg-ink-900 text-paper" : "border-line text-muted hover:border-line-strong")}>{value.replace("_", " ")}</button>
-            ))}
+          <button
+            type="button"
+            onClick={() => setExpandedSection(expandedSection === "routine" ? null : "routine")}
+            className="w-full rounded-[var(--radius)] border border-line bg-surface px-4 py-3 text-left transition-all hover:border-line-strong"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2 text-[14px] font-semibold">
+                <span className="text-[20px]">{routineStateOptions.find(o => o.value === routineState)?.emoji}</span>
+                {routineStateOptions.find(o => o.value === routineState)?.label}
+              </span>
+              <ChevronRightIcon
+                size={16}
+                className={cx(
+                  "transition-transform duration-300",
+                  expandedSection === "routine" ? "rotate-90" : ""
+                )}
+              />
+            </div>
+          </button>
+          <div
+            className={cx(
+              "overflow-hidden transition-all duration-300 ease-in-out",
+              expandedSection === "routine" ? "mt-2 max-h-[200px] opacity-100" : "max-h-0 opacity-0"
+            )}
+          >
+            <div className="flex flex-col gap-2">
+              {routineStateOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setRoutineState(option.value);
+                    setExpandedSection(null);
+                  }}
+                  className={cx(
+                    "flex items-center gap-3 rounded-[var(--radius)] border px-4 py-2.5 text-left transition-all",
+                    routineState === option.value
+                      ? "border-ink-900 bg-ink-900 text-paper"
+                      : "border-line bg-surface hover:border-line-strong hover:bg-surface-2"
+                  )}
+                >
+                  <span className="text-[20px]">{option.emoji}</span>
+                  <span className="text-[13px] font-semibold">{option.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
       {error && <div className="mt-3"><Notice tone="error">{error}</Notice></div>}
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <Button onClick={submit} loading={saving}>{saved ? "Saved" : "Save check-in"}</Button>
+        <motion.div animate={submitControls}>
+          <Button onClick={submit} loading={saving}>{saved ? "Saved" : "Save check-in"}</Button>
+        </motion.div>
         {saved && <span className="text-[12px] font-semibold text-useful">Added to this week’s context.</span>}
       </div>
     </Card>

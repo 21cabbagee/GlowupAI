@@ -141,6 +141,16 @@ object GlowTextStyles {
     /** Display variant for even larger hero text */
     val DisplayLarge = DisplayTextStyle.copy(fontSize = 36.sp, lineHeight = 44.sp)
 
+    /** Display hero variant for splash and onboarding screens - 48sp, SemiBold */
+    val DisplayHero =
+        TextStyle(
+            fontFamily = PrimaryFontFamily,
+            fontWeight = GlowFontWeight.SemiBold,
+            fontSize = 48.sp,
+            lineHeight = 60.sp,
+            letterSpacing = (-0.5).sp,
+        )
+
     /** Title variant with medium weight for less emphasis */
     val TitleMedium = TitleTextStyle.copy(fontWeight = GlowFontWeight.Medium)
 
@@ -161,6 +171,16 @@ object GlowTextStyles {
 
     /** Monospace variant for body-sized numbers */
     val MonospaceBody = BodyTextStyle.copy(fontFamily = MonospaceFontFamily)
+
+    /** Large metric display - 40sp with tabular numbers for data visualization */
+    val MetricLarge =
+        TextStyle(
+            fontFamily = MonospaceFontFamily,
+            fontWeight = GlowFontWeight.SemiBold,
+            fontSize = 40.sp,
+            lineHeight = 50.sp,
+            letterSpacing = 0.sp,
+        )
 
     /** Button text style - 16sp, SemiBold */
     val Button =

@@ -203,8 +203,8 @@ private fun CalendarDayCell(
     // Fade-in animation with staggered delay
     val fadeAlpha = rememberFadeInAnimation(delay = day * 15)
 
-    // Highlight pulse animation for today
-    val highlightAlpha = rememberHighlightAnimation(enabled = isToday)
+    // Pulse animation for today
+    val pulseScale = rememberPulseAnimation(enabled = isToday)
 
     val backgroundColor =
         when {
@@ -242,11 +242,11 @@ private fun CalendarDayCell(
                         Modifier
                             .border(
                                 width = 2.dp,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = highlightAlpha),
+                                color = MaterialTheme.colorScheme.primary,
                                 shape = RoundedCornerShape(8.dp),
                             ).graphicsLayer {
-                                scaleX = 0.95f + (highlightAlpha * 0.05f)
-                                scaleY = 0.95f + (highlightAlpha * 0.05f)
+                                scaleX = pulseScale
+                                scaleY = pulseScale
                             }
                     } else {
                         Modifier

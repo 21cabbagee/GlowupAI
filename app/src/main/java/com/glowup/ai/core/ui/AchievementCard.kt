@@ -236,6 +236,26 @@ fun AchievementBadge(
     size: Int = 40,
 ) {
     val tierColor = getTierColor(achievement.type.tier)
+    val glow = LocalGlowColors.current
+    val reducedMotion = isReducedMotionEnabled()
+
+    // Shimmer animation for unlocked badges
+    val shimmerTranslate = if (achievement.isUnlocked && !reducedMotion) {
+        val transition = rememberInfiniteTransition(label = "badgeShimmer")
+        val translate by transition.animateFloat(
+            initialValue = -1f,
+            targetValue = 2f,
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(durationMillis = 1100, easing = GlowEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            label = "shimmerTranslate",
+        )
+        translate
+    } else {
+        null
+    }
 
     Box(
         modifier =
@@ -243,6 +263,28 @@ fun AchievementBadge(
                 .size(size.dp)
                 .clip(CircleShape)
                 .background(tierColor.copy(alpha = 0.2f))
+                .then(
+                    if (shimmerTranslate != null) {
+                        Modifier.drawWithContent {
+                            drawContent()
+                            // Draw shimmer effect overlay
+                            val shimmerBrush =
+                                Brush.linearGradient(
+                                    colors =
+                                        listOf(
+                                            Color.Transparent,
+                                            Color.White.copy(alpha = 0.4f),
+                                            Color.Transparent,
+                                        ),
+                                    start = Offset(shimmerTranslate * size.width, 0f),
+                                    end = Offset(shimmerTranslate * size.width + size.width, size.height),
+                                )
+                            drawRect(brush = shimmerBrush)
+                        }
+                    } else {
+                        Modifier
+                    },
+                )
                 .border(
                     width = 2.dp,
                     color = tierColor,

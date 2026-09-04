@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -56,6 +57,15 @@ fun StreakCounter(
             enabled = streak.currentStreak > 0,
             minScale = 0.97f,
             maxScale = 1.03f,
+            durationMillis = 2000,
+        )
+
+    // Pulse animation for streak number
+    val streakPulse =
+        rememberPulseAnimation(
+            enabled = streak.currentStreak > 0,
+            minScale = 0.98f,
+            maxScale = 1.02f,
             durationMillis = 2000,
         )
 
@@ -154,12 +164,53 @@ fun StreakCounter(
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "${streak.currentStreak}",
-                        style = MaterialTheme.typography.displayLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = inkColor,
-                    )
+                    // Streak number with outer glow effect
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.scale(streakPulse),
+                    ) {
+                        // Outer glow layer 1 (largest, most transparent)
+                        Text(
+                            text = "${streak.currentStreak}",
+                            style = MaterialTheme.typography.displayLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = inkColor.copy(alpha = 0.15f),
+                            modifier = Modifier.blur(radius = 20.dp),
+                        )
+                        // Outer glow layer 2
+                        Text(
+                            text = "${streak.currentStreak}",
+                            style = MaterialTheme.typography.displayLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = inkColor.copy(alpha = 0.25f),
+                            modifier = Modifier.blur(radius = 12.dp),
+                        )
+                        // Outer glow layer 3 (smallest, less transparent)
+                        Text(
+                            text = "${streak.currentStreak}",
+                            style = MaterialTheme.typography.displayLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = inkColor.copy(alpha = 0.35f),
+                            modifier = Modifier.blur(radius = 6.dp),
+                        )
+                        // Main streak number with gradient background
+                        Text(
+                            text = "${streak.currentStreak}",
+                            style = MaterialTheme.typography.displayLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = inkColor,
+                            modifier =
+                                Modifier
+                                    .background(
+                                        brush =
+                                            Brush.verticalGradient(
+                                                colors = listOf(glowColors.honey400, glowColors.honey600),
+                                            ),
+                                        shape = GlowShapes.lg,
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                        )
+                    }
                     Text(
                         text = "day streak",
                         style = MaterialTheme.typography.bodyMedium,

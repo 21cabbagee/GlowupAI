@@ -1,5 +1,8 @@
 package com.glowup.ai.feature.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,16 +18,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -225,22 +234,66 @@ private fun HomeContent(
             }
         }.value
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding =
-            PaddingValues(
-                start = GlowSpacing.lg,
-                end = GlowSpacing.lg,
-                top = padding.calculateTopPadding() + GlowSpacing.lg,
-                bottom = padding.calculateBottomPadding() + GlowSpacing.xl,
-            ),
-        verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
+    val glow = com.glowup.ai.core.design.LocalGlowColors.current
+
+    // Animation states for staggered fade-in
+    var section1Visible by remember { mutableStateOf(false) }
+    var section2Visible by remember { mutableStateOf(false) }
+    var section3Visible by remember { mutableStateOf(false) }
+
+    val alpha1 by animateFloatAsState(
+        targetValue = if (section1Visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 600),
+        label = "section1Fade"
+    )
+    val alpha2 by animateFloatAsState(
+        targetValue = if (section2Visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 600),
+        label = "section2Fade"
+    )
+    val alpha3 by animateFloatAsState(
+        targetValue = if (section3Visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 600),
+        label = "section3Fade"
+    )
+
+    LaunchedEffect(Unit) {
+        section1Visible = true
+        kotlinx.coroutines.delay(100)
+        section2Visible = true
+        kotlinx.coroutines.delay(100)
+        section3Visible = true
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        glow.paper,
+                        glow.paper.copy(alpha = 0.95f)
+                    )
+                )
+            )
     ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding =
+                PaddingValues(
+                    start = GlowSpacing.lg,
+                    end = GlowSpacing.lg,
+                    top = padding.calculateTopPadding() + GlowSpacing.lg,
+                    bottom = padding.calculateBottomPadding() + GlowSpacing.xl,
+                ),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
         // Personalized greeting - creates emotional connection
         item {
             PersonalizedGreeting(
                 displayName = dashboard.profile.experienceProfile?.displayName,
                 dayCount = dayCount,
+                modifier = Modifier.alpha(alpha1)
             )
         }
 
@@ -256,12 +309,28 @@ private fun HomeContent(
 
         // Streak counter - prominent display with gradient (Peak moment design)
         item {
-            StreakCounter(
-                streak = state.streak,
-                onFreezeDayClick = onFreezeDayUsed,
-                showWarning = StreakCalculator.wouldStreakBreak(state.streak),
-                warningMessage = StreakCalculator.getStreakWarning(state.streak),
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(alpha2)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                glow.honey500.copy(alpha = 0.15f),
+                                glow.honey500.copy(alpha = 0.05f)
+                            )
+                        ),
+                        shape = GlowShapes.md
+                    )
+                    .padding(4.dp)
+            ) {
+                StreakCounter(
+                    streak = state.streak,
+                    onFreezeDayClick = onFreezeDayUsed,
+                    showWarning = StreakCalculator.wouldStreakBreak(state.streak),
+                    warningMessage = StreakCalculator.getStreakWarning(state.streak),
+                )
+            }
         }
 
         // Milestone progress - gamification element
@@ -276,11 +345,20 @@ private fun HomeContent(
             )
         }
 
+        item {
+            HorizontalDivider(
+                color = com.glowup.ai.core.design.LocalGlowColors.current.ink600.copy(alpha = 0.06f),
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
+        }
+
         // Metric cards grid - clear, data-focused display
         item {
             MetricCardGrid(
                 latest = latest,
                 previous = previous,
+                modifier = Modifier.alpha(alpha3)
             )
         }
 
@@ -309,6 +387,14 @@ private fun HomeContent(
                     variant = com.glowup.ai.core.ui.GlowButtonVariant.Secondary,
                 )
             }
+        }
+
+        item {
+            HorizontalDivider(
+                color = com.glowup.ai.core.design.LocalGlowColors.current.ink600.copy(alpha = 0.06f),
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
         }
 
         // Achievements section - celebrate wins
@@ -342,6 +428,14 @@ private fun HomeContent(
             CheckInSection(
                 checkIns = dashboard.checkIns,
                 onCheckInClick = onCheckInClick,
+            )
+        }
+
+        item {
+            HorizontalDivider(
+                color = com.glowup.ai.core.design.LocalGlowColors.current.ink600.copy(alpha = 0.06f),
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 12.dp)
             )
         }
 
@@ -416,6 +510,14 @@ private fun HomeContent(
             }
         }
 
+        item {
+            HorizontalDivider(
+                color = com.glowup.ai.core.design.LocalGlowColors.current.ink600.copy(alpha = 0.06f),
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
+        }
+
         // Verdicts section - product insights
         item {
             VerdictsSection(
@@ -446,6 +548,14 @@ private fun HomeContent(
             }
         }
 
+        item {
+            HorizontalDivider(
+                color = com.glowup.ai.core.design.LocalGlowColors.current.ink600.copy(alpha = 0.06f),
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
+        }
+
         // Experiments section - A/B testing
         item {
             ExperimentsSection(
@@ -459,20 +569,43 @@ private fun HomeContent(
 
         // Routine timeline - product tracking
         item {
-            RoutineTimelineSection(
-                events = dashboard.routineEvents,
-                onLogRoutine = { onNavigate(GlowDestination.Routine) },
+            Box(modifier = Modifier.alpha(0.95f)) {
+                RoutineTimelineSection(
+                    events = dashboard.routineEvents,
+                    onLogRoutine = { onNavigate(GlowDestination.Routine) },
+                )
+            }
+        }
+
+        item {
+            HorizontalDivider(
+                color = com.glowup.ai.core.design.LocalGlowColors.current.ink600.copy(alpha = 0.06f),
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 12.dp)
             )
         }
 
         // Discover shortcut
         item {
-            DiscoverShortcutCard(onClick = { onNavigate(GlowDestination.Discover) })
+            Box(modifier = Modifier.alpha(0.95f)) {
+                DiscoverShortcutCard(onClick = { onNavigate(GlowDestination.Discover) })
+            }
+        }
+
+        item {
+            HorizontalDivider(
+                color = com.glowup.ai.core.design.LocalGlowColors.current.ink600.copy(alpha = 0.06f),
+                thickness = 1.dp,
+                modifier = Modifier.padding(vertical = 12.dp)
+            )
         }
 
         // Disclaimer at bottom
         item {
-            DisclaimerNote(text = dashboard.disclaimer)
+            Box(modifier = Modifier.alpha(0.95f)) {
+                DisclaimerNote(text = dashboard.disclaimer)
+            }
+        }
         }
     }
 }

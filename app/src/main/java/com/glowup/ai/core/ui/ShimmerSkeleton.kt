@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,6 +49,11 @@ fun ShimmerSkeleton(
                     .height(height)
                     .clip(RoundedCornerShape(cornerRadius))
                     .background(glow.shimmer.copy(alpha = 0.4f))
+                    .border(
+                        width = 1.dp,
+                        color = glow.ink600.copy(alpha = 0.05f),
+                        shape = RoundedCornerShape(cornerRadius)
+                    )
                     .semantics { invisibleToUser() },
         )
         return
@@ -88,6 +94,11 @@ fun ShimmerSkeleton(
                 .height(height)
                 .clip(RoundedCornerShape(cornerRadius))
                 .background(brush)
+                .border(
+                    width = 1.dp,
+                    color = glow.ink600.copy(alpha = 0.05f),
+                    shape = RoundedCornerShape(cornerRadius)
+                )
                 .semantics { invisibleToUser() },
     )
 }

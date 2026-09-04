@@ -10,7 +10,6 @@ import { Button, Tag, cx } from "./ui";
 import {
   AccountIcon,
   CameraIcon,
-
   HomeIcon,
   InsightIcon,
   LogoMark,
@@ -19,6 +18,7 @@ import {
   SunIcon,
   type IconProps,
 } from "./icons";
+import { NotificationBadge } from "./animated-icons";
 
 interface NavItem {
   href: string;
@@ -142,6 +142,8 @@ function DesktopRail({ pathname }: { pathname: string }) {
 
 function MobileHeader() {
   const { isPremium } = useSession();
+  // Example: you could fetch actual notification count from your API
+  const notificationCount = 0; // Set to > 0 to see the pulsing badge
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-paper/85 backdrop-blur-xl lg:hidden pt-safe">
@@ -152,8 +154,16 @@ function MobileHeader() {
             Skin<span className="text-honey-600">Proof</span>
           </span>
         </Link>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1">
           {isPremium && <Tag tone="honey">Premium</Tag>}
+          {/* Example notification badge - remove or connect to real data */}
+          {notificationCount > 0 && (
+            <NotificationBadge
+              count={notificationCount}
+              size="sm"
+              onClick={() => console.log("Open notifications")}
+            />
+          )}
           <ThemeToggle />
         </div>
       </div>
@@ -181,7 +191,7 @@ function MobileTabBar({ pathname }: { pathname: string }) {
               "absolute -top-5 left-1/2 grid size-14 -translate-x-1/2 place-items-center",
               "rounded-[var(--radius-full)] bg-primary text-on-primary",
               "transition-transform duration-[var(--dur-fast)]",
-              "active:scale-90",
+              "active:scale-[0.9]",
               pathname === "/capture" && "ring-4 ring-honey-200",
             )}
           >

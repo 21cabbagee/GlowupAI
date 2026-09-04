@@ -1,17 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useAnimation } from 'framer-motion'
+import { successHaptic } from '@/lib/haptic'
 
 export default function Home() {
   const [email, setEmail] = useState('')
+  const buttonControls = useAnimation()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     // Handle email submission for iOS waitlist
     console.log('Email submitted:', email)
     alert('Thanks! We\'ll notify you when iOS launches.')
     setEmail('')
+    // Celebration animation + haptic
+    successHaptic()
+    await buttonControls.start({
+      scale: [1, 1.15, 1],
+      rotate: [0, -5, 5, 0],
+      transition: { duration: 0.5, ease: 'easeOut' }
+    })
   }
 
   return (
@@ -277,12 +286,14 @@ export default function Home() {
                 required
                 className="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
               />
-              <button
-                type="submit"
-                className="px-6 py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors"
-              >
-                Notify Me
-              </button>
+              <motion.div animate={buttonControls}>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+                >
+                  Notify Me
+                </button>
+              </motion.div>
             </form>
           </div>
         </div>

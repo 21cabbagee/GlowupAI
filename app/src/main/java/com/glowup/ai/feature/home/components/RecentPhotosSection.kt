@@ -1,6 +1,7 @@
 package com.glowup.ai.feature.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -202,8 +205,10 @@ private fun PhotoCard(
                 modifier =
                     Modifier
                         .size(104.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(glowColors.honey500.copy(alpha = 0.2f)),
+                        .shadow(2.dp, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(glowColors.honey500.copy(alpha = 0.2f))
+                        .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(

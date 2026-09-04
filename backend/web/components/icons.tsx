@@ -162,6 +162,47 @@ export const LockIcon = (p: IconProps) => (
   </Svg>
 );
 
+export const ArrowUpIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 19.5V4.5M5.5 11L12 4.5l6.5 6.5" />
+  </Svg>
+);
+
+export const ArrowDownIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 4.5v15M18.5 13L12 19.5 5.5 13" />
+  </Svg>
+);
+
+export const AlertCircleIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 8v4" strokeWidth={2} />
+    <path d="M12 16h.01" strokeWidth={2.4} />
+  </Svg>
+);
+
+export const HelpCircleIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M9.4 9.2a2.8 2.8 0 0 1 5 1.8c0 1.9-2.8 2.8-2.8 2.8" />
+    <path d="M12 17h.01" strokeWidth={2.4} />
+  </Svg>
+);
+
+export const RefreshIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M21 10.5a9 9 0 1 1-1.5-5M21 3.5v7h-7" />
+  </Svg>
+);
+
+export const BellIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M17.7 17.3A6.9 6.9 0 0 0 19 13V9.5a7 7 0 0 0-14 0V13c0 1.6.5 3.1 1.3 4.3L4.5 19.5h15z" />
+    <path d="M9.4 19.5a2.6 2.6 0 0 0 5.2 0" />
+  </Svg>
+);
+
 export const LogoMark = ({ size = 30, className }: IconProps) => (
   <svg
     viewBox="0 0 32 32"

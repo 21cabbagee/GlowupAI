@@ -1,16 +1,17 @@
 package com.glowup.ai.core.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.GlowShapes
 import com.glowup.ai.core.design.GlowSpacing
@@ -26,28 +27,31 @@ fun GlowCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     contentDescription: String? = null,
+    elevation: Dp = 2.dp,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
     val glow = LocalGlowColors.current
-    var cardModifier =
-        modifier
-            .background(color = glow.surfaceCard, shape = GlowShapes.md)
 
-    cardModifier =
-        if (onClick != null) {
-            cardModifier.clickable(
-                onClickLabel = contentDescription,
-                role = Role.Button,
-                onClick = onClick,
-            )
-        } else {
-            cardModifier
-        }
-
-    Column(
-        modifier = cardModifier.padding(GlowSpacing.md),
-        content = content,
-    )
+    Card(
+        modifier = modifier
+            .border(1.dp, glow.ink600.copy(alpha = 0.08f), GlowShapes.md),
+        shape = GlowShapes.md,
+        colors = CardDefaults.cardColors(
+            containerColor = glow.surfaceCard,
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = elevation,
+            pressedElevation = if (onClick != null) elevation + 2.dp else elevation,
+            hoveredElevation = if (onClick != null) elevation + 1.dp else elevation
+        ),
+        onClick = onClick ?: {},
+        enabled = onClick != null,
+    ) {
+        Column(
+            modifier = Modifier.padding(GlowSpacing.md),
+            content = content,
+        )
+    }
 }
 
 @Preview(name = "Light", showBackground = true)

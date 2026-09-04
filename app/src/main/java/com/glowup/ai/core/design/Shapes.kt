@@ -7,8 +7,8 @@ import androidx.compose.ui.unit.dp
 
 /** Canonical corner-radius scale, mirrored into [MaterialTheme.shapes][Shapes] by [GlowUpTheme]. */
 object GlowShapes {
-    val sm: CornerBasedShape = RoundedCornerShape(8.dp)
-    val md: CornerBasedShape = RoundedCornerShape(16.dp)
+    val sm: CornerBasedShape = RoundedCornerShape(14.dp)
+    val md: CornerBasedShape = RoundedCornerShape(20.dp)
     val lg: CornerBasedShape = RoundedCornerShape(24.dp)
     val xl: CornerBasedShape = RoundedCornerShape(32.dp)
 

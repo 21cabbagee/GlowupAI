@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { motion, useAnimation } from "motion/react";
 import {
   CONTEXT_EVENT_TYPES,
   METRIC_LABELS,
@@ -31,6 +32,7 @@ import {
   PaywallCard,
 } from "@/components/ui";
 import { InsightIcon, ShieldIcon, SparkIcon } from "@/components/icons";
+import { successHaptic } from "@/lib/haptic";
 
 function formatCiteDate(date: string): string {
   const d = new Date(date);
@@ -92,6 +94,7 @@ function ChatPanel() {
   const [sending, setSending] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const buttonControls = useAnimation();
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -122,13 +125,20 @@ function ChatPanel() {
         await api.ask(userId, question.trim());
         setQuestion("");
         await load();
+        // Celebration animation + haptic
+        successHaptic();
+        await buttonControls.start({
+          scale: [1, 1.15, 1],
+          rotate: [0, -5, 5, 0],
+          transition: { duration: 0.5, ease: "easeOut" }
+        });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not send that question");
       } finally {
         setSending(false);
       }
     },
-    [userId, question, sending, load],
+    [userId, question, sending, load, buttonControls],
   );
 
   const onUnlock = useCallback(async () => {
@@ -231,9 +241,11 @@ function ChatPanel() {
           onChange={(e) => setQuestion(e.target.value)}
           disabled={sending}
         />
-        <Button type="submit" loading={sending} disabled={!question.trim()}>
-          Send
-        </Button>
+        <motion.div animate={buttonControls}>
+          <Button type="submit" loading={sending} disabled={!question.trim()}>
+            Send
+          </Button>
+        </motion.div>
       </form>
     </Card>
   );
@@ -249,6 +261,7 @@ function IngredientCard() {
   const [explainer, setExplainer] = useState<IngredientExplainer | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const analyzeControls = useAnimation();
 
   useEffect(() => {
     api
@@ -267,6 +280,13 @@ function IngredientCard() {
     setError(null);
     try {
       setExplainer(await api.ingredientExplainer(selectedId, userId));
+      // Celebration animation + haptic
+      successHaptic();
+      await analyzeControls.start({
+        scale: [1, 1.15, 1],
+        rotate: [0, -5, 5, 0],
+        transition: { duration: 0.5, ease: "easeOut" }
+      });
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Could not analyze this product",
@@ -274,7 +294,7 @@ function IngredientCard() {
     } finally {
       setAnalyzing(false);
     }
-  }, [userId, selectedId]);
+  }, [userId, selectedId, analyzeControls]);
 
   return (
     <Card>
@@ -309,15 +329,17 @@ function IngredientCard() {
         </select>
       </Field>
 
-      <Button
-        variant="secondary"
-        onClick={onAnalyze}
-        loading={analyzing}
-        disabled={!selectedId}
-        block
-      >
-        Analyze ingredients
-      </Button>
+      <motion.div animate={analyzeControls}>
+        <Button
+          variant="secondary"
+          onClick={onAnalyze}
+          loading={analyzing}
+          disabled={!selectedId}
+          block
+        >
+          Analyze ingredients
+        </Button>
+      </motion.div>
 
       {error && (
         <div className="mt-3">
@@ -386,6 +408,7 @@ function TriageCard() {
   );
   const [triaging, setTriaging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const triageControls = useAnimation();
 
   const onCheck = useCallback(async () => {
     if (!text.trim() || triaging) return;
@@ -393,12 +416,19 @@ function TriageCard() {
     setError(null);
     try {
       setResult(await api.triage(text.trim()));
+      // Celebration animation + haptic
+      successHaptic();
+      await triageControls.start({
+        scale: [1, 1.15, 1],
+        rotate: [0, -5, 5, 0],
+        transition: { duration: 0.5, ease: "easeOut" }
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not run triage");
     } finally {
       setTriaging(false);
     }
-  }, [text, triaging]);
+  }, [text, triaging, triageControls]);
 
   return (
     <Card>
@@ -417,16 +447,18 @@ function TriageCard() {
         />
       </Field>
 
-      <Button
-        className="mt-3"
-        variant="secondary"
-        onClick={onCheck}
-        loading={triaging}
-        disabled={!text.trim()}
-        block
-      >
-        Check
-      </Button>
+      <motion.div animate={triageControls}>
+        <Button
+          className="mt-3"
+          variant="secondary"
+          onClick={onCheck}
+          loading={triaging}
+          disabled={!text.trim()}
+          block
+        >
+          Check
+        </Button>
+      </motion.div>
 
       {error && (
         <div className="mt-3">
@@ -471,6 +503,9 @@ function ContextCard() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState(false);
 
+  const logControls = useAnimation();
+  const searchControls = useAnimation();
+
   const loadEvents = useCallback(async () => {
     if (!userId) return;
     try {
@@ -498,12 +533,19 @@ function ContextCard() {
       setValue("");
       setNotes("");
       await loadEvents();
+      // Celebration animation + haptic
+      successHaptic();
+      await logControls.start({
+        scale: [1, 1.15, 1],
+        rotate: [0, -5, 5, 0],
+        transition: { duration: 0.5, ease: "easeOut" }
+      });
     } catch (e) {
       setLogError(e instanceof Error ? e.message : "Could not log that event");
     } finally {
       setLogging(false);
     }
-  }, [userId, eventType, value, occurredAt, notes, loadEvents]);
+  }, [userId, eventType, value, occurredAt, notes, loadEvents, logControls]);
 
   const onSearch = useCallback(async () => {
     if (!userId) return;
@@ -511,12 +553,19 @@ function ContextCard() {
     setSearchError(null);
     try {
       setCorrelations(await api.rootCause(userId, metric));
+      // Celebration animation + haptic
+      successHaptic();
+      await searchControls.start({
+        scale: [1, 1.15, 1],
+        rotate: [0, -5, 5, 0],
+        transition: { duration: 0.5, ease: "easeOut" }
+      });
     } catch (e) {
       setSearchError(e instanceof Error ? e.message : "Could not run root-cause search");
     } finally {
       setSearching(false);
     }
-  }, [userId, metric]);
+  }, [userId, metric, searchControls]);
 
   const onUnlock = useCallback(async () => {
     if (!userId) return;
@@ -567,9 +616,11 @@ function ContextCard() {
           <Notice tone="error">{logError}</Notice>
         </div>
       )}
-      <Button className="mt-3" variant="secondary" onClick={onLog} loading={logging}>
-        Log event
-      </Button>
+      <motion.div animate={logControls}>
+        <Button className="mt-3" variant="secondary" onClick={onLog} loading={logging}>
+          Log event
+        </Button>
+      </motion.div>
 
       {events && events.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-1.5">
@@ -607,9 +658,11 @@ function ContextCard() {
                   ))}
                 </select>
               </Field>
-              <Button variant="secondary" onClick={onSearch} loading={searching}>
-                Find patterns
-              </Button>
+              <motion.div animate={searchControls}>
+                <Button variant="secondary" onClick={onSearch} loading={searching}>
+                  Find patterns
+                </Button>
+              </motion.div>
             </div>
             {searchError && (
               <div className="mt-3">

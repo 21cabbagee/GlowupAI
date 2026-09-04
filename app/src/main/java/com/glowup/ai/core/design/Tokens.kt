@@ -2,6 +2,8 @@ package com.glowup.ai.core.design
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 /**
@@ -192,3 +194,48 @@ val DarkGlowColors =
     )
 
 val LocalGlowColors = staticCompositionLocalOf { LightGlowColors }
+
+/**
+ * Preset brand gradients for surfaces, CTAs, and visual accents. All gradients use the Honey
+ * palette + brand secondaries to maintain consistency across the app.
+ */
+object GlowGradients {
+    /** Primary CTA gradient — horizontal honey fade for buttons and action surfaces. */
+    val PrimaryCTA = Brush.horizontalGradient(listOf(HoneyPalette.Honey500, HoneyPalette.Honey600))
+
+    /** Streak hero gradient — vertical honey fade for celebration and streak displays. */
+    val StreakHero = Brush.verticalGradient(listOf(HoneyPalette.Honey400, HoneyPalette.Honey600))
+
+    /** Premium feature gradient — diagonal from honey to sage for premium/pro UI elements. */
+    val PremiumFeature = Brush.linearGradient(
+        colors = listOf(HoneyPalette.Honey500, HoneyPalette.Sage),
+        start = Offset(0f, 0f),
+        end = Offset(1000f, 1000f)
+    )
+
+    /** Glass surface gradient — semi-transparent white fade for frosted glass morphism effects. */
+    val GlassSurface = Brush.verticalGradient(
+        listOf(Color.White.copy(0.7f), Color.White.copy(0.5f))
+    )
+
+    /** Subtle hover gradient — light honey tint for interactive surface hover states. */
+    val SubtleHover = Brush.verticalGradient(
+        listOf(HoneyPalette.Honey300.copy(alpha = 0.3f), HoneyPalette.Honey400.copy(alpha = 0.2f))
+    )
+
+    /** Dark mode accent gradient — warm charcoal fade for elevated dark surfaces. */
+    val DarkModeAccent = Brush.verticalGradient(
+        listOf(HoneyPalette.Charcoal700, HoneyPalette.Charcoal800)
+    )
+
+    /** Warm card gradient — paper to surface fade for subtle depth on light cards. */
+    val WarmCard = Brush.verticalGradient(
+        listOf(HoneyPalette.Paper, HoneyPalette.Surface)
+    )
+
+    /** Success glow gradient — sage fade for achievement highlights and positive feedback. */
+    val SuccessGlow = Brush.radialGradient(
+        colors = listOf(HoneyPalette.Sage.copy(alpha = 0.4f), Color.Transparent),
+        radius = 500f
+    )
+}

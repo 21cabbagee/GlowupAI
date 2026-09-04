@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ButtonLink } from "@/components/ui";
+import { ButtonLink, VerdictTag } from "@/components/ui";
 import { LogoMark } from "@/components/icons";
 import { LandingReveal } from "@/components/landing-reveal";
 
@@ -115,9 +115,7 @@ export default function LandingPage() {
             <div className="rounded-[var(--radius-xl)] border border-line bg-surface p-6">
               <div className="flex items-center justify-between">
                 <p className="eyebrow">Weekly verdict</p>
-                <span className="rounded-[var(--radius-full)] bg-keep-bg px-2.5 py-1 text-[11px] font-bold text-keep">
-                  Keep
-                </span>
+                <VerdictTag label="keep" />
               </div>
               <p className="display-sm mt-3 text-[21px]">Barrier serum</p>
               <p className="mt-2.5 text-[13.5px] leading-relaxed text-muted">
