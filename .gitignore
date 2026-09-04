@@ -121,3 +121,13 @@ docs/_build/
 
 # PyCharm
 .idea/
+
+# Temporary documentation files
+*_FIXES.md
+*_SUMMARY.txt
+*_CHECKLIST.md
+CONTINUE_FROM_HERE.md
+RENDER_ADMIN_TOKEN.txt
+
+# Desktop APK copies
+*-Premium.apk
