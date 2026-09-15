@@ -42,7 +42,7 @@ coil = "3.6.0"
 # Charts
 vico = "2.5.2"
 
-kotlinxCoroutines = "1.9.0"
+kotlinxCoroutines = "1.11.0"
 
 # Misc androidx
 splashscreen = "1.2.0"
