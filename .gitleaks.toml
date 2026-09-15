@@ -3,47 +3,9 @@
 
 title = "GlowupAI Secret Scanning Config"
 
-# Allowlist documentation files with example tokens
-[[rules]]
-id = "ignore-documentation-examples"
-description = "Ignore example tokens in documentation"
-regex = '''(?i)(api[_-]?key|token|secret|password)\s*[:=]\s*["']?[a-zA-Z0-9_-]+["']?'''
-paths = [
-    '''ENV_VARS_REFERENCE\.md$''',
-    '''CACHE_QUICKSTART\.md$''',
-    '''RAILWAY_DEPLOY\.md$''',
-    '''SECURITY_DEPLOYMENT_CHECKLIST\.md$''',
-    '''TESTING_SECURITY_CHECKLIST\.md$''',
-    '''FIX_VERIFICATION\.md$''',
-]
-
-# Allowlist .env.example files (templates, not real secrets)
-[[rules]]
-id = "ignore-env-examples"
-description = "Ignore placeholder values in .env.example files"
-paths = [
-    '''\.env\.example$''',
-    '''\.env\.template$''',
-]
-
-# Allowlist backend CI test values
-[[rules]]
-id = "ignore-ci-test-values"
-description = "Ignore test encryption keys in CI workflows"
-paths = [
-    '''\.github/workflows/backend-ci\.yml$''',
-]
-
-# Allowlist deleted sensitive files (already removed from current code)
-[[rules]]
-id = "ignore-deleted-files"
-description = "Ignore secrets in files that have been deleted"
-paths = [
-    '''RENDER_ADMIN_TOKEN\.txt$''',
-    '''my-session\.md$''',
-]
-
-# Global allowlist for REDACTED placeholders
+# Global allowlist for documentation, templates, CI fixtures, and placeholders.
+# These are allowlists, rather than custom detection rules, so normal identifiers
+# such as `password` and `token` are not reported as leaked secrets.
 [allowlist]
 description = "Global allowlists for common false positives"
 regexes = [
@@ -52,6 +14,9 @@ regexes = [
     '''<base64-encoded-.*>''',
     '''example[_-]?token''',
     '''test[_-]?(token|key|secret)''',
+    '''test_password''',
+    '''test-secret-key-for-ci''',
+    '''test-encryption-key-32-bytes-long''',
     '''Bearer\s+test''',
 ]
 paths = [
@@ -59,4 +24,8 @@ paths = [
     '''.*\.example$''',         # All example files
     '''.*_test\..*$''',         # Test files
     '''.*/tests?/.*$''',        # Test directories
+    '''.*\.env\..*\.template$''',
+    '''\.github/workflows/backend-ci\.yml$''',
+    '''RENDER_ADMIN_TOKEN\.txt$''',
+    '''my-session\.md$''',
 ]
