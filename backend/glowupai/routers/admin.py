@@ -23,8 +23,25 @@ class TriageCreate(BaseModel):
     text: str = Field(min_length=1, max_length=2000)
 
 
+class KillSwitchUpdate(BaseModel):
+    """An explicit operator action; omitted values are never inferred."""
+
+    active: bool
+    reason: str = Field(default="", max_length=300)
+
+
 def setup_admin_router(
-    service, analytics, metrics_collector, run_handler, require_admin, cache=None
+    service,
+    analytics,
+    metrics_collector,
+    run_handler,
+    require_admin,
+    cache=None,
+    *,
+    controls=None,
+    alert_manager=None,
+    backup_manager=None,
+    rate_limiter=None,
 ) -> APIRouter:
     """Setup admin routes with dependencies."""
 
@@ -37,6 +54,104 @@ def setup_admin_router(
         require_admin(authorization)
         result: dict[str, Any] = metrics_collector.get_metrics()
         return result
+
+    @router.get("/admin/ops", tags=["operations"])
+    def operations_status(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Return safe operational status; secrets and user payloads are excluded."""
+        require_admin(authorization)
+        return {
+            "runtime_controls": (
+                controls.status() if controls else {"configured": False}
+            ),
+            "alerts": (
+                alert_manager.status() if alert_manager else {"configured": False}
+            ),
+            "backups": (
+                backup_manager.status() if backup_manager else {"configured": False}
+            ),
+            "rate_limits": (
+                rate_limiter.status() if rate_limiter else {"configured": False}
+            ),
+        }
+
+    @router.get("/admin/ops/kill-switches", tags=["operations"])
+    def kill_switches(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        require_admin(authorization)
+        if controls is None:
+            return {"configured": False, "switches": {}}
+        return dict(controls.status())
+
+    @router.put("/admin/ops/kill-switches/{name}", tags=["operations"])
+    def update_kill_switch(
+        name: str,
+        payload: KillSwitchUpdate,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        require_admin(authorization)
+        if controls is None:
+            return {"configured": False}
+        try:
+            value = controls.set(name, payload.active, updated_by="admin")
+        except ValueError as exc:
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        logger.warning(
+            "Runtime kill switch changed",
+            extra={
+                "kill_switch": name,
+                "active": payload.active,
+                "reason": payload.reason,
+            },
+        )
+        return {"name": name, **value}
+
+    @router.post("/admin/ops/alerts/test", tags=["operations"])
+    def test_alert(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        require_admin(authorization)
+        if alert_manager is None:
+            return {"configured": False, "sent": False}
+        sent = alert_manager.notify(
+            "operator.test",
+            severity="info",
+            message="Operator alert test",
+            details={"source": "admin_endpoint"},
+            force=True,
+        )
+        return {"configured": alert_manager.configured, "sent": sent}
+
+    @router.get("/admin/ops/backups", tags=["operations"])
+    def backup_status(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        require_admin(authorization)
+        if backup_manager is None:
+            return {"configured": False}
+        return dict(backup_manager.status())
+
+    @router.post("/admin/ops/backups", tags=["operations"])
+    def create_backup(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        require_admin(authorization)
+        if backup_manager is None:
+            return {"configured": False}
+        try:
+            return dict(backup_manager.create_backup(label="operator"))
+        except Exception as exc:  # noqa: BLE001 - preserve a safe API error boundary
+            logger.exception("Operator backup failed")
+            from fastapi import HTTPException
+
+            raise HTTPException(
+                status_code=503,
+                detail="backup could not be created",
+            ) from exc
 
     @router.get("/cache/diagnostics", tags=["monitoring"])
     def cache_diagnostics(
@@ -74,7 +189,7 @@ def setup_admin_router(
         )
         return result
 
-    @router.post("/triage")
+    @router.post("/admin/triage")
     def triage_question(
         payload: TriageCreate, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
@@ -111,10 +226,10 @@ def setup_admin_router(
     @router.get("/admin/analytics/daily")
     def admin_analytics_daily(
         days: int = 30, authorization: str | None = Header(default=None)
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, Any]]:
         """Get daily analytics stats for admins."""
         require_admin(authorization)
-        result: dict[str, Any] = analytics.get_daily_stats(days)
+        result: list[dict[str, Any]] = analytics.get_daily_stats(days)
         return result
 
     @router.get("/admin/analytics/events")
@@ -140,10 +255,12 @@ def setup_admin_router(
     @router.get("/admin/feedback/corrections")
     def admin_feedback_corrections(
         limit: int = 100, authorization: str | None = Header(default=None)
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, Any]]:
         """Get feedback corrections for retraining."""
         require_admin(authorization)
-        result: dict[str, Any] = run_handler(service.get_feedback_corrections, limit)
+        result: list[dict[str, Any]] = run_handler(
+            service.get_feedback_corrections, limit
+        )
         return result
 
     @router.get("/admin/feedback/accuracy")

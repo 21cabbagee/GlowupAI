@@ -5,7 +5,7 @@ data class User(
     val skinType: String?,
     val consentState: ConsentState,
     val createdAt: String?,
-    val firebaseUid: String?,
+    val supabaseUid: String?,
 )
 
 data class AppearanceProfile(

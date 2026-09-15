@@ -2,12 +2,11 @@ package com.glowup.ai.repository
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.glowup.ai.data.repository.HomeRepository
+import com.glowup.ai.core.util.GlowResult
 import com.glowup.ai.testing.HiltTestBase
 import com.glowup.ai.testing.MockResponses
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import kotlin.Result
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,17 +33,15 @@ class HomeRepositoryIntegrationTest : HiltTestBase() {
         mockWebServer.enqueue(MockResponses.successfulDashboard("user_123"))
 
         // When - fetch dashboard
-        val result = homeRepository.getDashboard("user_123").first()
+        val result = homeRepository.getDashboard("user_123")
 
         // Then - should succeed with data
-        assertTrue(result.isSuccess)
-        val dashboard = result.getOrNull()
-        assertNotNull(dashboard)
-        assertEquals("user_123", dashboard?.userId)
-        assertEquals(5, dashboard?.currentStreak)
-        assertEquals(10, dashboard?.longestStreak)
-        assertEquals(15, dashboard?.totalCaptures)
-        assertTrue(dashboard?.hasBaseline == true)
+        assertTrue(result is GlowResult.Success)
+        val dashboard = (result as GlowResult.Success).data.data
+        assertEquals("user_123", dashboard.profile.user.id)
+        assertEquals(5, dashboard.engagement?.captureStreak)
+        assertEquals(15, dashboard.engagement?.captureCount)
+        assertNotNull(dashboard.profile.appearanceProfiles.firstOrNull()?.baselineCaptureId)
     }
 
     @Test
@@ -53,11 +50,10 @@ class HomeRepositoryIntegrationTest : HiltTestBase() {
         mockWebServer.enqueue(MockResponses.errorResponse("Server error"))
 
         // When - fetch dashboard
-        val result = homeRepository.getDashboard("user_123").first()
+        val result = homeRepository.getDashboard("user_123")
 
         // Then - should fail
-        assertTrue(result.isFailure)
-        assertNotNull(result.exceptionOrNull())
+        assertTrue(result is GlowResult.Failure)
     }
 
     @Test
@@ -66,16 +62,14 @@ class HomeRepositoryIntegrationTest : HiltTestBase() {
         mockWebServer.enqueue(MockResponses.emptyDashboard("new_user"))
 
         // When - fetch dashboard
-        val result = homeRepository.getDashboard("new_user").first()
+        val result = homeRepository.getDashboard("new_user")
 
         // Then - should succeed with zero values
-        assertTrue(result.isSuccess)
-        val dashboard = result.getOrNull()
-        assertNotNull(dashboard)
-        assertEquals(0, dashboard?.currentStreak)
-        assertEquals(0, dashboard?.longestStreak)
-        assertEquals(0, dashboard?.totalCaptures)
-        assertFalse(dashboard?.hasBaseline == true)
+        assertTrue(result is GlowResult.Success)
+        val dashboard = (result as GlowResult.Success).data.data
+        assertEquals(0, dashboard.engagement?.captureStreak)
+        assertEquals(0, dashboard.engagement?.captureCount)
+        assertNull(dashboard.profile.appearanceProfiles.firstOrNull()?.baselineCaptureId)
     }
 
     @Test
@@ -84,9 +78,9 @@ class HomeRepositoryIntegrationTest : HiltTestBase() {
         mockWebServer.enqueue(MockResponses.unauthorizedResponse())
 
         // When - fetch dashboard
-        val result = homeRepository.getDashboard("user_123").first()
+        val result = homeRepository.getDashboard("user_123")
 
         // Then - should fail with auth error
-        assertTrue(result.isFailure)
+        assertTrue(result is GlowResult.Failure)
     }
 }

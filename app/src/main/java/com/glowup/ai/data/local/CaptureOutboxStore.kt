@@ -48,6 +48,8 @@ data class CaptureOutboxEntity(
      * have already been accepted server-side, and this row is dropped instead of re-uploaded. */
     val capturedAt: String,
     val deviceMetaJson: String?,
+    /** Server idempotency key retained across every background retry. */
+    val idempotencyKey: String = UUID.randomUUID().toString(),
     val attemptCount: Int = 0,
     val lastError: String? = null,
     val status: String = "pending",

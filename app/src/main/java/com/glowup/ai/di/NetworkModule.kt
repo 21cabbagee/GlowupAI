@@ -5,7 +5,7 @@ import com.glowup.ai.data.remote.GlowUpApi
 import com.glowup.ai.data.remote.NetworkFactory
 import com.glowup.ai.data.remote.NetworkJson
 import com.glowup.ai.data.remote.TokenProvider
-import com.glowup.ai.feature.auth.FirebaseTokenProvider
+import com.glowup.ai.feature.auth.SupabaseTokenProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,7 +25,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideTokenProvider(impl: FirebaseTokenProvider): TokenProvider = impl
+    fun provideTokenProvider(impl: SupabaseTokenProvider): TokenProvider = impl
 
     /**
      * Keep timeout, retry, redaction, and auth behavior in NetworkFactory. A second hand-built

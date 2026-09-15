@@ -35,10 +35,10 @@ sealed interface CaptureResultUiState {
         val captureResult: CaptureResult,
     ) : CaptureResultUiState
 
-    /** No `GET /captures/{id}` exists on the backend, so if the in-memory
-     * [CaptureResultCache] misses (process death between accept and viewing this screen), there is
-     * nothing to re-fetch — this is a real, honest state, not an error to retry. */
+    /** A confirmed missing/deleted capture is rendered as an unavailable state. */
     data object Unavailable : CaptureResultUiState
+
+    data class Error(val message: String) : CaptureResultUiState
 }
 
 sealed interface MeasurementFeedbackUiState {
@@ -71,8 +71,36 @@ class CaptureResultViewModel
         val feedbackState: StateFlow<MeasurementFeedbackUiState> = _feedbackState.asStateFlow()
 
         init {
-            val cached = resultCache.get(captureId)
-            _uiState.value = if (cached != null) CaptureResultUiState.Content(cached) else CaptureResultUiState.Unavailable
+            load()
+        }
+
+        fun load() {
+            viewModelScope.launch {
+                _uiState.value = CaptureResultUiState.Loading
+                resultCache.get(captureId)?.let {
+                    _uiState.value = CaptureResultUiState.Content(it)
+                    return@launch
+                }
+                val userId = sessionRepository.userIdFlow.first()
+                if (userId == null) {
+                    _uiState.value = CaptureResultUiState.Error("Please sign in again to load this capture.")
+                    return@launch
+                }
+                when (val result = captureRepository.getCapture(userId, captureId)) {
+                    is GlowResult.Success -> {
+                        resultCache.put(result.data)
+                        _uiState.value = CaptureResultUiState.Content(result.data)
+                    }
+                    is GlowResult.Failure -> {
+                        _uiState.value =
+                            if (result.error is ApiError.NotFound) {
+                                CaptureResultUiState.Unavailable
+                            } else {
+                                CaptureResultUiState.Error("Couldn't load this capture right now. Please try again.")
+                            }
+                    }
+                }
+            }
         }
 
         /** `POST /measurement-feedback` — "does this reading look fair?" */

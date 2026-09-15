@@ -70,8 +70,9 @@ AI-powered skincare tracking and analysis platform. Track your skin health journ
                     ┌────────────────┼────────────────┐
                     │                │                │
               ┌──────────┐    ┌──────────┐   ┌──────────┐
-              │PostgreSQL│    │  Redis   │   │ Firebase │
-              │          │    │  Cache   │   │   Auth   │
+              │ Supabase │    │  Redis   │   │ Supabase │
+              │ Postgres │    │  Cache   │   │ Auth +   │
+              │ +Storage │    │          │   │ Storage  │
               └──────────┘    └──────────┘   └──────────┘
 ```
 
@@ -98,21 +99,22 @@ AI-powered skincare tracking and analysis platform. Track your skin health journ
 | **ML/CV** | ML Kit Face Detection |
 | **Image Processing** | OpenCV Android |
 | **Charts** | Vico Compose |
-| **Authentication** | Firebase Auth |
+| **Authentication** | Supabase Auth (Google + Email/Password) |
 
 ### Backend API
 | Component | Technology |
 |-----------|------------|
 | **Language** | Python 3.11+ |
 | **Framework** | FastAPI |
-| **Database** | PostgreSQL (production), SQLite (dev) |
+| **Database** | Supabase PostgreSQL (production), SQLite (dev) |
 | **Cache** | Redis |
 | **ML Framework** | PyTorch, scikit-learn |
 | **Computer Vision** | OpenCV, NumPy, Pillow |
-| **Authentication** | Firebase Admin SDK |
+| **Authentication** | Backend-verified Supabase JWT |
+| **Image Storage** | Private Supabase Storage bucket |
 | **Error Tracking** | Sentry |
 | **Observability** | OpenTelemetry (optional) |
-| **Deployment** | Docker + Render.com |
+| **Deployment** | Vercel Functions |
 
 ### CI/CD & DevOps
 - **GitHub Actions**: Automated testing, building, security scanning
@@ -180,11 +182,19 @@ Visit `http://localhost:8000/api/docs` for interactive API documentation.
 
 **Backend** (`.env`):
 ```env
-# Required
-GLOWUPAI_GEMINI_API_KEY=your_gemini_api_key
+# AI providers (backend-only; never add these to Android or browser code)
+OPENAI_API_KEY=your_openai_api_key
+GLOWUPAI_LUNA_ENABLED=1
+GLOWUPAI_LUNA_MONTHLY_SPEND_CAP_USD=5
+GEMINI_API_KEY=your_gemini_api_key
+GLOWUPAI_GEMINI_ENABLED=1
 
-# Optional - Production
-DATABASE_URL=postgresql://user:pass@host:5432/dbname
+# Optional - Production/staging
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_DB_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+SUPABASE_JWT_SECRET=server_only_jwt_secret
+SUPABASE_SERVICE_ROLE_KEY=server_only_service_role_key
+SUPABASE_STORAGE_BUCKET=user-images
 REDIS_URL=redis://localhost:6379
 GLOWUPAI_ADMIN_TOKEN=secure_random_token
 SENTRY_DSN=your_sentry_dsn
@@ -198,13 +208,21 @@ GLOWUPAI_LOG_LEVEL=DEBUG
 ```properties
 # Local backend URL for development
 DEBUG_API_BASE_URL=http://10.0.2.2:8000/api/
+# Public Supabase values only; never put service-role/JWT/database secrets here.
+DEBUG_SUPABASE_URL=https://your-development-project.supabase.co
+DEBUG_SUPABASE_ANON_KEY=your_public_anon_or_publishable_key
+# OAuth 2.0 Web client ID from the Google Cloud project connected to Supabase Auth.
+# This is public (not a client secret) and enables the native Google account chooser.
+DEBUG_GOOGLE_WEB_CLIENT_ID=1234567890-abc123.apps.googleusercontent.com
 ```
 
-**Firebase Setup** (both platforms):
-1. Create Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Download `google-services.json` → `app/google-services.json`
-3. Enable Authentication > Email/Password
-4. Enable Crashlytics
+**Supabase Setup** (development, staging, and production):
+1. Create a separate Supabase project for each environment.
+2. Enable Google and Email/Password providers in Supabase Auth.
+3. Create a private Storage bucket named `user-images` (and `user-images-staging` for staging).
+4. Set `SUPABASE_URL`, `SUPABASE_DB_URL`, `SUPABASE_JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` only on the backend.
+5. Set `DEBUG_*`, `STAGING_*`, or `RELEASE_*` URL/anon-key values on the Android build; the service-role key and JWT secret never ship in the APK. Also set the matching `*_GOOGLE_WEB_CLIENT_ID` to the Google OAuth **Web application** client ID configured for the Supabase Google provider. It is a public identifier, never a client secret.
+6. For CI/release builds, add `RELEASE_GOOGLE_WEB_CLIENT_ID` to GitHub Actions secrets (alongside the existing `RELEASE_SUPABASE_*` secrets). The Android workflow passes it into the signed APK at build time; it is not stored in the backend database.
 
 ### Running Tests
 
@@ -255,14 +273,13 @@ pre-commit run --all-files
 
 ## 🌐 Deployment
 
-### Backend - Render.com
+### Backend - Vercel
 
 1. **Fork/Clone** this repository
-2. **Create Render Web Service**:
-   - Build Command: `pip install -e .`
-   - Start Command: `uvicorn glowupai.complete_api:app --host 0.0.0.0 --port $PORT`
-3. **Set Environment Variables** in Render dashboard
-4. **Add PostgreSQL Database** (optional, SQLite works for small scale)
+2. **Link the `backend/` directory to the Vercel `backend` project** and deploy it with `vercel --prod`.
+3. **Set the Supabase environment variables** from `backend/.env.production.template` in the Vercel project settings.
+4. **Use the Supabase PostgreSQL connection string** and private Storage bucket.
+5. **Configure production operations** from [`docs/PRODUCTION_OPERATIONS.md`](docs/PRODUCTION_OPERATIONS.md): shared Redis, alerts, daily verified backups, protected metrics, and Vercel rollback access.
 
 ### Android - Release Build
 
@@ -277,6 +294,10 @@ keyAlias=glowupai
 keyPassword=YOUR_KEY_PASSWORD" > app/keystore.properties
 
 # Build release APK
+RELEASE_API_BASE_URL=https://backend-piyushcapitals-4171.vercel.app/api/ \
+RELEASE_SUPABASE_URL=https://your-production-project.supabase.co \
+RELEASE_SUPABASE_ANON_KEY=your_public_anon_or_publishable_key \
+RELEASE_GOOGLE_WEB_CLIENT_ID=1234567890-abc123.apps.googleusercontent.com \
 ./gradlew assembleRelease
 
 # Output: app/build/outputs/apk/release/app-release.apk
@@ -339,7 +360,7 @@ in the Software without restriction...
 - **OpenCV** for image processing
 - **FastAPI** for the backend framework
 - **Jetpack Compose** for modern Android UI
-- **Render.com** for free tier hosting
+- **Vercel** for backend hosting
 - All our contributors and users!
 
 ---

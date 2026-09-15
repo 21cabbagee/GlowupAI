@@ -270,7 +270,7 @@ class CommerceService:
         rows = self.db.fetchall(
             """SELECT p.id,p.name,p.category,v.label,v.evidence_json,v.user_id FROM verdicts v JOIN products p ON p.id=v.product_id WHERE v.label='likely_useful'"""
         )
-        grouped = {}
+        grouped: dict[str, dict[str, Any]] = {}
         for row in rows:
             key = row["id"]
             grouped.setdefault(
@@ -332,7 +332,7 @@ class CommerceService:
     ) -> list[dict[str, Any]]:
         self.parent.require_user(user_id)
         sql = "SELECT o.*,p.name AS product_name FROM affiliate_offers o JOIN products p ON p.id=o.product_id WHERE o.active=1"
-        params = ()
+        params: tuple[Any, ...] = ()
         if product_id:
             sql += " AND o.product_id=?"
             params = (product_id,)

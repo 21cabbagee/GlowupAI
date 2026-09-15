@@ -6,14 +6,14 @@ import os
 import secrets
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .analytics import AnalyticsTracker
-from .auth import AuthError, verify_id_token
+from .auth import AuthError, verify_access_token
 from .complete_db import build_full_database
 from .complete_service import CompleteGlowupAIService
 from .config import Settings
@@ -37,6 +37,12 @@ from .performance import (
     RequestTimingMiddleware,
 )
 from .photos import build_photo_store
+from .production_ops import (
+    AlertManager,
+    BackupManager,
+    KillSwitchMiddleware,
+    RuntimeControls,
+)
 from .rate_limiter import ProductionRateLimitMiddleware
 from .routers import (
     setup_admin_router,
@@ -93,6 +99,13 @@ def setup_monitoring(
     cache = RedisCache(redis_url, default_ttl=300)  # 5-minute TTL
     app.state.cache = cache
 
+    # Runtime controls use the same shared Redis when configured, otherwise
+    # they use a mode-600 local file. This gives local development a useful
+    # fallback while keeping production kill switches cross-worker.
+    app.state.alert_manager = AlertManager.from_env()
+    app.state.runtime_controls = RuntimeControls.from_env(redis_url)
+    app.state.backup_manager = BackupManager.from_env(active.settings)
+
     # Initialize image compressor
     compressor = ImageCompressor()
     app.state.compressor = compressor
@@ -131,6 +144,8 @@ def create_middleware_stack(
     metrics_collector: MetricsCollector,
     cache: RedisCache,
     redis_url: str | None,
+    controls: RuntimeControls | None = None,
+    alert_manager: AlertManager | None = None,
 ) -> None:
     """Add middleware stack in correct order.
 
@@ -144,17 +159,35 @@ def create_middleware_stack(
     app.add_middleware(RequestTimingMiddleware, slow_threshold_ms=slow_threshold_ms)
 
     # 3. Metrics collection
-    app.add_middleware(MetricsMiddleware, collector=metrics_collector)
+    app.add_middleware(
+        MetricsMiddleware,
+        collector=metrics_collector,
+        alert_manager=alert_manager,
+    )
 
     # 4. Response caching (for dashboard and other GET endpoints)
-    cache_enabled = os.getenv("GLOWUPAI_CACHE_ENABLED", "1") == "1"
+    # Caching is opt-in until every write path publishes invalidation events.
+    # Serving a stale owner snapshot is worse than the small latency savings.
+    cache_enabled = os.getenv("GLOWUPAI_CACHE_ENABLED", "0") == "1"
     if cache_enabled:
-        app.add_middleware(CacheMiddleware, cache=cache)
+        # Only cache the dashboard snapshot. History, entitlements, offers, and
+        # analytics are mutable owner-scoped reads and must never serve a stale
+        # response after a capture, upgrade, or context event.
+        app.add_middleware(CacheMiddleware, cache=cache, cacheable_paths=["/dashboard"])
+
+    app.add_middleware(
+        KillSwitchMiddleware,
+        controls=controls or RuntimeControls.from_env(redis_url),
+    )
 
     # 5. Rate limiting (Redis-backed)
     rate_limit_enabled = os.getenv("GLOWUPAI_RATE_LIMIT_ENABLED", "1") == "1"
+    rate_limit_fail_closed = os.getenv("GLOWUPAI_RATE_LIMIT_FAIL_CLOSED", "0") == "1"
     app.add_middleware(
-        ProductionRateLimitMiddleware, redis_url=redis_url, enabled=rate_limit_enabled
+        ProductionRateLimitMiddleware,
+        redis_url=redis_url,
+        enabled=rate_limit_enabled,
+        fail_closed=rate_limit_fail_closed,
     )
 
     # 6. Request timeout (innermost, closest to handlers)
@@ -163,7 +196,8 @@ def create_middleware_stack(
 
     logger.info(
         f"Middleware configured: rate_limit={rate_limit_enabled}, cache={cache_enabled}, "
-        f"timeout={timeout_seconds}s, slow_threshold={slow_threshold_ms}ms",
+        f"rate_limit_fail_closed={rate_limit_fail_closed}, timeout={timeout_seconds}s, "
+        f"slow_threshold={slow_threshold_ms}ms",
     )
 
 
@@ -177,6 +211,7 @@ def register_routes(
     run,
     _require_owner,
     _require_admin,
+    _require_authenticated,
 ) -> None:
     """Register all API routes via routers.
 
@@ -190,46 +225,115 @@ def register_routes(
         run: Helper function for running service methods with error handling
         _require_owner: Auth helper for owner verification
         _require_admin: Auth helper for admin verification
+        _require_authenticated: Auth helper for global user writes
     """
+
+    # Keep the health probe cheap. The Android client calls this before it can
+    # render the first useful screen, so it must not wait on database metadata,
+    # disk inspection, or operational-control files. `/api/ready` below remains
+    # the deep probe for platform health checks.
+    health_checker = create_health_checker(active.db, settings)
+    health_features = [
+        "experiments",
+        "qna",
+        "discover",
+        "commerce",
+        "reprocessing",
+        "shelf_scan",
+        "product_prediction",
+        "root_cause_search",
+        "budget_optimizer",
+        "derm_export",
+        "luna_observation",
+        "qualitative_region_results",
+        "comparison_progress",
+        "product_label_scan",
+        "ai_language_fallback",
+    ]
+
+    def health_payload() -> dict:
+        """Build the public health response without duplicating route logic."""
+        return {
+            "status": "healthy",
+            "checks": {
+                "service": {"status": "healthy"},
+                "database": {"status": "deferred"},
+            },
+            "version": "3.0.0",
+            "scope": "cosmetic_tracking",
+            "features": health_features,
+        }
 
     # Health check endpoint (kept in main file)
     @app.get("/api/health")
     async def health():
-        """Enhanced health check with database, disk, and dependency checks."""
-        health_checker = create_health_checker(active.db, settings)
+        """Fast process health probe used by mobile clients and edge routing."""
+        return JSONResponse(
+            content=health_payload(),
+            status_code=200,
+            headers={
+                # This endpoint contains no user data. A brief edge cache
+                # removes repeated serverless cold-start work while the
+                # stale-while-revalidate window keeps startup snappy.
+                "Cache-Control": "public, max-age=5, s-maxage=5, stale-while-revalidate=30",
+            },
+        )
+
+    @app.get("/api/ready", include_in_schema=False)
+    async def ready():
+        """Readiness probe: includes database and dependency checks."""
         try:
             health_status = await health_checker()
-
-            # Add version and feature info
             health_status["version"] = "3.0.0"
             health_status["scope"] = "cosmetic_tracking"
-            health_status["features"] = [
-                "experiments",
-                "qna",
-                "discover",
-                "commerce",
-                "reprocessing",
-                "shelf_scan",
-                "product_prediction",
-                "root_cause_search",
-                "budget_optimizer",
-                "derm_export",
-            ]
-
-            # Return 503 if unhealthy, 200 if healthy
+            health_status["features"] = health_features
+            health_status["ops"] = {
+                "alerts": app.state.alert_manager.status(),
+                "runtime_controls": app.state.runtime_controls.status(),
+                "backups": app.state.backup_manager.status(),
+                "rate_limits": getattr(
+                    getattr(app.state, "rate_limiter", None),
+                    "status",
+                    lambda: {"configured": False},
+                )(),
+            }
             status_code = 200 if health_status["status"] == "healthy" else 503
             return JSONResponse(content=health_status, status_code=status_code)
-
         except (OSError, RuntimeError):
-            logger.exception("Health check failed")
+            logger.exception("Readiness check failed")
             return JSONResponse(
                 content={
                     "status": "unhealthy",
-                    "error": "Health check failed",
+                    "error": "Readiness check failed",
                     "version": "3.0.0",
                 },
                 status_code=503,
             )
+
+    @app.get("/api/live", include_in_schema=False)
+    def live():
+        """Liveness probe: proves the process is serving without touching data."""
+        return {"status": "alive", "service": "glowupai"}
+
+    @app.get("/internal/metrics", include_in_schema=False)
+    def prometheus_metrics(authorization: str | None = Header(default=None)):
+        """Prometheus text endpoint protected by the admin/metrics secret."""
+        metrics_token = os.getenv("GLOWUPAI_METRICS_TOKEN", "").strip()
+        if metrics_token:
+            supplied = (
+                authorization.split(" ", 1)[1].strip()
+                if authorization and authorization.lower().startswith("bearer ")
+                else ""
+            )
+            if not secrets.compare_digest(supplied, metrics_token):
+                raise HTTPException(status_code=403, detail="invalid metrics token")
+        else:
+            _require_admin(authorization)
+        return PlainTextResponse(
+            metrics_collector.prometheus(),
+            media_type="text/plain; version=0.0.4",
+            headers={"Cache-Control": "no-store"},
+        )
 
     # Public triage endpoint (no authentication required)
     @app.post("/api/triage")
@@ -252,12 +356,22 @@ def register_routes(
     app.include_router(analytics_router)
     logger.info("Analytics router registered")
 
-    subscriptions_router = setup_subscriptions_router(active, run, _require_owner)
+    subscriptions_router = setup_subscriptions_router(
+        active, run, _require_owner, _require_admin, _require_authenticated
+    )
     app.include_router(subscriptions_router)
     logger.info("Subscriptions router registered")
 
     admin_router = setup_admin_router(
-        active, analytics, metrics_collector, run, _require_admin
+        active,
+        analytics,
+        metrics_collector,
+        run,
+        _require_admin,
+        controls=app.state.runtime_controls,
+        alert_manager=app.state.alert_manager,
+        backup_manager=app.state.backup_manager,
+        rate_limiter=getattr(app.state, "rate_limiter", None),
     )
     app.include_router(admin_router)
     logger.info("Admin router registered")
@@ -295,6 +409,7 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
     else:
         # Production: create service from environment settings
         settings = Settings.from_env()
+        settings.validate_for_production()
         settings.prepare()
         active = CompleteGlowupAIService(
             build_full_database(settings),
@@ -320,6 +435,7 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
         """Close database connections on shutdown."""
         logger.info("Closing database connections")
         try:
+            active.jobs.shutdown()
             active.db.close()
         except (OSError, RuntimeError) as exc:
             logger.error(f"Error closing database: {exc}")
@@ -330,7 +446,14 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
     # Configure middleware (order matters: last added = first executed)
     setup_cors(app, settings)
     configure_error_handlers(app)
-    create_middleware_stack(app, metrics_collector, cache, redis_url)
+    create_middleware_stack(
+        app,
+        metrics_collector,
+        cache,
+        redis_url,
+        controls=app.state.runtime_controls,
+        alert_manager=app.state.alert_manager,
+    )
 
     # Helper function for running service methods with error handling
     def run(callable_, *args, **kwargs):
@@ -352,7 +475,12 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
             raise HTTPException(status_code=401, detail="missing bearer token")
         token = authorization.split(" ", 1)[1].strip()
         try:
-            return verify_id_token(token, active.settings.firebase_project_id)
+            return verify_access_token(
+                token,
+                active.settings.supabase_url,
+                active.settings.supabase_jwt_secret,
+                jwks_url=active.settings.supabase_jwks_url,
+            )
         except AuthError as exc:
             raise HTTPException(status_code=401, detail=str(exc)) from exc
 
@@ -362,7 +490,7 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
             return
         identity = _bearer_identity(authorization)
         row = active.db.fetchone(
-            "SELECT id FROM users WHERE firebase_uid = ?",
+            "SELECT id FROM users WHERE supabase_uid = ?",
             (identity.uid,),
         )
         if not row or row["id"] != user_id:
@@ -370,6 +498,11 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
                 status_code=403,
                 detail="the authenticated account does not own this user_id",
             )
+
+    def _require_authenticated(authorization: str | None) -> None:
+        """Require a valid user JWT for global writes without an owner path."""
+        if active.settings.auth_required:
+            _bearer_identity(authorization)
 
     def _require_admin(authorization: str | None) -> None:
         if not active.settings.admin_token:
@@ -394,6 +527,7 @@ def create_complete_app(service: CompleteGlowupAIService | None = None) -> FastA
         run,
         _require_owner,
         _require_admin,
+        _require_authenticated,
     )
 
     return app

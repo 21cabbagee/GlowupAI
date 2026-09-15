@@ -9,6 +9,61 @@ from typing import Any
 _SQLITE_PARAMETER = re.compile(r"\?")
 _SQLITE_NOW = re.compile(r"datetime\('now'\)", re.IGNORECASE)
 _SQLITE_IS_PARAMETER = re.compile(r"\bIS\s+\?", re.IGNORECASE)
+_DOLLAR_QUOTE = re.compile(r"\$[A-Za-z_][A-Za-z0-9_]*\$|\$\$")
+
+
+def _split_migration_sql(sql: str) -> list[str]:
+    """Split SQL statements without breaking PostgreSQL dollar-quoted blocks."""
+    statements: list[str] = []
+    current: list[str] = []
+    quote: str | None = None
+    dollar_quote: str | None = None
+    index = 0
+    while index < len(sql):
+        if dollar_quote:
+            if sql.startswith(dollar_quote, index):
+                current.append(dollar_quote)
+                index += len(dollar_quote)
+                dollar_quote = None
+            else:
+                current.append(sql[index])
+                index += 1
+            continue
+        character = sql[index]
+        if quote:
+            current.append(character)
+            if character == quote:
+                if index + 1 < len(sql) and sql[index + 1] == quote:
+                    current.append(sql[index + 1])
+                    index += 2
+                    continue
+                quote = None
+            index += 1
+            continue
+        if character in {"'", '"'}:
+            quote = character
+            current.append(character)
+            index += 1
+            continue
+        if character == "$":
+            match = _DOLLAR_QUOTE.match(sql, index)
+            if match:
+                dollar_quote = match.group(0)
+                current.append(dollar_quote)
+                index = match.end()
+                continue
+        if character == ";":
+            statement = "".join(current).strip()
+            if statement:
+                statements.append(statement)
+            current = []
+        else:
+            current.append(character)
+        index += 1
+    statement = "".join(current).strip()
+    if statement:
+        statements.append(statement)
+    return statements
 
 
 class PostgresDatabase:
@@ -47,6 +102,11 @@ class PostgresDatabase:
         conn_kwargs = {
             "connect_timeout": connect_timeout,
             "options": f"-c statement_timeout={statement_timeout}",
+            # Supabase's transaction pooler may route consecutive queries to
+            # different PostgreSQL sessions. psycopg's auto-prepared
+            # statements then become missing or duplicate (_pg3_*), breaking
+            # otherwise successful capture previews and history reads.
+            "prepare_threshold": None,
         }
 
         self.pool = ConnectionPool(
@@ -133,13 +193,9 @@ class PostgresDatabase:
                 for migration in sorted(migration_dir.glob("*.sql")):
                     if migration.name in applied:
                         continue
-                    statements = [
-                        statement.strip()
-                        for statement in migration.read_text(encoding="utf-8").split(
-                            ";",
-                        )
-                        if statement.strip()
-                    ]
+                    statements = _split_migration_sql(
+                        migration.read_text(encoding="utf-8"),
+                    )
                     for statement in statements:
                         cursor.execute(statement)
                     cursor.execute(

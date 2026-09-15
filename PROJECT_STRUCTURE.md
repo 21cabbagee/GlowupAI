@@ -173,7 +173,7 @@ npm run dev
 - ❌ Temporary documentation files
 - ❌ Gradle cache (.gradle/) - 37MB saved
 - ❌ Python cache (__pycache__) - cleaned
-- ❌ Sensitive tokens (RENDER_ADMIN_TOKEN.txt)
+- ❌ Sensitive legacy deployment tokens
 
 **Organized:**
 - ✅ Test scripts moved to `/scripts/`

@@ -5,7 +5,10 @@ from __future__ import annotations
 import io
 import math
 
-import cv2
+try:
+    import cv2
+except ImportError:  # pragma: no cover - exercised in minimal worker images
+    cv2 = None  # type: ignore[assignment]
 import numpy as np
 from PIL import Image
 
@@ -30,6 +33,8 @@ def _detect_eyes_with_cascade(
     gray: np.ndarray,
 ) -> tuple[tuple[int, int], tuple[int, int]] | None:
     """Detect left and right eye centers using Haar Cascade."""
+    if cv2 is None or not hasattr(cv2, "CascadeClassifier"):
+        return None
     eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")  # type: ignore[attr-defined]
 
     eyes = eye_cascade.detectMultiScale(
@@ -58,6 +63,8 @@ def _detect_eyes_with_cascade(
 
 def _detect_face_region(image: np.ndarray) -> tuple[int, int, int, int] | None:
     """Detect face bounding box using Haar Cascade."""
+    if cv2 is None or not hasattr(cv2, "CascadeClassifier"):
+        return None
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     face_cascade = cv2.CascadeClassifier(  # type: ignore[attr-defined]
         cv2.data.haarcascades + "haarcascade_frontalface_default.xml"  # type: ignore[attr-defined]
@@ -103,6 +110,9 @@ def align_face(
     Raises:
         FaceAlignmentError: If no face or eyes are detected
     """
+    if cv2 is None:
+        raise FaceAlignmentError("OpenCV face alignment is unavailable")
+
     # Load image
     with Image.open(io.BytesIO(image_bytes)) as pil_img:
         cv_img = _pil_to_cv2(pil_img)
@@ -190,7 +200,7 @@ def align_face_safe(
     """
     try:
         return align_face(image_bytes, target_eye_distance, output_size)
-    except (FaceAlignmentError, OSError, ValueError, RuntimeError):
+    except (FaceAlignmentError, OSError, ValueError, RuntimeError, AttributeError):
         # If alignment fails, return resized original image
         with Image.open(io.BytesIO(image_bytes)) as img:
             resized = img.convert("RGB").resize(output_size, Image.Resampling.LANCZOS)

@@ -21,7 +21,7 @@ import com.glowup.ai.di.NetworkModule
  *
  * Provides:
  * - MockWebServer for API responses
- * - Fake TokenProvider that doesn't require Firebase
+ * - Fake TokenProvider that doesn't require Supabase
  * - Test-configured OkHttpClient and Retrofit
  */
 @Module

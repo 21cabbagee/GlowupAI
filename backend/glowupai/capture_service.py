@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -13,6 +14,8 @@ from .service import GlowupAIService, row_dict
 VERTICALS = ("skin",)
 CAPTURE_PROTOCOL_VERSION = "standardized-v1"
 FREE_HISTORY_DAYS = 90
+
+logger = logging.getLogger(__name__)
 
 
 def uid() -> str:
@@ -232,6 +235,7 @@ class CaptureService:
         is_baseline: bool = False,
         vertical: str = "skin",
         experiment_id: str | None = None,
+        idempotency_key: str | None = None,
         record_engagement_fn: Callable | None = None,
     ) -> dict[str, Any]:
         """Create a new photo capture with analysis and metrics.
@@ -259,6 +263,20 @@ class CaptureService:
         """
         if vertical not in VERTICALS:
             raise ValueError("vertical must be skin")
+        if idempotency_key:
+            existing = self.db.fetchone(
+                "SELECT id FROM photo_captures WHERE user_id=? AND idempotency_key=?",
+                (user_id, idempotency_key),
+            )
+            if existing:
+                # The route must not repeat side effects (analytics, streak
+                # notifications) for an idempotent replay.  Keep this marker
+                # internal: the router removes it before serialising the API
+                # response, preserving the replay's public response shape.
+                return {
+                    **self.detail(user_id, existing["id"], vertical),
+                    "_capture_created": False,
+                }
         if experiment_id and not self.db.fetchone(
             "SELECT id FROM experiments WHERE id=? AND user_id=?",
             (experiment_id, user_id),
@@ -273,6 +291,7 @@ class CaptureService:
             captured_at,
             device_meta,
             is_baseline,
+            idempotency_key,
         )
         metric = result["metric"] or {}
         appearance_id = uid()
@@ -314,6 +333,10 @@ class CaptureService:
             }
         )
         result["capture_protocol"] = CAPTURE_PROTOCOL_VERSION
+        # Internal route metadata; stripped before returning the HTTP payload.
+        # This distinguishes an accepted new capture from an idempotent replay
+        # without trying to infer creation from the capture data itself.
+        result["_capture_created"] = True
         # Add baseline comparison if this is not the baseline itself
         if not is_baseline:
             result["baseline_comparison"] = self._add_baseline_comparison(
@@ -352,15 +375,80 @@ class CaptureService:
         if vertical not in VERTICALS:
             raise ValueError("invalid vertical")
         rows = self.db.fetchall(
-            """SELECT c.id,c.captured_at,c.is_baseline,c.capture_quality_json,m.model_version,m.blemish_count,m.redness_score,m.redness_delta,m.darkspot_area,m.texture_score,m.confidence,m.noise_floor_json,a.metrics_json FROM photo_captures c JOIN metric_snapshots m ON m.id=(SELECT m2.id FROM metric_snapshots m2 WHERE m2.photo_id=c.id ORDER BY m2.created_at DESC LIMIT 1) LEFT JOIN appearance_captures a ON a.photo_id=c.id AND a.vertical=? WHERE c.user_id=? ORDER BY c.captured_at""",
+            """SELECT c.id,c.captured_at,c.is_baseline,c.status,c.capture_quality_json,
+                      m.model_version,m.blemish_count,m.redness_score,m.redness_delta,
+                      m.darkspot_area,m.texture_score,m.confidence,m.noise_floor_json,
+                      a.metrics_json,
+                      aa.id AS ai_analysis_id, aa.schema_version AS ai_schema_version,
+                      aa.status AS ai_status, aa.safe_error_code AS ai_error_code,
+                      aa.vision_provider AS ai_vision_provider,
+                      aa.vision_model_id AS ai_vision_model_id,
+                      aa.vision_reasoning_effort AS ai_vision_reasoning_effort,
+                      aa.language_provider AS ai_language_provider,
+                      aa.language_model_id AS ai_language_model_id,
+                      aa.language_reasoning_effort AS ai_language_reasoning_effort,
+                      aa.language_mode AS ai_language_mode,
+                      aa.language_fallback_provider AS ai_language_fallback_provider,
+                      aa.language_fallback_model_id AS ai_language_fallback_model_id,
+                      aa.language_fallback_reasoning_effort AS ai_language_fallback_reasoning_effort,
+                      aa.preprocessing_version AS ai_preprocessing_version,
+                      aa.image_input_json AS ai_image_input_json,
+                      aa.validated_vision_json AS ai_vision_json,
+                      aa.validated_language_json AS ai_language_json,
+                      (SELECT j.id FROM analysis_jobs j WHERE j.capture_id=c.id
+                       ORDER BY j.queued_at DESC LIMIT 1) AS analysis_job_id
+               FROM photo_captures c
+               LEFT JOIN metric_snapshots m ON m.id=(
+                   SELECT m2.id FROM metric_snapshots m2 WHERE m2.photo_id=c.id
+                   ORDER BY m2.created_at DESC LIMIT 1)
+               LEFT JOIN appearance_captures a ON a.photo_id=c.id AND a.vertical=?
+               LEFT JOIN ai_analyses aa ON aa.id=(
+                   SELECT aa2.id FROM ai_analyses aa2 WHERE aa2.capture_id=c.id
+                   ORDER BY aa2.created_at DESC LIMIT 1)
+               WHERE c.user_id=? ORDER BY c.captured_at""",
             (vertical, user_id),
         )
         output = []
         for row in rows:
             item = row_dict(row)
+            item["photo_path"] = f"users/{user_id}/captures/{item['id']}/photo"
             item["capture_quality"] = load(item.pop("capture_quality_json"))
-            item["noise_floor"] = load(item.pop("noise_floor_json"))
+            item["noise_floor"] = load(item.pop("noise_floor_json"), {})
             item["appearance_metrics"] = load(item.pop("metrics_json"), {})
+            ai_row = {
+                "id": item.pop("ai_analysis_id", None),
+                "schema_version": item.pop("ai_schema_version", None),
+                "status": item.pop("ai_status", None),
+                "safe_error_code": item.pop("ai_error_code", None),
+                "vision_provider": item.pop("ai_vision_provider", None),
+                "vision_model_id": item.pop("ai_vision_model_id", None),
+                "vision_reasoning_effort": item.pop("ai_vision_reasoning_effort", None),
+                "language_provider": item.pop("ai_language_provider", None),
+                "language_model_id": item.pop("ai_language_model_id", None),
+                "language_reasoning_effort": item.pop(
+                    "ai_language_reasoning_effort", None
+                ),
+                "language_mode": item.pop("ai_language_mode", None),
+                "language_fallback_provider": item.pop(
+                    "ai_language_fallback_provider", None
+                ),
+                "language_fallback_model_id": item.pop(
+                    "ai_language_fallback_model_id", None
+                ),
+                "language_fallback_reasoning_effort": item.pop(
+                    "ai_language_fallback_reasoning_effort", None
+                ),
+                "preprocessing_version": item.pop("ai_preprocessing_version", None),
+                "image_input_json": item.pop("ai_image_input_json", None),
+                "validated_vision_json": item.pop("ai_vision_json", None),
+                "validated_language_json": item.pop("ai_language_json", None),
+            }
+            item["analysis"] = self.parent._decode_ai_analysis(
+                ai_row if ai_row["id"] else None
+            )
+            item["analysis_status"] = (
+                item["analysis"].get("status") if item["analysis"] else None
+            )
             item.update(self._measurement_explanation(item))
             # Add baseline comparison for non-baseline captures
             if not item.get("is_baseline"):
@@ -380,6 +468,39 @@ class CaptureService:
             cutoff = datetime.now(UTC) - timedelta(days=FREE_HISTORY_DAYS)
             output = [item for item in output if as_date(item["captured_at"]) >= cutoff]
         return output
+
+    def detail(
+        self, user_id: str, capture_id: str, vertical: str = "skin"
+    ) -> dict[str, Any]:
+        """Return one owner-scoped capture without the free-history window.
+
+        The detail route is used for process-death recovery. History limits are
+        a presentation capability; they must never make an owned capture
+        disappear when the user follows a previously issued capture id.
+        """
+        self.parent.require_user(user_id)
+        if vertical not in VERTICALS:
+            raise ValueError("invalid vertical")
+        item = next(
+            (
+                entry
+                for entry in self.history(user_id, vertical, is_premium=True)
+                if entry.get("id") == capture_id
+            ),
+            None,
+        )
+        if item is None:
+            raise ValueError("capture not found")
+        item["vertical"] = vertical
+        item["metric"] = {
+            "confidence": item.get("confidence"),
+            "redness_score": item.get("redness_score"),
+            "blemish_count": item.get("blemish_count"),
+            "darkspot_area": item.get("darkspot_area"),
+            "texture_score": item.get("texture_score"),
+            "model_version": item.get("model_version"),
+        }
+        return item
 
     def capture_guide(
         self, user_id: str, vertical: str = "skin", history_fn: Callable | None = None
@@ -577,7 +698,9 @@ class CaptureService:
             self.db.fetchone("SELECT * FROM labels WHERE id=?", (label_id,))
         )
 
-    def _run_reprocess(self, user_id: str, model_version: str) -> dict[str, Any]:
+    def _run_reprocess(
+        self, user_id: str, model_version: str, job_id: str | None = None
+    ) -> dict[str, Any]:
         """Reprocess all user captures with a new model version (background task).
 
         Re-runs ML analysis on all accepted captures using specified model version,
@@ -594,8 +717,47 @@ class CaptureService:
             "SELECT * FROM photo_captures WHERE user_id=? AND status='accepted' ORDER BY captured_at",
             (user_id,),
         )
+
+        # Reprocessing in the provider-backed deployment always uses the
+        # configured Luna model.  The caller-supplied version is retained as a
+        # prompt/series key for auditability; arbitrary provider model IDs are
+        # never accepted from the API.
+        orchestrator = getattr(self.parent, "ai_orchestrator", None)
+        if orchestrator is not None:
+            processed = 0
+            for capture in captures:
+                try:
+                    orchestrator.run_capture_analysis(
+                        user_id=user_id,
+                        capture_id=capture["id"],
+                        image_bytes=self.photos.read(capture["raw_ref"]),
+                        mime_type="image/jpeg",
+                        data_class="personal_face",
+                        task_type="vision_observation_reprocess",
+                        prompt_version=f"skin-vision-{model_version[:60]}",
+                    )
+                    processed += 1
+                except Exception as exc:  # provider failure is recorded per analysis
+                    logger.warning(
+                        "Capture reprocessing analysis failed",
+                        extra={"error_type": type(exc).__name__},
+                    )
+            return {"processed_count": processed, "model_version": model_version}
+
         processed = 0
         for capture in captures:
+            snapshot_id = (
+                str(
+                    uuid.uuid5(uuid.NAMESPACE_URL, f"glowupai:{job_id}:{capture['id']}")
+                )
+                if job_id
+                else uid()
+            )
+            if self.db.fetchone(
+                "SELECT id FROM metric_snapshots WHERE id=?", (snapshot_id,)
+            ):
+                processed += 1
+                continue
             quality = load(capture["capture_quality_json"])
             result = analyze(
                 self.photos.read(capture["raw_ref"]),
@@ -604,9 +766,9 @@ class CaptureService:
                 model_version,
             )
             self.db.execute(
-                "INSERT INTO metric_snapshots (id,photo_id,user_id,model_version,blemish_count,redness_score,redness_delta,darkspot_area,texture_score,confidence,noise_floor_json) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO metric_snapshots (id,photo_id,user_id,model_version,blemish_count,redness_score,redness_delta,darkspot_area,texture_score,confidence,noise_floor_json) VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT (id) DO NOTHING",
                 (
-                    uid(),
+                    snapshot_id,
                     capture["id"],
                     user_id,
                     result.model_version,
@@ -637,7 +799,12 @@ class CaptureService:
             Dictionary with job_id and status ('queued').
         """
         job_id = jobs.submit(
-            "reprocess", self._run_reprocess, user_id, model_version, user_id=user_id
+            "reprocess",
+            self._run_reprocess,
+            user_id,
+            model_version,
+            user_id=user_id,
+            payload={"model_version": model_version},
         )
         audit_fn(
             "reprocess_queued",
@@ -666,7 +833,7 @@ class CaptureService:
         job = jobs.get(job_id, user_id=user_id)
         if not job:
             raise ValueError("reprocess job not found")
-        return job
+        return dict(job)
 
     # Data Collection, Feedback, and Monitoring Methods
 

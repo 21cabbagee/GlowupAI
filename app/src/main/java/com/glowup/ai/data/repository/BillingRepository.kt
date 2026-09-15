@@ -37,6 +37,19 @@ class BillingRepository
         private val mutations = MutationLock<String>()
         val pendingKeys: StateFlow<Set<String>> = mutations.pendingKeys
 
+        suspend fun productIds(): List<String> = api.billingConfig()
+            .takeIf { it.enabled }
+            ?.productIds
+            .orEmpty()
+
+        suspend fun verifyPurchase(userId: String, token: String): GlowResult<Subscription> =
+            apiCall {
+                api.verifyPlayPurchase(userId, com.glowup.ai.data.remote.dto.PlayPurchaseRequestDto(token)).toDomain()
+            }.onSuccess {
+                sessionStore.setEntitlement(it.plan, it.status)
+                invalidationBus.publish(InvalidationSignal.SubscriptionChanged(userId))
+            }
+
         suspend fun getSubscription(userId: String): GlowResult<Subscription> =
             apiCall { api.getSubscription(userId).toDomain() }.onSuccess {
                 sessionStore.setEntitlement(it.plan, it.status)

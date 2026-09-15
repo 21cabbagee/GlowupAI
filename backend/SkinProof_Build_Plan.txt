@@ -248,7 +248,7 @@ drift toward diagnostic claims.
   Mobile    | React Native (or native Swift/Kotlin if capture guidance needs frame-level camera control) | Camera/AR guidance is the highest-craft surface in the app — don't let a cross-platform layer degrade it; prototype capture natively first if RN camera APIs fall short
   Backend   | Node/TypeScript or Python (FastAPI) services, event-driven via a queue (SQS/PubSub) | CV and attribution are async workloads by nature — a queue-first backend fits the domain
   CV/ML     | PyTorch, ONNX export for on-device, MediaPipe for landmarks              | Standard, well-supported, and portable to on-device inference later
-  Storage   | Postgres (transactional), S3/GCS (encrypted photos), pgvector for embeddings early | No need for a specialized vector DB until cohort-similarity features (Discover) are built
+  Storage   | Supabase Postgres (transactional), private Supabase Storage (photos), pgvector for embeddings early | No need for a specialized vector DB until cohort-similarity features (Discover) are built
   Infra     | Single cloud (AWS or GCP), GPU autoscaling worker pool for CV inference, CDN for processed image delivery | Keep it boring at MVP scale — the differentiation is in the models and product, not the infra
   LLM       | Hosted frontier model behind an internal "insight service" interface     | Narrow, evaluable prompts — quality now, swap for cost later without touching product code
 
@@ -259,7 +259,7 @@ Scale the causal claims, not just the infrastructure.
 
 0 -> 500 users — Prove the loop, not the model.
   Off-the-shelf landmarks + deterministic color-space metrics. Rules-based
-  attribution. Single region, Postgres + S3. Founders manually review a
+  attribution. Single region, Supabase Postgres + private Supabase Storage. Founders manually review a
   sample of verdicts weekly to catch bad calls before they erode trust.
 
 500 -> 20k — Automate what was manual.

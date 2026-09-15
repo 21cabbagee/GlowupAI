@@ -22,6 +22,7 @@ import androidx.navigation.NavController
 import com.glowup.ai.BuildConfig
 import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.ui.GlowTopBar
+import com.glowup.ai.feature.shell.GlowDestination
 import java.time.LocalTime
 
 /**
@@ -51,10 +52,12 @@ fun SettingsRoute(
         onStreakWarningsToggled = viewModel::setStreakWarnings,
         onWeeklyRecapToggled = viewModel::setWeeklyRecap,
         onAchievementCelebrationsToggled = viewModel::setAchievementCelebrations,
-        onCloudBackupToggled = viewModel::setCloudBackup,
-        onExportDataClick = viewModel::exportData,
         onSignOutClick = viewModel::signOut,
-        onDeleteAccountClick = viewModel::requestDeleteAccount,
+        onDeleteAccountClick = { navController.navigate(GlowDestination.DataAndPrivacy) },
+        onManageDataClick = { navController.navigate(GlowDestination.DataAndPrivacy) },
+        onPrivacyPolicyClick = { navController.navigate(GlowDestination.PrivacyPolicy) },
+        onTermsClick = { navController.navigate(GlowDestination.TermsOfService) },
+        onMedicalDisclaimerClick = { navController.navigate(GlowDestination.MedicalDisclaimer) },
         onClearCacheClick = viewModel::clearCache,
         onForceCrashClick = viewModel::forceCrash,
         onViewLogsClick = viewModel::viewLogs,
@@ -74,16 +77,17 @@ private fun SettingsContent(
     onStreakWarningsToggled: (Boolean) -> Unit,
     onWeeklyRecapToggled: (Boolean) -> Unit,
     onAchievementCelebrationsToggled: (Boolean) -> Unit,
-    onCloudBackupToggled: (Boolean) -> Unit,
-    onExportDataClick: () -> Unit,
     onSignOutClick: () -> Unit,
     onDeleteAccountClick: () -> Unit,
+    onManageDataClick: () -> Unit,
+    onPrivacyPolicyClick: () -> Unit,
+    onTermsClick: () -> Unit,
+    onMedicalDisclaimerClick: () -> Unit,
     onClearCacheClick: () -> Unit,
     onForceCrashClick: () -> Unit,
     onViewLogsClick: () -> Unit,
     onApiEndpointSelected: (String) -> Unit,
 ) {
-    var showDeleteAccountDialog by remember { mutableStateOf(false) }
     var showTimePickerDialog by remember { mutableStateOf(false) }
 
     Scaffold(topBar = { GlowTopBar(title = "Settings", onBack = onBack) }) { padding ->
@@ -100,7 +104,7 @@ private fun SettingsContent(
                 email = uiState.userEmail,
                 displayName = uiState.userDisplayName,
                 onSignOutClick = onSignOutClick,
-                onDeleteAccountClick = { showDeleteAccountDialog = true },
+                onDeleteAccountClick = onDeleteAccountClick,
                 signingOut = uiState.signingOut,
             )
 
@@ -120,10 +124,10 @@ private fun SettingsContent(
 
             // Data & Privacy Section
             DataPrivacySection(
-                cloudBackupEnabled = uiState.cloudBackupEnabled,
-                onCloudBackupToggled = onCloudBackupToggled,
-                onExportDataClick = onExportDataClick,
-                exportInProgress = uiState.exportInProgress,
+                onManageDataClick = onManageDataClick,
+                onPrivacyPolicyClick = onPrivacyPolicyClick,
+                onTermsClick = onTermsClick,
+                onMedicalDisclaimerClick = onMedicalDisclaimerClick,
             )
 
             // Display Section
@@ -152,17 +156,6 @@ private fun SettingsContent(
         }
     }
 
-    // Delete Account Confirmation Dialog
-    if (showDeleteAccountDialog) {
-        DeleteAccountDialog(
-            onDismiss = { showDeleteAccountDialog = false },
-            onConfirm = {
-                showDeleteAccountDialog = false
-                onDeleteAccountClick()
-            },
-        )
-    }
-
     // Time Picker Dialog
     if (showTimePickerDialog) {
         TimePickerDialog(
@@ -175,4 +168,3 @@ private fun SettingsContent(
         )
     }
 }
-

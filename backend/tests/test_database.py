@@ -28,21 +28,21 @@ class TestDatabaseOperations(unittest.TestCase):
         """Test user creation."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid, skin_type) VALUES (?, ?, ?)",
+            "INSERT INTO users (id, supabase_uid, skin_type) VALUES (?, ?, ?)",
             (user_id, "test_uid_123", "combination"),
         )
 
         user = self.db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
         self.assertIsNotNone(user)
         self.assertEqual(user["id"], user_id)
-        self.assertEqual(user["firebase_uid"], "test_uid_123")
+        self.assertEqual(user["supabase_uid"], "test_uid_123")
         self.assertEqual(user["skin_type"], "combination")
 
     def test_get_user_by_id(self):
         """Test retrieving user by ID."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "test_uid_456"),
         )
 
@@ -50,30 +50,30 @@ class TestDatabaseOperations(unittest.TestCase):
 
         self.assertIsNotNone(user)
         self.assertEqual(user["id"], user_id)
-        self.assertEqual(user["firebase_uid"], "test_uid_456")
+        self.assertEqual(user["supabase_uid"], "test_uid_456")
 
-    def test_get_user_by_firebase_uid(self):
-        """Test retrieving user by Firebase UID."""
-        firebase_uid = "firebase_test_789"
+    def test_get_user_by_supabase_uid(self):
+        """Test retrieving user by Supabase UID."""
+        supabase_uid = "supabase_test_789"
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id, firebase_uid),
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
+            (user_id, supabase_uid),
         )
 
         user = self.db.fetchone(
-            "SELECT * FROM users WHERE firebase_uid = ?", (firebase_uid,)
+            "SELECT * FROM users WHERE supabase_uid = ?", (supabase_uid,)
         )
 
         self.assertIsNotNone(user)
         self.assertEqual(user["id"], user_id)
-        self.assertEqual(user["firebase_uid"], firebase_uid)
+        self.assertEqual(user["supabase_uid"], supabase_uid)
 
     def test_update_user_consent(self):
         """Test updating user consent."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "consent_test"),
         )
 
@@ -100,7 +100,7 @@ class TestDatabaseOperations(unittest.TestCase):
         """Test capture creation."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "capture_test"),
         )
 
@@ -131,7 +131,7 @@ class TestDatabaseOperations(unittest.TestCase):
         """Test retrieving capture by ID."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "get_capture_test"),
         )
 
@@ -162,7 +162,7 @@ class TestDatabaseOperations(unittest.TestCase):
         """Test listing all captures for a user."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "list_captures_test"),
         )
 
@@ -192,7 +192,7 @@ class TestDatabaseOperations(unittest.TestCase):
         """Test listing captures with limit."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "limit_test"),
         )
 
@@ -222,7 +222,7 @@ class TestDatabaseOperations(unittest.TestCase):
         """Test retrieving baseline capture."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "baseline_test"),
         )
 
@@ -299,7 +299,7 @@ class TestDatabaseOperations(unittest.TestCase):
         """Test routine event creation."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "routine_test"),
         )
 
@@ -327,7 +327,7 @@ class TestDatabaseOperations(unittest.TestCase):
         """Test retrieving user's routine events."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "events_test"),
         )
 
@@ -361,7 +361,7 @@ class TestDatabaseOperations(unittest.TestCase):
         """Test deleting user's captures."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "delete_test"),
         )
 
@@ -394,7 +394,7 @@ class TestDatabaseOperations(unittest.TestCase):
         """Test that database connection persists across operations."""
         user_id = str(uuid.uuid4())
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
             (user_id, "persist_test"),
         )
 
@@ -414,7 +414,7 @@ class TestDatabaseOperations(unittest.TestCase):
         for i in range(10):
             user_id = str(uuid.uuid4())
             self.db.execute(
-                "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
+                "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
                 (user_id, f"concurrent_test_{i}"),
             )
             user_ids.append(user_id)
@@ -425,7 +425,7 @@ class TestDatabaseOperations(unittest.TestCase):
 
         # Verify all users exist in database
         all_users = self.db.fetchall(
-            "SELECT * FROM users WHERE firebase_uid LIKE 'concurrent_test_%'"
+            "SELECT * FROM users WHERE supabase_uid LIKE 'concurrent_test_%'"
         )
         self.assertEqual(len(all_users), 10)
 

@@ -1,5 +1,7 @@
 package com.glowup.ai.domain.model
 
+import java.util.UUID
+
 /**
  * Typealias for StreakCalculator - uses HistoryItem which has capturedAt field
  */
@@ -25,6 +27,8 @@ data class CaptureCreateRequest(
     val experimentId: String? = null,
     val capturedAt: String? = null,
     val deviceMeta: Map<String, String>? = null,
+    /** Stable across an ambiguous network failure and every outbox retry. */
+    val idempotencyKey: String = UUID.randomUUID().toString(),
 )
 
 data class CoachingTip(
@@ -60,6 +64,55 @@ data class AppearanceMetric(
     val confidenceLabel: String?,
 )
 
+/** A bounded, qualitative observation returned by the vision provider.  All
+ * fields are strings from a server-controlled enum; keeping them as strings
+ * lets the app safely display a newly added server value instead of failing
+ * deserialization. */
+data class CosmeticObservation(
+    val region: String,
+    val concern: String,
+    val visibility: String,
+    val extent: String,
+    val description: String,
+)
+
+data class AnalysisQuality(
+    val usable: Boolean,
+    val issues: List<String>,
+)
+
+data class AnalysisImageInput(
+    val preprocessingVersion: String,
+    val width: Int,
+    val height: Int,
+    val bytes: Int,
+    val detail: String,
+)
+
+data class AnalysisEnvelope(
+    val schemaVersion: String,
+    val analysisId: String?,
+    val status: String,
+    val unavailableReason: String?,
+    val retryAfterSeconds: Int?,
+    val visionProvider: String?,
+    val visionModelId: String?,
+    val visionReasoningEffort: String?,
+    val languageProvider: String?,
+    val languageModelId: String?,
+    val languageReasoningEffort: String?,
+    val languageMode: String?,
+    val languageFallbackProvider: String?,
+    val languageFallbackModelId: String?,
+    val languageFallbackReasoningEffort: String?,
+    val imageInput: AnalysisImageInput?,
+    val quality: AnalysisQuality?,
+    val observations: List<CosmeticObservation>,
+    val limitations: List<String>,
+    val summary: String?,
+    val languageAnswer: String?,
+)
+
 data class BaselineComparison(
     val hasBaseline: Boolean,
     val rednessChangePct: Double?,
@@ -78,6 +131,7 @@ data class CaptureResult(
     val metric: AppearanceMetric,
     val vertical: String,
     val baselineComparison: BaselineComparison? = null,
+    val analysis: AnalysisEnvelope? = null,
 )
 
 data class HistoryItem(
@@ -96,6 +150,8 @@ data class HistoryItem(
     val appearanceMetrics: Map<String, Double>,
     val confidenceLabel: String?,
     val baselineComparison: BaselineComparison? = null,
+    val photoPath: String? = null,
+    val analysis: AnalysisEnvelope? = null,
 )
 
 data class CaptureGuide(

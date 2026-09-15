@@ -1,5 +1,6 @@
 package com.glowup.ai.feature.account
 
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,6 +54,7 @@ fun AccountRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cancelState by viewModel.cancelState.collectAsStateWithLifecycle()
     val signedOut by viewModel.signedOut.collectAsStateWithLifecycle()
+    val uriHandler = LocalUriHandler.current
 
     LaunchedEffect(signedOut) {
         if (signedOut) navController.routeToWelcomeAfterSessionEnd()
@@ -63,7 +65,7 @@ fun AccountRoute(
         cancelState = cancelState,
         onRetry = viewModel::retry,
         onUpgradeClick = { navController.navigate(GlowDestination.Paywall) },
-        onManageSubscriptionClick = viewModel::requestCancelSubscription,
+        onManageSubscriptionClick = { uriHandler.openUri("https://play.google.com/store/account/subscriptions") },
         onDismissCancel = viewModel::dismissCancelSubscription,
         onConfirmCancel = viewModel::confirmCancelSubscription,
         onSettingsClick = { navController.navigate(GlowDestination.Settings) },

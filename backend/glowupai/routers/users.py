@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..auth import AuthError, verify_id_token
+from ..auth import AuthError, verify_access_token
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,13 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
 
     @router.post("/users")
     def create_user(payload: UserCreate) -> dict[str, Any]:
-        # Create user - frontend will update profile separately
+        # Legacy local-development route. Production identities are provisioned
+        # only from a validated Supabase JWT at /auth/session.
+        if service.settings.auth_required:
+            raise HTTPException(
+                status_code=401,
+                detail="use /api/auth/session with a Supabase bearer token",
+            )
         result: dict[str, Any] = run_handler(service.create_user, payload.skin_type)
         return result
 
@@ -54,7 +60,12 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
             raise HTTPException(status_code=401, detail="missing bearer token")
         token = authorization.split(" ", 1)[1].strip()
         try:
-            identity = verify_id_token(token, service.settings.firebase_project_id)
+            identity = verify_access_token(
+                token,
+                service.settings.supabase_url,
+                service.settings.supabase_jwt_secret,
+                jwks_url=service.settings.supabase_jwks_url,
+            )
         except AuthError as exc:
             raise HTTPException(status_code=401, detail=str(exc)) from exc
 
@@ -69,7 +80,9 @@ def setup_users_router(service, analytics, run_handler, require_owner) -> APIRou
         # Track user signup if new user
         if result.get("created"):
             analytics.track_user_signup(
-                user_id=result["user_id"],
+                # `session_for_identity` returns the standard profile
+                # envelope, where the canonical id lives in `user`.
+                user_id=result["user"]["id"],
                 method="google" if identity.email else "anonymous",
                 email=identity.email,
             )

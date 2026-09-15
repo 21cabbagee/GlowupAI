@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import sqlite3
@@ -8,11 +9,14 @@ from datetime import UTC, datetime
 from typing import Any
 
 from .attribution import AttributionEngine, parse_time
+from .ai_contracts import LanguageMode
+from .ai_orchestrator import AIOrchestrationError
 from .capture import merge_quality
 from .catalog import explain, parse_ingredients
 from .config import Settings
 from .db import Database, json_dumps
 from .insights import GroundedInsightService, InsightService
+from .google_ai import GoogleGeminiInsightService
 from .metrics import MetricResult, analyze
 from .photos import MemoryPhotoStore, PhotoStore
 from .preprocessing import (
@@ -33,8 +37,16 @@ def new_id() -> str:
     return str(uuid.uuid4())
 
 
-def row_dict(row: Any) -> dict[str, Any] | None:
-    return None if row is None else dict(row)
+def row_dict(row: Any) -> dict[str, Any]:
+    """Convert a database row that the caller has established must exist.
+
+    Optional lookups must branch before calling this helper. Treating every conversion as
+    nullable hid real missing-row defects across the service layer and made static analysis
+    unable to verify otherwise straightforward response construction.
+    """
+    if row is None:
+        raise RuntimeError("Expected database row was missing")
+    return dict(row)
 
 
 def enrich_metric(metric: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -60,6 +72,112 @@ class GlowupAIService:
         self.photos = photos or MemoryPhotoStore()
         self.insights = insights or GroundedInsightService()
         self.attribution = AttributionEngine(db)
+
+    @staticmethod
+    def _decode_ai_analysis(row: Any | None) -> dict[str, Any] | None:
+        """Build the stable client-facing analysis envelope from one DB row.
+
+        Provider payloads are never returned directly.  The orchestrator stores
+        validated vision/language contracts; this method only projects those
+        contracts into the response shape used by Android and the web client.
+        Legacy metric columns remain independent and may legitimately be null.
+        """
+        if row is None:
+            return None
+        item = dict(row)
+
+        def decode(value: Any, default: Any) -> Any:
+            if value is None:
+                return default
+            if isinstance(value, (dict, list)):
+                return value
+            try:
+                return json.loads(value)
+            except (TypeError, ValueError):
+                return default
+
+        vision = decode(item.get("validated_vision_json"), {})
+        language = decode(item.get("validated_language_json"), None)
+        stored_image_input = decode(item.get("image_input_json"), {})
+        if not isinstance(stored_image_input, dict):
+            stored_image_input = {}
+
+        def safe_int(value: Any) -> int:
+            try:
+                return max(0, int(value or 0))
+            except (TypeError, ValueError):
+                return 0
+
+        quality = vision.get("quality") if isinstance(vision, dict) else None
+        observations = (
+            vision.get("observations", []) if isinstance(vision, dict) else []
+        )
+        limitations = vision.get("limitations", []) if isinstance(vision, dict) else []
+        summary = vision.get("summary") if isinstance(vision, dict) else None
+        if not isinstance(observations, list):
+            observations = []
+        if not isinstance(limitations, list):
+            limitations = []
+        if not isinstance(summary, str):
+            summary = None
+        result: dict[str, Any] = {
+            "schema_version": item.get("schema_version") or "cosmetic-observation-v1",
+            "analysis_id": item.get("id"),
+            "status": item.get("status") or "unavailable",
+            "unavailable_reason": item.get("safe_error_code"),
+            "vision_provider": item.get("vision_provider"),
+            "vision_model_id": item.get("vision_model_id"),
+            "vision_reasoning_effort": item.get("vision_reasoning_effort"),
+            "language_provider": item.get("language_provider"),
+            "language_model_id": item.get("language_model_id"),
+            "language_reasoning_effort": item.get("language_reasoning_effort"),
+            "language_mode": item.get("language_mode")
+            or LanguageMode.UNAVAILABLE.value,
+            "language_fallback_provider": item.get("language_fallback_provider"),
+            "language_fallback_model_id": item.get("language_fallback_model_id"),
+            "language_fallback_reasoning_effort": item.get(
+                "language_fallback_reasoning_effort"
+            ),
+            "image_input": {
+                "preprocessing_version": stored_image_input.get(
+                    "preprocessing_version",
+                    item.get("preprocessing_version") or "face-derivative-v1",
+                ),
+                "width": safe_int(stored_image_input.get("width")),
+                "height": safe_int(stored_image_input.get("height")),
+                "bytes": safe_int(stored_image_input.get("bytes")),
+                "detail": stored_image_input.get("detail") or "low",
+            },
+            "quality": quality,
+            "observations": observations,
+            "limitations": limitations,
+            "summary": summary,
+            "language": language,
+        }
+        return result
+
+    def _latest_ai_analysis(
+        self, capture_id: str, user_id: str
+    ) -> dict[str, Any] | None:
+        try:
+            row = self.db.fetchone(
+                "SELECT * FROM ai_analyses WHERE capture_id=? AND user_id=? "
+                "ORDER BY created_at DESC LIMIT 1",
+                (capture_id, user_id),
+            )
+        except sqlite3.Error:
+            # Legacy databases do not have the provider tables; their capture
+            # responses remain fully backward compatible.
+            return None
+        return self._decode_ai_analysis(row)
+
+    def _personal_gemini_allowed(self) -> bool:
+        """Whether this deployment has explicitly approved personal Gemini data."""
+        return bool(
+            getattr(self.settings, "gemini_enabled", False)
+            and getattr(self.settings, "gemini_personal_data_enabled", False)
+            and getattr(self.settings, "gemini_eligibility_review_id", None)
+        )
 
     def create_user(self, skin_type: str | None = None) -> dict[str, Any]:
         user_id = new_id()
@@ -98,14 +216,13 @@ class GlowupAIService:
         return result
 
     def require_user(self, user_id: str) -> dict[str, Any]:
-        user = row_dict(
-            self.db.fetchone(
-                "SELECT * FROM users WHERE id = ? AND deleted_at IS NULL",
-                (user_id,),
-            ),
+        row = self.db.fetchone(
+            "SELECT * FROM users WHERE id = ? AND deleted_at IS NULL",
+            (user_id,),
         )
-        if not user:
+        if row is None:
             raise ValueError("user not found")
+        user = row_dict(row)
         return user
 
     def require_consent(self, user_id: str) -> dict[str, Any]:
@@ -211,6 +328,7 @@ class GlowupAIService:
         captured_at: str | None = None,
         device_meta: dict[str, Any] | None = None,
         is_baseline: bool = False,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         self.require_consent(user_id)
         if not image_bytes:
@@ -239,7 +357,7 @@ class GlowupAIService:
         raw_ref = self.photos.save(user_id, capture_id, image_bytes)
         self.db.execute(
             """INSERT INTO photo_captures (id, user_id, captured_at, raw_ref, capture_quality_json,
-               device_meta_json, is_baseline) VALUES (?, ?, ?, ?, ?, ?, ?)""",
+               device_meta_json, is_baseline, idempotency_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 capture_id,
                 user_id,
@@ -248,6 +366,7 @@ class GlowupAIService:
                 json_dumps(quality.as_dict()),
                 json_dumps(device_meta or {}),
                 int(baseline),
+                idempotency_key,
             ),
         )
         job_id = new_id()
@@ -266,14 +385,12 @@ class GlowupAIService:
         capture["capture_quality"] = json.loads(capture.pop("capture_quality_json"))
         capture["device_meta"] = json.loads(capture.pop("device_meta_json"))
         capture["analysis_job_id"] = job_id
-        capture["metric"] = enrich_metric(
-            row_dict(
-                self.db.fetchone(
-                    "SELECT * FROM metric_snapshots WHERE photo_id = ?",
-                    (capture_id,),
-                ),
-            )
+        metric_row = self.db.fetchone(
+            "SELECT * FROM metric_snapshots WHERE photo_id = ?",
+            (capture_id,),
         )
+        capture["metric"] = enrich_metric(row_dict(metric_row) if metric_row else None)
+        capture["analysis"] = self._latest_ai_analysis(capture_id, user_id)
         return capture
 
     def process_analysis_job(self, job_id: str) -> None:
@@ -293,6 +410,65 @@ class GlowupAIService:
             )
             quality = json.loads(capture["capture_quality_json"])
             image_bytes = self.photos.read(capture["raw_ref"])
+
+            # New deployments use the paid Luna vision adapter.  The adapter
+            # creates its own deterministic 768px derivative and Gemini only
+            # receives validated text evidence.  A provider outage must not
+            # discard an accepted photo: persist the safe unavailable state and
+            # let the result/history routes render it without legacy scores.
+            orchestrator = getattr(self, "ai_orchestrator", None)
+            if orchestrator is not None:
+                try:
+                    orchestrator.run_capture_analysis(
+                        user_id=capture["user_id"],
+                        capture_id=capture["id"],
+                        image_bytes=image_bytes,
+                        mime_type="image/jpeg",
+                        data_class="personal_face",
+                    )
+                except AIOrchestrationError as exc:
+                    logger.warning(
+                        "AI capture analysis unavailable",
+                        extra={"job_id": job_id, "code": exc.code},
+                    )
+                except Exception as exc:
+                    # Provider/configuration failures must not turn an already accepted
+                    # capture into an HTTP 500. The image and capture row are durable;
+                    # persist a safe unavailable analysis and let the result screen
+                    # offer recovery. Do not expose provider exception text to clients.
+                    logger.error(
+                        "Unexpected AI capture analysis failure",
+                        extra={
+                            "job_id": job_id,
+                            "code": "analysis_unavailable",
+                            "exception_type": type(exc).__name__,
+                        },
+                    )
+                    try:
+                        analysis_id = self.db.fetchone(
+                            "SELECT id FROM ai_analyses WHERE capture_id=? AND user_id=? "
+                            "ORDER BY created_at DESC LIMIT 1",
+                            (capture["id"], capture["user_id"]),
+                        )
+                        if analysis_id:
+                            self.db.execute(
+                                "UPDATE ai_analyses SET status='unavailable', safe_error_code=? "
+                                "WHERE id=? AND user_id=?",
+                                ("analysis_unavailable", analysis_id["id"], capture["user_id"]),
+                            )
+                    except Exception as persist_exc:
+                        logger.error(
+                            "Could not persist unavailable AI analysis",
+                            extra={
+                                "job_id": job_id,
+                                "exception_type": type(persist_exc).__name__,
+                            },
+                        )
+                self.db.execute(
+                    "UPDATE analysis_jobs SET status = 'completed', completed_at = ? WHERE id = ?",
+                    (now_iso(), job_id),
+                )
+                return
 
             # Apply preprocessing to normalize lighting and quality
             import os
@@ -372,7 +548,6 @@ class GlowupAIService:
     def refresh_verdicts(self, user_id: str) -> list[dict[str, Any]]:
         results = self.attribution.evaluate_user(user_id)
         for result in results:
-            text = self.insights.generate(result.as_dict())
             evidence = result.evidence
             evidence_start = evidence.get("evidence_window_start")
             evidence_end = evidence.get("evidence_window_end")
@@ -387,20 +562,72 @@ class GlowupAIService:
                     evidence_end,
                 ),
             )
-            if not existing:
-                self.db.execute(
-                    "INSERT INTO verdicts (id, user_id, product_id, label, evidence_window_start, evidence_window_end, generated_text, evidence_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                    (
-                        new_id(),
-                        user_id,
-                        result.product_id,
-                        result.label,
-                        evidence_start,
-                        evidence_end,
-                        text,
-                        json_dumps(evidence),
-                    ),
+            # A stable verdict already has its bounded language result; do not
+            # spend another provider request every time the dashboard opens.
+            if existing:
+                continue
+            # Never send user-linked attribution evidence without the explicit
+            # reviewed personal-data opt-in.
+            # Custom injected insight services remain usable in tests; the
+            # built-in Gemini adapter is gated by the reviewed personal mode.
+            orchestrator = getattr(self, "ai_orchestrator", None)
+            text: str | None = None
+            if orchestrator is not None:
+                evidence_id = (
+                    f"verdict:{result.product_id}:"
+                    f"{hashlib.sha256(json.dumps(evidence, sort_keys=True, default=str).encode('utf-8')).hexdigest()[:16]}"
                 )
+                try:
+                    language_result = orchestrator.run_language(
+                        user_id=user_id,
+                        evidence={
+                            "evidence_ids": [evidence_id],
+                            "evidence": [
+                                {
+                                    "id": evidence_id,
+                                    "type": "attribution_result",
+                                    "value": result.as_dict(),
+                                }
+                            ],
+                        },
+                        task_type="product_verdict",
+                        data_class="personal_history",
+                        request_identity=evidence_id,
+                    )
+                    language = language_result.get("answer") or {}
+                    text = (
+                        language.get("answer") if isinstance(language, dict) else None
+                    )
+                except Exception:
+                    text = None
+            if text is None:
+                # With the orchestrator present Gemini and Luna have already
+                # been attempted in the mandated order; finish locally rather
+                # than calling the Gemini adapter a second time.
+                insight_service = (
+                    GroundedInsightService()
+                    if orchestrator is not None
+                    else self.insights
+                )
+                if (
+                    isinstance(insight_service, GoogleGeminiInsightService)
+                    and not self._personal_gemini_allowed()
+                ):
+                    insight_service = GroundedInsightService()
+                text = insight_service.generate(result.as_dict())
+            self.db.execute(
+                "INSERT INTO verdicts (id, user_id, product_id, label, evidence_window_start, evidence_window_end, generated_text, evidence_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    new_id(),
+                    user_id,
+                    result.product_id,
+                    result.label,
+                    evidence_start,
+                    evidence_end,
+                    text,
+                    json_dumps(evidence),
+                ),
+            )
         latest = self.db.fetchall(
             """SELECT v.*, p.name AS product_name FROM verdicts v JOIN products p ON p.id = v.product_id
                WHERE v.user_id = ? AND v.generated_at = (SELECT MAX(v2.generated_at) FROM verdicts v2 WHERE v2.user_id = v.user_id AND v2.product_id = v.product_id)

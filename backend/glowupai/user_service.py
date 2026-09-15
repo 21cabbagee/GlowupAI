@@ -114,40 +114,45 @@ class UserService:
 
     def session_for_identity(
         self,
-        firebase_uid: str,
+        supabase_uid: str,
         email: str | None = None,
         email_verified: bool = False,
         name: str | None = None,
     ) -> dict[str, Any]:
-        """Exchange a verified Firebase uid for a GlowUpAI profile.
+        """Exchange a verified Supabase uid for a GlowUpAI profile.
 
-        Idempotent per `firebase_uid`: the first call creates the user,
+        Idempotent per `supabase_uid`: the first call creates the user,
         appearance profile, and free entitlement exactly like `create_user`
         and binds the uid; every later call for the same uid returns the same
         user's profile, never a duplicate.
         """
 
         existing = self.db.fetchone(
-            "SELECT id FROM users WHERE firebase_uid = ?", (firebase_uid,)
+            "SELECT id FROM users WHERE supabase_uid = ?", (supabase_uid,)
         )
         if existing:
-            return self.profile(existing["id"])
+            result = self.profile(existing["id"])
+            # The session endpoint uses this signal to record signup analytics
+            # exactly once. Returning identities must never look like a new
+            # account simply because their profile was loaded successfully.
+            result["created"] = False
+            return result
         created = self.create_user(None)
         user_id = created["user"]["id"]
         try:
             self.db.execute(
-                "UPDATE users SET firebase_uid = ? WHERE id = ?",
-                (firebase_uid, user_id),
+                "UPDATE users SET supabase_uid = ? WHERE id = ?",
+                (supabase_uid, user_id),
             )
         except (sqlite3.IntegrityError, ValueError) as exc:
             # Lost a create-race to a concurrent request for the same uid:
             # bind to whichever row won, and drop the extra one we made
             # rather than leaving an orphaned duplicate user behind.
             logger.warning(
-                f"Race condition detected for firebase_uid {firebase_uid}: {exc}"
+                f"Race condition detected for supabase_uid {supabase_uid}: {exc}"
             )
             winner = self.db.fetchone(
-                "SELECT id FROM users WHERE firebase_uid = ?", (firebase_uid,)
+                "SELECT id FROM users WHERE supabase_uid = ?", (supabase_uid,)
             )
             if not winner:
                 raise
@@ -164,13 +169,15 @@ class UserService:
                     (name.strip()[:80], user_id),
                 )
         self._audit(
-            "firebase_identity_bound",
+            "supabase_identity_bound",
             "user",
             user_id,
             user_id,
             {"email_verified": bool(email_verified)},
         )
-        return self.profile(user_id)
+        result = self.profile(user_id)
+        result["created"] = True
+        return result
 
     def grant_consent(
         self, user_id: str, facial_data: bool, policy_version: str | None = None
@@ -421,7 +428,8 @@ class UserService:
                     (user_id,),
                 )
             ],
-            "qna": qna_history_fn(user_id) if is_premium else [],
+            # Stored data remains exportable after entitlement changes.
+            "qna": qna_history_fn(user_id),
             "engagement": [
                 row_dict(row)
                 for row in self.db.fetchall(

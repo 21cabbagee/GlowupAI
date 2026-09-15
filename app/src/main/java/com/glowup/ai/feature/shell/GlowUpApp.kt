@@ -44,6 +44,7 @@ import com.glowup.ai.data.repository.SessionRepository
 import com.glowup.ai.data.telemetry.Telemetry
 import com.glowup.ai.data.telemetry.TelemetryEvent
 import com.glowup.ai.domain.SessionState
+import com.glowup.ai.feature.auth.SupabaseAuthGateway
 import kotlin.reflect.KClass
 
 /** Honey/Bumble shell: four persistent destinations and one clearly-labelled capture FAB. */
@@ -52,6 +53,7 @@ fun GlowUpApp(
     navController: NavHostController = rememberNavController(),
     sessionStore: SessionStore,
     sessionRepository: SessionRepository,
+    authGateway: SupabaseAuthGateway,
     telemetry: Telemetry,
     pendingDestination: GlowDestination? = null,
     onPendingDestinationConsumed: (GlowDestination) -> Unit = {},
@@ -63,12 +65,14 @@ fun GlowUpApp(
         navController = navController,
         sessionRepository = sessionRepository,
         sessionStore = sessionStore,
+        authGateway = authGateway,
         currentRoute = currentDestination?.route,
     ) { sessionState, retry ->
         val isWorkspaceRoute = currentDestination.isWorkspaceDestination()
+        val isFullScreenRoute = currentDestination.isFullScreenDestination()
         val isAuthoritative = sessionState.isAuthoritative
         val showWorkspaceChrome =
-            isWorkspaceRoute && isAuthoritative &&
+            isWorkspaceRoute && !isFullScreenRoute && isAuthoritative &&
                 (
                     sessionState is SessionState.BaselineNeeded ||
                         sessionState is SessionState.Ready ||
@@ -243,6 +247,9 @@ private fun NavDestination?.selectedTabIndex(): Int =
 
 private fun NavDestination?.isWorkspaceDestination(): Boolean = this != null && WORKSPACE_ROUTE_CLASSES.any { matchesRoute(it) }
 
+private fun NavDestination?.isFullScreenDestination(): Boolean =
+    this != null && GlowDestination.fullScreenRoutes.any { route -> hierarchy.any { it.matchesRoute(route) } }
+
 private fun NavDestination?.isHomeDestination(): Boolean = this != null && matchesRoute(GlowDestination.Home::class)
 
 private fun NavDestination.matchesRoute(routeClass: KClass<out GlowDestination>): Boolean {
@@ -256,6 +263,7 @@ private val WORKSPACE_ROUTE_CLASSES =
         GlowDestination.Home::class,
         GlowDestination.Routine::class,
         GlowDestination.Capture::class,
+        GlowDestination.PhotoHistory::class,
         GlowDestination.CaptureResult::class,
         GlowDestination.ProductDetail::class,
         GlowDestination.ShelfScan::class,

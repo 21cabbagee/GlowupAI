@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -14,6 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -71,6 +73,8 @@ fun ConsentRoute(
         onDecline = { viewModel.decide(accept = false) },
         onContinueToApp = viewModel::continueToApp,
         onRetry = viewModel::retry,
+        onPrivacyPolicy = { navController.navigate(GlowDestination.PrivacyPolicy) },
+        onTermsOfService = { navController.navigate(GlowDestination.TermsOfService) },
     )
 }
 
@@ -81,6 +85,8 @@ private fun ConsentContent(
     onDecline: () -> Unit,
     onContinueToApp: () -> Unit,
     onRetry: () -> Unit,
+    onPrivacyPolicy: () -> Unit,
+    onTermsOfService: () -> Unit,
 ) {
     Scaffold { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -105,6 +111,8 @@ private fun ConsentContent(
                         saving = true,
                         onAccept = onAccept,
                         onDecline = onDecline,
+                        onPrivacyPolicy = onPrivacyPolicy,
+                        onTermsOfService = onTermsOfService,
                     )
                 }
 
@@ -118,7 +126,13 @@ private fun ConsentContent(
                         }
 
                         else -> {
-                            ConsentChoiceBody(saving = false, onAccept = onAccept, onDecline = onDecline)
+                            ConsentChoiceBody(
+                                saving = false,
+                                onAccept = onAccept,
+                                onDecline = onDecline,
+                                onPrivacyPolicy = onPrivacyPolicy,
+                                onTermsOfService = onTermsOfService,
+                            )
                         }
                     }
                 }
@@ -132,6 +146,8 @@ private fun ConsentChoiceBody(
     saving: Boolean,
     onAccept: () -> Unit,
     onDecline: () -> Unit,
+    onPrivacyPolicy: () -> Unit,
+    onTermsOfService: () -> Unit,
 ) {
     val glow = LocalGlowColors.current
     Column(
@@ -173,6 +189,7 @@ private fun ConsentChoiceBody(
             )
             listOf(
                 "Photos are used only for your own skin-tracking dashboard.",
+                "This choice covers facial-photo processing for your account; it is not permission for optional model training.",
                 "You can decline and still use routine tracking, insights, and Q&A.",
                 "You can change your mind at any time from your account settings.",
             ).forEach { line ->
@@ -208,6 +225,14 @@ private fun ConsentChoiceBody(
                 onClick = onDecline,
                 contentDescription = "Decline photo tracking for now",
             )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            TextButton(onClick = onPrivacyPolicy, enabled = !saving) { Text("Privacy policy") }
+            TextButton(onClick = onTermsOfService, enabled = !saving) { Text("Terms") }
         }
     }
 }

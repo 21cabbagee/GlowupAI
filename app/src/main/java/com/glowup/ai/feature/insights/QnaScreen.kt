@@ -102,7 +102,7 @@ private fun QnaContent(
     Column(modifier = Modifier.fillMaxSize()) {
         if (state.messages.isEmpty()) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(GlowSpacing.lg),
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(GlowSpacing.lg),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -126,6 +126,16 @@ private fun QnaContent(
                         isError = message.isError,
                         citations = message.citations,
                     )
+                    if (message.role == "assistant" && message.serverId != null && !message.pending) {
+                        GlowButton(
+                            text = if (message.reported) "Reported for review" else "Report unsafe answer",
+                            onClick = { viewModel.reportAnswer(message.id) },
+                            enabled = !message.reporting && !message.reported,
+                            loading = message.reporting,
+                            variant = GlowButtonVariant.Secondary,
+                        )
+                        message.reportError?.let { Text(it, color = glow.ink600) }
+                    }
                 }
             }
         }

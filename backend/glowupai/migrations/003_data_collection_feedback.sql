@@ -5,7 +5,7 @@
 -- Table: collection_log
 -- Tracks anonymized data collected for training
 CREATE TABLE IF NOT EXISTS collection_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGSERIAL PRIMARY KEY,
     face_id TEXT NOT NULL,  -- Anonymized user hash
     anonymous_capture_id TEXT NOT NULL,
     collected_at TEXT NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS capture_feedback (
     corrections_json TEXT NOT NULL DEFAULT '{}',  -- User corrections: {"blemish_count": 15, "redness_score": 0.25}
     original_metrics_json TEXT NOT NULL DEFAULT '{}',  -- Original prediction values
     comment TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP::text)
 );
 
 CREATE INDEX IF NOT EXISTS idx_feedback_capture ON capture_feedback(capture_id);
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS model_predictions (
     predictions_json TEXT NOT NULL,  -- {"blemish_count": 12, "redness_score": 0.34, ...}
     processing_time_ms REAL NOT NULL,
     error TEXT,  -- NULL if successful, error message if failed
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP::text)
 );
 
 CREATE INDEX IF NOT EXISTS idx_predictions_capture ON model_predictions(capture_id);
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS model_health_log (
     error_rate REAL NOT NULL,
     drift_json TEXT NOT NULL,  -- Drift scores per metric
     issues_json TEXT NOT NULL DEFAULT '[]',  -- List of detected issues
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP::text)
 );
 
 CREATE INDEX IF NOT EXISTS idx_health_log_created_at ON model_health_log(created_at);

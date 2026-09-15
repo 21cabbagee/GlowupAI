@@ -59,7 +59,7 @@ class TestCompleteUserFlow(unittest.TestCase):
         signup_response = self.client.post(
             "/api/users",
             json={
-                "firebase_uid": "integration_test_user",
+                "supabase_uid": "integration_test_user",
                 "email": "integration@test.com",
                 "skin_type": "combination",
             },
@@ -101,7 +101,7 @@ class TestCompleteUserFlow(unittest.TestCase):
         """Test flow: create user -> add product -> start routine -> captures."""
         # Create user
         user_response = self.client.post(
-            "/api/users", json={"firebase_uid": "product_test", "skin_type": "oily"}
+            "/api/users", json={"supabase_uid": "product_test", "skin_type": "oily"}
         )
         user_id = user_response.json()["id"]
 
@@ -162,7 +162,7 @@ class TestCompleteUserFlow(unittest.TestCase):
         """Test flow with multiple captures showing progression."""
         # Setup user
         user_response = self.client.post(
-            "/api/users", json={"firebase_uid": "multi_capture"}
+            "/api/users", json={"supabase_uid": "multi_capture"}
         )
         user_id = user_response.json()["id"]
 
@@ -196,7 +196,7 @@ class TestCompleteUserFlow(unittest.TestCase):
         """Test that capture requires explicit consent."""
         # Create user without consent
         user_response = self.client.post(
-            "/api/users", json={"firebase_uid": "no_consent"}
+            "/api/users", json={"supabase_uid": "no_consent"}
         )
         user_id = user_response.json()["id"]
 
@@ -216,7 +216,7 @@ class TestCompleteUserFlow(unittest.TestCase):
     def test_quality_gates_enforcement(self):
         """Test that quality gates are enforced."""
         user_response = self.client.post(
-            "/api/users", json={"firebase_uid": "quality_test"}
+            "/api/users", json={"supabase_uid": "quality_test"}
         )
         user_id = user_response.json()["id"]
 
@@ -292,7 +292,7 @@ class TestErrorHandling(unittest.TestCase):
     def test_invalid_image_data(self):
         """Test handling of invalid image data."""
         user_response = self.client.post(
-            "/api/users", json={"firebase_uid": "invalid_image_test"}
+            "/api/users", json={"supabase_uid": "invalid_image_test"}
         )
         user_id = user_response.json()["id"]
 
@@ -321,7 +321,7 @@ class TestErrorHandling(unittest.TestCase):
     def test_duplicate_baseline(self):
         """Test handling of duplicate baseline attempts."""
         user_response = self.client.post(
-            "/api/users", json={"firebase_uid": "duplicate_baseline"}
+            "/api/users", json={"supabase_uid": "duplicate_baseline"}
         )
         user_id = user_response.json()["id"]
 
@@ -372,7 +372,7 @@ class TestRateLimiting(unittest.TestCase):
         """Test that rate limiting is enforced on capture endpoint."""
         # Create user
         user_response = self.client.post(
-            "/api/users", json={"firebase_uid": "ratelimit_test"}
+            "/api/users", json={"supabase_uid": "ratelimit_test"}
         )
         user_id = user_response.json()["id"]
 

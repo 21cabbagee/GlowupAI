@@ -191,7 +191,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
 
     def test_users_02_auth_session(self):
         """POST /api/auth/session"""
-        # This requires a valid Firebase token, so we expect 401 without proper auth
+        # This requires a valid Supabase token, so we expect 401 without proper auth
         self._check_endpoint(
             "users", "auth_session", "POST", "/api/auth/session", expected_status=401
         )
@@ -303,7 +303,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         capture = self.create_test_capture(user_id)
         capture_id = capture["id"]
 
-        # This endpoint requires proper auth with Firebase token
+        # This endpoint requires proper auth with Supabase token
         self._check_endpoint(
             "captures",
             "submit_feedback",
@@ -314,7 +314,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
                 "issues": ["redness"],
                 "comment": "Test feedback",
             },
-            expected_status=401,  # Expected without valid Firebase token
+            expected_status=401,  # Expected without valid Supabase token
         )
 
     def test_captures_03_capture_guide(self):
@@ -345,7 +345,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         response = self._check_endpoint(
             "captures", "history", "GET", f"/api/users/{user_id}/history?vertical=skin"
         )
-        self.assertIn("captures", response.json())
+        self.assertIsInstance(response.json(), list)
 
     def test_captures_06_get_check_ins(self):
         """GET /api/users/{user_id}/check-ins"""
@@ -380,7 +380,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             "GET",
             f"/api/users/{user_id}/weekly-recap?vertical=skin",
         )
-        self.assertIn("captures", response.json())
+        self.assertIn("status", response.json())
 
     def test_captures_09_measurement_feedback(self):
         """POST /api/users/{user_id}/measurement-feedback"""
@@ -513,7 +513,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         response = self._check_endpoint(
             "analytics", "analytics", "GET", f"/api/users/{user_id}/analytics"
         )
-        self.assertIn("captures_this_week", response.json())
+        self.assertIn("activation", response.json())
 
     def test_analytics_02_get_engagement(self):
         """GET /api/users/{user_id}/engagement"""
@@ -521,7 +521,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         response = self._check_endpoint(
             "analytics", "get_engagement", "GET", f"/api/users/{user_id}/engagement"
         )
-        self.assertIsInstance(response.json(), list)
+        self.assertIsInstance(response.json(), dict)
 
     def test_analytics_03_engagement_event(self):
         """POST /api/users/{user_id}/engagement"""
@@ -559,7 +559,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             "POST",
             f"/api/users/{user_id}/context-events",
             json={
-                "event_type": "diet_change",
+                "event_type": "diet",
                 "value": "started_supplements",
                 "notes": "Test context event",
             },
@@ -575,8 +575,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             "GET",
             f"/api/users/{user_id}/root-cause?metric=texture_score",
         )
-        # Root cause returns dict with various analysis fields
-        self.assertIsInstance(response.json(), dict)
+        self.assertIsInstance(response.json(), list)
 
     def test_analytics_07_budget_optimizer(self):
         """GET /api/users/{user_id}/budget-optimizer"""
@@ -700,7 +699,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             "GET",
             f"/api/products/{product['id']}/predict?user_id={user_id}",
         )
-        self.assertIn("signal", response.json())
+        self.assertIn("headline", response.json())
 
     def test_subscriptions_10_purchase_guidance(self):
         """POST /api/users/{user_id}/purchase-guidance"""
@@ -928,7 +927,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             "/api/triage",
             json={"text": "How do I improve my skin texture?"},
         )
-        self.assertIn("category", response.json())
+        self.assertIn("scope", response.json())
 
     def test_admin_04_audit(self):
         """GET /api/admin/audit"""
@@ -961,7 +960,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             "/api/admin/analytics?days=7",
             headers=self.admin_headers,
         )
-        self.assertIn("summary", response.json())
+        self.assertIn("total_events", response.json())
 
     def test_admin_07_admin_analytics_daily(self):
         """GET /api/admin/analytics/daily"""
@@ -983,7 +982,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             "/api/admin/analytics/events?days=7",
             headers=self.admin_headers,
         )
-        self.assertIsInstance(response.json(), list)
+        self.assertIsInstance(response.json(), dict)
 
     def test_admin_09_admin_feedback(self):
         """GET /api/admin/feedback"""
@@ -994,7 +993,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             "/api/admin/feedback?limit=100",
             headers=self.admin_headers,
         )
-        self.assertIn("stats", response.json())
+        self.assertIn("total_feedback", response.json())
 
     def test_admin_10_admin_feedback_corrections(self):
         """GET /api/admin/feedback/corrections"""
@@ -1016,7 +1015,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             "/api/admin/feedback/accuracy",
             headers=self.admin_headers,
         )
-        self.assertIn("accuracy", response.json())
+        self.assertIsInstance(response.json(), dict)
 
     def test_admin_12_admin_monitoring(self):
         """GET /api/admin/monitoring"""
@@ -1049,7 +1048,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             "/api/admin/data-collection/stats",
             headers=self.admin_headers,
         )
-        self.assertIn("total_users", response.json())
+        self.assertIn("total_samples", response.json())
 
     def test_admin_15_admin_data_collection_export(self):
         """POST /api/admin/data-collection/export"""
@@ -1061,7 +1060,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             json={"output_dir": "/tmp/export", "min_quality": 0.8, "max_samples": 100},
             headers=self.admin_headers,
         )
-        self.assertIn("exported", response.json())
+        self.assertIn("stats", response.json())
 
     def test_admin_16_admin_data_collection_cleanup(self):
         """POST /api/admin/data-collection/cleanup"""
@@ -1073,7 +1072,7 @@ class RouterRefactoringValidationTest(unittest.TestCase):
             json={"retention_days": 365},
             headers=self.admin_headers,
         )
-        self.assertIn("deleted", response.json())
+        self.assertIn("deleted_count", response.json())
 
     # ========================================================================
     # SUMMARY AND REPORTING

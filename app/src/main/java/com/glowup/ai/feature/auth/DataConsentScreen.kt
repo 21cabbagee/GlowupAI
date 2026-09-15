@@ -30,8 +30,8 @@ import kotlinx.coroutines.delay
 /**
  * Data collection consent screen.
  *
- * Explains data collection for model training and gets explicit user consent.
- * Part of GDPR/CCPA compliance and ethical AI practices.
+ * Explains optional data collection for model improvement and gets explicit user consent.
+ * The choice is recorded separately from the service's required facial-photo consent.
  */
 @Composable
 fun DataConsentRoute(
@@ -150,11 +150,11 @@ private fun DataConsentScreen(
                             )
                         }
 
-                        BulletPoint("All data is anonymized — no personal info")
-                        BulletPoint("Your face gets a random ID hash")
-                        BulletPoint("Data is automatically deleted after 1 year")
-                        BulletPoint("You can opt-out anytime in settings")
-                        BulletPoint("GDPR & CCPA compliant")
+                        BulletPoint("This optional choice is separate from facial-photo consent")
+                        BulletPoint("We will separate improvement data from account identity where supported")
+                        BulletPoint("Retention and deletion follow the policy shown before you opt in")
+                        BulletPoint("You can withdraw this optional choice in settings")
+                        BulletPoint("Review the Privacy Policy before deciding")
                     }
                 }
             }

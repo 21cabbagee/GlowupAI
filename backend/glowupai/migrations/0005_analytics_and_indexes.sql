@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS analytics_events (
     user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
     event_type TEXT NOT NULL,
     event_data TEXT NOT NULL DEFAULT '{}',
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP::text)
 );
 
 -- Indexes for analytics queries
@@ -21,5 +21,5 @@ ON photo_captures(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_routine_events_user_time
 ON routine_events(user_id, timestamp DESC);
 
-CREATE INDEX IF NOT EXISTS idx_users_firebase_uid
-ON users(firebase_uid);
+CREATE INDEX IF NOT EXISTS idx_users_supabase_uid
+ON users(supabase_uid);

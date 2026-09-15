@@ -30,8 +30,8 @@ class TestDataCollector(unittest.TestCase):
         # Create test user
         self.user_id = "test_user_123"
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid, consent_state) VALUES (?, ?, ?)",
-            (self.user_id, "firebase_123", "granted"),
+            "INSERT INTO users (id, supabase_uid, consent_state) VALUES (?, ?, ?)",
+            (self.user_id, "supabase_123", "granted"),
         )
 
         # Grant data collection consent
@@ -70,8 +70,8 @@ class TestDataCollector(unittest.TestCase):
         # Create user without consent
         user_id_no_consent = "user_no_consent"
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id_no_consent, "firebase_456"),
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
+            (user_id_no_consent, "supabase_456"),
         )
 
         has_consent = self.collector.check_consent(user_id_no_consent)
@@ -81,8 +81,8 @@ class TestDataCollector(unittest.TestCase):
         """Test consent check for user who revoked consent."""
         user_id_revoked = "user_revoked"
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id_revoked, "firebase_789"),
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
+            (user_id_revoked, "supabase_789"),
         )
 
         # Grant then revoke consent
@@ -236,8 +236,8 @@ class TestDataCollector(unittest.TestCase):
         """Test data collection skips users without consent."""
         user_no_consent = "user_no_consent"
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_no_consent, "firebase_999"),
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
+            (user_no_consent, "supabase_999"),
         )
 
         success = self.collector.collect_capture(
@@ -490,8 +490,8 @@ class TestDataCollector(unittest.TestCase):
         # Create another user
         user_id_2 = "user_2"
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (user_id_2, "firebase_222"),
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
+            (user_id_2, "supabase_222"),
         )
         self.db.execute(
             """

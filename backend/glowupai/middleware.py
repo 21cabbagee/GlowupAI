@@ -7,6 +7,7 @@ import logging
 import time
 from collections import defaultdict
 from collections.abc import Callable
+from typing import Any
 
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
@@ -254,13 +255,12 @@ def create_health_checker(db, settings) -> Callable:
         """Comprehensive health check."""
         checks: dict[str, Any] = {"status": "healthy", "checks": {}}
 
-        # Database check
+        # Database checks are independent. Run them concurrently so a pooled
+        # PostgreSQL deployment pays one round-trip window instead of two.
         try:
-            db_healthy = await asyncio.get_event_loop().run_in_executor(
-                None, db.healthcheck
-            )
-            table_count = await asyncio.get_event_loop().run_in_executor(
-                None, db.count_tables
+            db_healthy, table_count = await asyncio.gather(
+                asyncio.to_thread(db.healthcheck),
+                asyncio.to_thread(db.count_tables),
             )
             checks["checks"]["database"] = {
                 "status": "healthy" if db_healthy else "unhealthy",

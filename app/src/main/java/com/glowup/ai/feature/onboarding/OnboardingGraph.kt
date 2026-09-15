@@ -15,8 +15,9 @@ import com.glowup.ai.feature.shell.GlowDestination
  */
 fun NavGraphBuilder.onboardingGraph(navController: NavController) {
     composable<GlowDestination.Onboarding> {
-        // Use the enhanced onboarding flow with comprehensive tutorial screens
-        EnhancedOnboardingRoute(navController = navController)
+        // This route owns the server-backed profile form. Completion is only
+        // persisted locally after PATCH /users/{userId}/profile succeeds.
+        OnboardingRoute(navController = navController)
     }
     composable<GlowDestination.Consent> {
         ConsentRoute(navController = navController)

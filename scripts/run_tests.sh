@@ -40,14 +40,16 @@ run_backend_tests() {
     # Activate venv
     source venv/bin/activate
 
-    # Install dependencies
+    # Install dependencies. The backend declares Python 3.11+; fail early
+    # instead of collecting a misleading partial suite on an older interpreter.
+    python -c 'import sys; raise SystemExit("Python 3.11+ is required") if sys.version_info < (3, 11) else None'
     log_info "Installing dependencies..."
-    pip install -q -e ".[dev]" 2>&1 | grep -v "already satisfied" || true
+    python -m pip install -q -e ".[dev]"
 
     # Run tests with coverage
     log_info "Running pytest with coverage..."
     pytest tests/ \
-        --cov=skinproof \
+        --cov=glowupai \
         --cov-report=html \
         --cov-report=term \
         --junit-xml=pytest-report.xml \
@@ -65,21 +67,21 @@ run_backend_tests() {
     log_info "Running code quality checks..."
 
     # Black
-    if black --check skinproof tests 2>/dev/null; then
+    if black --check glowupai tests 2>/dev/null; then
         log_success "Black formatting ✓"
     else
-        log_warning "Black formatting issues found. Run: black skinproof tests"
+        log_warning "Black formatting issues found. Run: black glowupai tests"
     fi
 
     # Mypy
-    if mypy skinproof --ignore-missing-imports --no-strict-optional 2>/dev/null; then
+    if mypy glowupai --ignore-missing-imports --no-strict-optional 2>/dev/null; then
         log_success "Mypy type checking ✓"
     else
         log_warning "Mypy type issues found"
     fi
 
     # Bandit
-    if bandit -r skinproof -ll 2>/dev/null; then
+    if bandit -r glowupai -ll 2>/dev/null; then
         log_success "Bandit security scan ✓"
     else
         log_warning "Bandit found potential security issues"
@@ -122,12 +124,13 @@ run_android_tests() {
 }
 
 run_android_ui_tests() {
-    log_info "Running Android UI Tests (requires emulator)..."
+    log_info "Running Android UI Tests on a connected physical device..."
 
-    # Check if emulator is running
-    if ! adb devices | grep -q "emulator"; then
-        log_warning "No emulator detected. Starting emulator..."
-        log_info "Please start an emulator first: emulator -avd YOUR_AVD_NAME"
+    # Emulator use is intentionally unsupported for this project. Require a real device whose
+    # adb serial is not the emulator-* namespace and never create or boot an AVD here.
+    if ! adb devices | awk 'NR > 1 && $2 == "device" && $1 !~ /^emulator-/ { found=1 } END { exit !found }'; then
+        log_warning "No authorized physical Android device is connected."
+        log_info "Connect a device with USB debugging enabled, then rerun this command."
         exit 1
     fi
 
@@ -148,7 +151,7 @@ run_load_tests() {
     # Check if server is running
     if ! curl -s http://localhost:8000/api/roadmap > /dev/null; then
         log_error "Backend server not responding at http://localhost:8000"
-        log_info "Start the server first: cd backend && uvicorn skinproof.api:app --reload"
+        log_info "Start the server first: cd backend && uvicorn glowupai.api:app --reload"
         exit 1
     fi
 
@@ -168,7 +171,7 @@ print_usage() {
     echo "Commands:"
     echo "  backend     - Run backend tests (unit + integration)"
     echo "  android     - Run Android unit tests"
-    echo "  android-ui  - Run Android UI tests (requires emulator)"
+    echo "  android-ui  - Run Android UI tests (requires a physical device)"
     echo "  load        - Run load tests (requires running server)"
     echo "  all         - Run all tests (backend + android)"
     echo "  quick       - Run quick tests only (no UI, no load)"

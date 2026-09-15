@@ -36,8 +36,8 @@ import javax.inject.Singleton
  * Owns: `POST /api/captures`, `POST /measurement-feedback`, and the local capture outbox that
  * backs them.
  *
- * `POST /api/captures` is NOT idempotent (frontend-api-map.md trap #9) and the capture quality
- * gate is server-authoritative (trap #6/#3) — this repository never marks a frame accepted itself
+ * `POST /api/captures` is idempotent by the request's stable key and the capture quality gate is
+ * server-authoritative (trap #6/#3) — this repository never marks a frame accepted itself
  * and never auto-retries a submission. On an ambiguous failure (no HTTP response at all —
  * [ApiError.Network]) it queues the request into the outbox instead of retrying inline; only
  * [com.glowup.ai.data.work.CaptureUploadWorker] (via [drainOutboxOnce]) ever re-attempts it, and
@@ -122,6 +122,7 @@ class CaptureRepository
                         experimentId = request.experimentId,
                         capturedAt = capturedAt,
                         deviceMetaJson = deviceMetaJson,
+                        idempotencyKey = request.idempotencyKey,
                         createdAtMillis = System.currentTimeMillis(),
                     ),
                 )
@@ -168,6 +169,12 @@ class CaptureRepository
             userId: String,
             request: MeasurementFeedbackRequest,
         ): GlowResult<MeasurementFeedback> = apiCall { api.addMeasurementFeedback(userId, request.toDto()).toDomain() }
+
+        suspend fun getCapture(
+            userId: String,
+            captureId: String,
+            vertical: String = "skin",
+        ): GlowResult<CaptureResult> = apiCall { api.getCapture(userId, captureId, vertical).toDomain() }
 
         private suspend fun wasAlreadyAccepted(
             userId: String,

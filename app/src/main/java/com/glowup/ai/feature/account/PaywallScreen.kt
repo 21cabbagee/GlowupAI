@@ -1,5 +1,9 @@
 package com.glowup.ai.feature.account
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.LocalGlowColors
@@ -34,8 +41,7 @@ import com.glowup.ai.feature.account.components.PremiumFeatureList
 
 /**
  * [com.glowup.ai.feature.shell.GlowDestination.Paywall]. Lists the REAL Premium features the
- * backend gates and offers the simulated local-checkout upgrade — see [PaywallViewModel]'s class
- * doc for why this deliberately never draws payment-card UI.
+ * backend gates and displays prices supplied by Google Play.
  */
 @Composable
 fun PaywallRoute(
@@ -43,11 +49,22 @@ fun PaywallRoute(
     viewModel: PaywallViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val activity = generateSequence(context) { (it as? ContextWrapper)?.baseContext }.filterIsInstance<Activity>().firstOrNull()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshPurchases()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     PaywallContent(
         uiState = uiState,
         onBack = { navController.popBackStack() },
         onRetry = viewModel::retry,
-        onUpgradeClick = viewModel::upgrade,
+        onUpgradeClick = { token -> activity?.let { viewModel.upgrade(it, token) } },
+        onRestore = viewModel::restore,
         onDismissJustUpgraded = viewModel::dismissJustUpgraded,
     )
 }
@@ -57,7 +74,8 @@ private fun PaywallContent(
     uiState: PaywallUiState,
     onBack: () -> Unit,
     onRetry: () -> Unit,
-    onUpgradeClick: () -> Unit,
+    onUpgradeClick: (String) -> Unit,
+    onRestore: () -> Unit,
     onDismissJustUpgraded: () -> Unit,
 ) {
     Scaffold(topBar = { GlowTopBar(title = "GlowUp Premium", onBack = onBack) }) { padding ->
@@ -89,11 +107,12 @@ private fun PaywallContent(
                         verticalArrangement = Arrangement.spacedBy(GlowSpacing.lg),
                     ) {
                         if (uiState.subscription.isPremium) {
-                            AlreadyPremiumCard()
+                            AlreadyPremiumCard(justUpgraded = uiState.justUpgraded)
                         } else {
                             UpgradeCard(uiState = uiState, onUpgradeClick = onUpgradeClick, onDismissJustUpgraded = onDismissJustUpgraded)
                         }
                         PremiumFeaturesCard()
+                        GlowButton(text = "Restore purchases", onClick = onRestore, variant = GlowButtonVariant.Ghost)
                     }
                 }
             }
@@ -102,7 +121,7 @@ private fun PaywallContent(
 }
 
 @Composable
-private fun AlreadyPremiumCard() {
+private fun AlreadyPremiumCard(justUpgraded: Boolean) {
     val glow = LocalGlowColors.current
     GlowCard(modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -117,13 +136,22 @@ private fun AlreadyPremiumCard() {
             color = glow.ink600,
             modifier = Modifier.padding(top = GlowSpacing.xs),
         )
+        if (justUpgraded) {
+            Text(
+                text = "Premium is active. Thanks for subscribing!",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = glow.success,
+                modifier = Modifier.padding(top = GlowSpacing.md),
+            )
+        }
     }
 }
 
 @Composable
 private fun UpgradeCard(
     uiState: PaywallUiState.Content,
-    onUpgradeClick: () -> Unit,
+    onUpgradeClick: (String) -> Unit,
     onDismissJustUpgraded: () -> Unit,
 ) {
     val glow = LocalGlowColors.current
@@ -143,9 +171,8 @@ private fun UpgradeCard(
         DisclaimerNote(
             modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.md),
             text =
-                "This is a local checkout simulation for internal/closed testing — it is not " +
-                    "a real payment provider and no card is charged. Real paid distribution will use " +
-                    "Google Play Billing in a future release.",
+                "Payment is handled by Google Play. Subscriptions renew automatically unless cancelled. " +
+                    "Manage or cancel your subscription in Google Play.",
         )
         if (uiState.justUpgraded) {
             Text(
@@ -170,13 +197,13 @@ private fun UpgradeCard(
                 modifier = Modifier.padding(top = GlowSpacing.md),
             )
         }
-        GlowButton(
+        uiState.plans.forEach { plan -> GlowButton(
             modifier = Modifier.fillMaxWidth().padding(top = GlowSpacing.lg),
-            text = if (uiState.justUpgraded) "Upgraded" else "Simulate checkout",
-            onClick = onUpgradeClick,
+            text = if (uiState.justUpgraded) "Upgraded" else "Subscribe — ${plan.label}",
+            onClick = { onUpgradeClick(plan.offerToken) },
             enabled = !uiState.upgrading && !uiState.justUpgraded,
             loading = uiState.upgrading,
-        )
+        ) }
     }
 }
 

@@ -1,5 +1,7 @@
 package com.glowup.ai.feature.analytics
 
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -37,6 +39,17 @@ fun AnalyticsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val glow = LocalGlowColors.current
+    val context = LocalContext.current
+    LaunchedEffect(uiState.exportState) {
+        val ready = uiState.exportState as? ExportState.Success ?: return@LaunchedEffect
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = ready.mimeType
+            putExtra(Intent.EXTRA_STREAM, ready.uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intent, "Save or share analytics"))
+        viewModel.dismissExportState()
+    }
 
     Scaffold(
         topBar = {

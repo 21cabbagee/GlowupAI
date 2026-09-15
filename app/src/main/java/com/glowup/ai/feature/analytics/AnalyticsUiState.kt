@@ -91,6 +91,8 @@ sealed interface ExportState {
 
     data class Success(
         val message: String,
+        val uri: android.net.Uri,
+        val mimeType: String,
     ) : ExportState
 
     data class Error(

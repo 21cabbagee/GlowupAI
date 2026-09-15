@@ -9,7 +9,7 @@ import com.glowup.ai.data.repository.SessionRepository
 import com.glowup.ai.domain.model.Analytics
 import com.glowup.ai.domain.model.Profile
 import com.glowup.ai.domain.model.Subscription
-import com.glowup.ai.feature.auth.FirebaseAuthGateway
+import com.glowup.ai.feature.auth.SupabaseAuthGateway
 import com.glowup.ai.feature.auth.toMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,6 +69,7 @@ class AccountViewModel
         private val sessionRepository: SessionRepository,
         private val billingRepository: BillingRepository,
         private val privacyRepository: PrivacyRepository,
+        private val authGateway: SupabaseAuthGateway,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<AccountUiState>(AccountUiState.Loading)
         val uiState: StateFlow<AccountUiState> = _uiState.asStateFlow()
@@ -165,14 +166,14 @@ class AccountViewModel
             }
         }
 
-        /** Firebase sign-out + clearing GlowUp's own [com.glowup.ai.data.local.SessionStore] keys
+        /** Supabase sign-out + clearing GlowUp's own [com.glowup.ai.data.local.SessionStore] keys
          * only (never a blanket wipe — see [SessionRepository.clearSession]). Does not touch the
          * server-side account at all. */
         fun signOut() {
             if (_signedOut.value) return
             viewModelScope.launch {
                 sessionRepository.clearSession()
-                FirebaseAuthGateway.signOut()
+                authGateway.signOut()
                 _signedOut.value = true
             }
         }

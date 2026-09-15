@@ -12,13 +12,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.LocalGlowColors
+import com.glowup.ai.core.ui.DisclaimerNote
 import com.glowup.ai.core.ui.GlowTopBar
 
 /**
  * Privacy Policy screen.
  *
- * Displays comprehensive privacy policy covering data collection, user rights,
- * third-party services, and contact information. GDPR and CCPA compliant.
+ * Displays GlowUp AI's privacy notice covering data collection, user choices, data controls, and
+ * contact information.
  */
 @Composable
 fun PrivacyPolicyRoute(
@@ -55,17 +56,42 @@ private fun PrivacyPolicyScreen(
         ) {
             // Effective date
             Text(
-                text = "Effective Date: September 1, 2026",
+                text = "Effective date: August 24, 2026",
                 style = MaterialTheme.typography.bodyMedium,
                 color = glowColors.ink600
             )
 
             // Introduction
             Text(
-                text = "At GlowupAI, we are committed to protecting your privacy and ensuring transparency in how we collect, use, and protect your personal information. This Privacy Policy explains our practices in detail.",
+                text = "This Privacy Policy explains what GlowUp AI collects, why it is used, and which controls are available in the app.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = glowColors.ink900
             )
+
+            DisclaimerNote(
+                text = "GlowUp AI is cosmetic appearance tracking only. It is not a medical device, diagnosis, treatment, or substitute for a licensed dermatologist.",
+            )
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = glowColors.surfaceCard),
+            ) {
+                Column(
+                    modifier = Modifier.padding(GlowSpacing.md),
+                    verticalArrangement = Arrangement.spacedBy(GlowSpacing.sm),
+                ) {
+                    Text(
+                        text = "Facial-photo consent",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = glowColors.ink900,
+                    )
+                    Text(
+                        text = "Photo capture stays locked until you make an explicit choice. You can decline and still use non-photo features, and you can change your choice later in Data & Privacy. Accepting this facial-photo consent is separate from any optional model-training consent.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = glowColors.ink600,
+                    )
+                }
+            }
 
             Divider(color = glowColors.ink600.copy(alpha = 0.1f))
 
@@ -84,7 +110,7 @@ private fun PrivacyPolicyScreen(
                     PolicySubsection(
                         subtitle = "1.2 Information We Collect Automatically",
                         items = listOf(
-                            "Photos: Face photos you capture for skin analysis",
+                            "Photos: Face photos you choose to capture after giving explicit consent",
                             "Device information: Device model, operating system version, unique device identifiers",
                             "Camera information: Camera specifications and sensor data",
                             "Usage data: App interactions, feature usage, session duration",
@@ -95,8 +121,8 @@ private fun PrivacyPolicyScreen(
                     PolicySubsection(
                         subtitle = "1.3 Location Information",
                         items = listOf(
-                            "Approximate location (city/country level) to provide region-specific skincare recommendations",
-                            "We do not collect precise GPS coordinates"
+                            "If a future feature requests approximate location, it will explain the purpose before collection",
+                            "GlowUp AI does not request precise GPS coordinates"
                         )
                     )
                 )
@@ -113,11 +139,11 @@ private fun PrivacyPolicyScreen(
                         items = listOf(
                             "Provide and improve our skin analysis services",
                             "Generate personalized skincare insights and recommendations",
-                            "Analyze trends and patterns to improve AI model accuracy",
+                            "Analyze trends and patterns to operate and improve the service",
                             "Communicate with you about updates, features, and support",
                             "Ensure app security and prevent fraud or abuse",
                             "Comply with legal obligations and enforce our terms",
-                            "Conduct research and development (with anonymized data only)"
+                            "Conduct product research and development using aggregated or anonymized data where applicable"
                         )
                     )
                 )
@@ -127,17 +153,14 @@ private fun PrivacyPolicyScreen(
 
             // Section 3: Model Training (Optional)
             PolicySection(
-                title = "3. Model Training Data Collection (Optional)",
+                title = "3. Optional improvement data",
                 content = listOf(
                     PolicySubsection(
-                        subtitle = "If you opt-in to help improve our AI:",
+                        subtitle = "The facial-photo consent above does not authorize model training. If a future version offers an optional improvement-data choice:",
                         items = listOf(
-                            "Your captured photos and analysis results may be used for model training",
-                            "All training data is anonymized before use - we assign a random ID hash that cannot be linked back to you",
-                            "No personal information (name, email, profile data) is included in training datasets",
-                            "Training data is stored securely and automatically deleted after 1 year",
-                            "You can opt-out at any time in Settings > Data & Privacy",
-                            "Opting out will not affect your app experience or analysis quality"
+                            "That choice will be presented separately and will not be inferred from continued app use",
+                            "The screen will explain the data, purpose, retention, and how to withdraw",
+                            "Declining optional improvement data will not remove core account access"
                         )
                     )
                 )
@@ -152,10 +175,9 @@ private fun PrivacyPolicyScreen(
                     PolicySubsection(
                         subtitle = "We use the following third-party services:",
                         items = listOf(
-                            "Firebase Authentication: For secure sign-in (Google, email/password)",
-                            "Firebase Cloud Storage: For secure photo storage",
-                            "Firebase Analytics: For anonymous usage analytics",
-                            "Firebase Crashlytics: For crash reporting and diagnostics",
+                            "Supabase Auth: For secure Google and email/password sign-in",
+                            "Private cloud object storage: For secure user-image storage",
+                            "GlowUp AI backend: For analytics, processing, and account controls",
                             "Machine Learning APIs: For AI-powered skin analysis (photos processed in secure cloud environment)",
                             "Payment processors: For subscription and payment processing (we do not store payment card details)"
                         )
@@ -180,9 +202,9 @@ private fun PrivacyPolicyScreen(
                     PolicySubsection(
                         subtitle = "We protect your data through:",
                         items = listOf(
-                            "End-to-end encryption for photos in transit and at rest",
-                            "Industry-standard security protocols (TLS 1.3, AES-256)",
-                            "Secure authentication via Firebase",
+                            "Encryption in transit and at rest where supported by the service",
+                            "Access controls, secure authentication, and least-privilege service access",
+                            "Secure authentication via Supabase Auth",
                             "Regular security audits and vulnerability assessments",
                             "Access controls and employee training",
                             "Automated monitoring for suspicious activity"
@@ -216,8 +238,8 @@ private fun PrivacyPolicyScreen(
                         subtitle = "To exercise your rights:",
                         items = listOf(
                             "In-app: Go to Settings > Data & Privacy",
-                            "Email us at: privacy@glowupai.com",
-                            "We will respond within 30 days of your request"
+                            "Email us at: privacy@glowup.ai",
+                            "We will review requests and respond within the timeframe required by applicable law"
                         )
                     )
                 )
@@ -251,7 +273,7 @@ private fun PrivacyPolicyScreen(
                         items = listOf(
                             "GlowupAI is not intended for children under 13 years of age",
                             "We do not knowingly collect personal information from children under 13",
-                            "If you believe we have inadvertently collected data from a child under 13, contact us immediately at privacy@glowupai.com"
+                            "If you believe we have inadvertently collected data from a child under 13, contact us at privacy@glowup.ai"
                         )
                     )
                 )
@@ -299,10 +321,9 @@ private fun PrivacyPolicyScreen(
                     PolicySubsection(
                         subtitle = "Questions about this Privacy Policy or our data practices?",
                         items = listOf(
-                            "Email: privacy@glowupai.com",
-                            "Support: support@glowupai.com",
-                            "Mailing address: GlowupAI Inc., 123 Tech Street, San Francisco, CA 94105, USA",
-                            "Data Protection Officer: dpo@glowupai.com"
+                            "Email: privacy@glowup.ai",
+                            "Support: support@glowup.ai",
+                            "Privacy requests can also be made in the app through Settings > Data & Privacy"
                         )
                     )
                 )
@@ -317,7 +338,7 @@ private fun PrivacyPolicyScreen(
                 )
             ) {
                 Text(
-                    text = "By using GlowupAI, you acknowledge that you have read and understood this Privacy Policy and agree to our data practices as described.",
+                    text = "If you have questions about this Privacy Policy or want to exercise your privacy rights, contact privacy@glowup.ai or use Settings > Data & Privacy.",
                     style = MaterialTheme.typography.bodySmall,
                     color = glowColors.ink600,
                     modifier = Modifier.padding(GlowSpacing.md)

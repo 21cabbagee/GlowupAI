@@ -116,6 +116,9 @@ data class WeeklyRecap(
     val comparisonMode: String?,
     val confidenceLabel: String,
     val metricSummaries: List<MetricSummary>,
+    val observationSummaries: List<CosmeticObservation> = emptyList(),
+    val aiSummary: String? = null,
+    val languageMode: String? = null,
     val period: WeeklyRecapPeriod,
     val disclaimer: String,
 )

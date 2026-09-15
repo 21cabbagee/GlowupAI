@@ -31,12 +31,20 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["analytics"])
 
     @router.get("/analytics/summary")
-    def analytics_summary(user_id: str) -> dict[str, Any]:
+    def analytics_summary(
+        user_id: str, authorization: str | None = Header(default=None)
+    ) -> dict[str, Any]:
+        require_owner(user_id, authorization)
         result: dict[str, Any] = run_handler(service.summary, user_id)
         return result
 
     @router.get("/analytics/trends")
-    def analytics_trends(user_id: str, vertical: str = "skin") -> dict[str, Any]:
+    def analytics_trends(
+        user_id: str,
+        vertical: str = "skin",
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        require_owner(user_id, authorization)
         result: dict[str, Any] = run_handler(service.trends, user_id, vertical)
         return result
 
@@ -102,9 +110,11 @@ def setup_analytics_router(service, run_handler, require_owner) -> APIRouter:
         user_id: str,
         metric: str = "texture_score",
         authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.root_cause_search, user_id, metric)
+        result: list[dict[str, Any]] = run_handler(
+            service.root_cause_search, user_id, metric
+        )
         return result
 
     @router.get("/users/{user_id}/budget-optimizer")

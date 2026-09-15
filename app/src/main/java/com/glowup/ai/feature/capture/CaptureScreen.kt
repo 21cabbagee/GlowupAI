@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -98,7 +99,7 @@ fun CaptureRoute(
         onRetryGate = viewModel::loadGate,
         onPermissionResult = viewModel::onPermissionResult,
         onLiveQuality = viewModel::onLiveQuality,
-        onCameraJpegCaptured = { bytes, rotation, baseline -> viewModel.submitCameraJpeg(bytes, rotation, baseline) },
+        onCameraFileCaptured = { file, rotation, baseline -> viewModel.submitCameraFile(file, rotation, baseline) },
         onGalleryPicked = { uri, baseline ->
             viewModel.submitGalleryUri(uri, { CaptureImageProcessor.processGalleryUri(appContext, it) }, baseline)
         },
@@ -117,7 +118,7 @@ private fun CaptureScreen(
     onRetryGate: () -> Unit,
     onPermissionResult: (Boolean, Boolean, Boolean) -> Unit,
     onLiveQuality: (LiveFaceQuality) -> Unit,
-    onCameraJpegCaptured: (ByteArray, Int, Boolean) -> Unit,
+    onCameraFileCaptured: (File, Int, Boolean) -> Unit,
     onGalleryPicked: (Uri, Boolean) -> Unit,
     onRetake: () -> Unit,
     onClose: () -> Unit,
@@ -149,7 +150,7 @@ private fun CaptureScreen(
                     hasQueuedOfflineFromBefore = hasQueuedOfflineFromBefore,
                     onPermissionResult = onPermissionResult,
                     onLiveQuality = onLiveQuality,
-                    onCameraJpegCaptured = onCameraJpegCaptured,
+                    onCameraFileCaptured = onCameraFileCaptured,
                     onGalleryPicked = onGalleryPicked,
                     onRetake = onRetake,
                     onClose = onClose,
@@ -227,7 +228,7 @@ private fun CaptureReadyContent(
     hasQueuedOfflineFromBefore: Boolean,
     onPermissionResult: (Boolean, Boolean, Boolean) -> Unit,
     onLiveQuality: (LiveFaceQuality) -> Unit,
-    onCameraJpegCaptured: (ByteArray, Int, Boolean) -> Unit,
+    onCameraFileCaptured: (File, Int, Boolean) -> Unit,
     onGalleryPicked: (Uri, Boolean) -> Unit,
     onRetake: () -> Unit,
     onClose: () -> Unit,
@@ -255,12 +256,15 @@ private fun CaptureReadyContent(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
     val galleryLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { onGalleryPicked(it, isBaseline) } }
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri -> uri?.let { onGalleryPicked(it, isBaseline) } }
+    fun pickGalleryImage() {
+        galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+    }
     when (permissionState) {
         CameraPermissionUiState.Unknown, CameraPermissionUiState.Request, CameraPermissionUiState.ShouldShowRationale -> {
             PermissionRationaleScaffold(onRequest = {
                 permissionLauncher.launch(Manifest.permission.CAMERA)
-            }, onGallery = { galleryLauncher.launch("image/*") }, onClose = onClose)
+            }, onGallery = ::pickGalleryImage, onClose = onClose)
         }
 
         CameraPermissionUiState.PermanentlyDenied -> {
@@ -270,7 +274,7 @@ private fun CaptureReadyContent(
                         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
                     )
                 },
-                onGallery = { galleryLauncher.launch("image/*") },
+                onGallery = ::pickGalleryImage,
                 onClose = onClose,
             )
         }
@@ -278,14 +282,14 @@ private fun CaptureReadyContent(
         CameraPermissionUiState.Granted -> {
             when (phase) {
                 CapturePhase.Framing -> {
-                    FramingContent(guideState, guideMessage, livePose, hasQueuedOfflineFromBefore, onLiveQuality, { b, r ->
-                        onCameraJpegCaptured(
-                            b,
+                    FramingContent(guideState, guideMessage, livePose, hasQueuedOfflineFromBefore, onLiveQuality, { file, r ->
+                        onCameraFileCaptured(
+                            file,
                             r,
                             isBaseline,
                         )
                     }, {
-                        galleryLauncher.launch("image/*")
+                        pickGalleryImage()
                     }, onRetake)
                 }
 
@@ -404,7 +408,7 @@ private fun CaptureReadyContent(
     livePose: LiveFaceQuality?,
     queued: Boolean,
     onLiveQuality: (LiveFaceQuality) -> Unit,
-    onShutter: (ByteArray, Int) -> Unit,
+    onShutter: (File, Int) -> Unit,
     onGallery: () -> Unit,
     onRetake: () -> Unit,
 ) {
@@ -484,9 +488,9 @@ private fun CaptureReadyContent(
                 ShutterButton(enabled = !taking && imageCapture != null) {
                     val capture = imageCapture ?: return@ShutterButton
                     taking = true
-                    capture.takeJpegFile(context, onCaptured = { bytes ->
+                    capture.takeJpegFile(context, onCaptured = { file ->
                         taking = false
-                        onShutter(bytes, 0)
+                        onShutter(file, 0)
                     }, onError = {
                         taking = false
                         cameraError =
@@ -563,7 +567,7 @@ private fun CaptureReadyContent(
 
 private fun ImageCapture.takeJpegFile(
     context: android.content.Context,
-    onCaptured: (ByteArray) -> Unit,
+    onCaptured: (File) -> Unit,
     onError: (String) -> Unit,
 ) {
     val output =
@@ -578,13 +582,16 @@ private fun ImageCapture.takeJpegFile(
         object : ImageCapture.OnImageSavedCallback {
             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                 try {
-                    onCaptured(output.readBytes())
+                    // Transfer ownership to the capture ViewModel. It deletes the file in a
+                    // finally block after sampled decode, so the full-resolution JPEG never needs
+                    // to be copied into a ByteArray here.
+                    onCaptured(output)
                 } catch (
                     _: Throwable,
                 ) {
+                    output.delete()
                     onError("Couldn't read the captured photo.")
                 } finally {
-                    output.delete()
                     executor.shutdown()
                 }
             }

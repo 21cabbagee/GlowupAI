@@ -14,6 +14,10 @@ data class ChatMessage(
     val pending: Boolean = false,
     val isSafetyHandoff: Boolean = false,
     val isError: Boolean = false,
+    val serverId: String? = null,
+    val reporting: Boolean = false,
+    val reported: Boolean = false,
+    val reportError: String? = null,
 )
 
 sealed interface QnaUiState {

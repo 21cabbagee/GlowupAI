@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.ui.GlowButton
 import com.glowup.ai.core.ui.GlowTopBar
+import com.glowup.ai.core.ui.GlowAsyncImage
 import kotlin.math.abs
 
 /**
@@ -254,17 +256,11 @@ fun PhotoComparisonSlider(
                     .fillMaxSize()
                     .clip(RoundedCornerShape(16.dp)),
         ) {
-            // TODO: Load actual image with Coil
-            Surface(
+            GlowAsyncImage(
+                url = afterPhotoUrl,
+                contentDescription = "After progress photo",
                 modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("AFTER", style = MaterialTheme.typography.headlineMedium)
-                }
-            }
+            )
 
             // Label
             Surface(
@@ -292,25 +288,15 @@ fun PhotoComparisonSlider(
                     .fillMaxSize()
                     .clip(RoundedCornerShape(16.dp)),
         ) {
-            Canvas(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                // Clip the before photo to slider position
-                val clipWidth = size.width * sliderPosition
-
-                clipRect(
-                    left = 0f,
-                    top = 0f,
-                    right = clipWidth,
-                    bottom = size.height,
-                ) {
-                    // TODO: Draw actual before image with Coil
-                    drawRect(
-                        color = Color(0xFFE8E8E8),
-                        size = Size(size.width, size.height),
-                    )
-                }
-            }
+            GlowAsyncImage(
+                url = beforePhotoUrl,
+                contentDescription = "Before progress photo",
+                modifier = Modifier.fillMaxSize().drawWithContent {
+                    clipRect(left = 0f, top = 0f, right = size.width * sliderPosition, bottom = size.height) {
+                        this@drawWithContent.drawContent()
+                    }
+                },
+            )
 
             // BEFORE label
             if (sliderPosition > 0.3f) {

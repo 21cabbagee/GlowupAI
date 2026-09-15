@@ -1,5 +1,8 @@
 package com.glowup.ai.feature.analytics
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.glowup.ai.core.util.GlowResult
@@ -26,6 +29,7 @@ class AnalyticsViewModel
         private val homeRepository: HomeRepository,
         private val experimentRepository: ExperimentRepository,
         private val sessionStore: SessionStore,
+        @ApplicationContext private val context: Context,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(AnalyticsUiState())
         val uiState: StateFlow<AnalyticsUiState> = _uiState.asStateFlow()
@@ -403,27 +407,22 @@ class AnalyticsViewModel
                 )
         }
 
-        fun exportPdf() {
-            viewModelScope.launch {
-                _uiState.value = _uiState.value.copy(exportState = ExportState.Exporting)
-                // TODO: Implement PDF export
-                kotlinx.coroutines.delay(2000) // Simulate export
-                _uiState.value =
-                    _uiState.value.copy(
-                        exportState = ExportState.Success("Analytics exported successfully"),
-                    )
-            }
-        }
+        fun exportPdf() = export(true)
 
-        fun exportCsv() {
+        fun exportCsv() = export(false)
+
+        private fun export(pdf: Boolean) {
+            if (_uiState.value.exportState is ExportState.Exporting) return
+            _uiState.value = _uiState.value.copy(exportState = ExportState.Exporting)
+            val history = historyItems.toList()
             viewModelScope.launch {
-                _uiState.value = _uiState.value.copy(exportState = ExportState.Exporting)
-                // TODO: Implement CSV export
-                kotlinx.coroutines.delay(1500) // Simulate export
-                _uiState.value =
-                    _uiState.value.copy(
-                        exportState = ExportState.Success("Data exported to CSV"),
-                    )
+                try {
+                    val uri = AnalyticsExportWriter.write(context, history, pdf)
+                    _uiState.value = _uiState.value.copy(exportState = ExportState.Success(
+                        "Export ready to save or share", uri, if (pdf) "application/pdf" else "text/csv",
+                    ))
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { _uiState.value = _uiState.value.copy(exportState = ExportState.Error("Unable to create export. Please try again.")) }
             }
         }
 

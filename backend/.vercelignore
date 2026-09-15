@@ -1,0 +1,19 @@
+# Local-only environments and generated reports must never enter a Vercel
+# Function bundle. They are large and contain machine-specific artifacts.
+venv/
+.venv/
+web/node_modules/
+train_model/
+tests/
+htmlcov/
+.mypy_cache/
+.pytest_cache/
+.coverage
+.data/
+*.pyc
+__pycache__/
+*.egg-info/
+
+# Local deployment/debug material is not needed by the FastAPI runtime.
+docker-compose.yml
+*.log

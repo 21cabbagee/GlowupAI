@@ -13,12 +13,16 @@ object MockResponses {
         .setBody(
             """
             {
-                "user_id": "$userId",
-                "current_streak": 5,
-                "longest_streak": 10,
-                "total_captures": 15,
-                "has_baseline": true,
-                "history": []
+                "profile": {
+                    "user": {"id": "$userId", "consent_state": "granted"},
+                    "appearance_profiles": [{"id": "appearance_1", "vertical": "skin", "baseline_capture_id": "baseline_1"}],
+                    "entitlement": {"plan": "free", "status": "active"},
+                    "verticals": ["skin"]
+                },
+                "vertical": "skin",
+                "history": [],
+                "engagement": {"capture_streak": 5, "capture_count": 15, "capture_days": [], "reminders": []},
+                "features": {}
             }
             """.trimIndent()
         )
@@ -75,12 +79,16 @@ object MockResponses {
         .setBody(
             """
             {
-                "user_id": "$userId",
-                "current_streak": 0,
-                "longest_streak": 0,
-                "total_captures": 0,
-                "has_baseline": false,
-                "history": []
+                "profile": {
+                    "user": {"id": "$userId", "consent_state": "pending"},
+                    "appearance_profiles": [{"id": "appearance_1", "vertical": "skin", "baseline_capture_id": null}],
+                    "entitlement": {"plan": "free", "status": "active"},
+                    "verticals": ["skin"]
+                },
+                "vertical": "skin",
+                "history": [],
+                "engagement": {"capture_streak": 0, "capture_count": 0, "capture_days": [], "reminders": []},
+                "features": {}
             }
             """.trimIndent()
         )

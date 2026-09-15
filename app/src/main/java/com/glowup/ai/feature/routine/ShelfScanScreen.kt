@@ -1,8 +1,8 @@
 package com.glowup.ai.feature.routine
 
 import android.net.Uri
-import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,7 +37,9 @@ import com.glowup.ai.core.ui.GlowCard
 import com.glowup.ai.core.ui.GlowTextField
 import com.glowup.ai.core.ui.GlowTopBar
 import com.glowup.ai.core.ui.PollingIndicator
+import com.glowup.ai.feature.capture.CaptureImageProcessor
 import com.glowup.ai.feature.routine.components.AddProductSheet
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -54,18 +56,20 @@ fun ShelfScanRoute(
     val scope = rememberCoroutineScope()
 
     val pickImage =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
             if (uri == null) return@rememberLauncherForActivityResult
             scope.launch {
-                val base64 =
-                    withContext(Dispatchers.IO) {
-                        runCatching {
-                            context.contentResolver.openInputStream(uri)?.use { stream ->
-                                Base64.encodeToString(stream.readBytes(), Base64.NO_WRAP)
-                            }
-                        }.getOrNull()
-                    }
-                if (base64 != null) viewModel.submitPhoto(base64)
+                try {
+                    val base64 =
+                        withContext(Dispatchers.Default) {
+                            CaptureImageProcessor.processGalleryUriToBase64(context.applicationContext, uri)
+                        }
+                    viewModel.submitPhoto(base64)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Throwable) {
+                    viewModel.onPhotoProcessingFailed(shelfScanPhotoError(error))
+                }
             }
         }
 
@@ -73,7 +77,15 @@ fun ShelfScanRoute(
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             when (val s = state) {
                 is ShelfScanUiState.Idle -> {
-                    ShelfScanIntro(onPickPhoto = { pickImage.launch("image/*") })
+                    ShelfScanIntro(
+                        onPickPhoto = {
+                            pickImage.launch(
+                                PickVisualMediaRequest(
+                                    ActivityResultContracts.PickVisualMedia.ImageOnly,
+                                ),
+                            )
+                        },
+                    )
                 }
 
                 is ShelfScanUiState.Uploading -> {
@@ -108,6 +120,21 @@ fun ShelfScanRoute(
         }
     }
 }
+
+private fun shelfScanPhotoError(error: Throwable): String =
+    when {
+        error.message?.contains("too small", ignoreCase = true) == true ->
+            "That image is too small. Choose a photo at least 160×160 pixels."
+        error.message?.contains("empty", ignoreCase = true) == true ->
+            "That photo was empty. Choose another image and try again."
+        error.message?.contains("large", ignoreCase = true) == true ->
+            "That photo is too large to process on this device. Choose a smaller image."
+        error.message?.contains("corrupt", ignoreCase = true) == true ||
+            error.message?.contains("unsupported", ignoreCase = true) == true ||
+            error.message?.contains("decode", ignoreCase = true) == true ->
+            "That image couldn't be read. Choose another photo and try again."
+        else -> "That photo couldn't be prepared. Choose another image and try again."
+    }
 
 @Composable
 private fun ShelfScanIntro(onPickPhoto: () -> Unit) {
@@ -154,6 +181,14 @@ private fun ShelfScanReadyContent(
         )
     } else {
         Column(modifier = Modifier.fillMaxSize()) {
+            state.explanation?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = glow.ink600,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
             Text(
                 "Review before adding",
                 style = MaterialTheme.typography.titleLarge,

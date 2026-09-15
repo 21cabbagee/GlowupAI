@@ -60,7 +60,7 @@ class GlowupUser(HttpUser):
         response = self.client.post(
             "/api/users",
             json={
-                "firebase_uid": f"load_test_user_{random.randint(1000, 999999)}",
+                "supabase_uid": f"load_test_user_{random.randint(1000, 999999)}",
                 "email": f"loadtest{random.randint(1000, 999999)}@example.com",
                 "skin_type": random.choice(["normal", "dry", "oily", "combination"]),
             },

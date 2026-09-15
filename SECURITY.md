@@ -47,7 +47,8 @@ GlowupAI implements several security measures:
 - ✅ Secure credential storage
 - ✅ HTTPS enforcement in production
 - ✅ Security scanning in CI/CD (Trivy, Bandit, Safety)
-- ✅ Firebase Authentication
+- ✅ Supabase Auth with backend JWT verification
+- ✅ Private Supabase Storage for user images
 - ✅ ProGuard/R8 code shrinking for Android
 
 ## Known Security Considerations
@@ -62,7 +63,11 @@ GlowupAI implements several security measures:
 Required production secrets:
 - `GLOWUPAI_ADMIN_TOKEN`: Admin API authentication
 - `GLOWUPAI_GEMINI_API_KEY`: AI service integration
-- `DATABASE_URL`: PostgreSQL connection string
+- `SUPABASE_URL`: Supabase project URL
+- `SUPABASE_DB_URL`: Supabase PostgreSQL connection string
+- `SUPABASE_JWT_SECRET`: server-only JWT verification secret
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only Storage/admin credential
+- `SUPABASE_STORAGE_BUCKET`: private image bucket name
 - `REDIS_URL`: Cache connection string (optional)
 - `SENTRY_DSN`: Error monitoring (optional)
 

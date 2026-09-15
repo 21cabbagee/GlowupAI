@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -125,17 +126,21 @@ class CaptureViewModel
             _livePose.value = quality
         }
 
-        fun submitCameraJpeg(
-            jpegBytes: ByteArray,
+        fun submitCameraFile(
+            jpegFile: File,
             rotationDegrees: Int,
             isBaseline: Boolean,
         ) {
-            val userId = _userId.value ?: return
+            val userId = _userId.value
+            if (userId == null) {
+                jpegFile.delete()
+                return
+            }
             // Capture the pose at shutter time. Reading the live analyzer state after JPEG processing
             // can attach a later frame's pose (or null) to this image.
             val poseAtShutter = _livePose.value?.pose
-            submitProcessed(userId, isBaseline, poseAtShutter) {
-                withContext(Dispatchers.Default) { CaptureImageProcessor.processCameraJpeg(jpegBytes, rotationDegrees) }
+            submitProcessed(userId, isBaseline, poseAtShutter, cleanup = { jpegFile.delete() }) {
+                withContext(Dispatchers.Default) { CaptureImageProcessor.processCameraFile(jpegFile, rotationDegrees) }
             }
         }
 
@@ -156,34 +161,42 @@ class CaptureViewModel
             userId: String,
             isBaseline: Boolean,
             pose: com.glowup.ai.domain.model.CapturePose?,
+            cleanup: () -> Unit = {},
             decode: suspend () -> Bitmap,
         ) {
-            if (_phase.value != CapturePhase.Framing || _gateState.value !is CaptureGateState.Ready) return
+            if (_phase.value != CapturePhase.Framing || _gateState.value !is CaptureGateState.Ready) {
+                cleanup()
+                return
+            }
             // Reserve the input synchronously before launching decode work. Two quick taps otherwise
             // both observe Framing and can enqueue duplicate uploads.
             _phase.value = CapturePhase.Processing
             viewModelScope.launch {
-                val bitmap =
-                    runCatching { decode() }.getOrElse { error ->
-                        android.util.Log.e("CaptureViewModel", "Photo decode failed", error)
-                        val message =
-                            when {
-                                error.message?.contains("empty") == true -> "The captured image was empty. Please try again."
+                try {
+                    val bitmap =
+                        runCatching { decode() }.getOrElse { error ->
+                            android.util.Log.e("CaptureViewModel", "Photo decode failed", error)
+                            val message =
+                                when {
+                                    error.message?.contains("empty") == true -> "The captured image was empty. Please try again."
 
-                                error.message?.contains(
-                                    "corrupt",
-                                ) == true -> "That image appears corrupt. Please try again or choose from gallery."
+                                    error.message?.contains(
+                                        "corrupt",
+                                    ) == true -> "That image appears corrupt. Please try again or choose from gallery."
 
-                                error.message?.contains(
-                                    "decode",
-                                ) == true -> "Couldn't decode that image. Try choosing from gallery instead."
+                                    error.message?.contains(
+                                        "decode",
+                                    ) == true -> "Couldn't decode that image. Try choosing from gallery instead."
 
-                                else -> "Couldn't process that photo (${error.message}). Please choose another or try gallery."
-                            }
-                        _phase.value = CapturePhase.Failed(message)
-                        return@launch
-                    }
-                submitBitmap(bitmap, userId, isBaseline, pose)
+                                    else -> "Couldn't process that photo. Please choose another or try gallery."
+                                }
+                            _phase.value = CapturePhase.Failed(message)
+                            return@launch
+                        }
+                    submitBitmap(bitmap, userId, isBaseline, pose)
+                } finally {
+                    cleanup()
+                }
             }
         }
 

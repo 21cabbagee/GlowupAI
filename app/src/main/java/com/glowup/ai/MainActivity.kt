@@ -16,6 +16,7 @@ import com.glowup.ai.data.local.SessionStore
 import com.glowup.ai.data.repository.SessionRepository
 import com.glowup.ai.data.telemetry.Telemetry
 import com.glowup.ai.feature.account.ThemePreference
+import com.glowup.ai.feature.auth.SupabaseAuthGateway
 import com.glowup.ai.feature.shell.GlowDestination
 import com.glowup.ai.feature.shell.GlowUpApp
 import com.glowup.ai.feature.shell.destinationFromIntent
@@ -34,12 +35,15 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var telemetry: Telemetry
 
+    @Inject lateinit var authGateway: SupabaseAuthGateway
+
     private var pendingDestination by mutableStateOf<GlowDestination?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        authGateway.handleAuthCallback(intent?.data)
 
         pendingDestination =
             if (savedInstanceState?.getBoolean(STATE_OPEN_CAPTURE) == true) {
@@ -61,6 +65,7 @@ class MainActivity : ComponentActivity() {
                 GlowUpApp(
                     sessionStore = sessionStore,
                     sessionRepository = sessionRepository,
+                    authGateway = authGateway,
                     telemetry = telemetry,
                     pendingDestination = pendingDestination,
                     onPendingDestinationConsumed = { consumed ->
@@ -76,6 +81,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        authGateway.handleAuthCallback(intent.data)
         pendingDestination = destinationFromIntent(intent)
     }
 

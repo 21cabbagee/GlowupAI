@@ -367,12 +367,10 @@ private fun HomeContent(
             RecentPhotosSection(
                 history = sortedHistory,
                 onPhotoClick = { captureId ->
-                    // Navigate to capture detail when implemented
-                    onNavigate(GlowDestination.Capture)
+                    onNavigate(GlowDestination.CaptureResult(captureId))
                 },
                 onSeeAllClick = {
-                    // Navigate to full history view
-                    onNavigate(GlowDestination.Capture)
+                    onNavigate(GlowDestination.PhotoHistory)
                 },
             )
         }
@@ -501,9 +499,9 @@ private fun HomeContent(
                                         false
                                     }
                                 }
-                            // For now, navigate to Capture screen
-                            // TODO: Navigate to specific capture detail when captureForDate.id is available
-                            onNavigate(GlowDestination.Capture)
+                            captureForDate?.id?.let { captureId ->
+                                onNavigate(GlowDestination.CaptureResult(captureId))
+                            }
                         },
                     )
                 }

@@ -18,10 +18,10 @@ CREATE TABLE IF NOT EXISTS users (
     consent_state TEXT NOT NULL DEFAULT 'pending',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     deleted_at TEXT,
-    firebase_uid TEXT UNIQUE
+    supabase_uid TEXT UNIQUE
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid);
+CREATE INDEX IF NOT EXISTS idx_users_supabase_uid ON users(supabase_uid);
 
 CREATE TABLE IF NOT EXISTS consent_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS photo_captures (
     device_meta_json TEXT NOT NULL DEFAULT '{}',
     is_baseline INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'accepted',
+    idempotency_key TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -107,6 +108,8 @@ CREATE TABLE IF NOT EXISTS verdicts (
 
 CREATE INDEX IF NOT EXISTS idx_events_user_time ON routine_events(user_id, timestamp);
 CREATE INDEX IF NOT EXISTS idx_captures_user_time ON photo_captures(user_id, captured_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_captures_user_idempotency
+ON photo_captures(user_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_metrics_user_time ON metric_snapshots(user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_verdicts_user_product ON verdicts(user_id, product_id, generated_at);
 
@@ -188,7 +191,26 @@ class Database:
         with self._lock:
             self.connection.execute("PRAGMA foreign_keys = ON")
             self.connection.execute("PRAGMA journal_mode = WAL")
+            # CREATE TABLE IF NOT EXISTS does not upgrade existing tables.
+            # Add columns before the schema creates indexes referencing them.
+            for table, column in (
+                ("users", "supabase_uid"),
+                ("photo_captures", "idempotency_key"),
+            ):
+                columns = {
+                    row["name"]
+                    for row in self.connection.execute(f"PRAGMA table_info({table})")
+                }
+                if columns and column not in columns:
+                    self.connection.execute(
+                        f"ALTER TABLE {table} ADD COLUMN {column} TEXT"
+                    )
+            # Legacy Firebase identities must not become Supabase identities.
             self.connection.executescript(SCHEMA)
+            self.connection.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_supabase_identity "
+                "ON users(supabase_uid) WHERE supabase_uid IS NOT NULL"
+            )
             self.connection.commit()
 
     @contextmanager

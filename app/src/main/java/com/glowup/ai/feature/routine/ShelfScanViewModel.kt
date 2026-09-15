@@ -56,6 +56,12 @@ class ShelfScanViewModel
                 }
         }
 
+        /** Shows a recoverable local picker/decoding failure without attempting a network job. */
+        fun onPhotoProcessingFailed(message: String) {
+            pollJob?.cancel()
+            _uiState.value = ShelfScanUiState.Error(message)
+        }
+
         private suspend fun pollUntilDone(
             userId: String,
             jobId: String,
@@ -76,6 +82,8 @@ class ShelfScanViewModel
                                                 ShelfScanCandidateUi(it.name, it.category ?: "other", it.ingredients, checked = true)
                                             },
                                         message = job.result?.message,
+                                        explanation = job.result?.explanation,
+                                        limitations = job.result?.limitations.orEmpty(),
                                         showManualAdd = candidates.isEmpty(),
                                     )
                                 return

@@ -110,6 +110,14 @@ class CompleteApiTests(unittest.TestCase):
             },
         )
         self.assertEqual(capture.status_code, 200)
+        capture_id = capture.json()["id"]
+        detail = self.client.get(f"/api/users/{user_id}/captures/{capture_id}")
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.json()["id"], capture_id)
+        photo = self.client.get(f"/api/users/{user_id}/captures/{capture_id}/photo")
+        self.assertEqual(photo.status_code, 200)
+        self.assertEqual(photo.headers["content-type"], "image/jpeg")
+        self.assertEqual(photo.headers["cache-control"], "private, no-store")
         dashboard = self.client.get(f"/api/users/{user_id}/dashboard")
         self.assertEqual(dashboard.status_code, 200)
         self.assertEqual(len(dashboard.json()["history"]), 1)
@@ -152,6 +160,56 @@ class CompleteApiTests(unittest.TestCase):
         guide = self.client.get(f"/api/users/{user_id}/capture-guide?vertical=skin")
         self.assertEqual(guide.status_code, 200)
         self.assertEqual(guide.json()["state"], "scheduled")
+
+    def test_capture_idempotency_replays_the_accepted_capture(self):
+        user_id = self.create_premium_user()
+        payload = {
+            "user_id": user_id,
+            "image_base64": sample_image(),
+            "vertical": "skin",
+            "is_baseline": True,
+            "idempotency_key": "capture-retry-1",
+        }
+        first = self.client.post("/api/captures", json=payload)
+        replay = self.client.post("/api/captures", json=payload)
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(replay.status_code, 200)
+        self.assertEqual(replay.json()["id"], first.json()["id"])
+        self.assertNotIn("_capture_created", replay.json())
+        self.assertEqual(
+            len(self.client.get(f"/api/users/{user_id}/history").json()), 1
+        )
+        analytics = self.service.db.fetchall(
+            "SELECT event_type FROM analytics_events WHERE user_id=? AND event_type='capture_created'",
+            (user_id,),
+        )
+        self.assertEqual(
+            len(analytics),
+            1,
+            "an idempotency replay must not be counted as a second capture",
+        )
+
+    def test_unexpected_ai_failure_keeps_capture_accepted(self):
+        """A provider/configuration exception must not turn capture upload into HTTP 500."""
+        user_id = self.create_premium_user()
+
+        class BrokenOrchestrator:
+            def run_capture_analysis(self, **_kwargs):
+                raise RuntimeError("provider configuration failure")
+
+        self.service.ai_orchestrator = BrokenOrchestrator()
+        response = self.client.post(
+            "/api/captures",
+            json={
+                "user_id": user_id,
+                "image_base64": sample_image(),
+                "vertical": "skin",
+                "is_baseline": True,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "accepted")
+        self.assertTrue(response.json()["id"])
 
     def test_free_plan_gates_premium_features_and_keeps_history(self):
         user = self.client.post("/api/users", json={}).json()

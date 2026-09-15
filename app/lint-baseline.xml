@@ -257,50 +257,6 @@
     <issue
         id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
-        errorLine1="                                    description = &quot;${metric.displayName} has increased by ${String.format("
-        errorLine2="                                                                                            ^">
-        <location
-            file="src/main/java/com/glowup/ai/feature/insights/InsightsEnhancedViewModel.kt"
-            line="198"
-            column="93"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
-        errorLine1="                                    description = &quot;${metric.displayName} has decreased by ${String.format("
-        errorLine2="                                                                                            ^">
-        <location
-            file="src/main/java/com/glowup/ai/feature/insights/InsightsEnhancedViewModel.kt"
-            line="213"
-            column="93"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
-        errorLine1="                                &quot;Your redness has increased by ${String.format(&quot;%.1f&quot;, change)}%. &quot; +"
-        errorLine2="                                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/glowup/ai/feature/insights/InsightsEnhancedViewModel.kt"
-            line="260"
-            column="66"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
-        errorLine1="                                &quot;Texture has improved by ${String.format(&quot;%.1f&quot;, abs(change))}%. &quot; +"
-        errorLine2="                                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/glowup/ai/feature/insights/InsightsEnhancedViewModel.kt"
-            line="281"
-            column="60"/>
-    </issue>
-
-    <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
         errorLine1="                    text = String.format(&quot;%.2f&quot;, point.value),"
         errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -637,39 +593,6 @@
             file="$HOME/GlowupAI/gradle/libs.versions.toml"
             line="36"
             column="11"/>
-    </issue>
-
-    <issue
-        id="GradleDependency"
-        message="A newer version of com.google.firebase:firebase-bom than 33.7.0 is available: 34.18.0"
-        errorLine1="firebaseBom = &quot;33.7.0&quot;"
-        errorLine2="              ~~~~~~~~">
-        <location
-            file="$HOME/GlowupAI/gradle/libs.versions.toml"
-            line="46"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="GradleDependency"
-        message="A newer version of com.google.gms.google-services than 4.4.2 is available: 4.5.0"
-        errorLine1="googleServicesPlugin = &quot;4.4.2&quot;"
-        errorLine2="                       ~~~~~~~">
-        <location
-            file="$HOME/GlowupAI/gradle/libs.versions.toml"
-            line="47"
-            column="24"/>
-    </issue>
-
-    <issue
-        id="GradleDependency"
-        message="A newer version of com.google.firebase.crashlytics than 3.0.2 is available: 3.0.8"
-        errorLine1="firebaseCrashlyticsPlugin = &quot;3.0.2&quot;"
-        errorLine2="                            ~~~~~~~">
-        <location
-            file="$HOME/GlowupAI/gradle/libs.versions.toml"
-            line="48"
-            column="29"/>
     </issue>
 
     <issue

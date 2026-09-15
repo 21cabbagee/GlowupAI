@@ -375,7 +375,7 @@ def detect_server_issues(results: TestResult):
     # Check auth configuration from responses
     auth_disabled_hint = any(
         test.get("response_data", {}).get("detail", "") ==
-        "GLOWUPAI_FIREBASE_PROJECT_ID is not configured on this server"
+        "SUPABASE_URL is not configured on this server"
         for test in results.tests
     )
 
@@ -398,8 +398,8 @@ def print_recommendations(results: TestResult):
 1. AUTH/SESSION ENDPOINT:
    - ✓ Properly rejects requests without Authorization header (401)
    - ✓ Properly rejects requests with invalid/malformed tokens (401)
-   - ⚠ Firebase project ID is configured but auth verification needs valid tokens
-   - Recommendation: Add integration tests with mock Firebase tokens (see tests/test_auth.py)
+   - ⚠ Supabase project URL is configured but auth verification needs valid tokens
+   - Recommendation: Add integration tests with mock Supabase tokens (see tests/test_auth.py)
 
 2. CONSENT ENDPOINTS:
    - ⚠ Could not fully test - server returned 500 errors
@@ -417,8 +417,8 @@ def print_recommendations(results: TestResult):
 5. NEXT STEPS:
    - Investigate 500 errors in server logs (/Users/21cabbage/GlowupAI/backend/server*.log)
    - Check database connectivity (.data/glowupai.sqlite3)
-   - Set up Firebase emulator for local testing
-   - Add end-to-end tests with mock Firebase tokens (pattern in tests/test_auth.py)
+   - Configure a Supabase development project for local testing
+   - Add end-to-end tests with mock Supabase tokens (pattern in tests/test_auth.py)
    - Consider adding rate limiting for auth endpoints
 """)
     print("="*60)

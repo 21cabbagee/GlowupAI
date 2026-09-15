@@ -31,6 +31,9 @@ data class QnaResponseDto(
     val answer: String,
     val scope: String = "cosmetic_tracking",
     val citations: List<CitationDto> = emptyList(),
+    @SerialName("language_mode") val languageMode: String? = null,
+    @SerialName("language_policy") val languagePolicy: String? = null,
+    @SerialName("message_id") val messageId: String? = null,
 )
 
 fun QnaResponseDto.toDomain(): QnaAnswer =
@@ -39,10 +42,14 @@ fun QnaResponseDto.toDomain(): QnaAnswer =
         answer = answer,
         scope = SafetyScope.fromRaw(scope),
         citations = citations.map { it.toDomain() },
+        languageMode = languageMode,
+        languagePolicy = languagePolicy,
+        messageId = messageId,
     )
 
 @Serializable
 data class QnaMessageDto(
+    val id: String? = null,
     val role: String = "assistant",
     val content: String = "",
     @SerialName("created_at") val createdAt: String? = null,
@@ -59,6 +66,7 @@ fun QnaMessageDto.toDomain(): QnaMessage =
         scope = scope?.let { SafetyScope.fromRaw(it) },
         citations = citations.map { it.toDomain() },
         threadId = threadId,
+        id = id,
     )
 
 @Serializable

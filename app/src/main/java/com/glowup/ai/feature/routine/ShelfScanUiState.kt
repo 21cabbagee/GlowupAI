@@ -29,6 +29,8 @@ sealed interface ShelfScanUiState {
         val jobId: String,
         val candidates: List<ShelfScanCandidateUi>,
         val message: String?,
+        val explanation: String? = null,
+        val limitations: List<String> = emptyList(),
         val confirming: Boolean = false,
         val confirmError: String? = null,
         val showManualAdd: Boolean = false,

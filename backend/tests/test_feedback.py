@@ -26,8 +26,8 @@ class TestFeedbackCollector(unittest.TestCase):
         # Create test user
         self.user_id = "test_user_123"
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            (self.user_id, "firebase_123"),
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
+            (self.user_id, "supabase_123"),
         )
 
         # Create test capture

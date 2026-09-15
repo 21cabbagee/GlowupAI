@@ -36,7 +36,7 @@ class SessionStore
     ) {
         private object Keys {
             val USER_ID = stringPreferencesKey("glowup_user_id")
-            val FIREBASE_UID = stringPreferencesKey("glowup_firebase_uid")
+            val SUPABASE_UID = stringPreferencesKey("glowup_supabase_uid")
             val PLAN = stringPreferencesKey("glowup_plan")
             val ENTITLEMENT_STATUS = stringPreferencesKey("glowup_entitlement_status")
             val CONSENT_STATE = stringPreferencesKey("glowup_consent_state")
@@ -69,7 +69,7 @@ class SessionStore
             val ALL: Set<Preferences.Key<*>> =
                 setOf(
                     USER_ID,
-                    FIREBASE_UID,
+                    SUPABASE_UID,
                     PLAN,
                     ENTITLEMENT_STATUS,
                     CONSENT_STATE,
@@ -102,9 +102,9 @@ class SessionStore
 
         suspend fun setUserId(userId: String) = dataStore.edit { it[Keys.USER_ID] = userId }
 
-        val firebaseUidFlow: Flow<String?> = dataStore.data.map { it[Keys.FIREBASE_UID] }
+        val supabaseUidFlow: Flow<String?> = dataStore.data.map { it[Keys.SUPABASE_UID] }
 
-        suspend fun setFirebaseUid(uid: String) = dataStore.edit { it[Keys.FIREBASE_UID] = uid }
+        suspend fun setSupabaseUid(uid: String) = dataStore.edit { it[Keys.SUPABASE_UID] = uid }
 
         // -- Cached plan / entitlement (used ONLY as a cache key / offline hint — never as the
         // authoritative Premium check; that is always [com.glowup.ai.domain.model.Entitlement.isPremium]

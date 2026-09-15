@@ -124,7 +124,7 @@ Time to Deploy:      10-15 minutes
 ═══════════════════════════════════════════════════════════════════════════
 
 REQUIRED (7):
-  1. GLOWUPAI_FIREBASE_PROJECT_ID=glowup-ai-38ae7
+  1. SUPABASE_URL, SUPABASE_JWT_SECRET, and SUPABASE_SERVICE_ROLE_KEY
   2. GLOWUPAI_ENV=production
   3. GLOWUPAI_DISABLE_LEGACY_KEY_FILE=1
   4. GLOWUPAI_ALLOWED_ORIGINS=https://your-domain.com

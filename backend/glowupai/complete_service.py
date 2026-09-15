@@ -1,15 +1,26 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import logging
+import os
+from collections.abc import Callable
 from typing import Any
 
 from .analytics_service import AnalyticsService
 from .capture_service import CaptureService
+from .comparison_service import ComparisonService
 from .commerce_service import CommerceService
 from .complete_db import FullDatabase
 from .google_ai import build_insight_service, build_vision_service
+from .google_ai import GoogleGeminiInsightService
+from .openai_ai import build_luna_service
+from .ai_orchestrator import AIOrchestrator
 from .guidance_service import GuidanceService
 from .insights import GroundedInsightService
-from .jobs import JobRunner
+from .durable_jobs import JobRunner
+from .deletion import AccountDeletion
+from .supabase_auth_admin import SupabaseAuthAdmin
 from .service import GlowupAIService
 from .subscription_service import SubscriptionService
 
@@ -29,6 +40,8 @@ PREMIUM_FEATURES = {
     "product_prediction",
 }
 
+logger = logging.getLogger(__name__)
+
 
 class CompleteGlowupAIService(GlowupAIService):
     """Complete local product implementation for every user-facing phase.
@@ -44,19 +57,88 @@ class CompleteGlowupAIService(GlowupAIService):
             db, settings=settings, photos=photos, insights=GroundedInsightService()
         )
         self.full_db = db
+        auth_admin = None
+        if self.settings.supabase_url and self.settings.supabase_service_role_key:
+            auth_admin = SupabaseAuthAdmin(
+                self.settings.supabase_url,
+                self.settings.supabase_service_role_key,
+            )
+        self.deletions = AccountDeletion(db, self.photos, auth_admin)
         self.insights = build_insight_service(self.settings)
-        self.vision = build_vision_service(self.settings)
-        self.jobs = JobRunner(db)
+        legacy_vision = build_vision_service(self.settings)
+        # The provider-backed pipeline is opt-in and only exists when the
+        # paid Luna key/cap are configured.  Legacy/local deployments retain
+        # their existing deterministic behavior until the migration feature
+        # flag is enabled, while all new captures in this path use Luna for
+        # vision and Gemini (or Luna text fallback) for language.
+        luna = build_luna_service(self.settings)
+        # Product-only label scans also prefer Luna when it is configured. The
+        # Gemini vision adapter remains an explicitly gated compatibility path
+        # for product-only free-tier deployments.
+        self.vision = luna or legacy_vision
+        gemini = (
+            self.insights
+            if isinstance(self.insights, GoogleGeminiInsightService)
+            else None
+        )
+        self.ai_orchestrator = (
+            AIOrchestrator(
+                luna=luna,
+                gemini=gemini,
+                db=db,
+                settings=self.settings,
+                consent_checker=lambda owner_id, _scope: bool(
+                    (
+                        row := db.fetchone(
+                            "SELECT consent_state FROM users WHERE id=? AND deleted_at IS NULL",
+                            (owner_id,),
+                        )
+                    )
+                    and row["consent_state"] == "active"
+                ),
+            )
+            if luna is not None
+            else None
+        )
+        self._recap_language_cache: dict[str, tuple[str, str | None]] = {}
+        inline_default = "0" if self.settings.is_production else "1"
+        self.jobs = JobRunner(
+            db, inline=os.getenv("GLOWUPAI_JOB_INLINE", inline_default) == "1"
+        )
 
         # Initialize service modules
         self.user_svc = UserService(db, self)
-        self.capture_svc = CaptureService(db, self, photos, settings)
+        self.capture_svc = CaptureService(db, self, self.photos, self.settings)
+        self.comparison_svc = ComparisonService(db, self, self.photos)
         self.subscription_svc = SubscriptionService(db, self)
         self.analytics_svc = AnalyticsService(db, self)
         self.guidance_svc = GuidanceService(
             db, self, self.insights, self.vision, self.jobs
         )
         self.commerce_svc = CommerceService(db, self)
+        self.jobs.register("shelf_scan", self._resume_shelf_scan)
+        self.jobs.register("reprocess", self._resume_reprocess)
+
+    def _resume_shelf_scan(self, job, payload):
+        self.require_user(job["user_id"])
+        return self.guidance_svc._run_shelf_scan(
+            self.photos.read(payload["photo_ref"]),
+            user_id=job["user_id"],
+            request_identity=f"shelf-scan:{job['id']}",
+        )
+
+    def delete_user(self, user_id: str) -> None:
+        self.deletions.request(user_id)
+        # Do not retain personalized recap wording after an account deletion
+        # request; persisted AI rows and provider retention are handled by the
+        # deletion workflow separately.
+        self._recap_language_cache.clear()
+
+    def _resume_reprocess(self, job, payload):
+        self.require_user(job["user_id"])
+        return self.capture_svc._run_reprocess(
+            job["user_id"], payload["model_version"], job["id"]
+        )
 
     # ============================================================================
     # USER SERVICE DELEGATION
@@ -69,13 +151,13 @@ class CompleteGlowupAIService(GlowupAIService):
 
     def session_for_identity(
         self,
-        firebase_uid: str,
+        supabase_uid: str,
         email: str | None = None,
         email_verified: bool = False,
         name: str | None = None,
     ) -> dict[str, Any]:
         return self.user_svc.session_for_identity(
-            firebase_uid, email, email_verified, name
+            supabase_uid, email, email_verified, name
         )
 
     def grant_consent(
@@ -112,9 +194,16 @@ class CompleteGlowupAIService(GlowupAIService):
             history_fn=self.history,
             context_events_fn=self.context_events,
             check_ins_fn=self.check_ins,
-            qna_history_fn=self.qna_history,
-            is_premium=self.is_premium(user_id),
+            qna_history_fn=self.qna_history_for_export,
+            # Data portability is not a Premium feature. A user must retain
+            # access to their previously stored Q&A messages after a plan
+            # expires or is cancelled.
+            is_premium=True,
         )
+
+    def qna_history_for_export(self, user_id: str) -> list[dict[str, Any]]:
+        """Return stored Q&A for portability without applying the feature gate."""
+        return self.guidance_svc.qna_history(user_id)
 
     def record_data_collection_consent(
         self, user_id: str, granted: bool, policy_version: str = "1.0"
@@ -172,11 +261,15 @@ class CompleteGlowupAIService(GlowupAIService):
             record_engagement_fn=self.record_engagement,
         )
 
+    def _usage(self, user_id: str, feature: str) -> int:
+        """Compatibility read for quota diagnostics and admin verification."""
+        return self.subscription_svc._usage(user_id, feature)
+
     # ============================================================================
     # CAPTURE SERVICE DELEGATION
     # ============================================================================
 
-    def create_capture(
+    def create_capture(  # type: ignore[override]
         self,
         user_id: str,
         image_bytes: bytes,
@@ -186,6 +279,7 @@ class CompleteGlowupAIService(GlowupAIService):
         is_baseline: bool = False,
         vertical: str = "skin",
         experiment_id: str | None = None,
+        idempotency_key: str | None = None,
     ) -> dict[str, Any]:
         return self.capture_svc.create_capture(
             user_id,
@@ -196,6 +290,7 @@ class CompleteGlowupAIService(GlowupAIService):
             is_baseline,
             vertical,
             experiment_id,
+            idempotency_key,
             record_engagement_fn=self.record_engagement,
         )
 
@@ -204,9 +299,33 @@ class CompleteGlowupAIService(GlowupAIService):
             user_id, vertical, is_premium=self.is_premium(user_id)
         )
 
-    def capture_guide(self, user_id: str, vertical: str = "skin") -> dict[str, Any]:
+    def capture_detail(
+        self, user_id: str, capture_id: str, vertical: str = "skin"
+    ) -> dict[str, Any]:
+        return self.capture_svc.detail(user_id, capture_id, vertical)
+
+    def compare_captures(
+        self,
+        user_id: str,
+        earlier_capture_id: str,
+        later_capture_id: str,
+        vertical: str = "skin",
+    ) -> dict[str, Any]:
+        return self.comparison_svc.compare(
+            user_id, earlier_capture_id, later_capture_id, vertical
+        )
+
+    def comparison_detail(self, user_id: str, comparison_id: str) -> dict[str, Any]:
+        return self.comparison_svc.detail(user_id, comparison_id)
+
+    def capture_guide(
+        self,
+        user_id: str,
+        vertical: str = "skin",
+        history_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         return self.capture_svc.capture_guide(
-            user_id, vertical, history_fn=self.history
+            user_id, vertical, history_fn=history_fn or self.history
         )
 
     def add_measurement_feedback(
@@ -323,15 +442,92 @@ class CompleteGlowupAIService(GlowupAIService):
         return self.analytics_svc.confound_check(user_id, exclude_product_id)
 
     def weekly_recap(
-        self, user_id: str, vertical: str = "skin", as_of: str | None = None
+        self,
+        user_id: str,
+        vertical: str = "skin",
+        as_of: str | None = None,
+        history_fn: Callable | None = None,
+        check_ins_fn: Callable | None = None,
     ) -> dict[str, Any]:
-        return self.analytics_svc.weekly_recap(
+        history_reader = history_fn or self.history
+        check_ins_reader = check_ins_fn or self.check_ins
+        recap = self.analytics_svc.weekly_recap(
             user_id,
             vertical,
             as_of,
-            history_fn=self.history,
-            check_ins_fn=self.check_ins,
+            history_fn=history_reader,
+            check_ins_fn=check_ins_reader,
         )
+        # The factual recap is always computed locally. In reviewed paid
+        # Gemini mode, ask the same text-only orchestrator for one bounded
+        # explanation; a Gemini failure gets exactly one evidence-only Luna
+        # fallback and never re-sends a capture image.
+        orchestrator = getattr(self, "ai_orchestrator", None)
+        if orchestrator is not None and recap.get("status") not in {
+            "baseline_needed",
+            "building_signal",
+        }:
+            history = history_reader(user_id, vertical)
+            evidence_ids = [
+                str(item.get("id")) for item in history[-8:] if item.get("id")
+            ]
+            evidence = [
+                {
+                    "id": str(item.get("id")),
+                    "type": "capture_recap_evidence",
+                    "value": {
+                        "captured_at": item.get("captured_at"),
+                        "analysis": item.get("analysis"),
+                    },
+                }
+                for item in history[-8:]
+                if item.get("id")
+            ]
+            evidence_ids.append("weekly-recap")
+            evidence.append(
+                {"id": "weekly-recap", "type": "factual_recap", "value": recap}
+            )
+            identity_material = json.dumps(
+                {
+                    "user_id": user_id,
+                    "period": recap.get("period"),
+                    "ids": evidence_ids,
+                    "status": recap.get("status"),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            recap_key = hashlib.sha256(identity_material.encode("utf-8")).hexdigest()[
+                :32
+            ]
+            cached_language = self._recap_language_cache.get(recap_key)
+            if cached_language:
+                recap["ai_summary"], recap["language_mode"] = cached_language
+                return recap
+            try:
+                language_result = orchestrator.run_language(
+                    user_id=user_id,
+                    evidence={"evidence_ids": evidence_ids, "evidence": evidence},
+                    task_type="weekly_recap",
+                    data_class="personal_history",
+                    request_identity=f"weekly-recap:{recap_key}",
+                )
+                language = language_result.get("answer") or {}
+                if isinstance(language, dict) and language.get("answer"):
+                    recap["ai_summary"] = language["answer"]
+                    recap["language_mode"] = language_result.get("language_mode")
+                    self._recap_language_cache[recap_key] = (
+                        language["answer"],
+                        language_result.get("language_mode"),
+                    )
+            except Exception as exc:
+                # The local factual recap remains the source of truth if the
+                # optional wording stage is unavailable.
+                logger.warning(
+                    "Optional weekly recap wording failed",
+                    extra={"error_type": type(exc).__name__},
+                )
+        return recap
 
     def check_ins(self, user_id: str, limit: int = 30) -> list[dict[str, Any]]:
         return self.analytics_svc.check_ins(user_id, limit)
@@ -364,13 +560,24 @@ class CompleteGlowupAIService(GlowupAIService):
             user_id, event_type, reference_id, metadata
         )
 
-    def engagement(self, user_id: str) -> dict[str, Any]:
+    def engagement(
+        self,
+        user_id: str,
+        history_fn: Callable | None = None,
+    ) -> dict[str, Any]:
         return self.analytics_svc.engagement(
-            user_id, capture_guide_fn=self.capture_guide
+            user_id,
+            capture_guide_fn=lambda uid: self.capture_guide(uid, history_fn=history_fn),
         )
 
-    def analytics(self, user_id: str) -> dict[str, Any]:
-        return self.analytics_svc.analytics(user_id, history_fn=self.history)
+    def analytics(
+        self,
+        user_id: str,
+        history_fn: Callable | None = None,
+    ) -> dict[str, Any]:
+        return self.analytics_svc.analytics(
+            user_id, history_fn=history_fn or self.history
+        )
 
     def add_context_event(
         self,
@@ -547,7 +754,9 @@ class CompleteGlowupAIService(GlowupAIService):
             user_id, offer_id, record_engagement_fn=self.record_engagement
         )
 
-    def ingredient_explainer(self, user_id: str, product_id: str) -> dict[str, Any]:
+    def ingredient_explainer(  # type: ignore[override]
+        self, user_id: str, product_id: str
+    ) -> dict[str, Any]:
         return self.commerce_svc.ingredient_explainer(
             user_id, product_id, require_premium_fn=self.require_premium
         )
@@ -558,17 +767,79 @@ class CompleteGlowupAIService(GlowupAIService):
         )
 
     def dashboard(self, user_id: str, vertical: str = "skin") -> dict[str, Any]:
+        # A dashboard is one read model assembled from several feature
+        # services. Keep the request-local snapshot coherent and avoid reading
+        # the same user's history three or four times from PostgreSQL.
+        profile_cache: dict[str, dict[str, Any]] = {}
+        history_cache: dict[tuple[str, str], list[dict[str, Any]]] = {}
+        verdicts_cache: dict[str, list[dict[str, Any]]] = {}
+        experiments_cache: dict[str, list[dict[str, Any]]] = {}
+        engagement_cache: dict[str, dict[str, Any]] = {}
+        analytics_cache: dict[str, dict[str, Any]] = {}
+        recap_cache: dict[tuple[str, str], dict[str, Any]] = {}
+        check_ins_cache: dict[tuple[str, int], list[dict[str, Any]]] = {}
+
+        def profile_for(uid: str) -> dict[str, Any]:
+            if uid not in profile_cache:
+                profile_cache[uid] = self.profile(uid)
+            return profile_cache[uid]
+
+        def history_for(
+            uid: str, requested_vertical: str = vertical
+        ) -> list[dict[str, Any]]:
+            key = (uid, requested_vertical)
+            if key not in history_cache:
+                history_cache[key] = self.history(uid, requested_vertical)
+            return history_cache[key]
+
+        def verdicts_for(uid: str) -> list[dict[str, Any]]:
+            if uid not in verdicts_cache:
+                verdicts_cache[uid] = self.verdicts_for_user(uid)
+            return verdicts_cache[uid]
+
+        def experiments_for(uid: str) -> list[dict[str, Any]]:
+            if uid not in experiments_cache:
+                experiments_cache[uid] = self.experiments(uid)
+            return experiments_cache[uid]
+
+        def engagement_for(uid: str) -> dict[str, Any]:
+            if uid not in engagement_cache:
+                engagement_cache[uid] = self.engagement(uid, history_fn=history_for)
+            return engagement_cache[uid]
+
+        def analytics_for(uid: str) -> dict[str, Any]:
+            if uid not in analytics_cache:
+                analytics_cache[uid] = self.analytics(uid, history_fn=history_for)
+            return analytics_cache[uid]
+
+        def recap_for(uid: str, requested_vertical: str = vertical) -> dict[str, Any]:
+            key = (uid, requested_vertical)
+            if key not in recap_cache:
+                recap_cache[key] = self.weekly_recap(
+                    uid,
+                    requested_vertical,
+                    history_fn=history_for,
+                    check_ins_fn=check_ins_for,
+                )
+            return recap_cache[key]
+
+        def check_ins_for(uid: str, limit: int = 30) -> list[dict[str, Any]]:
+            key = (uid, limit)
+            if key not in check_ins_cache:
+                check_ins_cache[key] = self.check_ins(uid, limit)
+            return check_ins_cache[key]
+
         return self.guidance_svc.dashboard(
             user_id,
             vertical,
-            profile_fn=self.profile,
-            history_fn=self.history,
-            verdicts_for_user_fn=self.verdicts_for_user,
-            experiments_fn=self.experiments,
-            engagement_fn=self.engagement,
-            analytics_fn=self.analytics,
-            weekly_recap_fn=self.weekly_recap,
-            check_ins_fn=self.check_ins,
+            profile_fn=profile_for,
+            history_fn=history_for,
+            verdicts_for_user_fn=verdicts_for,
+            experiments_fn=experiments_for,
+            engagement_fn=engagement_for,
+            analytics_fn=analytics_for,
+            weekly_recap_fn=recap_for,
+            check_ins_fn=check_ins_for,
         )
 
     def triage_question(self, text: str) -> dict[str, Any]:

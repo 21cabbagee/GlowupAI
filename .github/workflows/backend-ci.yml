@@ -5,6 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  workflow_call:
 
 permissions:
   contents: read
@@ -47,14 +48,12 @@ jobs:
       - name: Type checking with Mypy
         id: mypy
         working-directory: backend
-        continue-on-error: true  # Allow mypy to fail without blocking the workflow
         run: |
           mypy glowupai --ignore-missing-imports --no-strict-optional
 
       - name: Security scan with Bandit
         id: bandit
         working-directory: backend
-        continue-on-error: true  # Allow security warnings without blocking
         run: |
           bandit -r glowupai -f json -o bandit-report.json
           bandit -r glowupai
@@ -62,7 +61,6 @@ jobs:
       - name: Run pytest with coverage
         id: pytest
         working-directory: backend
-        continue-on-error: true  # Don't block CI while fixing test failures
         env:
           GLOWUPAI_RATE_LIMIT_ENABLED: "0"
         run: |
@@ -76,7 +74,6 @@ jobs:
 
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v4
-        continue-on-error: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -157,20 +154,20 @@ jobs:
           docker run --rm glowup-backend:test python -c "import glowupai; print('Import successful')"
 
   # Summary job for branch protection rules
-  # This job will pass if all critical jobs pass, regardless of matrix failures
+  # Stable branch-protection gate: every required job must succeed.
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [test]
+    needs: [test, docker-build, integration-tests]
     if: always()
     steps:
       - name: Check test results
         run: |
-          if [ "${{ needs.test.result }}" != "success" ]; then
-            echo "::warning::Some test matrix jobs failed"
-            # Check if at least Python 3.11 (production version) passed
-            # Note: GitHub Actions doesn't expose individual matrix results easily
-            # Consider this a warning rather than a failure
+          if [ "${{ needs.test.result }}" != "success" ] ||
+             [ "${{ needs.docker-build.result }}" != "success" ] ||
+             [ "${{ needs.integration-tests.result }}" != "success" ]; then
+            echo "::error::Required backend verification failed or was skipped"
+            exit 1
           fi
           echo "Test summary completed"
 
@@ -213,65 +210,52 @@ jobs:
       - name: Run integration tests
         id: integration_tests
         working-directory: backend
-        continue-on-error: true  # Don't block deployment if integration tests fail
         env:
           DATABASE_URL: postgresql://glowup_test:test_password@localhost:5432/glowup_test
           JWT_SECRET_KEY: test-secret-key-for-ci
           ENCRYPTION_KEY: test-encryption-key-32-bytes-long
           GLOWUPAI_RATE_LIMIT_ENABLED: "0"
         run: |
-          # Run integration tests if they exist
-          if pytest tests/ -v -m "integration or not unit" --collect-only -q 2>/dev/null | grep -q "test"; then
-            pytest tests/ -v -m "integration or not unit"
-          else
-            echo "No integration tests found, skipping..."
-          fi
+          pytest tests/integration/ -v
 
   deploy:
-    name: Deploy to Render
+    name: Deploy to Vercel
     runs-on: ubuntu-latest
     needs: [test, docker-build, integration-tests]
-    # Deploy if tests and docker build succeed, even if integration tests fail
-    # Note: test job must have at least one matrix variant succeed
     if: |
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
       needs.test.result == 'success' &&
       needs.docker-build.result == 'success' &&
-      (needs.integration-tests.result == 'success' || needs.integration-tests.result == 'failure')
+      needs.integration-tests.result == 'success' &&
+      secrets.VERCEL_TOKEN != ''
     timeout-minutes: 10
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Render
+      - name: Deploy to Vercel
         env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
-            echo "Triggering Render deployment..."
-            curl -X POST "$RENDER_DEPLOY_HOOK"
-            echo "Deployment triggered successfully!"
-          else
-            echo "::warning::RENDER_DEPLOY_HOOK not set, skipping deployment"
-          fi
-
-      - name: Wait for deployment
-        run: |
-          echo "Waiting 60 seconds for deployment to complete..."
-          sleep 60
+          test -n "$VERCEL_TOKEN"
+          npm install --global vercel
+          cd backend
+          vercel link --yes --project=backend --scope=piyushcapitals-4171 --token="$VERCEL_TOKEN"
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
 
       - name: Health check
         id: health_check
-        continue-on-error: true  # Don't fail deployment if health check has issues
         run: |
           echo "Performing health check..."
           max_retries=3
           retry_count=0
 
           while [ "$retry_count" -lt "$max_retries" ]; do
-            response=$(curl -s -o /dev/null -w "%{http_code}" https://glowupai-20ca.onrender.com/api/roadmap)
+            response=$(curl --max-time 15 -s -o /dev/null -w "%{http_code}" https://backend-piyushcapitals-4171.vercel.app/api/ready)
             if [ "$response" -eq 200 ]; then
               echo "✅ Health check passed!"
               exit 0
@@ -285,17 +269,17 @@ jobs:
             fi
           done
 
-          echo "⚠️ Health check did not pass after $max_retries attempts - but deployment was triggered"
-          exit 0
+          echo "Health check did not pass after $max_retries attempts"
+          exit 1
 
       - name: Log deployment success
         if: success()
         run: |
-          echo "✅ Backend deployed successfully to Render!"
+          echo "✅ Backend deployed successfully to Vercel!"
           echo "Health check status: ${{ steps.health_check.outcome }}"
 
       - name: Log deployment issues
         if: failure()
         run: |
           echo "❌ Backend deployment encountered issues."
-          echo "Check the workflow logs and Render dashboard for details."
+          echo "Check the workflow logs and Vercel dashboard for details."

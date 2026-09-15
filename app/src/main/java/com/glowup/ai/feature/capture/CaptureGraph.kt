@@ -33,6 +33,17 @@ fun NavGraphBuilder.captureGraph(navController: NavController) {
             onClose = { navController.popBackStack() },
         )
     }
+    composable<GlowDestination.PhotoHistory> {
+        PhotoHistoryRoute(
+            onBack = { navController.popBackStack() },
+            onCaptureClick = { capture ->
+                navController.navigate(GlowDestination.CaptureResult(capture.id))
+            },
+            onCompareClick = { _, _ ->
+                navController.navigate(GlowDestination.Comparison)
+            },
+        )
+    }
     composable<GlowDestination.CaptureResult> {
         CaptureResultRoute(
             onDone = {

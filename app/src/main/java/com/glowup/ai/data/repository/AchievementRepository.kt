@@ -1,10 +1,14 @@
 package com.glowup.ai.data.repository
 
+import android.content.Context
+import androidx.core.content.edit
 import com.glowup.ai.domain.model.UserAchievement
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,14 +16,24 @@ import javax.inject.Singleton
  * Achievement Repository
  * Manages achievement state and persistence
  *
- * Currently uses in-memory storage. Can be migrated to Room database
- * for persistence across app restarts in the future.
+ * The calculated snapshot is kept in memory for fast UI updates, while the set of
+ * unlocked IDs is persisted in app-private preferences. That durable set is what
+ * prevents an app restart from replaying "new achievement" celebrations.
  */
 @Singleton
 class AchievementRepository
     @Inject
-    constructor() {
-        // In-memory storage keyed by userId
+    constructor(
+        @ApplicationContext context: Context,
+    ) {
+        private val persisted =
+            context.applicationContext.getSharedPreferences(
+                PREFERENCES_NAME,
+                Context.MODE_PRIVATE,
+            )
+
+        // Calculated snapshots keyed by userId; the authoritative unlocked IDs also live in
+        // [persisted] so this cache may safely be discarded on process death.
         private val achievementCache = mutableMapOf<String, List<UserAchievement>>()
 
         // Flow for observing achievement changes
@@ -39,7 +53,7 @@ class AchievementRepository
                 ?.filter { it.isUnlocked }
                 ?.map { it.type.id }
                 ?.toSet()
-                ?: emptySet()
+                ?: persisted.getStringSet(keyFor(userId), emptySet()).orEmpty().toSet()
 
         /**
          * Save achievements for a user
@@ -49,6 +63,12 @@ class AchievementRepository
             achievements: List<UserAchievement>,
         ) {
             achievementCache[userId] = achievements
+            persisted.edit {
+                putStringSet(
+                    keyFor(userId),
+                    achievements.filter { it.isUnlocked }.map { it.type.id }.toSet(),
+                )
+            }
             _achievementFlow.update { achievementCache.toMap() }
         }
 
@@ -71,6 +91,7 @@ class AchievementRepository
          */
         fun clearAchievements(userId: String) {
             achievementCache.remove(userId)
+            persisted.edit { remove(keyFor(userId)) }
             _achievementFlow.update { achievementCache.toMap() }
         }
 
@@ -94,6 +115,15 @@ class AchievementRepository
                         0f
                     },
             )
+        }
+
+        private fun keyFor(userId: String): String {
+            val digest = MessageDigest.getInstance("SHA-256").digest(userId.toByteArray())
+            return "unlocked_" + digest.joinToString("") { "%02x".format(it) }
+        }
+
+        private companion object {
+            const val PREFERENCES_NAME = "glowup_achievements"
         }
     }
 

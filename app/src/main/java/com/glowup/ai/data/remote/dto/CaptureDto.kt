@@ -1,6 +1,9 @@
 package com.glowup.ai.data.remote.dto
 
 import com.glowup.ai.domain.model.AppearanceMetric
+import com.glowup.ai.domain.model.AnalysisEnvelope
+import com.glowup.ai.domain.model.AnalysisQuality
+import com.glowup.ai.domain.model.AnalysisImageInput
 import com.glowup.ai.domain.model.BaselineComparison
 import com.glowup.ai.domain.model.CaptureCreateRequest
 import com.glowup.ai.domain.model.CaptureGuide
@@ -8,6 +11,7 @@ import com.glowup.ai.domain.model.CaptureGuideState
 import com.glowup.ai.domain.model.CaptureQuality
 import com.glowup.ai.domain.model.CaptureResult
 import com.glowup.ai.domain.model.CoachingTip
+import com.glowup.ai.domain.model.CosmeticObservation
 import com.glowup.ai.domain.model.HistoryItem
 import com.glowup.ai.domain.model.MeasurementAgreement
 import com.glowup.ai.domain.model.MeasurementFeedback
@@ -37,6 +41,7 @@ data class CaptureCreateRequestDto(
     @SerialName("is_baseline") val isBaseline: Boolean = false,
     val vertical: String = "skin",
     @SerialName("experiment_id") val experimentId: String? = null,
+    @SerialName("idempotency_key") val idempotencyKey: String? = null,
 )
 
 fun CaptureCreateRequest.toDto(): CaptureCreateRequestDto =
@@ -58,6 +63,7 @@ fun CaptureCreateRequest.toDto(): CaptureCreateRequestDto =
         isBaseline = isBaseline,
         vertical = vertical,
         experimentId = experimentId,
+        idempotencyKey = idempotencyKey,
     )
 
 @Serializable
@@ -137,6 +143,84 @@ data class BaselineComparisonDto(
     @SerialName("texture_change_pct") val textureChangePct: Double? = null,
 )
 
+@Serializable
+data class AnalysisQualityDto(
+    val usable: Boolean = false,
+    val issues: List<String> = emptyList(),
+)
+
+@Serializable
+data class CosmeticObservationDto(
+    val region: String = "",
+    val concern: String = "",
+    val visibility: String = "",
+    val extent: String = "",
+    val description: String = "",
+)
+
+@Serializable
+data class AnalysisImageInputDto(
+    @SerialName("preprocessing_version") val preprocessingVersion: String = "",
+    val width: Int = 0,
+    val height: Int = 0,
+    val bytes: Int = 0,
+    val detail: String = "low",
+)
+
+@Serializable
+data class AnalysisEnvelopeDto(
+    @SerialName("schema_version") val schemaVersion: String = "",
+    @SerialName("analysis_id") val analysisId: String? = null,
+    val status: String = "unavailable",
+    @SerialName("unavailable_reason") val unavailableReason: String? = null,
+    @SerialName("retry_after_seconds") val retryAfterSeconds: Int? = null,
+    @SerialName("vision_provider") val visionProvider: String? = null,
+    @SerialName("vision_model_id") val visionModelId: String? = null,
+    @SerialName("vision_reasoning_effort") val visionReasoningEffort: String? = null,
+    @SerialName("language_provider") val languageProvider: String? = null,
+    @SerialName("language_model_id") val languageModelId: String? = null,
+    @SerialName("language_reasoning_effort") val languageReasoningEffort: String? = null,
+    @SerialName("language_mode") val languageMode: String? = null,
+    @SerialName("language_fallback_provider") val languageFallbackProvider: String? = null,
+    @SerialName("language_fallback_model_id") val languageFallbackModelId: String? = null,
+    @SerialName("language_fallback_reasoning_effort") val languageFallbackReasoningEffort: String? = null,
+    @SerialName("image_input") val imageInput: AnalysisImageInputDto? = null,
+    val quality: AnalysisQualityDto? = null,
+    val observations: List<CosmeticObservationDto> = emptyList(),
+    val limitations: List<String> = emptyList(),
+    val summary: String? = null,
+    val language: LanguageResponseDto? = null,
+)
+
+@Serializable
+data class LanguageResponseDto(
+    val answer: String? = null,
+)
+
+fun AnalysisEnvelopeDto.toDomain(): AnalysisEnvelope = AnalysisEnvelope(
+    schemaVersion = schemaVersion,
+    analysisId = analysisId,
+    status = status,
+    unavailableReason = unavailableReason,
+    retryAfterSeconds = retryAfterSeconds,
+    visionProvider = visionProvider,
+    visionModelId = visionModelId,
+    visionReasoningEffort = visionReasoningEffort,
+    languageProvider = languageProvider,
+    languageModelId = languageModelId,
+    languageReasoningEffort = languageReasoningEffort,
+    languageMode = languageMode,
+    languageFallbackProvider = languageFallbackProvider,
+    languageFallbackModelId = languageFallbackModelId,
+    languageFallbackReasoningEffort = languageFallbackReasoningEffort,
+    imageInput = imageInput?.let { AnalysisImageInput(it.preprocessingVersion, it.width, it.height, it.bytes, it.detail) },
+    quality = quality?.let { AnalysisQuality(it.usable, it.issues) },
+    observations = observations.map { CosmeticObservation(it.region, it.concern, it.visibility, it.extent, it.description) },
+    limitations = limitations,
+    summary = summary,
+    languageAnswer = language?.answer,
+)
+
 fun BaselineComparisonDto?.toDomain(): BaselineComparison? =
     this?.let {
         BaselineComparison(
@@ -160,6 +244,8 @@ data class CaptureResponseDto(
     val measurement: MeasurementExplanationDto? = null,
     val vertical: String = "skin",
     @SerialName("baseline_comparison") val baselineComparison: BaselineComparisonDto? = null,
+    val analysis: AnalysisEnvelopeDto? = null,
+    @SerialName("analysis_status") val analysisStatus: String? = null,
 )
 
 fun CaptureResponseDto.toDomain(): CaptureResult =
@@ -173,11 +259,13 @@ fun CaptureResponseDto.toDomain(): CaptureResult =
         metric = metric.toDomain(measurement?.confidenceLabel),
         vertical = vertical,
         baselineComparison = baselineComparison.toDomain(),
+        analysis = analysis?.toDomain() ?: analysisStatus?.let { AnalysisEnvelopeDto(status = it).toDomain() },
     )
 
 @Serializable
 data class HistoryItemDto(
     val id: String = "",
+    @SerialName("photo_path") val photoPath: String? = null,
     @SerialName("captured_at") val capturedAt: String = "",
     @SerialName("is_baseline") @Serializable(with = IntBooleanSerializer::class) val isBaseline: Boolean = false,
     @SerialName("redness_score") val rednessScore: Double? = null,
@@ -192,11 +280,13 @@ data class HistoryItemDto(
     @SerialName("appearance_metrics") val appearanceMetrics: Map<String, Double>? = null,
     @SerialName("confidence_label") val confidenceLabel: String? = null,
     @SerialName("baseline_comparison") val baselineComparison: BaselineComparisonDto? = null,
+    val analysis: AnalysisEnvelopeDto? = null,
 )
 
 fun HistoryItemDto.toDomain(): HistoryItem =
     HistoryItem(
         id = id,
+        photoPath = photoPath,
         capturedAt = capturedAt,
         isBaseline = isBaseline,
         rednessScore = rednessScore,
@@ -211,6 +301,7 @@ fun HistoryItemDto.toDomain(): HistoryItem =
         appearanceMetrics = appearanceMetrics ?: emptyMap(),
         confidenceLabel = confidenceLabel,
         baselineComparison = baselineComparison.toDomain(),
+        analysis = analysis?.toDomain(),
     )
 
 @Serializable

@@ -451,8 +451,8 @@ class TestModelMonitor(unittest.TestCase):
         """Test daily report includes feedback stats."""
         # Create test user and captures first
         self.db.execute(
-            "INSERT INTO users (id, firebase_uid) VALUES (?, ?)",
-            ("user_123", "firebase_123"),
+            "INSERT INTO users (id, supabase_uid) VALUES (?, ?)",
+            ("user_123", "supabase_123"),
         )
 
         for i in range(5):

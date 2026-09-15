@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.GlowShapes
 import com.glowup.ai.core.design.GlowSpacing
 import com.glowup.ai.core.design.LocalGlowColors
+import com.glowup.ai.core.ui.CapturePhoto
 import com.glowup.ai.domain.model.HistoryItem
 import java.time.Instant
 import java.time.ZoneId
@@ -161,23 +162,17 @@ private fun PhotoCard(
 ) {
     val glowColors = LocalGlowColors.current
 
-    val dateText =
-        try {
-            photo.capturedAt.let { isoString ->
-                val instant = Instant.parse(isoString)
-                val localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate()
-                val today = java.time.LocalDate.now()
-                val yesterday = today.minusDays(1)
-
-                when (localDate) {
-                    today -> "Today"
-                    yesterday -> "Yesterday"
-                    else -> localDate.format(DateTimeFormatter.ofPattern("MMM d"))
-                }
-            }
-        } catch (e: Exception) {
-            "Unknown"
-        }
+    val localDate = runCatching {
+        Instant.parse(photo.capturedAt).atZone(ZoneId.systemDefault()).toLocalDate()
+    }.getOrNull()
+    val today = java.time.LocalDate.now()
+    val yesterday = today.minusDays(1)
+    val dateText = when (localDate) {
+        today -> "Today"
+        yesterday -> "Yesterday"
+        null -> "Unknown"
+        else -> localDate.format(DateTimeFormatter.ofPattern("MMM d"))
+    }
 
     Card(
         modifier =
@@ -199,8 +194,6 @@ private fun PhotoCard(
             modifier = Modifier.padding(GlowSpacing.sm),
             verticalArrangement = Arrangement.spacedBy(GlowSpacing.xs),
         ) {
-            // Placeholder for photo thumbnail
-            // In a real implementation, you would load the actual image here
             Box(
                 modifier =
                     Modifier
@@ -211,11 +204,10 @@ private fun PhotoCard(
                         .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = Icons.Default.CameraAlt,
-                    contentDescription = null,
-                    tint = glowColors.honey700,
-                    modifier = Modifier.size(32.dp),
+                CapturePhoto(
+                    path = photo.photoPath,
+                    description = "Capture from ${photo.capturedAt.take(10)}",
+                    modifier = Modifier.fillMaxWidth().height(104.dp),
                 )
             }
 

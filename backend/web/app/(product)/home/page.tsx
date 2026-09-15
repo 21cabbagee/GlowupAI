@@ -420,8 +420,7 @@ function WeeklyRecapCard({ recap }: { recap: Dashboard["weekly_recap"] }) {
           {recap.metric_summaries.map((item) => {
             const isImproved = item.direction === "improved";
             const isIncreased = item.direction === "increased";
-            const isDecreased = item.direction === "decreased";
-            const ArrowIcon = isIncreased || isImproved ? ArrowUpIcon : isDecreased ? ArrowDownIcon : null;
+            const ArrowIcon = isIncreased || isImproved ? ArrowUpIcon : null;
             const arrowColor = isImproved ? "text-useful" : isIncreased ? "text-investigate" : "text-muted";
             const bgTint = isImproved
               ? "bg-useful/10"

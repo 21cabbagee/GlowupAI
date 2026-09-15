@@ -7,6 +7,7 @@ import com.glowup.ai.domain.model.MetricSummary
 import com.glowup.ai.domain.model.Reminder
 import com.glowup.ai.domain.model.WeeklyRecap
 import com.glowup.ai.domain.model.WeeklyRecapPeriod
+import com.glowup.ai.domain.model.CosmeticObservation
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
@@ -82,6 +83,9 @@ data class WeeklyRecapDto(
     @SerialName("comparison_mode") val comparisonMode: String? = null,
     @SerialName("confidence_label") val confidenceLabel: String = "",
     @SerialName("metric_summaries") val metricSummaries: List<MetricSummaryDto> = emptyList(),
+    @SerialName("observation_summaries") val observationSummaries: List<CosmeticObservationDto> = emptyList(),
+    @SerialName("ai_summary") val aiSummary: String? = null,
+    @SerialName("language_mode") val languageMode: String? = null,
     val period: WeeklyRecapPeriodDto = WeeklyRecapPeriodDto(),
     val disclaimer: String = "",
 )
@@ -98,6 +102,9 @@ fun WeeklyRecapDto.toDomain(): WeeklyRecap =
         comparisonMode = comparisonMode,
         confidenceLabel = confidenceLabel,
         metricSummaries = metricSummaries.map { MetricSummary(it.metric, it.label, it.direction, it.delta, it.noiseFloor, it.sentence) },
+        observationSummaries = observationSummaries.map { CosmeticObservation(it.region, it.concern, it.visibility, it.extent, it.description) },
+        aiSummary = aiSummary,
+        languageMode = languageMode,
         period = WeeklyRecapPeriod(period.start, period.end),
         disclaimer = disclaimer,
     )

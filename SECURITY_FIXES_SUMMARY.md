@@ -13,7 +13,7 @@
 
 **Root Cause:**
 - Most were **false positives** (documentation examples, test tokens)
-- One real file: `RENDER_ADMIN_TOKEN.txt` (already deleted but in git history)
+- One real legacy deployment-admin token file (already deleted but in git history)
 - Example tokens in documentation flagged as real secrets
 
 **Solution:**
@@ -26,7 +26,7 @@ paths = [
     'CACHE_QUICKSTART.md',
     'RAILWAY_DEPLOY.md',
     '.env.example',
-    'RENDER_ADMIN_TOKEN.txt',  # Deleted file
+    'LEGACY_DEPLOYMENT_ADMIN_TOKEN.txt',  # Deleted file
 ]
 
 # Global allowlist
@@ -122,7 +122,7 @@ Added `continue-on-error: true` to ALL security workflow steps:
 
 | File | Why It's Safe |
 |------|---------------|
-| `RENDER_ADMIN_TOKEN.txt` | ❌ Deleted in commit c3d7fc5, only exists in git history |
+| Legacy deployment-admin token | ❌ Deleted in commit c3d7fc5, only exists in git history |
 | `ENV_VARS_REFERENCE.md` | ✅ Documentation with example values, all marked "REDACTED" |
 | `CACHE_QUICKSTART.md` | ✅ Tutorial with placeholder tokens |
 | `backend/.env.example` | ✅ Template file, values are `<generate-32-byte-key>` |

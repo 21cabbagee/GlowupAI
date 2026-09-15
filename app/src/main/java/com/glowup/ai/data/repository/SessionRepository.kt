@@ -12,9 +12,11 @@ import com.glowup.ai.data.remote.dto.UserCreateRequestDto
 import com.glowup.ai.data.remote.dto.toDomain
 import com.glowup.ai.data.remote.dto.toDto
 import com.glowup.ai.data.repository.support.MutationLock
+import com.glowup.ai.data.work.WorkScheduler
 import com.glowup.ai.domain.model.HealthStatus
 import com.glowup.ai.domain.model.Profile
 import com.glowup.ai.domain.model.ProfileUpdateRequest
+import com.glowup.ai.feature.capture.CaptureResultCache
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -41,6 +43,8 @@ class SessionRepository
         private val sessionStore: SessionStore,
         private val localDataCleaner: LocalDataCleaner,
         private val invalidationBus: com.glowup.ai.data.repository.support.CacheInvalidationBus,
+        private val workScheduler: WorkScheduler,
+        private val captureResultCache: CaptureResultCache,
     ) {
         /** `POST /api/users`, `POST /consent`, and `PATCH /profile` are not idempotent — guard
          * concurrent taps on the same action. */
@@ -63,9 +67,9 @@ class SessionRepository
                 }.onSuccess { persist(it) }
         }
 
-        /** `POST /api/auth/session` is documented idempotent per Firebase uid — still worth a lock so
+        /** `POST /api/auth/session` is documented idempotent per Supabase uid — still worth a lock so
          * a rotating token / rapid re-auth doesn't fire two concurrent profile-creating calls. */
-        suspend fun authenticateWithFirebase(): GlowResult<Profile> =
+        suspend fun authenticateWithSupabase(): GlowResult<Profile> =
             mutations
                 .run("auth_session") {
                     apiCall { api.authSession().toDomain() }
@@ -114,12 +118,27 @@ class SessionRepository
         suspend fun clearSession() {
             val userId = sessionStore.userId()
             try {
+                // Stop session-owned work before deleting its outbox rows. This closes the
+                // logout race where a queued upload could otherwise run after identity removal.
+                try {
+                    workScheduler.cancelCaptureUpload()
+                    workScheduler.cancelReminder()
+                } catch (_: Exception) {
+                    // WorkManager cancellation is best effort; identity cleanup must continue.
+                }
                 userId?.let { localDataCleaner.clearUser(it) }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
                 // Local cleanup is best effort; stale identity must never survive sign-out.
             } finally {
+                // This cache is not owned by LocalDataCleaner: clear it explicitly before
+                // dropping the identity so the next user cannot observe prior-user state.
+                try {
+                    captureResultCache.clear()
+                } catch (_: Exception) {
+                    // Cache cleanup is best effort; session keys are still cleared below.
+                }
                 sessionStore.clearSession()
                 userId?.let {
                     invalidationBus.publish(
@@ -132,7 +151,7 @@ class SessionRepository
 
         private suspend fun persist(profile: Profile) {
             sessionStore.setUserId(profile.user.id)
-            profile.user.firebaseUid?.let { sessionStore.setFirebaseUid(it) }
+            profile.user.supabaseUid?.let { sessionStore.setSupabaseUid(it) }
             sessionStore.setEntitlement(profile.entitlement.plan, profile.entitlement.status)
             sessionStore.setConsentState(profile.user.consentState)
             profile.experienceProfile?.let { sessionStore.setOnboardingComplete(it.onboardingComplete) }
@@ -141,7 +160,7 @@ class SessionRepository
         private fun <T> notSignedIn(): GlowResult<T> =
             GlowResult.Failure(
                 com.glowup.ai.data.remote.ApiError.Unknown(
-                    IllegalStateException("No stored user id — call ensureUser()/authenticateWithFirebase() first"),
+                    IllegalStateException("No stored user id — call ensureUser()/authenticateWithSupabase() first"),
                 ),
             )
     }

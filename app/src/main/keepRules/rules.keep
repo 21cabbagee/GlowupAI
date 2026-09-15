@@ -2,7 +2,7 @@
 # src/<variant>/keepRules (see https://d.android.com/r/tools/r8/keep-rules).
 #
 # The bulk of the app's keep rules (kotlinx.serialization, Retrofit/OkHttp,
-# Room, Hilt, ML Kit, Firebase, and the DTO/domain model packages) live in
+# Room, Hilt, ML Kit, and the DTO/domain model packages) live in
 # app/proguard-rules.pro, wired via proguardFiles(...) on the release build
 # type in app/build.gradle.kts. This file only needs entries that are purely
 # structural/source-set based rather than dependency-specific.

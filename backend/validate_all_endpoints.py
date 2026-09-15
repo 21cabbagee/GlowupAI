@@ -156,7 +156,7 @@ class EndpointValidator:
         self.test_endpoint(
             "Captures", "submit_feedback", "POST",
             f"/api/captures/{capture_id}/feedback",
-            [401],  # Expected without valid Firebase token
+            [401],  # Expected without valid Supabase token
             json={"feedback_type": "incorrect", "issues": ["redness"]}
         )
 

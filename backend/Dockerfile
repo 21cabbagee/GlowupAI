@@ -36,7 +36,9 @@ RUN pip install --user --no-cache-dir \
         "opencv-python>=4.10.0.84" \
         "numpy>=2.0.0" \
         "cryptography>=44.0.0" \
+        "google-auth[requests]>=2.38.0,<3" \
         "google-genai>=1.0.0" \
+        "openai>=1.0.0" \
         "psycopg[binary,pool]>=3.2.6" \
         "PyJWT[crypto]>=2.10.0" \
         "redis>=5.2.1" \
@@ -63,6 +65,7 @@ RUN apt-get update && \
     libsm6 \
     libxext6 \
     libxrender1 \
+    postgresql-client \
     && apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
@@ -97,7 +100,7 @@ RUN pip install --no-cache-dir --no-deps .
 # Create non-root user and data directories
 # User ID 10001 is a common convention for non-root container users
 RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin glowupai \
-    && mkdir -p /app/.data /app/photos \
+    && mkdir -p /app/.data \
     && chown -R glowupai:glowupai /app
 
 # Switch to non-root user

@@ -16,7 +16,11 @@ ROADMAP = [
             "quality gates",
             "baseline history",
             "routine logging",
-            "deterministic metrics",
+            "provider-backed qualitative observations (Luna)",
+            "Gemini text intelligence with Luna fallback",
+            "region uncertainty and retake guidance",
+            "comparable-photo progress",
+            "product-label and ingredient scanning",
         ],
     },
     {
@@ -41,6 +45,7 @@ ROADMAP = [
             "labels",
             "model reprocessing",
             "analytics",
+            "weekly recaps and conversational Q&A",
         ],
     },
     {

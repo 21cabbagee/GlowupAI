@@ -64,6 +64,11 @@ class EncryptedFilePhotoStore:
         return hmac.new(self.root_key, user_id.encode(), hashlib.sha256).digest()
 
     def _path(self, user_id: str, capture_id: str) -> Path:
+        if not capture_id or any(
+            c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+            for c in capture_id
+        ):
+            raise ValueError("Invalid photo identifier")
         return self.root / self._user_hash(user_id) / f"{capture_id}.bin"
 
     def save(self, user_id: str, capture_id: str, data: bytes) -> str:
@@ -116,9 +121,23 @@ class EncryptedFilePhotoStore:
 
 
 def build_photo_store(photo_dir: Path | None) -> PhotoStore:
-    """Use encrypted local storage only when explicitly configured correctly."""
+    """Use Supabase private storage in deployments and encrypted local storage in development."""
 
     encoded_key = os.getenv("GLOWUPAI_PHOTO_KEY", "").strip()
+    supabase_url = os.getenv("SUPABASE_URL", "").strip()
+    service_role_key = (
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        or os.getenv("SUPABASE_SECRET_KEY", "").strip()
+    )
+    bucket = os.getenv("SUPABASE_STORAGE_BUCKET", "user-images").strip()
+    if supabase_url or service_role_key:
+        if not supabase_url or not service_role_key:
+            raise RuntimeError(
+                "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY are required for Supabase Storage"
+            )
+        from .supabase_storage import SupabasePhotoStore
+
+        return SupabasePhotoStore(supabase_url, service_role_key, bucket)
     if photo_dir and encoded_key:
         try:
             key = base64.b64decode(encoded_key, validate=True)

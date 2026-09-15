@@ -63,6 +63,9 @@ class WorkScheduler
             workManager.enqueueUniqueWork(REMINDER_WORK_NAME, ExistingWorkPolicy.REPLACE, request)
         }
 
+        /** Cancels any queued or running capture upload for the signed-out user. */
+        fun cancelCaptureUpload() = workManager.cancelUniqueWork(CAPTURE_UPLOAD_WORK_NAME)
+
         fun cancelReminder() = workManager.cancelUniqueWork(REMINDER_WORK_NAME)
     }
 

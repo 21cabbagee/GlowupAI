@@ -31,7 +31,7 @@ class SessionStateMachineTest {
             skinType = "combination",
             consentState = consentState,
             createdAt = "2026-01-01T00:00:00Z",
-            firebaseUid = "firebase-uid-1",
+            supabaseUid = "supabase-uid-1",
         )
 
     private fun entitlement(

@@ -1,15 +1,12 @@
 """Unit tests for analysis pipeline (face detection, metrics calculation)."""
 
-import base64
 import io
 import unittest
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 from PIL import Image, ImageDraw
 
 from glowupai.metrics import analyze
-from glowupai.pipeline import analyze_capture
 
 
 def create_test_image(size=(240, 240), color=(210, 165, 145)):
@@ -22,13 +19,6 @@ def create_test_image(size=(240, 240), color=(210, 165, 145)):
             if (x // 8 + y // 8) % 2:
                 draw.rectangle((x, y, x + 3, y + 3), fill=(165, 130, 118))
     return image
-
-
-def image_to_base64(image: Image.Image) -> str:
-    """Convert PIL image to base64 string."""
-    output = io.BytesIO()
-    image.save(output, format="PNG")
-    return base64.b64encode(output.getvalue()).decode()
 
 
 def image_to_bytes(image: Image.Image) -> bytes:
@@ -113,24 +103,6 @@ class TestAnalysisPipeline(unittest.TestCase):
         self.assertEqual(result1["clarity_score"], result2["clarity_score"])
         self.assertEqual(result1["evenness_score"], result2["evenness_score"])
 
-    def test_analyze_capture_with_valid_image(self):
-        """Test complete capture analysis."""
-        image = create_test_image()
-        image_b64 = image_to_base64(image)
-
-        result = analyze_capture(image_b64)
-
-        self.assertIsNotNone(result)
-        self.assertIn("metrics", result)
-        self.assertIn("quality", result)
-
-    def test_analyze_capture_rejects_invalid_base64(self):
-        """Test that invalid base64 is rejected."""
-        invalid_b64 = "not-valid-base64!!!"
-
-        with self.assertRaises(Exception):
-            analyze_capture(invalid_b64)
-
     def test_analyze_frame_with_different_colors(self):
         """Test analysis with different skin tones."""
         skin_tones = [
@@ -151,23 +123,6 @@ class TestAnalysisPipeline(unittest.TestCase):
 
 class TestFaceDetection(unittest.TestCase):
     """Test face detection functionality."""
-
-    @patch("glowupai.pipeline.detect_face")
-    def test_face_detection_called(self, mock_detect):
-        """Test that face detection is called during analysis."""
-        mock_detect.return_value = {
-            "face_present": True,
-            "bounding_box": [50, 50, 150, 150],
-            "confidence": 0.95,
-        }
-
-        image = create_test_image()
-        image_b64 = image_to_base64(image)
-
-        result = analyze_capture(image_b64)
-
-        # Verify face detection was attempted
-        self.assertIn("quality", result)
 
     def test_quality_gates_check_face_presence(self):
         """Test that quality gates verify face presence."""

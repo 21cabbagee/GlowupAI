@@ -337,8 +337,54 @@ class AnalyticsService:
                 },
                 "disclaimer": "Cosmetic appearance tracking only; this is not a diagnosis.",
             }
+        recent_checkins = [
+            item
+            for item in checkins
+            if current_start <= as_date(item["occurred_at"]) <= anchor
+        ]
+        available_metrics = [
+            metric
+            for metric in METRIC_LABELS
+            if first.get(metric) is not None and last.get(metric) is not None
+        ]
+        # Luna's migrated contract is qualitative.  A valid observation-only
+        # history must not crash or manufacture zero-valued legacy metrics.
+        if not available_metrics:
+            observations: list[dict[str, Any]] = []
+            for item in current[-3:]:
+                analysis = item.get("analysis") or {}
+                for observation in (
+                    analysis.get("observations", [])
+                    if isinstance(analysis, dict)
+                    else []
+                ):
+                    if isinstance(observation, dict):
+                        observations.append(observation)
+            latest_analysis = (current[-1].get("analysis") or {}) if current else {}
+            latest_summary = (
+                latest_analysis.get("summary")
+                if isinstance(latest_analysis, dict)
+                else None
+            )
+            return {
+                "status": "observation_only",
+                "headline": "Your recent visual observations are ready.",
+                "body": latest_summary
+                or "GlowUpAI is tracking visible cosmetic appearance without inventing numeric measurements.",
+                "next_action": "Keep the routine steady and capture again in the next guided window",
+                "capture_count": len(current),
+                "total_capture_count": len(history),
+                "check_in_count": len(recent_checkins),
+                "comparison_mode": comparison_mode,
+                "confidence_label": "qualitative observation; not a diagnosis",
+                "metric_summaries": [],
+                "observation_summaries": observations[:24],
+                "period": {"start": first["captured_at"], "end": last["captured_at"]},
+                "disclaimer": "Cosmetic appearance tracking only; this is not a diagnosis.",
+            }
         metric_summaries = [
-            self._weekly_metric_summary(metric, first, last) for metric in METRIC_LABELS
+            self._weekly_metric_summary(metric, first, last)
+            for metric in available_metrics
         ]
         improved = [
             item["label"]
@@ -370,11 +416,6 @@ class AnalyticsService:
             if average_confidence >= 0.65
             else "still sensitive to capture noise"
         )
-        recent_checkins = [
-            item
-            for item in checkins
-            if current_start <= as_date(item["occurred_at"]) <= anchor
-        ]
         return {
             "status": status,
             "headline": headline,
@@ -718,14 +759,38 @@ class AnalyticsService:
         self.parent.require_user(user_id)
 
         # Get capture history
-        history_rows = self.db.fetchall(
-            """SELECT captured_at, redness_score, blemish_count, darkspot_area,
-                      texture_score, confidence
-               FROM photo_captures
-               WHERE user_id=? AND status='accepted' AND vertical=?
-               ORDER BY captured_at ASC""",
-            (user_id, vertical),
-        )
+        try:
+            history_rows = self.db.fetchall(
+                """SELECT c.captured_at, m.redness_score, m.blemish_count,
+                      m.darkspot_area, m.texture_score, m.confidence,
+                      aa.validated_vision_json
+               FROM photo_captures c
+               LEFT JOIN metric_snapshots m ON m.id=(
+                   SELECT m2.id FROM metric_snapshots m2
+                   WHERE m2.photo_id=c.id ORDER BY m2.created_at DESC LIMIT 1)
+               LEFT JOIN ai_analyses aa ON aa.id=(
+                   SELECT aa2.id FROM ai_analyses aa2
+                   WHERE aa2.capture_id=c.id ORDER BY aa2.created_at DESC LIMIT 1)
+               WHERE c.user_id=? AND c.status='accepted'
+               ORDER BY c.captured_at ASC""",
+                (user_id,),
+            )
+        except Exception:
+            # Older/local databases may predate the AI tables. Keep the
+            # numeric compatibility response available without making the
+            # migration a prerequisite for analytics reads.
+            history_rows = self.db.fetchall(
+                """SELECT c.captured_at, m.redness_score, m.blemish_count,
+                          m.darkspot_area, m.texture_score, m.confidence,
+                          NULL AS validated_vision_json
+                   FROM photo_captures c
+                   LEFT JOIN metric_snapshots m ON m.id=(
+                       SELECT m2.id FROM metric_snapshots m2
+                       WHERE m2.photo_id=c.id ORDER BY m2.created_at DESC LIMIT 1)
+                   WHERE c.user_id=? AND c.status='accepted'
+                   ORDER BY c.captured_at ASC""",
+                (user_id,),
+            )
 
         history = [row_dict(row) for row in history_rows]
 
@@ -774,6 +839,38 @@ class AnalyticsService:
                         "direction": direction,
                     }
                 )
+
+        if not trends:
+            observation_timeline: list[dict[str, Any]] = []
+            for row in history:
+                raw = row.get("validated_vision_json")
+                try:
+                    vision = json.loads(raw) if raw else {}
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    vision = {}
+                observations = (
+                    vision.get("observations", []) if isinstance(vision, dict) else []
+                )
+                observation_timeline.append(
+                    {
+                        "captured_at": row["captured_at"],
+                        "summary": (
+                            vision.get("summary") if isinstance(vision, dict) else None
+                        ),
+                        "observations": (
+                            observations if isinstance(observations, list) else []
+                        ),
+                    }
+                )
+            return {
+                "user_id": user_id,
+                "status": "observation_only",
+                "message": "Qualitative observations are available; numeric trend measurements are not produced by the active model.",
+                "total_captures": len(history),
+                "period": {"start": first["captured_at"], "end": last["captured_at"]},
+                "trends": [],
+                "observation_timeline": observation_timeline,
+            }
 
         return {
             "user_id": user_id,

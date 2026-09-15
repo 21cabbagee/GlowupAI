@@ -14,6 +14,9 @@ data class QnaAnswer(
     val answer: String,
     val scope: SafetyScope,
     val citations: List<Citation>,
+    val languageMode: String? = null,
+    val languagePolicy: String? = null,
+    val messageId: String? = null,
 )
 
 data class QnaMessage(
@@ -23,6 +26,7 @@ data class QnaMessage(
     val scope: SafetyScope?,
     val citations: List<Citation>,
     val threadId: String?,
+    val id: String? = null,
 )
 
 data class TriageResult(

@@ -5,7 +5,11 @@ from types import SimpleNamespace
 import unittest
 
 from glowupai.config import Settings
-from glowupai.google_ai import GoogleGeminiInsightService, build_insight_service
+from glowupai.google_ai import (
+    GoogleGeminiInsightService,
+    GoogleGeminiVisionService,
+    build_insight_service,
+)
 from glowupai.insights import GroundedInsightService
 
 
@@ -55,6 +59,30 @@ class GoogleAiTests(unittest.TestCase):
         self.assertNotIn("must never be sent", models.calls[0]["contents"])
         self.assertIn("system_instruction", models.calls[0]["config"])
 
+    def test_personal_evidence_never_contains_raw_image_material(self):
+        models = FakeModels()
+        provider = GoogleGeminiInsightService(
+            "test-key",
+            "gemini-test",
+            client=FakeClient(models),
+            data_class="public_catalog",
+        )
+        provider.generate(
+            {
+                "capture_id": "capture-1",
+                "observations": [{"region": "cheek", "concern": "texture"}],
+                "image_bytes": "raw-image-must-not-cross-provider",
+                "image_url": "data:image/jpeg;base64,secret",
+                "nested": {"photo_digest": "safe metadata may be omitted"},
+            }
+        )
+
+        contents = models.calls[0]["contents"]
+        self.assertNotIn("raw-image-must-not-cross-provider", contents)
+        self.assertNotIn("data:image/jpeg;base64,secret", contents)
+        self.assertNotIn("image_bytes", contents)
+        self.assertNotIn("image_url", contents)
+
     def test_generation_falls_back_and_qna_returns_none_on_provider_failure(self):
         provider = GoogleGeminiInsightService(
             "test-key", "gemini-test", client=FakeClient(FailingModels())
@@ -65,6 +93,27 @@ class GoogleAiTests(unittest.TestCase):
 
         self.assertIn("Serum", fallback)
         self.assertIsNone(provider.answer("What changed?", {}))
+
+    def test_personal_data_is_blocked_before_gemini_network_call(self):
+        models = FakeModels()
+        provider = GoogleGeminiInsightService(
+            "test-key",
+            "gemini-test",
+            client=FakeClient(models),
+            data_class="personal_face",
+        )
+        with self.assertRaises(RuntimeError):
+            provider.generate_text({"observations": []})
+        self.assertEqual(models.calls, [])
+
+    def test_legacy_gemini_image_adapter_never_sends_image_bytes(self):
+        models = FakeModels()
+        provider = GoogleGeminiVisionService(
+            "test-key", "gemini-test", client=FakeClient(models)
+        )
+        with self.assertRaises(RuntimeError):
+            provider.extract_products(b"raw-face-bytes")
+        self.assertEqual(models.calls, [])
 
     def test_builder_is_local_when_no_key_is_configured(self):
         settings = Settings(

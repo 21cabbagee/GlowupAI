@@ -3,13 +3,40 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
+from threading import RLock
+from typing import Any
 
 from fastapi import Request, Response, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 logger = logging.getLogger(__name__)
+
+_SLIDING_WINDOW_SCRIPT = """
+local key = KEYS[1]
+local now = tonumber(ARGV[1])
+local window = tonumber(ARGV[2])
+local limit = tonumber(ARGV[3])
+local window_start = now - window
+redis.call('ZREMRANGEBYSCORE', key, 0, window_start)
+local count = redis.call('ZCARD', key)
+local oldest = redis.call('ZRANGE', key, 0, 0, 'WITHSCORES')
+local reset = now + window
+if #oldest > 0 then
+  reset = tonumber(oldest[2]) + window
+end
+if count < limit then
+  local member = string.format('%.6f-%s', now, redis.call('INCR', key .. ':sequence'))
+  redis.call('ZADD', key, now, member)
+  redis.call('EXPIRE', key, window)
+  redis.call('EXPIRE', key .. ':sequence', window)
+  return {1, limit - count - 1, 0, math.floor(reset)}
+end
+local retry = math.max(1, math.floor(reset - now) + 1)
+return {0, 0, retry, math.floor(reset)}
+"""
 
 
 class RedisRateLimiter:
@@ -18,15 +45,24 @@ class RedisRateLimiter:
     Falls back to in-memory rate limiting if Redis is not available.
     """
 
-    def __init__(self, redis_url: str | None = None):
+    def __init__(
+        self,
+        redis_url: str | None = None,
+        *,
+        limits: dict[str, tuple[int, int]] | None = None,
+        fail_closed: bool = False,
+    ):
         self.redis_url = redis_url
         self.redis_client = None
         self.fallback_memory: dict[str, list[float]] = (
             {}
         )  # Fallback for when Redis is unavailable
+        self.memory_lock = RLock()
+        self.fail_closed = fail_closed
+        self.redis_error: str | None = None
 
         # Rate limits: (requests_per_minute, window_seconds)
-        self.limits = {
+        self.limits = limits or {
             "capture_analyze": (10, 60),  # 10 per minute
             "auth": (5, 60),  # 5 per minute
             "dashboard": (30, 60),  # 30 per minute
@@ -46,10 +82,12 @@ class RedisRateLimiter:
                 # Test connection
                 self.redis_client.ping()
                 logger.info("Redis rate limiter initialized successfully")
-            except (ImportError, Exception) as exc:  # noqa: BLE001
+            except (ImportError, OSError, ValueError, RuntimeError) as exc:
                 # Catch-all for Redis initialization with fallback
+                self.redis_error = type(exc).__name__
                 logger.warning(
-                    f"Redis unavailable, falling back to memory-based rate limiting: {exc}",
+                    "Redis unavailable, falling back to memory-based rate limiting",
+                    extra={"error_type": self.redis_error},
                 )
                 self.redis_client = None
 
@@ -94,6 +132,8 @@ class RedisRateLimiter:
                 max_requests,
                 window_seconds,
             )
+        elif self.fail_closed:
+            return False, 5, 0, int(time.time() + 5)
         else:
             return await self._check_memory_limit(
                 client_id,
@@ -110,45 +150,38 @@ class RedisRateLimiter:
         window_seconds: int,
     ) -> tuple[bool, int | None, int, int]:
         """Check rate limit using Redis sliding window."""
-        assert self.redis_client is not None, "Redis client must be initialized"
+        redis_client = self.redis_client
+        if redis_client is None:
+            raise RuntimeError("Redis client must be initialized")
 
         try:
             key = f"ratelimit:{limit_type}:{client_id}"
             now = time.time()
-            window_start = now - window_seconds
-
-            # Remove old entries
-            self.redis_client.zremrangebyscore(key, 0, window_start)
-
-            # Count requests in current window
-            request_count = self.redis_client.zcard(key)
-
-            # Get oldest entry for reset calculation
-            oldest = self.redis_client.zrange(key, 0, 0, withscores=True)
-            reset_timestamp = (
-                int(float(oldest[0][1]) + window_seconds)
-                if oldest
-                else int(now + window_seconds)
+            result = redis_client.eval(
+                _SLIDING_WINDOW_SCRIPT,
+                1,
+                key,
+                now,
+                window_seconds,
+                max_requests,
             )
+            allowed, remaining, retry_after, reset_timestamp = (
+                int(value) for value in result
+            )
+            return bool(allowed), (retry_after or None), remaining, reset_timestamp
 
-            if request_count < max_requests:
-                # Add current request
-                self.redis_client.zadd(key, {str(now): now})
-                self.redis_client.expire(key, window_seconds)
-                remaining = max_requests - request_count - 1
-                return True, None, remaining, reset_timestamp
-            else:
-                # Calculate retry after
-                if oldest:
-                    retry_after = int(float(oldest[0][1]) + window_seconds - now) + 1
-                else:
-                    retry_after = window_seconds
-                return False, retry_after, 0, reset_timestamp
-
-        except (ConnectionError, TimeoutError, OSError, ValueError) as exc:
-            logger.error(f"Redis rate limit check failed: {exc}")
-            # Fall back to allowing request on Redis failure
-            return True, None, max_requests, int(time.time() + window_seconds)
+        # Redis clients expose vendor-specific exceptions.
+        except Exception as exc:  # noqa: BLE001
+            self.redis_error = type(exc).__name__
+            logger.error(
+                "Redis rate limit check failed; using memory fallback",
+                extra={"error_type": self.redis_error},
+            )
+            if self.fail_closed:
+                return False, 5, 0, int(time.time() + 5)
+            return await self._check_memory_limit(
+                client_id, limit_type, max_requests, window_seconds
+            )
 
     async def _check_memory_limit(
         self,
@@ -162,35 +195,66 @@ class RedisRateLimiter:
         now = time.time()
         window_start = now - window_seconds
 
-        # Initialize if not exists
-        if key not in self.fallback_memory:
-            self.fallback_memory[key] = []
+        with self.memory_lock:
+            # Initialize if not exists
+            if key not in self.fallback_memory:
+                self.fallback_memory[key] = []
 
-        # Remove old entries
-        self.fallback_memory[key] = [
-            ts for ts in self.fallback_memory[key] if ts > window_start
-        ]
+            # Remove old entries
+            self.fallback_memory[key] = [
+                ts for ts in self.fallback_memory[key] if ts > window_start
+            ]
 
-        current_count = len(self.fallback_memory[key])
-        oldest = min(self.fallback_memory[key]) if self.fallback_memory[key] else now
-        reset_timestamp = int(oldest + window_seconds)
+            current_count = len(self.fallback_memory[key])
+            oldest = (
+                min(self.fallback_memory[key]) if self.fallback_memory[key] else now
+            )
+            reset_timestamp = int(oldest + window_seconds)
 
-        if current_count < max_requests:
-            self.fallback_memory[key].append(now)
-            remaining = max_requests - current_count - 1
-            return True, None, remaining, reset_timestamp
-        else:
+            if current_count < max_requests:
+                self.fallback_memory[key].append(now)
+                remaining = max_requests - current_count - 1
+                return True, None, remaining, reset_timestamp
             retry_after = int(oldest + window_seconds - now) + 1
             return False, retry_after, 0, reset_timestamp
+
+    def status(self) -> dict[str, Any]:
+        return {
+            "backend": "redis" if self.redis_client is not None else "memory",
+            "configured_redis": bool(self.redis_url),
+            "fail_closed": self.fail_closed,
+            "limits": {
+                name: {"requests": value[0], "window_seconds": value[1]}
+                for name, value in self.limits.items()
+            },
+            "error": self.redis_error,
+        }
 
 
 class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
     """Production-ready rate limiting middleware with Redis backend."""
 
-    def __init__(self, app, redis_url: str | None = None, enabled: bool = True):
+    def __init__(
+        self,
+        app,
+        redis_url: str | None = None,
+        enabled: bool = True,
+        fail_closed: bool = False,
+    ):
         super().__init__(app)
-        self.limiter = RedisRateLimiter(redis_url)
+        self.limiter = RedisRateLimiter(
+            redis_url,
+            limits=_limits_from_env(),
+            fail_closed=fail_closed,
+        )
         self.enabled = enabled
+        # Expose redacted backend status to health/admin diagnostics without
+        # making the Redis client itself part of the public API.
+        target = app
+        while getattr(target, "app", None) is not None:
+            target = target.app
+        if hasattr(target, "state"):
+            target.state.rate_limiter = self.limiter
 
     async def dispatch(
         self,
@@ -202,32 +266,19 @@ class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Skip rate limiting for health and metrics endpoints
-        if request.url.path in ["/api/health", "/api/metrics"]:
+        if request.url.path in [
+            "/api/health",
+            "/api/ready",
+            "/api/live",
+            "/api/metrics",
+            "/internal/metrics",
+        ]:
             return await call_next(request)
 
-        # Get client identifier (prefer user ID from auth, fall back to IP)
-        client_id = request.client.host if request.client else "unknown"
-
-        # Try to extract user ID from authorization header for better tracking
-        auth_header = request.headers.get("authorization", "")
-        if auth_header and "." in auth_header:
-            # Simple extraction of sub from JWT (without full verification)
-            try:
-                import base64
-                import json
-
-                token = auth_header.replace("Bearer ", "").strip()
-                payload = token.split(".")[1]
-                # Add padding if needed
-                payload += "=" * (4 - len(payload) % 4)
-                decoded = json.loads(base64.urlsafe_b64decode(payload))
-                if "sub" in decoded:
-                    client_id = f"user:{decoded['sub']}"
-            except (ValueError, KeyError, IndexError, json.JSONDecodeError) as exc:
-                # JWT parsing failed - fall back to IP
-                logger.debug(
-                    f"Failed to extract user ID from JWT for rate limiting: {exc}"
-                )
+        # Use the source IP as the stable abuse key. Do not use an unverified
+        # JWT claim here: a caller could otherwise rotate `sub` values to
+        # bypass a per-IP bucket before authentication runs.
+        client_id = f"ip:{request.client.host if request.client else 'unknown'}"
 
         # Check rate limit
         (
@@ -278,3 +329,23 @@ class ProductionRateLimitMiddleware(BaseHTTPMiddleware):
         response.headers["X-RateLimit-Reset"] = str(reset_timestamp)
 
         return response
+
+
+def _limits_from_env() -> dict[str, tuple[int, int]]:
+    """Load bounded route limits without allowing a client to configure them."""
+
+    def limit(name: str, default: int) -> int:
+        try:
+            return max(1, int(os.getenv(name, str(default))))
+        except ValueError:
+            logger.warning(
+                "Invalid rate limit configuration; using default", extra={"name": name}
+            )
+            return default
+
+    return {
+        "capture_analyze": (limit("GLOWUPAI_RATE_LIMIT_CAPTURE_PER_MINUTE", 10), 60),
+        "auth": (limit("GLOWUPAI_RATE_LIMIT_AUTH_PER_MINUTE", 5), 60),
+        "dashboard": (limit("GLOWUPAI_RATE_LIMIT_DASHBOARD_PER_MINUTE", 30), 60),
+        "api": (limit("GLOWUPAI_RATE_LIMIT_API_PER_MINUTE", 60), 60),
+    }

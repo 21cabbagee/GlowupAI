@@ -4,14 +4,13 @@ import okhttp3.Interceptor
 import okhttp3.Response
 
 /**
- * Supplies the Firebase ID token. Firebase itself is wired up later (Phase
+ * Supplies the Supabase access JWT. The auth gateway owns session refresh and
  * 1/3.1) — this interface exists so the network layer has zero compile-time
- * dependency on the Firebase SDK. Implement it once `FirebaseAuth` is
- * available and bind it in a Hilt module (owned by the DI agent).
+ * exposes only a short-lived token to this network layer.
  */
 interface TokenProvider {
     /**
-     * Returns the current user's Firebase ID token, or `null` if there is no
+     * Returns the current user's Supabase access token, or `null` if there is no
      * signed-in user. Pass `forceRefresh = true` after a `401` to obtain a
      * fresh token before failing the request permanently.
      */
@@ -26,7 +25,7 @@ interface TokenProvider {
  *
  * A request that already carries an explicit `Authorization` header (the
  * three `/api/admin` routes, which use a static admin bearer token instead
- * of a Firebase ID token) is left untouched.
+ * of a Supabase access token) is left untouched.
  */
 class AuthInterceptor(
     private val tokenProvider: TokenProvider,
@@ -75,7 +74,7 @@ class AuthInterceptor(
 
 /**
  * OkHttp interceptors are synchronous; [TokenProvider.idToken] is a suspend
- * function backed by the Firebase SDK's Task API. This bridges the two
+ * function backed by Supabase session refresh. This bridges the two
  * without pulling a coroutine dispatcher/scope dependency into the
  * interceptor's constructor — OkHttp already runs interceptors off the
  * caller's thread for suspend Retrofit calls.

@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS photo_captures (
     device_meta_json TEXT NOT NULL DEFAULT '{}',
     is_baseline INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'accepted',
+    idempotency_key TEXT,
     created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP::text)
 );
 
@@ -266,6 +267,8 @@ CREATE TABLE IF NOT EXISTS experience_profiles (
 
 CREATE INDEX IF NOT EXISTS idx_events_user_time ON routine_events(user_id, timestamp);
 CREATE INDEX IF NOT EXISTS idx_captures_user_time ON photo_captures(user_id, captured_at);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_captures_user_idempotency
+ON photo_captures(user_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_metrics_user_time ON metric_snapshots(user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_verdicts_user_product ON verdicts(user_id, product_id, generated_at);
 CREATE INDEX IF NOT EXISTS idx_appearance_user_time ON appearance_captures(user_id, created_at);

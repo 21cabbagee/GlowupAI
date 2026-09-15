@@ -26,26 +26,26 @@ def test_cache_key_generation():
     print("Testing cache key generation...")
 
     # Test user
-    firebase_uid = "test_user_123"
+    supabase_uid = "test_user_123"
     user_id = "user_abc"
 
     # Generate keys for different paths
     dashboard_key = generate_cache_key(
-        firebase_uid,
+        supabase_uid,
         f"/api/users/{user_id}/dashboard",
         ""
     )
     print(f"Dashboard cache key (no params): {dashboard_key}")
 
     dashboard_key_with_vertical = generate_cache_key(
-        firebase_uid,
+        supabase_uid,
         f"/api/users/{user_id}/dashboard",
         "vertical=skin"
     )
     print(f"Dashboard cache key (vertical=skin): {dashboard_key_with_vertical}")
 
     history_key = generate_cache_key(
-        firebase_uid,
+        supabase_uid,
         f"/api/users/{user_id}/history",
         "vertical=skin"
     )
@@ -63,7 +63,7 @@ def test_cache_invalidation_logic():
 
     # Simulate the paths that would be invalidated
     user_id = "user_abc"
-    firebase_uid = "firebase_123"
+    supabase_uid = "supabase_123"
 
     paths_to_invalidate = [
         (f"/api/users/{user_id}/dashboard", ""),
@@ -76,7 +76,7 @@ def test_cache_invalidation_logic():
 
     print(f"Would invalidate {len(paths_to_invalidate)} cache keys:")
     for path, query in paths_to_invalidate:
-        cache_key = generate_cache_key(firebase_uid, path, query)
+        cache_key = generate_cache_key(supabase_uid, path, query)
         print(f"  - {cache_key} ({path}?{query})")
 
     print("✓ Cache invalidation would cover all common scenarios")
@@ -97,7 +97,7 @@ def main():
         print("=" * 70)
         print("\nThe fix should work correctly:")
         print("1. When a capture is created, the cache invalidation code will:")
-        print("   - Look up the user's firebase_uid from the database")
+        print("   - Look up the user's supabase_uid from the database")
         print("   - Generate cache keys for all dashboard/history variations")
         print("   - Delete those cache keys from Redis/memory")
         print("2. The next dashboard request will bypass the cache and show fresh data")

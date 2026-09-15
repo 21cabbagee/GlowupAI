@@ -11,10 +11,14 @@ dependencies = [
   "fastapi>=0.115.6",
   "uvicorn[standard]>=0.34.0",
   "pillow>=11.0.0",
-  "opencv-python>=4.10.0.84,<6.0.0",
+  # Server deployments do not have X11/GUI libraries. The headless build
+  # provides the same cv2 image-processing APIs without those native deps.
+  "opencv-python-headless>=4.10.0.84,<6.0.0",
   "numpy>=2.0.0",
   "cryptography>=44.0.0",
+  "google-auth[requests]>=2.38.0,<3",
   "google-genai>=1.0.0",
+  "openai>=1.0.0",
   "psycopg[binary,pool]>=3.2.6",
   "PyJWT[crypto]>=2.10.0",
   "redis>=5.2.1",
@@ -48,6 +52,12 @@ include = ["glowupai*"]
 
 [tool.setuptools.package-data]
 glowupai = ["static/*.html", "static/*.css", "static/*.js", "migrations/*.sql"]
+
+# Vercel's Python runtime can serve the existing FastAPI application directly.
+# The module name is not one of Vercel's conventional filenames, so declare it
+# explicitly instead of creating a second application entrypoint.
+[tool.vercel]
+entrypoint = "glowupai.complete_api:app"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

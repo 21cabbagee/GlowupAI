@@ -1,12 +1,20 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from .service import now_iso, row_dict
+from .play_billing import (
+    PlayBilling,
+    PlayPurchaseNotFound,
+    account_id,
+    decrypt_token,
+    encrypt_token,
+)
 
 PREMIUM_FEATURES = {
     "experiments",
@@ -19,6 +27,8 @@ PREMIUM_FEATURES = {
     "derm_export",
     "product_prediction",
 }
+
+logger = logging.getLogger(__name__)
 
 
 def uid() -> str:
@@ -35,6 +45,7 @@ class SubscriptionService:
     def __init__(self, db: Any, parent_service: Any) -> None:
         self.db = db
         self.parent = parent_service
+        self.play = PlayBilling()
 
     def entitlement(self, user_id: str) -> dict[str, Any]:
         self.parent.require_user(user_id)
@@ -46,11 +57,157 @@ class SubscriptionService:
             row = self.db.fetchone(
                 "SELECT * FROM entitlements WHERE user_id = ?", (user_id,)
             )
-        return row_dict(row)
+        entitlement = row_dict(row)
+        if entitlement["source"] == "google_play" and entitlement.get("renews_at"):
+            if datetime.fromisoformat(
+                entitlement["renews_at"].replace("Z", "+00:00")
+            ) <= datetime.now(UTC):
+                self.db.execute(
+                    "UPDATE entitlements SET plan='free', status='cancelled' WHERE user_id=?",
+                    (user_id,),
+                )
+                entitlement.update(plan="free", status="cancelled")
+        return entitlement
+
+    def verify_play_purchase(
+        self,
+        user_id: str,
+        purchase_token: str,
+        *,
+        purchase: dict | None = None,
+    ) -> dict[str, Any]:
+        self.parent.require_user(user_id)
+        checked_at = datetime.now(UTC).isoformat()
+        verified = self.play.verify(user_id, purchase_token, purchase=purchase)
+        ciphertext = encrypt_token(user_id, purchase_token)
+        self.db.execute(
+            "INSERT INTO play_purchases (token_hash,user_id,token_ciphertext,active,expires_at,verified_at) "
+            "VALUES (?,?,?,?,?,?) ON CONFLICT (token_hash) DO UPDATE SET "
+            "active=excluded.active, expires_at=excluded.expires_at, verified_at=excluded.verified_at "
+            "WHERE play_purchases.user_id=excluded.user_id AND play_purchases.verified_at < excluded.verified_at",
+            (
+                account_id(purchase_token),
+                user_id,
+                ciphertext,
+                int(verified["active"]),
+                verified["expires_at"],
+                checked_at,
+            ),
+        )
+        stored = self.db.fetchone(
+            "SELECT user_id FROM play_purchases WHERE token_hash=?",
+            (account_id(purchase_token),),
+        )
+        if stored["user_id"] != user_id:
+            raise PermissionError("This purchase is already linked to another account")
+
+        mapped = self.db.fetchone(
+            "SELECT user_id FROM play_accounts WHERE account_hash=?",
+            (account_id(user_id),),
+        )
+        if mapped and mapped["user_id"] != user_id:
+            raise PermissionError(
+                "This Google Play account is already linked elsewhere"
+            )
+        self.db.execute(
+            "INSERT INTO play_accounts (account_hash,user_id) VALUES (?,?) ON CONFLICT (account_hash) DO NOTHING",
+            (account_id(user_id), user_id),
+        )
+        self.entitlement(user_id)
+        self._refresh_google_entitlement(user_id, verified["expires_at"])
+        return self.entitlement(user_id)
+
+    def refresh_play_purchase(self, purchase_token: str) -> bool:
+        """Refresh a token received through RTDN and return whether it was linked."""
+        token_hash = account_id(purchase_token)
+        row = self.db.fetchone(
+            "SELECT user_id FROM play_purchases WHERE token_hash=?", (token_hash,)
+        )
+        purchase = None
+        try:
+            purchase = self.play.get_subscription(purchase_token)
+        except PlayPurchaseNotFound:
+            if row:
+                self._mark_play_purchase_inactive(purchase_token, row["user_id"])
+                return True
+            return False
+
+        user_id = row["user_id"] if row else None
+        if user_id is None:
+            bound = self.play.obfuscated_account_id(purchase)
+            if bound:
+                mapped = self.db.fetchone(
+                    "SELECT user_id FROM play_accounts WHERE account_hash=?", (bound,)
+                )
+                user_id = mapped["user_id"] if mapped else None
+        if user_id is None and purchase.get("linkedPurchaseToken"):
+            previous = self.db.fetchone(
+                "SELECT user_id FROM play_purchases WHERE token_hash=?",
+                (account_id(purchase["linkedPurchaseToken"]),),
+            )
+            user_id = previous["user_id"] if previous else None
+        if user_id is None:
+            # Purchases made without our obfuscated account ID cannot be safely assigned.
+            # A Play token is not sufficient proof of which GlowUp account owns it.
+            return False
+
+        self.verify_play_purchase(user_id, purchase_token, purchase=purchase)
+        return True
+
+    def _mark_play_purchase_inactive(self, purchase_token: str, user_id: str) -> None:
+        now = now_iso()
+        self.db.execute(
+            "UPDATE play_purchases SET active=0, expires_at=?, verified_at=? WHERE token_hash=? AND user_id=?",
+            (now, now, account_id(purchase_token), user_id),
+        )
+        self._refresh_google_entitlement(user_id, now)
+
+    def _refresh_google_entitlement(self, user_id: str, fallback_expiry: str) -> None:
+        active = self.db.fetchone(
+            "SELECT MAX(expires_at) AS expiry FROM play_purchases WHERE user_id=? AND active=1 AND expires_at > ?",
+            (user_id, now_iso()),
+        )["expiry"]
+        self.db.execute(
+            "UPDATE entitlements SET plan=?, status=?, renews_at=?, source='google_play' WHERE user_id=?",
+            (
+                "premium" if active else "free",
+                "active" if active else "cancelled",
+                active or fallback_expiry,
+                user_id,
+            ),
+        )
+
+    def reconcile_play_purchases(self, limit=100):
+        rows = self.db.fetchall(
+            "SELECT * FROM play_purchases ORDER BY verified_at LIMIT ?", (limit,)
+        )
+        completed = 0
+        for row in rows:
+            try:
+                self.verify_play_purchase(
+                    row["user_id"],
+                    decrypt_token(row["user_id"], row["token_ciphertext"]),
+                )
+                completed += 1
+            except PlayPurchaseNotFound:
+                self._mark_play_purchase_inactive(
+                    decrypt_token(row["user_id"], row["token_ciphertext"]),
+                    row["user_id"],
+                )
+                completed += 1
+            except Exception as exc:
+                # Keep previous expiry on provider outages; never extend it.
+                logger.warning(
+                    "Play purchase reconciliation deferred",
+                    extra={"error_type": type(exc).__name__},
+                )
+        return completed
 
     def is_premium(self, user_id: str) -> bool:
         entitlement = self.entitlement(user_id)
-        return entitlement["plan"] == "premium" and entitlement["status"] == "active"
+        return bool(
+            entitlement["plan"] == "premium" and entitlement["status"] == "active"
+        )
 
     def require_premium(self, user_id: str, feature: str) -> dict[str, Any]:
         entitlement = self.entitlement(user_id)
@@ -81,6 +238,10 @@ class SubscriptionService:
         audit_fn: Callable | None = None,
     ) -> dict[str, Any]:
         self.parent.require_user(user_id)
+        if self.parent.settings.is_production:
+            raise PermissionError(
+                "Use a verified Google Play purchase to activate Premium"
+            )
         renews = (
             (datetime.now(UTC) + timedelta(days=30)).isoformat().replace("+00:00", "Z")
         )
@@ -106,6 +267,8 @@ class SubscriptionService:
         self, user_id: str, audit_fn: Callable | None = None
     ) -> dict[str, Any]:
         self.parent.require_user(user_id)
+        if self.entitlement(user_id)["source"] == "google_play":
+            raise PermissionError("Manage cancellation in Google Play subscriptions")
         self.db.execute(
             "UPDATE entitlements SET plan='free', status='cancelled' WHERE user_id=?",
             (user_id,),
@@ -149,7 +312,7 @@ class SubscriptionService:
         refresh_verdicts_fn: Callable,
         record_engagement_fn: Callable,
     ) -> list[dict[str, Any]]:
-        verdicts = refresh_verdicts_fn(user_id)
+        verdicts: list[dict[str, Any]] = refresh_verdicts_fn(user_id)
         if self.is_premium(user_id):
             return verdicts
         unlocked = self._free_unlocked_product_id(user_id)

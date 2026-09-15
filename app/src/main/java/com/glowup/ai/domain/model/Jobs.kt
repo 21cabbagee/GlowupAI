@@ -29,6 +29,12 @@ data class ShelfScanResult(
     /** Explains an empty [candidates] list when the vision provider is not
      * configured server-side — always show a manual "add product" fallback. */
     val message: String?,
+    val limitations: List<String> = emptyList(),
+    val provider: String? = null,
+    val modelId: String? = null,
+    val reasoningEffort: String? = null,
+    val languageMode: String? = null,
+    val explanation: String? = null,
 )
 
 data class ShelfScanJob(

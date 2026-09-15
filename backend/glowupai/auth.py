@@ -1,29 +1,4 @@
-"""Firebase ID token verification for GlowUpAI.
-
-Why JWKS verification instead of the `firebase-admin` SDK: `firebase-admin`
-pulls in `google-cloud-firestore`, `google-cloud-storage`,
-`google-api-core`/`grpcio`/`protobuf`, and initializes clients for products
-(Firestore, Realtime Database, Cloud Messaging, Remote Config) this backend
-does not use anywhere else, just to call the one method that verifies a JWT.
-
-A Firebase ID token is a standard RS256 JWT signed by Google's
-`securetoken` service. Google publishes the current signing keys in JWKS
-format at
-
-    https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com
-
-(the same "verify with a third-party JWT library" approach Firebase itself
-documents:
-https://firebase.google.com/docs/auth/admin/verify-id-tokens#verify_id_tokens_using_a_third-party_jwt_library).
-Verifying against that endpoint needs only `PyJWT`, which is pure Python and
-uses the `cryptography` package this project already depends on for photo
-handling — no new transitive dependency tree.
-
-This module fails closed: any missing, malformed, mis-signed, expired, or
-wrong-audience/issuer token raises `AuthError`, and callers are expected to
-turn that into an HTTP 401/403 rather than treating a verification failure
-as "anonymous".
-"""
+"""Verification of Supabase Auth access tokens."""
 
 from __future__ import annotations
 
@@ -32,24 +7,24 @@ import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 import jwt
 from jwt import PyJWK
 
-FIREBASE_JWKS_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com"
 DEFAULT_JWKS_TTL_SECONDS = 300
 MIN_JWKS_TTL_SECONDS = 60
 
 
 class AuthError(Exception):
-    """Raised whenever a bearer token cannot be trusted. Always fail closed."""
+    """Raised whenever a bearer token cannot be trusted."""
 
 
 @dataclass(frozen=True)
-class FirebaseIdentity:
-    """The subset of Firebase ID token claims this backend needs."""
+class SupabaseIdentity:
+    """The claims the application needs from a verified Supabase user token."""
 
     uid: str
     email: str | None
@@ -61,69 +36,67 @@ def _parse_max_age(cache_control: str | None) -> int:
     if not cache_control:
         return DEFAULT_JWKS_TTL_SECONDS
     match = re.search(r"max-age\s*=\s*(\d+)", cache_control)
-    if not match:
-        return DEFAULT_JWKS_TTL_SECONDS
-    return max(MIN_JWKS_TTL_SECONDS, int(match.group(1)))
+    return (
+        max(MIN_JWKS_TTL_SECONDS, int(match.group(1)))
+        if match
+        else DEFAULT_JWKS_TTL_SECONDS
+    )
 
 
 def _http_fetch_jwks(url: str) -> tuple[dict[str, object], int]:
-    """Fetch the JWKS document, returning {kid: public_key} and a TTL in seconds."""
-
     request = Request(url, headers={"Accept": "application/json"})
     try:
-        with urlopen(request, timeout=5) as response:  # nosec B310 - fixed Google URL
+        # The URL comes only from trusted Supabase deployment configuration.
+        with urlopen(request, timeout=5) as response:  # nosec B310
             body = response.read()
             max_age = _parse_max_age(response.headers.get("Cache-Control"))
-    except URLError as exc:
+    except (URLError, OSError) as exc:
         raise AuthError(
-            f"could not reach the Firebase signing-key endpoint: {exc}",
+            f"could not reach the Supabase signing-key endpoint: {exc}"
         ) from exc
     try:
         payload = json.loads(body)
     except json.JSONDecodeError as exc:
         raise AuthError(
-            "Firebase signing-key endpoint returned malformed JSON",
+            "Supabase signing-key endpoint returned malformed JSON"
         ) from exc
     keys: dict[str, object] = {}
+    if not isinstance(payload, dict):
+        raise AuthError("Supabase signing-key endpoint returned an invalid payload")
     for jwk in payload.get("keys", []):
+        if not isinstance(jwk, dict):
+            continue
         kid = jwk.get("kid")
         if not kid:
             continue
         try:
-            # PyJWT 2.x uses PyJWK instead of RSAAlgorithm.from_jwk
-            pyjwk = PyJWK.from_dict(jwk)
-            keys[kid] = pyjwk.key
-        except (ValueError, TypeError):
+            keys[kid] = PyJWK.from_dict(jwk).key
+        except (TypeError, ValueError):
             continue
     if not keys:
-        raise AuthError("Firebase signing-key endpoint returned no usable keys")
+        raise AuthError("Supabase signing-key endpoint returned no usable keys")
     return keys, max_age
 
 
 class JWKSCache:
-    """Caches Firebase's public signing keys, honouring the response's max-age.
-
-    The fetch function is injectable so tests can mint their own key pair and
-    serve it locally instead of making a real network call.
-    """
+    """Caches a Supabase project's public signing keys and honours max-age."""
 
     def __init__(
         self,
-        url: str = FIREBASE_JWKS_URL,
+        url: str,
         fetch: Callable[[str], tuple[dict[str, object], int]] | None = None,
     ) -> None:
         self._url = url
         self._fetch = fetch or _http_fetch_jwks
         self._keys: dict[str, object] = {}
-        self._expires_at: float = 0.0
+        self._expires_at = 0.0
 
     def get_key(self, kid: str) -> object:
-        now = time.time()
-        if now >= self._expires_at or kid not in self._keys:
+        if time.time() >= self._expires_at or kid not in self._keys:
             self._refresh()
         key = self._keys.get(kid)
         if key is None:
-            raise AuthError(f"no Firebase signing key matches kid={kid!r}")
+            raise AuthError(f"no Supabase signing key matches kid={kid!r}")
         return key
 
     def _refresh(self) -> None:
@@ -131,75 +104,98 @@ class JWKSCache:
             keys, max_age = self._fetch(self._url)
         except AuthError:
             if self._keys:
-                # Keep serving the stale-but-still-valid key set rather than
-                # locking every request out on a transient network blip.
                 return
             raise
         self._keys = keys
         self._expires_at = time.time() + max_age
 
 
-_default_cache: JWKSCache | None = None
+_caches: dict[str, JWKSCache] = {}
 
 
-def get_default_cache() -> JWKSCache:
-    global _default_cache
-    if _default_cache is None:
-        _default_cache = JWKSCache()
-    return _default_cache
+def _cache_for(supabase_url: str, jwks_url: str | None = None) -> JWKSCache:
+    url = (
+        jwks_url or f"{supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
+    ).strip()
+    if url not in _caches:
+        _caches[url] = JWKSCache(url)
+    return _caches[url]
 
 
-def verify_id_token(
+def verify_access_token(
     token: str,
-    project_id: str | None,
+    supabase_url: str | None,
+    jwt_secret: str | None,
     *,
     jwks: JWKSCache | None = None,
-) -> FirebaseIdentity:
-    """Verify a Firebase ID token and return the identity it asserts.
-
-    Checks signature (RS256 against Google's published JWKS), `exp`, `iss`
-    (`https://securetoken.google.com/<project_id>`), and `aud`
-    (`<project_id>`). Raises `AuthError` on any failure.
-    """
+    jwks_url: str | None = None,
+) -> SupabaseIdentity:
+    """Verify one Supabase Auth access JWT and return its trusted identity."""
 
     if not token or not token.strip():
         raise AuthError("missing bearer token")
-    if not project_id:
-        raise AuthError(
-            "GLOWUPAI_FIREBASE_PROJECT_ID is not configured on this server",
-        )
-    cache = jwks or get_default_cache()
+    if not supabase_url or not supabase_url.strip().startswith("https://"):
+        raise AuthError("SUPABASE_URL is not configured on this server")
+    issuer = f"{supabase_url.rstrip('/')}/auth/v1"
     try:
         header = jwt.get_unverified_header(token)
     except jwt.PyJWTError as exc:
-        raise AuthError(f"malformed token: {exc}") from exc
-    kid = header.get("kid")
-    if not kid:
-        raise AuthError("token header is missing 'kid'")
-    public_key = cache.get_key(kid)
+        # Do not reflect parser/crypto implementation details to unauthenticated
+        # callers.  They are not actionable and can vary between PyJWT versions.
+        raise AuthError("malformed bearer token") from exc
+    algorithm = header.get("alg")
+    key: Any
     try:
+        if algorithm == "HS256":
+            if not jwt_secret:
+                raise AuthError("SUPABASE_JWT_SECRET is not configured on this server")
+            key = jwt_secret
+            algorithms = ["HS256"]
+        elif algorithm in {"RS256", "ES256", "EdDSA"}:
+            kid = header.get("kid")
+            if not kid:
+                raise AuthError("token header is missing 'kid'")
+            key = (jwks or _cache_for(supabase_url, jwks_url)).get_key(kid)
+            algorithms = [algorithm]
+        else:
+            raise AuthError("token uses an unsupported signing algorithm")
         claims = jwt.decode(
             token,
-            key=public_key,  # type: ignore[arg-type]
-            algorithms=["RS256"],
-            audience=project_id,
-            issuer=f"https://securetoken.google.com/{project_id}",
+            key=key,  # type: ignore[arg-type]
+            algorithms=algorithms,
+            audience="authenticated",
+            issuer=issuer,
             options={"require": ["exp", "iat", "sub", "aud", "iss"]},
         )
+    except AuthError:
+        raise
     except jwt.ExpiredSignatureError as exc:
         raise AuthError("token has expired") from exc
     except jwt.InvalidAudienceError as exc:
-        raise AuthError("token audience does not match this project") from exc
+        raise AuthError("token audience is not authenticated") from exc
     except jwt.InvalidIssuerError as exc:
-        raise AuthError("token issuer does not match this project") from exc
+        raise AuthError("token issuer does not match this Supabase project") from exc
     except jwt.PyJWTError as exc:
-        raise AuthError(f"invalid token: {exc}") from exc
-    sub = claims.get("sub")
-    if not sub or not isinstance(sub, str):
+        raise AuthError("invalid Supabase token") from exc
+
+    if claims.get("role") not in (None, "authenticated"):
+        raise AuthError("token role is not an authenticated user")
+    subject = claims.get("sub")
+    if not isinstance(subject, str) or not subject:
         raise AuthError("token is missing a valid 'sub' claim")
-    return FirebaseIdentity(
-        uid=sub,
-        email=claims.get("email"),
-        email_verified=bool(claims.get("email_verified", False)),
-        name=claims.get("name"),
+    metadata = claims.get("user_metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+    name = claims.get("name") or metadata.get("full_name") or metadata.get("name")
+    return SupabaseIdentity(
+        uid=subject,
+        email=claims.get("email") if isinstance(claims.get("email"), str) else None,
+        email_verified=bool(
+            claims.get("email_verified") or claims.get("email_confirmed_at")
+        ),
+        name=name if isinstance(name, str) else None,
     )
+
+
+# Generic compatibility name; it now verifies Supabase tokens and has no provider-specific behavior.
+verify_id_token = verify_access_token

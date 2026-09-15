@@ -357,14 +357,9 @@ class ModelMonitor:
         smtp_pass: str | None = os.getenv("SMTP_PASSWORD")
         alert_email: str | None = os.getenv("ALERT_EMAIL")
 
-        if not all([smtp_user, smtp_pass, alert_email]):
+        if smtp_user is None or smtp_pass is None or alert_email is None:
             logger.warning("Email not configured, skipping alert")
             return False
-
-        # Type narrowing: all values are guaranteed to be non-None after the check above
-        assert smtp_user is not None
-        assert smtp_pass is not None
-        assert alert_email is not None
 
         try:
             msg = MIMEText(body)

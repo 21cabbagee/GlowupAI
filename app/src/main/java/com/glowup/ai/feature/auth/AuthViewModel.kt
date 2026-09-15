@@ -10,7 +10,6 @@ import com.glowup.ai.domain.SessionState
 import com.glowup.ai.domain.SessionStateMachine
 import com.glowup.ai.domain.model.Profile
 import com.glowup.ai.feature.shell.GlowDestination
-import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +49,7 @@ class AuthViewModel
     @Inject
     constructor(
         private val sessionRepository: SessionRepository,
+        private val authGateway: SupabaseAuthGateway,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.CheckingSession)
         val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -82,8 +82,8 @@ class AuthViewModel
                         }
 
                         is GlowResult.Success -> {
-                            if (FirebaseAuthGateway.currentUser() == null) {
-                                // A stored API id is only a candidate. Without a live Firebase identity it
+                            if (!authGateway.hasSession()) {
+                                // A stored API id is only a candidate. Without a live Supabase identity it
                                 // must never be used to open the shell or create an orphaned session.
                                 runCatching { sessionRepository.clearSession() }
                                 _sessionState.value = SessionState.NoUser
@@ -99,26 +99,35 @@ class AuthViewModel
 
         fun retryBootstrap() = bootstrap()
 
+        /** Cancels an in-progress native Google account selection and restores the auth UI. */
+        fun cancelAuthentication() {
+            activeJob?.cancel()
+            activeJob = null
+            _sessionState.value = SessionStateMachine.onAuthenticationFailed(_sessionState.value)
+            _uiState.value = AuthUiState.Idle
+            _navigationTarget.value = null
+        }
+
         fun signInWithGoogle(activity: Activity?) {
             if (activity == null) {
                 _uiState.value = AuthUiState.Error("Sign-in isn't available right now. Please try again.")
                 return
             }
-            authenticate { FirebaseAuthGateway.signInWithGoogle(activity) }
+            authenticate { authGateway.signInWithGoogle(activity) }
         }
 
         fun signInWithEmail(
             email: String,
             password: String,
         ) = authenticate {
-            FirebaseAuthGateway.signInWithEmail(email.trim(), password)
+            authGateway.signInWithEmail(email.trim(), password)
         }
 
         fun createAccount(
             email: String,
             password: String,
         ) = authenticate {
-            FirebaseAuthGateway.createAccountWithEmail(email.trim(), password)
+            authGateway.createAccountWithEmail(email.trim(), password)
         }
 
         fun sendPasswordReset(email: String) {
@@ -126,9 +135,9 @@ class AuthViewModel
             activeJob =
                 viewModelScope.launch {
                     _resetState.value = PasswordResetState.Sending
-                    FirebaseAuthGateway.sendPasswordReset(email.trim()).fold(
+                    authGateway.sendPasswordReset(email.trim()).fold(
                         onSuccess = { _resetState.value = PasswordResetState.Sent },
-                        onFailure = { _resetState.value = PasswordResetState.Failed(FirebaseAuthGateway.friendlyMessage(it)) },
+                        onFailure = { _resetState.value = PasswordResetState.Failed(authGateway.friendlyMessage(it)) },
                     )
                 }
         }
@@ -137,7 +146,20 @@ class AuthViewModel
             _resetState.value = PasswordResetState.Idle
         }
 
-        private fun authenticate(action: suspend () -> Result<FirebaseUser>) {
+        fun updatePassword(password: String) {
+            if (_resetState.value is PasswordResetState.Sending) return
+            activeJob?.cancel()
+            activeJob =
+                viewModelScope.launch {
+                    _resetState.value = PasswordResetState.Sending
+                    authGateway.updatePassword(password).fold(
+                        onSuccess = { _resetState.value = PasswordResetState.Sent },
+                        onFailure = { _resetState.value = PasswordResetState.Failed(authGateway.friendlyMessage(it)) },
+                    )
+                }
+        }
+
+        private fun authenticate(action: suspend () -> Result<SupabaseUser>) {
             activeJob?.cancel()
             activeJob =
                 viewModelScope.launch {
@@ -151,7 +173,7 @@ class AuthViewModel
                         },
                         onFailure = { failure ->
                             _sessionState.value = SessionStateMachine.onAuthenticationFailed(_sessionState.value)
-                            _uiState.value = AuthUiState.Error(FirebaseAuthGateway.friendlyMessage(failure))
+                            _uiState.value = AuthUiState.Error(authGateway.friendlyMessage(failure))
                         },
                     )
                 }
@@ -159,11 +181,11 @@ class AuthViewModel
 
         private suspend fun resolveSession() {
             _sessionState.value = SessionStateMachine.onProfileRefreshRequested(_sessionState.value)
-            val state = SessionStateMachine.onProfileResult(sessionRepository.authenticateWithFirebase())
+            val state = SessionStateMachine.onProfileResult(sessionRepository.authenticateWithSupabase())
             _sessionState.value = state
             if (state is SessionState.NoUser) {
                 sessionRepository.clearSession()
-                FirebaseAuthGateway.signOut()
+                authGateway.signOut()
             }
             _uiState.value =
                 if (state is SessionState.Unrecoverable) {

@@ -79,38 +79,16 @@
 # ---------------------------------------------------------------------------
 # ML Kit face detection
 # ---------------------------------------------------------------------------
+# ML Kit discovers this registrar from AndroidManifest metadata and instantiates
+# it reflectively during the app provider's startup. Keeping only the vision
+# packages lets R8 remove `CommonComponentRegistrar`, which makes every
+# minified release crash before MainActivity is created.
+-keep class com.google.mlkit.common.** { *; }
 -keep class com.google.mlkit.vision.face.** { *; }
 -keep class com.google.mlkit.vision.common.** { *; }
 -keep class com.google.android.gms.internal.mlkit_vision_face.** { *; }
 -dontwarn com.google.mlkit.**
 
-# ---------------------------------------------------------------------------
-# Firebase - Critical for component dependency injection
-# ---------------------------------------------------------------------------
--keep class com.google.firebase.** { *; }
--keep interface com.google.firebase.** { *; }
--dontwarn com.google.firebase.**
-
-# Firebase Components - CRITICAL: Prevents MissingDependencyException
--keep class com.google.firebase.components.ComponentRegistrar
--keep interface com.google.firebase.components.ComponentRegistrar
--keep,allowobfuscation @interface com.google.firebase.components.Component
--keep class * implements com.google.firebase.components.ComponentRegistrar {
-    public <init>();
-}
-# Keep all ComponentRegistrar implementations from being stripped
--keepnames class * implements com.google.firebase.components.ComponentRegistrar
-
-# Firebase Auth
--keep class com.google.firebase.auth.** { *; }
--keep interface com.google.firebase.auth.** { *; }
-
-# Firebase Analytics
--keep class com.google.firebase.analytics.** { *; }
--keep class com.google.android.gms.measurement.** { *; }
-
-# Firebase Crashlytics
--keep class com.google.firebase.crashlytics.** { *; }
 -keepattributes SourceFile,LineNumberTable
 -keepattributes *Annotation*
 

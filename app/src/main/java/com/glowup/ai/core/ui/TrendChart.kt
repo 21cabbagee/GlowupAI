@@ -2,6 +2,7 @@ package com.glowup.ai.core.ui
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.GlowShapes
@@ -38,9 +41,7 @@ data class TrendDataPoint(
 )
 
 /**
- * Trend Chart Component - Simplified version
- * Displays metric trends over time with interactive data points
- * TODO: Restore Vico chart implementation after fixing API compatibility
+ * Trend chart component that renders the measured values locally.
  */
 @Composable
 fun TrendChart(
@@ -58,7 +59,8 @@ fun TrendChart(
         if (dataPoints.size >= 2) {
             val first = dataPoints.first().value
             val last = dataPoints.last().value
-            val change = ((last - first) / first * 100)
+            val denominator = kotlin.math.abs(first).coerceAtLeast(1f)
+            val change = ((last - first) / denominator * 100)
             TrendInfo(
                 percentage = change,
                 direction =
@@ -118,22 +120,15 @@ fun TrendChart(
                 }
             }
 
-            // Placeholder for chart - will be replaced with Vico implementation
             if (dataPoints.isNotEmpty()) {
-                Box(
+                TrendPlot(
+                    dataPoints = dataPoints,
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .height(200.dp)
                             .padding(top = GlowSpacing.sm),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "Chart visualization\n${dataPoints.size} data points",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = glowColors.ink600,
-                    )
-                }
+                )
             } else {
                 EmptyState(
                     title = "No data yet",
@@ -149,6 +144,90 @@ fun TrendChart(
         }
     }
 }
+
+@Composable
+private fun TrendPlot(
+    dataPoints: List<TrendDataPoint>,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalGlowColors.current
+    val values = dataPoints.map { it.value }
+    val minimum = values.minOrNull() ?: 0f
+    val maximum = values.maxOrNull() ?: minimum
+    val range = (maximum - minimum).coerceAtLeast(1f)
+    val lineColor = colors.honey700
+    val guideColor = colors.ink600.copy(alpha = 0.18f)
+
+    Column(modifier = modifier) {
+        Canvas(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+        ) {
+            val horizontalPadding = 10.dp.toPx()
+            val verticalPadding = 12.dp.toPx()
+            val usableWidth = (size.width - horizontalPadding * 2).coerceAtLeast(1f)
+            val usableHeight = (size.height - verticalPadding * 2).coerceAtLeast(1f)
+            repeat(3) { guide ->
+                val y = verticalPadding + usableHeight * guide / 2f
+                drawLine(
+                    color = guideColor,
+                    start = Offset(horizontalPadding, y),
+                    end = Offset(size.width - horizontalPadding, y),
+                    strokeWidth = 1.dp.toPx(),
+                )
+            }
+            val points =
+                dataPoints.mapIndexed { index, point ->
+                    val fractionX =
+                        if (dataPoints.size == 1) 0.5f else index.toFloat() / (dataPoints.size - 1)
+                    val fractionY = (point.value - minimum) / range
+                    Offset(
+                        x = horizontalPadding + usableWidth * fractionX,
+                        y = verticalPadding + usableHeight * (1f - fractionY),
+                    )
+                }
+            points.zipWithNext().forEach { (start, end) ->
+                drawLine(
+                    color = lineColor,
+                    start = start,
+                    end = end,
+                    strokeWidth = 3.dp.toPx(),
+                    cap = StrokeCap.Round,
+                )
+            }
+            points.forEach { point ->
+                drawCircle(color = lineColor, radius = 4.dp.toPx(), center = point)
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = dataPoints.first().displayDate(),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.ink600,
+            )
+            if (dataPoints.size > 1) {
+                Text(
+                    text = dataPoints.last().displayDate(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.ink600,
+                )
+            }
+        }
+    }
+}
+
+private fun TrendDataPoint.displayDate(): String =
+    label?.takeIf { it.isNotBlank() }
+        ?: runCatching {
+            DateTimeFormatter.ofPattern("MMM d")
+                .withZone(ZoneId.systemDefault())
+                .format(Instant.parse(timestamp))
+        }.getOrDefault(timestamp.take(10))
 
 /**
  * Trend information for a metric

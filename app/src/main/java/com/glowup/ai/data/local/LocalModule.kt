@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,6 +23,18 @@ private val Context.glowUpSessionDataStore: DataStore<Preferences> by preference
 @Module
 @InstallIn(SingletonComponent::class)
 object LocalModule {
+    private val outboxMigration1To2 =
+        object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "ALTER TABLE capture_outbox ADD COLUMN idempotencyKey TEXT NOT NULL DEFAULT ''",
+                )
+                database.execSQL(
+                    "UPDATE capture_outbox SET idempotencyKey = 'legacy-' || id WHERE idempotencyKey = ''",
+                )
+            }
+        }
+
     @Provides
     @Singleton
     fun provideSessionDataStore(
@@ -84,9 +98,7 @@ object LocalModule {
     ): GlowUpOutboxDatabase =
         Room
             .databaseBuilder(context, GlowUpOutboxDatabase::class.java, "glowup_outbox.db")
-            // Deliberately no fallbackToDestructiveMigration() and no addMigrations() yet:
-            // version 1 has nothing to migrate from. The next schema bump MUST add a real
-            // Migration here instead of reaching for a destructive fallback.
+            .addMigrations(outboxMigration1To2)
             .build()
 
     @Provides

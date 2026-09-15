@@ -5,6 +5,8 @@ from dataclasses import asdict, dataclass
 
 from PIL import Image
 
+MAX_IMAGE_PIXELS = 25_000_000
+
 
 @dataclass
 class CaptureQuality:
@@ -153,6 +155,8 @@ def inspect_image(image_bytes: bytes) -> dict:
     """Return server-authoritative image checks before metric extraction."""
 
     with Image.open(io.BytesIO(image_bytes)) as original:
+        if original.width * original.height > MAX_IMAGE_PIXELS:
+            raise ValueError("image dimensions are too large")
         image = original.convert("RGB")
         width, height = image.size
         if width < 160 or height < 160:

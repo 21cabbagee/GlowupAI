@@ -71,6 +71,9 @@ class InsightsRepository
 
         suspend fun history(userId: String): GlowResult<List<QnaMessage>> = apiCall { api.getQnaHistory(userId).map { it.toDomain() } }
 
+        suspend fun reportAnswer(userId: String, messageId: String): GlowResult<Unit> =
+            apiCall { api.reportQna(userId, messageId) }
+
         /** Open route (no `user_id`, no Premium gate). Run BEFORE continuing a Q&A conversation —
          * `scope == dermatology_review` is a clinician hand-off, never something to keep chatting
          * about diagnostically. */

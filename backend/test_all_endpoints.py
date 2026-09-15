@@ -61,7 +61,7 @@ class EndpointTester:
         if success and data.get("user_id"):
             self.user_id = data["user_id"]
 
-        # 2. POST /api/auth/session (needs valid Firebase token - will likely fail)
+        # 2. POST /api/auth/session (needs valid Supabase token - will likely fail)
         success, status, data = self.test("POST", "/api/auth/session", headers={"Authorization": DUMMY_TOKEN})
         self.log_result("POST /api/auth/session", success, status, data)
 

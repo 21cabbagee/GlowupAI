@@ -7,8 +7,8 @@ import android.graphics.Matrix
 import android.media.ExifInterface
 import android.net.Uri
 import android.util.Base64
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.InputStream
 import kotlin.math.max
 
@@ -18,24 +18,35 @@ object CaptureImageProcessor {
     const val JPEG_QUALITY = 90
     const val MIN_DIMENSION_PX = 160
 
-    fun processCameraJpeg(
-        jpegBytes: ByteArray,
+    /**
+     * Processes the CameraX output directly from disk. Keeping the compressed capture as a file
+     * until sampled decoding avoids a second full-size ByteArray allocation on high-resolution
+     * devices.
+     *
+     * [jpegFile] is owned by the caller and is not deleted here; camera-flow cleanup must happen
+     * after this function returns, including when decoding fails or the coroutine is cancelled.
+     */
+    fun processCameraFile(
+        jpegFile: File,
         rotationDegrees: Int,
     ): Bitmap {
-        require(jpegBytes.isNotEmpty()) { "Captured image is empty" }
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size, bounds)
+        require(jpegFile.isFile && jpegFile.length() > 0L) { "Captured image is empty" }
+        val bounds = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+            jpegFile.inputStream().use { BitmapFactory.decodeStream(it, null, this) }
+        }
         requireValidBounds(bounds)
         val decoded =
-            BitmapFactory.decodeByteArray(
-                jpegBytes,
-                0,
-                jpegBytes.size,
-                BitmapFactory.Options().apply { inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight) },
-            ) ?: error("Could not decode captured image")
+            jpegFile.inputStream().use {
+                BitmapFactory.decodeStream(
+                    it,
+                    null,
+                    BitmapFactory.Options().apply { inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight) },
+                )
+            } ?: error("Could not decode captured image")
         // CameraX OutputFileOptions stores orientation in EXIF. A non-zero explicit rotation is
         // still honoured for callers that provide an ImageProxy-derived JPEG.
-        val degrees = if (rotationDegrees != 0) rotationDegrees else readExifRotationDegrees(ByteArrayInputStream(jpegBytes))
+        val degrees = if (rotationDegrees != 0) rotationDegrees else jpegFile.inputStream().use(::readExifRotationDegrees)
         return scaleToMaxDimension(rotateIfNeeded(decoded, degrees), MAX_DIMENSION_PX)
     }
 
@@ -60,6 +71,24 @@ object CaptureImageProcessor {
             } ?: error("Could not decode picked image")
         val rotation = resolver.openInputStream(uri)?.use(::readExifRotationDegrees) ?: 0
         return scaleToMaxDimension(rotateIfNeeded(decoded, rotation), MAX_DIMENSION_PX)
+    }
+
+    /**
+     * Decodes and encodes a picked gallery image without retaining the original compressed bytes.
+     * The returned payload is bounded by [MAX_DIMENSION_PX] before JPEG encoding; the bitmap is
+     * always released before this function returns.
+     */
+    fun processGalleryUriToBase64(
+        context: Context,
+        uri: Uri,
+    ): String {
+        val bitmap = processGalleryUri(context, uri)
+        return try {
+            require(meetsMinimumDimensions(bitmap)) { "That image is too small" }
+            encodeToBase64Jpeg(bitmap)
+        } finally {
+            if (!bitmap.isRecycled) bitmap.recycle()
+        }
     }
 
     fun encodeToBase64Jpeg(bitmap: Bitmap): String {
@@ -125,14 +154,14 @@ object CaptureImageProcessor {
         return scaled
     }
 
-    /** Decode at no more than roughly 2x the upload target, preventing huge gallery images from OOMing. */
-    private fun calculateInSampleSize(
+    /** Decode close to the upload target, preventing huge gallery images from OOMing. */
+    internal fun calculateInSampleSize(
         width: Int,
         height: Int,
     ): Int {
         val longest = max(width, height)
         var sample = 1
-        while (longest / (sample * 2) > MAX_DIMENSION_PX * 2) sample *= 2
+        while (longest / (sample * 2) > MAX_DIMENSION_PX) sample *= 2
         return sample
     }
 }

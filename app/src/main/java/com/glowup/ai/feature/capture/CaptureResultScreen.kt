@@ -34,6 +34,7 @@ import com.glowup.ai.core.ui.StatDelta
 import com.glowup.ai.core.ui.StatDeltaDirection
 import com.glowup.ai.core.ui.StatTile
 import com.glowup.ai.domain.model.AppearanceMetric
+import com.glowup.ai.domain.model.AnalysisEnvelope
 import com.glowup.ai.domain.model.BaselineComparison
 import com.glowup.ai.domain.model.CaptureResult
 import com.glowup.ai.domain.model.MeasurementAgreement
@@ -43,7 +44,8 @@ import java.util.Locale
  * `POST /api/captures`'s accepted response, rendered with the REAL metrics from the server
  * (ANDROID_PLAN.md 3.2 item 7). The legacy `ResultScreenNew` hardcoded 5 of 6 metrics as
  * `8/7/9/6/8`; every value below is `metric.<field>` off [CaptureResultCache] or an explicit
- * "not available yet" label — never a placeholder number.
+ * "not available yet" label — never a placeholder number. The server detail
+ * route restores the same contract after process death.
  */
 @Composable
 fun CaptureResultRoute(
@@ -57,6 +59,7 @@ fun CaptureResultRoute(
         uiState = uiState,
         feedbackState = feedbackState,
         onSubmitFeedback = viewModel::submitFeedback,
+        onRetry = viewModel::load,
         onDone = onDone,
     )
 }
@@ -66,6 +69,7 @@ private fun CaptureResultScreen(
     uiState: CaptureResultUiState,
     feedbackState: MeasurementFeedbackUiState,
     onSubmitFeedback: (MeasurementAgreement, String?) -> Unit,
+    onRetry: () -> Unit,
     onDone: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -88,6 +92,20 @@ private fun CaptureResultScreen(
                         body = "This can happen after the app restarts. Your capture was saved — check it from your history on Home.",
                         ctaLabel = "Back to Home",
                         onCtaClick = onDone,
+                    )
+                }
+            }
+
+            is CaptureResultUiState.Error -> {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    EmptyState(
+                        title = "Couldn't load this result",
+                        body = uiState.message,
+                        ctaLabel = "Try again",
+                        onCtaClick = onRetry,
                     )
                 }
             }
@@ -133,10 +151,13 @@ private fun CaptureResultContent(
             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
         )
 
-        MetricsGrid(
-            metric = result.metric,
-            baselineComparison = result.baselineComparison,
-        )
+        result.analysis?.let { AnalysisSummaryCard(it) }
+        if (result.analysis == null && result.metric.hasValues()) {
+            MetricsGrid(
+                metric = result.metric,
+                baselineComparison = result.baselineComparison,
+            )
+        }
 
         DisclaimerNote(
             modifier = Modifier.padding(top = 16.dp),
@@ -168,6 +189,70 @@ private fun CaptureResultContent(
         )
     }
 }
+
+@Composable
+private fun AnalysisSummaryCard(analysis: AnalysisEnvelope) {
+    val glow = LocalGlowColors.current
+    GlowCard(modifier = Modifier.fillMaxWidth()) {
+        val status = analysis.status.lowercase()
+        val title = when (status) {
+            "completed" -> "What GlowUp noticed"
+            "needs_retake" -> "A clearer photo is needed"
+            "queued", "running" -> "Analysis in progress"
+            "unavailable" -> "Analysis unavailable"
+            else -> "Analysis not available"
+        }
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = glow.ink900)
+        analysis.summary?.takeIf { it.isNotBlank() }?.let {
+            Text(it, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 8.dp))
+        }
+        if (analysis.observations.isNotEmpty()) {
+            analysis.observations.forEach { observation ->
+                Column(modifier = Modifier.padding(top = 12.dp)) {
+                    Text(
+                        text = "${observation.region.replace('_', ' ')} · ${observation.concern.replace('_', ' ')}",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = glow.ink900,
+                    )
+                    Text(observation.description, style = MaterialTheme.typography.bodySmall, color = glow.ink600)
+                    Text(
+                        text = "${observation.visibility.replace('_', ' ')} · ${observation.extent.replace('_', ' ')}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = glow.ink600,
+                    )
+                }
+            }
+        }
+        analysis.quality?.issues?.takeIf { it.isNotEmpty() }?.let { issues ->
+            Text(
+                text = "Photo notes: ${issues.joinToString { it.replace('_', ' ') }}",
+                style = MaterialTheme.typography.bodySmall,
+                color = glow.ink600,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+        }
+        analysis.limitations.takeIf { it.isNotEmpty() }?.forEach { limitation ->
+            Text(
+                text = limitation,
+                style = MaterialTheme.typography.bodySmall,
+                color = glow.ink600,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
+        if (analysis.status != "completed" && analysis.unavailableReason != null) {
+            Text(
+                text = analysis.unavailableReason.replace('_', ' '),
+                style = MaterialTheme.typography.bodySmall,
+                color = glow.ink600,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+private fun AppearanceMetric.hasValues(): Boolean =
+    confidence != null || rednessScore != null || blemishCount != null || darkspotArea != null || textureScore != null
 
 @Composable
 private fun MetricsGrid(

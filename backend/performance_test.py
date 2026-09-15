@@ -30,8 +30,8 @@ sys.path.insert(0, str(backend_dir))
 
 # Environment setup
 os.environ.setdefault("DATABASE_URL", "sqlite:///test_performance.db")
-os.environ.setdefault("FIREBASE_PROJECT_ID", "test-project")
-os.environ.setdefault("JWT_SECRET", "test-secret-key-for-performance-testing")
+os.environ.setdefault("SUPABASE_URL", "https://performance-test.supabase.co")
+os.environ.setdefault("SUPABASE_JWT_SECRET", "test-secret-key-for-performance-testing")
 
 
 class PerformanceTestResult:

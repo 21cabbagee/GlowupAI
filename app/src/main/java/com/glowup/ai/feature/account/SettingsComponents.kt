@@ -214,25 +214,22 @@ fun NotificationsSection(
 
 @Composable
 fun DataPrivacySection(
-    cloudBackupEnabled: Boolean,
-    onCloudBackupToggled: (Boolean) -> Unit,
-    onExportDataClick: () -> Unit,
-    exportInProgress: Boolean,
+    onManageDataClick: () -> Unit,
+    onPrivacyPolicyClick: () -> Unit,
+    onTermsClick: () -> Unit,
+    onMedicalDisclaimerClick: () -> Unit,
 ) {
     val glow = LocalGlowColors.current
-    val context = LocalContext.current
 
     GlowCard(modifier = Modifier.fillMaxWidth()) {
         SectionHeader(title = "Data & Privacy")
 
         Spacer(modifier = Modifier.height(GlowSpacing.md))
 
-        // Cloud Backup Toggle
-        SettingsToggleRow(
-            title = "Cloud backup",
-            description = "Automatically back up your data to the cloud",
-            checked = cloudBackupEnabled,
-            onCheckedChange = onCloudBackupToggled,
+        Text(
+            text = "Your account history is securely synced so it remains available after reinstalling or changing devices.",
+            style = MaterialTheme.typography.bodySmall,
+            color = glow.ink600,
         )
 
         HorizontalDivider(
@@ -240,12 +237,11 @@ fun DataPrivacySection(
             color = glow.ink600.copy(alpha = 0.12f),
         )
 
-        // Export All Data
         SettingsClickableRow(
-            title = "Export all data",
-            description = "Download your data as a JSON file",
-            onClick = onExportDataClick,
-            loading = exportInProgress,
+            title = "Manage consent & account data",
+            description = "Review photo consent, export data, or delete your account",
+            onClick = onManageDataClick,
+            showArrow = true,
         )
 
         HorizontalDivider(
@@ -256,10 +252,7 @@ fun DataPrivacySection(
         // Privacy Policy Link
         SettingsClickableRow(
             title = "Privacy policy",
-            onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://glowup.ai/privacy"))
-                context.startActivity(intent)
-            },
+            onClick = onPrivacyPolicyClick,
             showArrow = true,
         )
 
@@ -271,10 +264,19 @@ fun DataPrivacySection(
         // Terms of Service Link
         SettingsClickableRow(
             title = "Terms of service",
-            onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://glowup.ai/terms"))
-                context.startActivity(intent)
-            },
+            onClick = onTermsClick,
+            showArrow = true,
+        )
+
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = GlowSpacing.md),
+            color = glow.ink600.copy(alpha = 0.12f),
+        )
+
+        SettingsClickableRow(
+            title = "Medical disclaimer",
+            description = "Understand the app's cosmetic-only scope",
+            onClick = onMedicalDisclaimerClick,
             showArrow = true,
         )
     }
@@ -683,37 +685,6 @@ fun SettingsInfoRow(
 // ================================================================================================
 // Dialog Components
 // ================================================================================================
-
-@Composable
-fun DeleteAccountDialog(
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Delete account?") },
-        text = {
-            Text(
-                "This will permanently delete your account and all associated data. " +
-                    "This action cannot be undone."
-            )
-        },
-        confirmButton = {
-            GlowButton(
-                text = "Delete account",
-                onClick = onConfirm,
-                variant = GlowButtonVariant.Danger,
-            )
-        },
-        dismissButton = {
-            GlowButton(
-                text = "Cancel",
-                onClick = onDismiss,
-                variant = GlowButtonVariant.Ghost,
-            )
-        },
-    )
-}
 
 @Composable
 fun TimePickerDialog(

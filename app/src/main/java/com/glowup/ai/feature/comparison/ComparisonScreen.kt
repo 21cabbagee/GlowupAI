@@ -1,5 +1,8 @@
 package com.glowup.ai.feature.comparison
 
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import com.glowup.ai.core.ui.CapturePhoto
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -23,14 +26,18 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,8 +62,8 @@ import kotlin.math.abs
 
 /**
  * Photo Comparison Screen
- * Side-by-side comparison of two captures with metrics comparison
- * Shows baseline vs current with trend indicators
+ * Side-by-side comparison of two captures with server-owned qualitative
+ * observations. Legacy numeric metrics are shown only when available.
  */
 @Composable
 fun ComparisonRoute(
@@ -79,6 +86,21 @@ fun ComparisonScreen(
     onRetry: () -> Unit,
     onComparisonSelected: (Int, Int) -> Unit,
 ) {
+    val context = LocalContext.current
+    val share = {
+        if (state is ComparisonUiState.Content) {
+            val before = state.history[state.selectedBaselineIndex]
+            val after = state.history[state.selectedCurrentIndex]
+            val text = "My GlowUp AI progress: ${before.capturedAt.take(10)} to ${after.capturedAt.take(10)}\n" +
+                "Redness: ${before.rednessScore ?: "unavailable"} → ${after.rednessScore ?: "unavailable"}\n" +
+                "Blemishes: ${before.blemishCount ?: "unavailable"} → ${after.blemishCount ?: "unavailable"}\n" +
+                "Cosmetic tracking only, not a diagnosis."
+            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, text)
+            }, "Share progress"))
+        }
+    }
     Scaffold(
         topBar = {
             GlowTopBar(
@@ -86,7 +108,7 @@ fun ComparisonScreen(
                 onBack = onBack,
                 actions = {
                     if (state is ComparisonUiState.Content) {
-                        IconButton(onClick = { /* TODO: Share functionality */ }) {
+                        IconButton(onClick = share) {
                             Icon(
                                 imageVector = Icons.Filled.Share,
                                 contentDescription = "Share comparison",
@@ -119,6 +141,7 @@ fun ComparisonScreen(
                     padding = padding,
                     state = state,
                     onComparisonSelected = onComparisonSelected,
+                    onShare = share,
                 )
             }
         }
@@ -146,6 +169,7 @@ private fun ComparisonContent(
     padding: PaddingValues,
     state: ComparisonUiState.Content,
     onComparisonSelected: (Int, Int) -> Unit,
+    onShare: () -> Unit,
 ) {
     val baseline = state.history[state.selectedBaselineIndex]
     val current = state.history[state.selectedCurrentIndex]
@@ -162,6 +186,15 @@ private fun ComparisonContent(
             ),
         verticalArrangement = Arrangement.spacedBy(GlowSpacing.md),
     ) {
+        item {
+            CapturePairPicker(
+                history = state.history,
+                baselineIndex = state.selectedBaselineIndex,
+                currentIndex = state.selectedCurrentIndex,
+                onSelected = onComparisonSelected,
+            )
+        }
+
         // Header info card
         item {
             ComparisonHeaderCard(baseline = baseline, current = current)
@@ -172,19 +205,142 @@ private fun ComparisonContent(
             PhotoComparisonCard(baseline = baseline, current = current)
         }
 
-        // Metrics comparison table
         item {
-            MetricsComparisonCard(baseline = baseline, current = current)
+            QualitativeComparisonCard(
+                comparison = state.comparison,
+                loading = state.comparisonLoading,
+                error = state.comparisonError,
+            )
+        }
+
+        // Keep legacy numeric metrics only for older captures that actually
+        // have them; Luna comparisons are categorical and never fabricate
+        // percentage deltas.
+        if (listOf(
+                baseline.rednessScore, baseline.blemishCount, baseline.textureScore, baseline.darkspotArea,
+                current.rednessScore, current.blemishCount, current.textureScore, current.darkspotArea,
+            ).any { it != null }
+        ) {
+            item {
+                MetricsComparisonCard(baseline = baseline, current = current)
+            }
         }
 
         // Share button
         item {
             GlowButton(
                 text = "Share Progress",
-                onClick = { /* TODO: Share functionality */ },
+                onClick = onShare,
                 modifier = Modifier.fillMaxWidth(),
                 variant = GlowButtonVariant.Primary,
             )
+        }
+    }
+}
+
+@Composable
+private fun CapturePairPicker(
+    history: List<HistoryItem>,
+    baselineIndex: Int,
+    currentIndex: Int,
+    onSelected: (Int, Int) -> Unit,
+) {
+    var baselineOpen by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var currentOpen by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val glow = LocalGlowColors.current
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = glow.surfaceCard),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = GlowSpacing.sm, vertical = 2.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column {
+                Text("Compare", style = MaterialTheme.typography.labelSmall, color = glow.ink600)
+                TextButton(onClick = { baselineOpen = true }) {
+                    Text("Before: ${formatCaptureDate(history[baselineIndex].capturedAt)}")
+                }
+                DropdownMenu(expanded = baselineOpen, onDismissRequest = { baselineOpen = false }) {
+                    history.forEachIndexed { index, item ->
+                        DropdownMenuItem(
+                            text = { Text(formatCaptureDate(item.capturedAt)) },
+                            onClick = {
+                                baselineOpen = false
+                                onSelected(index, currentIndex)
+                            },
+                        )
+                    }
+                }
+            }
+            Column {
+                Text("Against", style = MaterialTheme.typography.labelSmall, color = glow.ink600)
+                TextButton(onClick = { currentOpen = true }) {
+                    Text("After: ${formatCaptureDate(history[currentIndex].capturedAt)}")
+                }
+                DropdownMenu(expanded = currentOpen, onDismissRequest = { currentOpen = false }) {
+                    history.forEachIndexed { index, item ->
+                        DropdownMenuItem(
+                            text = { Text(formatCaptureDate(item.capturedAt)) },
+                            onClick = {
+                                currentOpen = false
+                                onSelected(baselineIndex, index)
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun QualitativeComparisonCard(
+    comparison: com.glowup.ai.data.remote.dto.ComparisonResponseDto?,
+    loading: Boolean,
+    error: String?,
+) {
+    val glowColors = LocalGlowColors.current
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = glowColors.surfaceCard),
+    ) {
+        Column(modifier = Modifier.padding(GlowSpacing.md), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("AI observation comparison", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            when {
+                loading -> Text("Comparing visible appearance…", color = glowColors.ink600)
+                comparison == null -> Text(
+                    error ?: "No qualitative comparison is available yet.",
+                    color = glowColors.ink600,
+                )
+                comparison.status != "completed" -> Text(
+                    comparison.reasons.firstOrNull() ?: "Comparison is unavailable for these captures.",
+                    color = glowColors.ink600,
+                )
+                else -> {
+                    comparison.language?.answer?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    val changes = if (comparison.changes.isNotEmpty()) comparison.changes else comparison.comparison?.changes.orEmpty()
+                    if (changes.isEmpty()) {
+                        Text(
+                            "No reliable visible change was identified. This is cosmetic tracking, not a diagnosis.",
+                            color = glowColors.ink600,
+                        )
+                    } else {
+                        changes.take(6).forEach { change ->
+                            Text(
+                                "${change.region.replace('_', ' ')} · ${change.concern.replace('_', ' ')}: ${change.change.replace('_', ' ')} — ${change.description}",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                    val limitations = comparison.comparison?.limitations.orEmpty()
+                    limitations.firstOrNull()?.let { Text("Limit: $it", style = MaterialTheme.typography.bodySmall, color = glowColors.ink600) }
+                }
+            }
         }
     }
 }
@@ -318,6 +474,7 @@ private fun PhotoComparisonCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CapturePhoto(baseline.photoPath, "Baseline photo from ${baseline.capturedAt.take(10)}", Modifier.fillMaxWidth().weight(1f))
                         Text(
                             text = "BASELINE",
                             style = MaterialTheme.typography.labelSmall,
@@ -349,6 +506,7 @@ private fun PhotoComparisonCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CapturePhoto(current.photoPath, "Current photo from ${current.capturedAt.take(10)}", Modifier.fillMaxWidth().weight(1f))
                         Text(
                             text = "CURRENT",
                             style = MaterialTheme.typography.labelSmall,
@@ -399,7 +557,7 @@ private fun MetricsComparisonCard(
                     .padding(GlowSpacing.md),
         ) {
             Text(
-                text = "Metrics Comparison",
+                text = "Legacy numeric metrics",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = glowColors.ink900,

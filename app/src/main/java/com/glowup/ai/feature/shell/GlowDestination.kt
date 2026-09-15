@@ -27,7 +27,13 @@ sealed interface GlowDestination {
 
     @Serializable data object SignIn : GlowDestination
 
+    @Serializable data object ResetPassword : GlowDestination
+
     @Serializable data object PrivacyPolicy : GlowDestination
+
+    @Serializable data object TermsOfService : GlowDestination
+
+    @Serializable data object MedicalDisclaimer : GlowDestination
 
     // ---- feature/onboarding ------------------------------------------------
     @Serializable data object Onboarding : GlowDestination
@@ -41,6 +47,9 @@ sealed interface GlowDestination {
 
     // ---- feature/capture ----------------------------------------------------
     @Serializable data object Capture : GlowDestination
+
+    /** Full capture history, opened from Home's recent-photo section. */
+    @Serializable data object PhotoHistory : GlowDestination
 
     @Serializable data class CaptureResult(
         val captureId: String,
@@ -99,10 +108,14 @@ sealed interface GlowDestination {
                 Splash::class,
                 Welcome::class,
                 SignIn::class,
+                ResetPassword::class,
                 PrivacyPolicy::class,
+                TermsOfService::class,
+                MedicalDisclaimer::class,
                 Onboarding::class,
                 Consent::class,
                 Capture::class,
+                PhotoHistory::class,
                 CaptureResult::class,
             )
     }

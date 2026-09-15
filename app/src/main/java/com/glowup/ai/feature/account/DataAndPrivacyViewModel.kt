@@ -8,7 +8,7 @@ import com.glowup.ai.core.util.GlowResult
 import com.glowup.ai.data.repository.PrivacyRepository
 import com.glowup.ai.data.repository.SessionRepository
 import com.glowup.ai.domain.model.ConsentState
-import com.glowup.ai.feature.auth.FirebaseAuthGateway
+import com.glowup.ai.feature.auth.SupabaseAuthGateway
 import com.glowup.ai.feature.auth.toMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -87,6 +87,7 @@ class DataAndPrivacyViewModel
         @ApplicationContext private val appContext: Context,
         private val sessionRepository: SessionRepository,
         private val privacyRepository: PrivacyRepository,
+        private val authGateway: SupabaseAuthGateway,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(DataAndPrivacyUiState())
         val uiState: StateFlow<DataAndPrivacyUiState> = _uiState.asStateFlow()
@@ -258,7 +259,7 @@ class DataAndPrivacyViewModel
                     is GlowResult.Success -> {
                         // PrivacyRepository.deleteAccount already called SessionStore.clearSession()
                         // on success — GlowUp keys only, never a blanket wipe.
-                        FirebaseAuthGateway.signOut()
+                        authGateway.signOut()
                         _deleted.value = true
                     }
 

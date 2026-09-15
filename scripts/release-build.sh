@@ -2,7 +2,7 @@
 # GlowUp AI - Release Build Script
 # Usage: ./scripts/release-build.sh [staging|production]
 
-set -e  # Exit on error
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -48,15 +48,6 @@ if [[ ! -f "app/keystore.properties" ]]; then
 fi
 echo "  ✓ keystore.properties found"
 
-# Check google-services.json exists
-if [[ ! -f "app/google-services.json" ]]; then
-    echo -e "${RED}Error: app/google-services.json not found${NC}"
-    echo "Please download it from Firebase Console"
-    echo "See RELEASE_BUILD_GUIDE.md Step 4 for instructions"
-    exit 1
-fi
-echo "  ✓ google-services.json found"
-
 # Check gradlew exists
 if [[ ! -f "gradlew" ]]; then
     echo -e "${RED}Error: gradlew not found${NC}"
@@ -74,7 +65,7 @@ echo -e "${YELLOW}[2/7] Configuring API URL...${NC}"
 
 if [[ "$BUILD_TYPE" == "staging" ]]; then
     # Staging build
-    if [[ -z "${STAGING_API_BASE_URL}" ]]; then
+    if [[ -z "${STAGING_API_BASE_URL:-}" ]]; then
         echo -e "${BLUE}Enter staging API URL (e.g., https://staging.glowup.example.com/api/):${NC}"
         read -r STAGING_API_BASE_URL
 
@@ -84,22 +75,25 @@ if [[ "$BUILD_TYPE" == "staging" ]]; then
         fi
     fi
     API_URL="$STAGING_API_BASE_URL"
+    if [[ -z "${STAGING_SUPABASE_URL:-}" || -z "${STAGING_SUPABASE_ANON_KEY:-}" || -z "${STAGING_GOOGLE_WEB_CLIENT_ID:-}" ]]; then
+        echo -e "${RED}Error: STAGING_SUPABASE_URL, STAGING_SUPABASE_ANON_KEY, and STAGING_GOOGLE_WEB_CLIENT_ID are required${NC}"
+        exit 1
+    fi
     GRADLE_TASK="assembleStaging"
     GRADLE_BUNDLE_TASK="bundleStaging"
     GRADLE_PROPERTY="-PSTAGING_API_BASE_URL=$STAGING_API_BASE_URL"
     OUTPUT_DIR="staging"
 else
     # Production build
-    if [[ -z "${RELEASE_API_BASE_URL}" ]]; then
-        echo -e "${BLUE}Enter production API URL (e.g., https://api.glowup.example.com/api/):${NC}"
-        read -r RELEASE_API_BASE_URL
-
-        if [[ -z "${RELEASE_API_BASE_URL}" ]]; then
-            echo -e "${RED}Error: Production API URL is required${NC}"
-            exit 1
-        fi
+    if [[ -z "${RELEASE_API_BASE_URL:-}" ]]; then
+        RELEASE_API_BASE_URL="https://backend-piyushcapitals-4171.vercel.app/api/"
+        echo -e "${BLUE}Using Vercel production API: ${RELEASE_API_BASE_URL}${NC}"
     fi
     API_URL="$RELEASE_API_BASE_URL"
+    if [[ -z "${RELEASE_SUPABASE_URL:-}" || -z "${RELEASE_SUPABASE_ANON_KEY:-}" || -z "${RELEASE_GOOGLE_WEB_CLIENT_ID:-}" ]]; then
+        echo -e "${RED}Error: RELEASE_SUPABASE_URL, RELEASE_SUPABASE_ANON_KEY, and RELEASE_GOOGLE_WEB_CLIENT_ID are required${NC}"
+        exit 1
+    fi
     GRADLE_TASK="assembleRelease"
     GRADLE_BUNDLE_TASK="bundleRelease"
     GRADLE_PROPERTY="-PRELEASE_API_BASE_URL=$RELEASE_API_BASE_URL"
@@ -107,6 +101,10 @@ else
 fi
 
 echo -e "${GREEN}API URL: $API_URL${NC}"
+if [[ ! "$API_URL" =~ ^https:// ]]; then
+    echo -e "${RED}Error: release and staging builds require an HTTPS API URL${NC}"
+    exit 1
+fi
 echo ""
 
 # ============================================
@@ -173,8 +171,9 @@ if jarsigner -verify "$AAB_PATH" > /dev/null 2>&1; then
     echo "Certificate details:"
     jarsigner -verify -verbose -certs "$AAB_PATH" 2>&1 | grep -A 3 "Signed by" || echo "  (Details available via jarsigner -verify -verbose -certs)"
 else
-    echo -e "${RED}Warning: App Bundle signature verification failed${NC}"
-    echo "This might indicate debug signing - DO NOT upload to Play Store!"
+    echo -e "${RED}Error: App Bundle signature verification failed${NC}"
+    echo "Refusing to report a successful production build."
+    exit 1
 fi
 
 echo ""
@@ -227,7 +226,7 @@ if [[ "$BUILD_TYPE" == "staging" ]]; then
     echo "   adb install $APK_PATH"
     echo ""
     echo "2. Test these critical flows:"
-    echo "   - Firebase Authentication (Email + Google)"
+    echo "   - Supabase Auth (Email + Google)"
     echo "   - Network connectivity to staging backend"
     echo "   - Camera capture and upload"
     echo "   - All navigation and key features"
@@ -243,7 +242,7 @@ else
     fi
     echo ""
     echo "2. Verify these before uploading to Play Store:"
-    echo "   ✓ Firebase Auth works (Email + Google Sign-In)"
+    echo "   ✓ Supabase Auth works (Email + Google Sign-In)"
     echo "   ✓ App reaches production backend successfully"
     echo "   ✓ Camera and photo upload work"
     echo "   ✓ No crashes or critical bugs"

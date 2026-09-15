@@ -1,15 +1,10 @@
 package com.glowup.ai.data.telemetry
 
-import android.content.Context
-import android.os.Bundle
 import com.glowup.ai.core.util.GlowResult
 import com.glowup.ai.data.local.SessionStore
 import com.glowup.ai.data.repository.HomeRepository
 import com.glowup.ai.di.ApplicationScope
 import com.glowup.ai.domain.model.EngagementEventRequest
-import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -39,7 +34,7 @@ enum class TelemetryEvent(
 /**
  * Fire-and-forget engagement telemetry.
  *
- * The caller only enqueues a small, bounded event and never waits for network or Firebase. The
+ * The caller only enqueues a small, bounded event and never waits for the network. The
  * queue contains stable event names and identifiers only; photo bytes, question text, notes, and
  * other free-form user content are intentionally not accepted by this API. Failed network posts
  * are retried off the UI thread and then dropped, so telemetry can never block product flows.
@@ -48,7 +43,6 @@ enum class TelemetryEvent(
 class Telemetry
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
         private val sessionStore: SessionStore,
         private val homeRepository: HomeRepository,
         @ApplicationScope private val appScope: CoroutineScope,
@@ -60,13 +54,6 @@ class Telemetry
         )
 
         private val queue = Channel<QueuedEvent>(capacity = 64)
-        private val analytics: FirebaseAnalytics? by lazy {
-            runCatching { FirebaseAnalytics.getInstance(context) }.getOrNull()
-        }
-        private val crashlytics: FirebaseCrashlytics? by lazy {
-            runCatching { FirebaseCrashlytics.getInstance() }.getOrNull()
-        }
-
         init {
             appScope.launch {
                 for (event in queue) {
@@ -86,22 +73,13 @@ class Telemetry
                     .filterKeys { it.matches(SAFE_KEY) }
                     .filterValues { it.matches(SAFE_VALUE) }
                     .mapValues { it.value.take(48) }
-            analytics?.let { firebase ->
-                runCatching {
-                    firebase.logEvent(
-                        event.wireName,
-                        Bundle().apply {
-                            safeMetadata.forEach { (key, value) -> putString(key, value) }
-                        },
-                    )
-                }
-            }
             queue.trySend(QueuedEvent(event, referenceId?.takeIf { it.matches(SAFE_VALUE) }, safeMetadata))
         }
 
         /** Records unexpected app failures without logging user content. */
         fun recordNonFatal(throwable: Throwable) {
-            runCatching { crashlytics?.recordException(throwable) }
+            // Deliberately keep crash reporting out of the auth/storage migration. Callers can
+            // still provide a non-sensitive diagnostics implementation later.
         }
 
         private suspend fun deliver(event: QueuedEvent) {

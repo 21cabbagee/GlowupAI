@@ -6,25 +6,35 @@ import base64
 import binascii
 import logging
 import os
+import io
 from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException
+from fastapi.responses import Response
+from PIL import Image, ImageOps
 from pydantic import BaseModel, Field
 
-from ..auth import verify_id_token
+from ..auth import AuthError, verify_access_token
 
 logger = logging.getLogger(__name__)
+
+# Base64 expands binary data by roughly one third. Bound it in the request
+# model so hostile clients cannot force an unbounded allocation before image
+# decoding and compression begin.
+MAX_IMAGE_BASE64_CHARS = 16_000_000
+MAX_IMAGE_BYTES = 12_000_000
 
 
 class CaptureCreate(BaseModel):
     user_id: str
-    image_base64: str
+    image_base64: str = Field(min_length=4, max_length=MAX_IMAGE_BASE64_CHARS)
     quality: dict[str, Any] | None = None
     captured_at: str | None = None
     device_meta: dict[str, Any] | None = None
     is_baseline: bool = False
     vertical: str = "skin"
     experiment_id: str | None = None
+    idempotency_key: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 class CheckInCreate(BaseModel):
@@ -55,11 +65,17 @@ class ReprocessCreate(BaseModel):
 
 
 class ShelfScanCreate(BaseModel):
-    image_base64: str
+    image_base64: str = Field(min_length=4, max_length=MAX_IMAGE_BASE64_CHARS)
 
 
 class ShelfScanConfirm(BaseModel):
     selections: list[dict[str, Any]]
+
+
+class ComparisonCreate(BaseModel):
+    earlier_capture_id: str = Field(min_length=1, max_length=100)
+    later_capture_id: str = Field(min_length=1, max_length=100)
+    vertical: str = Field(default="skin", pattern="^skin$")
 
 
 def setup_captures_router(
@@ -81,6 +97,8 @@ def setup_captures_router(
             raise HTTPException(
                 status_code=400, detail="image_base64 must be valid base64"
             ) from exc
+        if len(image) > MAX_IMAGE_BYTES:
+            raise HTTPException(status_code=413, detail="image is too large")
 
         # Compress image before processing
         compressed_image = compressor.compress_image(
@@ -99,16 +117,23 @@ def setup_captures_router(
             payload.is_baseline,
             payload.vertical,
             payload.experiment_id,
+            payload.idempotency_key,
         )
 
-        # Track analytics
-        capture_id = result.get("capture_id")
-        if capture_id:
+        # An idempotency replay returns the original capture, but must not
+        # repeat side effects such as analytics events or streak milestones.
+        # `_capture_created` is internal metadata set by CaptureService and is
+        # removed so the public response remains exactly the capture payload.
+        capture_was_created = result.pop("_capture_created", True)
+
+        # Track analytics only for a newly persisted capture.
+        capture_id = result.get("id") or result.get("capture_id")
+        if capture_was_created and capture_id:
             analytics.track_capture_created(
                 user_id=payload.user_id,
                 capture_id=capture_id,
                 is_baseline=payload.is_baseline,
-                metrics=result.get("metrics"),
+                metrics=result.get("metric") or result.get("metrics"),
             )
 
             # Check for streak milestone
@@ -126,22 +151,31 @@ def setup_captures_router(
     ) -> dict[str, Any]:
         """Submit feedback for a capture."""
         # Extract user_id from authorization
-        token_result = (
-            verify_id_token(
-                authorization.replace("Bearer ", ""),
-                service.settings.firebase_project_id,
+        if not authorization or not authorization.lower().startswith("bearer "):
+            raise HTTPException(status_code=401, detail="missing bearer token")
+        try:
+            token_result = verify_access_token(
+                authorization.split(" ", 1)[1].strip(),
+                service.settings.supabase_url,
+                service.settings.supabase_jwt_secret,
+                jwks_url=service.settings.supabase_jwks_url,
             )
-            if authorization
-            else None
+        except AuthError as exc:
+            raise HTTPException(status_code=401, detail=str(exc)) from exc
+        owner = service.db.fetchone(
+            "SELECT id FROM users WHERE supabase_uid = ? AND deleted_at IS NULL",
+            (token_result.uid,),
         )
-        uid = token_result.uid if token_result else None
-        if not uid:
-            raise HTTPException(status_code=401, detail="Unauthorized")
+        if not owner:
+            raise HTTPException(
+                status_code=403, detail="authenticated user is not registered"
+            )
+        owner_id = owner["id"]
 
         result: dict[str, Any] = run_handler(
             service.submit_capture_feedback,
             capture_id,
-            uid,
+            owner_id,
             payload.get("feedback_type"),
             payload.get("issues"),
             payload.get("corrections"),
@@ -174,15 +208,89 @@ def setup_captures_router(
         user_id: str,
         vertical: str = "skin",
         authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.history, user_id, vertical)
+        result: list[dict[str, Any]] = run_handler(service.history, user_id, vertical)
 
         # Track comparison viewed
-        if result and len(result.get("captures", [])) > 1:
-            capture_ids = [c.get("id") for c in result.get("captures", [])]
+        if len(result) > 1:
+            capture_ids = [c.get("id") for c in result]
             analytics.track_comparison_viewed(user_id, capture_ids)
 
+        return result
+
+    @router.get("/users/{user_id}/captures/{capture_id}/photo")
+    def capture_photo(
+        user_id: str, capture_id: str, authorization: str | None = Header(default=None)
+    ):
+        require_owner(user_id, authorization)
+        run_handler(service.require_user, user_id)
+        capture = service.db.fetchone(
+            "SELECT raw_ref FROM photo_captures WHERE id=? AND user_id=?",
+            (capture_id, user_id),
+        )
+        if not capture:
+            raise HTTPException(404, "Photo not found")
+        try:
+            raw = service.photos.read(capture["raw_ref"])
+        except (KeyError, FileNotFoundError):
+            raise HTTPException(404, "Photo is no longer available") from None
+        with Image.open(io.BytesIO(raw)) as source:
+            image = ImageOps.exif_transpose(source).convert("RGB")
+            image.thumbnail((1600, 1600))
+            output = io.BytesIO()
+            image.save(output, format="JPEG", quality=85)
+        return Response(
+            output.getvalue(),
+            media_type="image/jpeg",
+            headers={
+                "Cache-Control": "private, no-store",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
+
+    @router.get("/users/{user_id}/captures/{capture_id}")
+    def capture_detail(
+        user_id: str,
+        capture_id: str,
+        vertical: str = "skin",
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Owner-scoped capture detail for result recovery and deep links."""
+        require_owner(user_id, authorization)
+        result: dict[str, Any] = run_handler(
+            service.capture_detail, user_id, capture_id, vertical
+        )
+        return result
+
+    @router.post("/users/{user_id}/comparisons")
+    @router.post("/users/{user_id}/compare")
+    def compare_captures(
+        user_id: str,
+        payload: ComparisonCreate,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Compare two owner-scoped captures using the Luna vision stage."""
+        require_owner(user_id, authorization)
+        result: dict[str, Any] = run_handler(
+            service.compare_captures,
+            user_id,
+            payload.earlier_capture_id,
+            payload.later_capture_id,
+            payload.vertical,
+        )
+        return result
+
+    @router.get("/users/{user_id}/comparisons/{comparison_id}")
+    def comparison_detail(
+        user_id: str,
+        comparison_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        require_owner(user_id, authorization)
+        result: dict[str, Any] = run_handler(
+            service.comparison_detail, user_id, comparison_id
+        )
         return result
 
     @router.get("/users/{user_id}/check-ins")
@@ -293,6 +401,8 @@ def setup_captures_router(
             raise HTTPException(
                 status_code=400, detail="image_base64 must be valid base64"
             ) from exc
+        if len(image) > MAX_IMAGE_BYTES:
+            raise HTTPException(status_code=413, detail="image is too large")
         result: dict[str, Any] = run_handler(service.scan_shelf, user_id, image)
         return result
 
@@ -310,9 +420,9 @@ def setup_captures_router(
         job_id: str,
         payload: ShelfScanConfirm,
         authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(
+        result: list[dict[str, Any]] = run_handler(
             service.confirm_shelf_scan, user_id, job_id, payload.selections
         )
         return result

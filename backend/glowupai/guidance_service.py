@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import hashlib
 import uuid
 from collections.abc import Callable
 from typing import Any
@@ -291,6 +292,9 @@ class GuidanceService:
             (uid(), thread_id, "user", question, scope.scope),
         )
         citations = []
+        language_mode: str | None = None
+        language_policy: str | None = None
+        answer: str | None
         if scope.scope == "dermatology_review":
             answer = scope.message
         else:
@@ -306,27 +310,99 @@ class GuidanceService:
                 citations.append(
                     {"type": "capture", "date": item["captured_at"], "id": item["id"]}
                 )
-            provider_answer = getattr(self.insights, "answer", None)
-            answer = (
-                provider_answer(question, self._qna_evidence(user_id, history, events))
-                if callable(provider_answer)
-                else None
-            )
+            # The migrated path routes all language through the orchestrator:
+            # Gemini receives only validated text evidence, and a Gemini error
+            # triggers exactly one evidence-only Luna fallback.  The old
+            # insight adapter remains for legacy/local deployments.
+            orchestrator = getattr(self.parent, "ai_orchestrator", None)
+            if orchestrator is not None:
+                evidence = self._qna_evidence(user_id, history, events)
+                evidence_items = []
+                evidence_ids = []
+                for capture in history[-8:]:
+                    capture_id = str(capture.get("id", ""))
+                    if capture_id:
+                        evidence_ids.append(capture_id)
+                        evidence_items.append(
+                            {"id": capture_id, "type": "capture", "value": capture}
+                        )
+                for index, event in enumerate(events[-20:]):
+                    event_id = f"routine-{index}"
+                    evidence_ids.append(event_id)
+                    evidence_items.append(
+                        {"id": event_id, "type": "routine_event", "value": event}
+                    )
+                evidence_items.append(
+                    {
+                        "id": "qna-summary",
+                        "type": "summary",
+                        "value": {
+                            "capture_count": len(history),
+                            "routine_event_count": len(events),
+                            "verdicts": evidence.get("verdicts", []),
+                        },
+                    }
+                )
+                evidence_ids.append("qna-summary")
+                language_result = orchestrator.run_language(
+                    user_id=user_id,
+                    evidence={
+                        "evidence_ids": evidence_ids,
+                        "evidence": evidence_items,
+                        "question": question,
+                    },
+                    task_type="qna",
+                    data_class="personal_history",
+                    request_identity=(
+                        f"qna:{thread_id}:{hashlib.sha256(question.encode('utf-8')).hexdigest()[:16]}"
+                    ),
+                )
+                language_mode = str(
+                    language_result.get("language_mode") or "unavailable"
+                )
+                language_policy = str(language_result.get("policy") or "deny")
+                language = language_result.get("answer") or {}
+                candidate_answer = (
+                    language.get("answer") if isinstance(language, dict) else None
+                )
+                answer = candidate_answer if isinstance(candidate_answer, str) else None
+            else:
+                provider_answer = getattr(self.insights, "answer", None)
+                # The compatibility adapter is not allowed to receive
+                # user-history evidence on Gemini's unpaid tier. The migrated
+                # orchestrator already enforces this gate; this branch covers
+                # legacy deployments where Luna is disabled.
+                if not bool(
+                    getattr(self.parent, "_personal_gemini_allowed", lambda: False)()
+                ):
+                    provider_answer = None
+                provider_result = (
+                    provider_answer(
+                        question, self._qna_evidence(user_id, history, events)
+                    )
+                    if callable(provider_answer)
+                    else None
+                )
+                answer = provider_result if isinstance(provider_result, str) else None
             if not answer:
                 answer = self._deterministic_qna_answer(
                     user_id, question, history, events
                 )
+        message_id = uid()
         self.db.execute(
             "INSERT INTO qna_messages (id,thread_id,role,content,citations_json,scope) VALUES (?,?,?,?,?,?)",
-            (uid(), thread_id, "assistant", answer, dump(citations), scope.scope),
+            (message_id, thread_id, "assistant", answer, dump(citations), scope.scope),
         )
         if record_engagement_fn:
             record_engagement_fn(user_id, "qna_answered", thread_id)
         return {
             "thread_id": thread_id,
+            "message_id": message_id,
             "answer": answer,
             "scope": scope.scope,
             "citations": citations,
+            "language_mode": language_mode,
+            "language_policy": language_policy,
         }
 
     def qna_history(
@@ -344,7 +420,69 @@ class GuidanceService:
 
     # -- shelf scan → auto-logging (free) -------------------------------------
 
-    def _run_shelf_scan(self, image_bytes: bytes) -> dict[str, Any]:
+    def _run_shelf_scan(
+        self,
+        image_bytes: bytes,
+        *,
+        user_id: str | None = None,
+        request_identity: str | None = None,
+    ) -> dict[str, Any]:
+        orchestrator = getattr(self.parent, "ai_orchestrator", None)
+        if orchestrator is not None and user_id:
+            try:
+                scanned = orchestrator.run_product_scan(
+                    user_id=user_id,
+                    image_bytes=image_bytes,
+                    request_identity=request_identity
+                    or f"shelf-scan:{user_id}:{hashlib.sha256(image_bytes).hexdigest()}",
+                )
+                candidates = scanned.get("products", [])
+                language = orchestrator.run_language(
+                    user_id=user_id,
+                    evidence={
+                        "evidence_ids": ["product-scan"],
+                        "evidence": [
+                            {
+                                "id": "product-scan",
+                                "type": "product_label_draft",
+                                "value": candidates,
+                            }
+                        ],
+                    },
+                    task_type="product_label_explanation",
+                    data_class="product_only",
+                    request_identity=(request_identity or f"shelf-scan:{user_id}")
+                    + ":language",
+                )
+                language_answer = (
+                    (language.get("answer") or {}).get("answer")
+                    if isinstance(language, dict)
+                    else None
+                )
+                return {
+                    "candidates": candidates,
+                    "limitations": scanned.get("limitations", []),
+                    "provider": scanned.get("provider"),
+                    "model_id": scanned.get("model_id"),
+                    "reasoning_effort": scanned.get("reasoning_effort"),
+                    "language": (
+                        language.get("language_mode")
+                        if isinstance(language, dict)
+                        else None
+                    ),
+                    "explanation": language_answer,
+                    "message": (
+                        f"Found {len(candidates)} candidate product(s). Review and confirm before they are added."
+                        if candidates
+                        else "No products were recognized in this photo. Try better lighting or a closer shot of the labels."
+                    ),
+                }
+            except Exception:
+                # Keep the job recoverable and avoid exposing provider details.
+                return {
+                    "candidates": [],
+                    "message": "Product scan is temporarily unavailable. Try again or add products manually.",
+                }
         if not self.vision:
             return {
                 "candidates": [],
@@ -369,8 +507,13 @@ class GuidanceService:
         self.parent.require_user(user_id)
         if not image_bytes:
             raise ValueError("image is required")
+        photo_ref = self.parent.photos.save(user_id, uid(), image_bytes)
         job_id = self.jobs.submit(
-            "shelf_scan", self._run_shelf_scan, image_bytes, user_id=user_id
+            "shelf_scan",
+            self._run_shelf_scan,
+            image_bytes,
+            user_id=user_id,
+            payload={"photo_ref": photo_ref},
         )
         if record_engagement_fn:
             record_engagement_fn(user_id, "shelf_scan_submitted", job_id)
@@ -381,7 +524,7 @@ class GuidanceService:
         job = self.jobs.get(job_id, user_id=user_id)
         if not job:
             raise ValueError("shelf-scan job not found")
-        return job
+        return dict(job)
 
     def confirm_shelf_scan(
         self,

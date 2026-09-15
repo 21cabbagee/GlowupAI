@@ -44,6 +44,22 @@ fun WeeklyRecapCard(
                 color = glow.ink600,
                 modifier = Modifier.padding(top = 6.dp),
             )
+            recap.aiSummary?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    text = "AI summary: $it",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = glow.ink600,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+            recap.observationSummaries.take(4).forEach { observation ->
+                Text(
+                    text = "${observation.region.replace('_', ' ')} · ${observation.concern.replace('_', ' ')}: ${observation.description}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = glow.ink600,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
             if (!recap.nextAction.isNullOrBlank()) {
                 Text(
                     text = "Next: ${recap.nextAction}",

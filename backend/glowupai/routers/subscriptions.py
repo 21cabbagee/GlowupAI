@@ -2,17 +2,35 @@
 
 from __future__ import annotations
 
+import base64
+import json
 import logging
+import os
 from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
+from ..config import play_billing_enabled
+from ..play_billing import verify_notification_identity
 
 logger = logging.getLogger(__name__)
 
 
 class UpgradeCreate(BaseModel):
     source: str = "local_checkout"
+
+
+class PlayPurchaseCreate(BaseModel):
+    purchase_token: str = Field(min_length=1, max_length=4096)
+
+
+class PlayNotificationMessage(BaseModel):
+    data: str = Field(min_length=1, max_length=32768)
+    message_id: str | None = Field(default=None, alias="messageId", max_length=256)
+
+
+class PlayNotification(BaseModel):
+    message: PlayNotificationMessage
 
 
 class ProductCreate(BaseModel):
@@ -69,19 +87,106 @@ class SubscriptionCreate(BaseModel):
     source: str = "api"
 
 
-def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter:
+def setup_subscriptions_router(
+    service, run_handler, require_owner, require_admin, require_authenticated
+) -> APIRouter:
     """Setup subscription and product routes with dependencies."""
 
     # Create a fresh router for each app instance
     router = APIRouter(prefix="/api", tags=["subscriptions"])
+
+    @router.get("/billing/config")
+    def billing_config():
+        if not play_billing_enabled():
+            return {"enabled": False, "product_ids": []}
+        return {
+            "enabled": True,
+            "product_ids": [
+                p.strip()
+                for p in os.getenv("GLOWUPAI_PLAY_PRODUCT_IDS", "").split(",")
+                if p.strip()
+            ],
+        }
+
+    @router.post("/billing/play/notifications")
+    def play_notification(
+        payload: PlayNotification, authorization: str | None = Header(default=None)
+    ):
+        if not play_billing_enabled():
+            raise HTTPException(404, "Google Play billing is not enabled")
+        try:
+            verify_notification_identity(authorization)
+        except PermissionError as exc:
+            raise HTTPException(401, str(exc)) from None
+        message_id = payload.message.message_id
+        if message_id and service.db.fetchone(
+            "SELECT message_id FROM play_notification_events WHERE message_id=?",
+            (message_id,),
+        ):
+            return {"received": True, "duplicate": True}
+        try:
+            notification = json.loads(
+                base64.b64decode(payload.message.data, validate=True).decode("utf-8")
+            )
+            if notification.get("packageName") != os.getenv(
+                "GLOWUPAI_PLAY_PACKAGE_NAME"
+            ):
+                raise ValueError("Unexpected package")
+            event = (
+                notification.get("subscriptionNotification")
+                or notification.get("voidedPurchaseNotification")
+                or {}
+            )
+            token = event.get("purchaseToken")
+            if token is not None and (
+                not isinstance(token, str) or not 1 <= len(token) <= 4096
+            ):
+                raise ValueError("Invalid purchase token")
+        except (ValueError, TypeError, AttributeError):
+            raise HTTPException(400, "Invalid Play notification") from None
+        linked = False
+        if token:
+            try:
+                linked = service.subscription_svc.refresh_play_purchase(token)
+            except Exception:
+                # Non-2xx keeps delivery retryable when Google or storage is unavailable.
+                raise HTTPException(
+                    503, "Purchase refresh failed; retry notification"
+                ) from None
+        if message_id:
+            service.db.execute(
+                "INSERT INTO play_notification_events (message_id) VALUES (?) ON CONFLICT (message_id) DO NOTHING",
+                (message_id,),
+            )
+        return {"received": True, "known_purchase": linked}
+
+    @router.post("/users/{user_id}/subscription/play")
+    def verify_play_purchase(
+        user_id: str,
+        payload: PlayPurchaseCreate,
+        authorization: str | None = Header(default=None),
+    ):
+        if not play_billing_enabled():
+            raise HTTPException(404, "Google Play billing is not enabled")
+        require_owner(user_id, authorization)
+        try:
+            return run_handler(
+                service.subscription_svc.verify_play_purchase,
+                user_id,
+                payload.purchase_token,
+            )
+        except RuntimeError:
+            logger.exception("Google Play purchase verification failed")
+            raise HTTPException(
+                503, "Google Play verification is temporarily unavailable"
+            ) from None
 
     @router.get("/subscriptions")
     def list_subscriptions(
         limit: int = 100, authorization: str | None = Header(default=None)
     ) -> dict[str, Any]:
         """List all subscriptions (returns list of entitlements)."""
-        # This endpoint could be used by admins or for listing user's own subscriptions
-        # For now, making it open to match the POST endpoint pattern
+        require_admin(authorization)
         subscriptions = run_handler(service.list_subscriptions, limit)
         return {"subscriptions": subscriptions, "count": len(subscriptions)}
 
@@ -123,7 +228,11 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         return result
 
     @router.post("/products")
-    def create_product(payload: ProductCreate) -> dict[str, Any]:
+    def create_product(
+        payload: ProductCreate,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        require_authenticated(authorization)
         result: dict[str, Any] = run_handler(
             service.create_product,
             payload.name,
@@ -227,9 +336,9 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
     @router.get("/users/{user_id}/experiments")
     def experiments(
         user_id: str, authorization: str | None = Header(default=None)
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.experiments, user_id)
+        result: list[dict[str, Any]] = run_handler(service.experiments, user_id)
         return result
 
     @router.get("/users/{user_id}/experiments/{experiment_id}")
@@ -277,6 +386,41 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         result: list[dict[str, Any]] = run_handler(service.qna_history, user_id)
         return result
 
+    @router.post("/users/{user_id}/qna/{message_id}/report")
+    def report_answer(
+        user_id: str,
+        message_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, bool]:
+        require_owner(user_id, authorization)
+        message = service.db.fetchone(
+            "SELECT m.id FROM qna_messages m JOIN qna_threads t ON t.id=m.thread_id "
+            "WHERE m.id=? AND t.user_id=? AND m.role='assistant'",
+            (message_id, user_id),
+        )
+        if message is None:
+            raise HTTPException(404, "Answer not found")
+        service.db.execute(
+            "INSERT INTO qna_reports (message_id,user_id) VALUES (?,?) "
+            "ON CONFLICT(message_id) DO NOTHING",
+            (message_id, user_id),
+        )
+        return {"reported": True}
+
+    @router.get("/admin/qna-reports")
+    def reported_answers(
+        authorization: str | None = Header(default=None),
+    ) -> list[dict[str, Any]]:
+        require_admin(authorization)
+        return [
+            dict(row)
+            for row in service.db.fetchall(
+                "SELECT r.message_id,r.created_at,m.content FROM qna_reports r "
+                "JOIN qna_messages m ON m.id=r.message_id "
+                "ORDER BY r.created_at DESC LIMIT 100"
+            )
+        ]
+
     @router.get("/users/{user_id}/discover")
     def discover(
         user_id: str, authorization: str | None = Header(default=None)
@@ -290,9 +434,9 @@ def setup_subscriptions_router(service, run_handler, require_owner) -> APIRouter
         user_id: str,
         product_id: str | None = None,
         authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, Any]]:
         require_owner(user_id, authorization)
-        result: dict[str, Any] = run_handler(service.offers, user_id, product_id)
+        result: list[dict[str, Any]] = run_handler(service.offers, user_id, product_id)
         return result
 
     @router.post("/users/{user_id}/commerce/offers/{offer_id}/click")

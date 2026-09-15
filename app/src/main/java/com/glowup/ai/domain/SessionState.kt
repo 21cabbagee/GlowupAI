@@ -52,7 +52,7 @@ sealed class SessionState {
         override val nextAction = NextAction.SignIn
     }
 
-    /** Firebase sign-in is in flight. Transient; not authoritative. */
+    /** Supabase sign-in is in flight. Transient; not authoritative. */
     object Authenticating : SessionState() {
         override val isAuthoritative = false
         override val canCapture = false
@@ -60,7 +60,7 @@ sealed class SessionState {
         override val nextAction = NextAction.Wait
     }
 
-    /** Firebase auth succeeded (or a stored user id is being re-validated);
+    /** Supabase auth succeeded (or a stored user id is being re-validated);
      * waiting on the authoritative `GET /profile`-shaped response. Transient;
      * not authoritative — the shell must keep gating here. */
     object ProfileLoading : SessionState() {

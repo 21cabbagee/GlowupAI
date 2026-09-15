@@ -63,6 +63,12 @@ data class ShelfScanCandidateDto(
 data class ShelfScanResultDto(
     val candidates: List<ShelfScanCandidateDto> = emptyList(),
     val message: String? = null,
+    val limitations: List<String> = emptyList(),
+    val provider: String? = null,
+    @SerialName("model_id") val modelId: String? = null,
+    @SerialName("reasoning_effort") val reasoningEffort: String? = null,
+    val language: String? = null,
+    val explanation: String? = null,
 )
 
 @Serializable
@@ -82,6 +88,12 @@ fun ShelfScanJobDto.toDomain(fallbackJobId: String): ShelfScanJob =
                 ShelfScanResult(
                     candidates = r.candidates.map { ShelfScanCandidate(it.name, it.brand, it.category, it.ingredients) },
                     message = r.message,
+                    limitations = r.limitations,
+                    provider = r.provider,
+                    modelId = r.modelId,
+                    reasoningEffort = r.reasoningEffort,
+                    languageMode = r.language,
+                    explanation = r.explanation,
                 )
             },
         error = error,

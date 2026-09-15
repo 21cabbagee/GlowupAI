@@ -10,6 +10,8 @@ import com.glowup.ai.data.remote.dto.CaptureGuideDto
 import com.glowup.ai.data.remote.dto.CaptureResponseDto
 import com.glowup.ai.data.remote.dto.CheckInCreateRequestDto
 import com.glowup.ai.data.remote.dto.CheckInDto
+import com.glowup.ai.data.remote.dto.ComparisonCreateRequestDto
+import com.glowup.ai.data.remote.dto.ComparisonResponseDto
 import com.glowup.ai.data.remote.dto.ConfoundCheckDto
 import com.glowup.ai.data.remote.dto.ConsentRequestDto
 import com.glowup.ai.data.remote.dto.ContextEventCreateRequestDto
@@ -83,6 +85,15 @@ import retrofit2.http.Query
  * simply ignore it server-side unless `GLOWUPAI_AUTH_REQUIRED=1`.
  */
 interface GlowUpApi {
+    @GET("billing/config")
+    suspend fun billingConfig(): com.glowup.ai.data.remote.dto.BillingConfigDto
+
+    @POST("users/{userId}/subscription/play")
+    suspend fun verifyPlayPurchase(
+        @Path("userId") userId: String,
+        @Body request: com.glowup.ai.data.remote.dto.PlayPurchaseRequestDto,
+    ): SubscriptionDto
+
     // -- Startup ------------------------------------------------------------
 
     @GET("health")
@@ -90,8 +101,8 @@ interface GlowUpApi {
 
     // -- Authentication -------------------------------------------------------
 
-    /** Exchange the current Firebase ID token (attached by [AuthInterceptor])
-     * for a GlowUpAI profile. Idempotent per Firebase uid. */
+    /** Exchange the current Supabase access JWT (attached by [AuthInterceptor])
+     * for a GlowUpAI profile. Idempotent per Supabase uid. */
     @POST("auth/session")
     suspend fun authSession(): ProfileResponseDto
 
@@ -237,6 +248,27 @@ interface GlowUpApi {
         @Query("vertical") vertical: String = "skin",
     ): List<HistoryItemDto>
 
+    /** Owner-checked detail endpoint used to recover a result after process death. */
+    @GET("users/{userId}/captures/{captureId}")
+    suspend fun getCapture(
+        @Path("userId") userId: String,
+        @Path("captureId") captureId: String,
+        @Query("vertical") vertical: String = "skin",
+    ): CaptureResponseDto
+
+    /** Runs the owner-scoped Luna qualitative comparison for two captures. */
+    @POST("users/{userId}/comparisons")
+    suspend fun compareCaptures(
+        @Path("userId") userId: String,
+        @Body body: ComparisonCreateRequestDto,
+    ): ComparisonResponseDto
+
+    @GET("users/{userId}/comparisons/{comparisonId}")
+    suspend fun getComparison(
+        @Path("userId") userId: String,
+        @Path("comparisonId") comparisonId: String,
+    ): ComparisonResponseDto
+
     /** Side-effecting (writes a reminder row) — never poll. */
     @GET("users/{userId}/engagement")
     suspend fun getEngagement(
@@ -291,6 +323,12 @@ interface GlowUpApi {
     suspend fun getQnaHistory(
         @Path("userId") userId: String,
     ): List<QnaMessageDto>
+
+    @POST("users/{userId}/qna/{messageId}/report")
+    suspend fun reportQna(
+        @Path("userId") userId: String,
+        @Path("messageId") messageId: String,
+    )
 
     /** Open route — no `user_id`, no Premium requirement. */
     @POST("triage")

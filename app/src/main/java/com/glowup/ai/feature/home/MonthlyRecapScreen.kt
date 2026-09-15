@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.ui.GlowButton
 import com.glowup.ai.core.ui.GlowTopBar
+import com.glowup.ai.core.ui.GlowAsyncImage
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.*
@@ -328,10 +329,10 @@ private fun BeforeAfterComparison(
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                     ) {
-                        // TODO: Load actual image with Coil
-                        Text(
-                            text = "Before",
-                            modifier = Modifier.align(Alignment.Center),
+                        GlowAsyncImage(
+                            url = beforeUrl,
+                            contentDescription = "First capture of the month",
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                     Text(
@@ -355,10 +356,10 @@ private fun BeforeAfterComparison(
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                     ) {
-                        // TODO: Load actual image with Coil
-                        Text(
-                            text = "After",
-                            modifier = Modifier.align(Alignment.Center),
+                        GlowAsyncImage(
+                            url = afterUrl,
+                            contentDescription = "Last capture of the month",
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                     Text(

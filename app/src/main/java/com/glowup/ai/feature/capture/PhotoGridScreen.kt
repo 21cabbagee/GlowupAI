@@ -3,7 +3,7 @@ package com.glowup.ai.feature.capture
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -26,7 +26,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.glowup.ai.core.design.LocalGlowColors
 import com.glowup.ai.core.ui.GlowTopBar
+import com.glowup.ai.core.ui.CapturePhoto
 import com.glowup.ai.domain.model.Capture
+import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -236,6 +238,7 @@ private fun MonthHeader(month: String) {
  * Individual photo grid item
  */
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun PhotoGridItem(
     capture: Capture,
     isSelected: Boolean,
@@ -252,9 +255,11 @@ private fun PhotoGridItem(
             modifier
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(8.dp))
-                .clickable(onClick = onClick),
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
     ) {
-        // Photo (TODO: Load with Coil)
         Box(
             modifier =
                 Modifier
@@ -264,10 +269,10 @@ private fun PhotoGridItem(
                     .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = capture.capturedAt.take(10), // Date only
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            CapturePhoto(
+                path = capture.photoPath,
+                description = "Capture from ${capture.capturedAt.take(10)}",
+                modifier = Modifier.fillMaxSize(),
             )
         }
 
@@ -330,7 +335,6 @@ enum class PhotoGridFilter(
     THIS_MONTH("This Month"),
     LAST_MONTH("Last Month"),
     BASELINE("Baseline"),
-    EXPERIMENTS("Experiments"),
 }
 
 /**
@@ -348,14 +352,14 @@ private fun filterCaptures(
 
         PhotoGridFilter.THIS_MONTH -> {
             captures.filter {
-                val date = LocalDate.parse(it.capturedAt.take(10))
+                val date = it.captureLocalDate() ?: return@filter false
                 date.month == now.month && date.year == now.year
             }
         }
 
         PhotoGridFilter.LAST_MONTH -> {
             captures.filter {
-                val date = LocalDate.parse(it.capturedAt.take(10))
+                val date = it.captureLocalDate() ?: return@filter false
                 val lastMonth = now.minusMonths(1)
                 date.month == lastMonth.month && date.year == lastMonth.year
             }
@@ -365,9 +369,6 @@ private fun filterCaptures(
             captures.filter { it.isBaseline }
         }
 
-        PhotoGridFilter.EXPERIMENTS -> {
-            emptyList()
-        } // TODO: Add experiment tracking to HistoryItem
     }
 }
 
@@ -378,6 +379,13 @@ private fun groupCapturesByMonth(captures: List<Capture>, locale: java.util.Loca
     captures
         .sortedByDescending { it.capturedAt }
         .groupBy {
-            val date = LocalDate.parse(it.capturedAt.take(10))
+            val date = it.captureLocalDate() ?: LocalDate.MIN
             "${date.month.getDisplayName(TextStyle.FULL, locale)} ${date.year}"
         }
+
+private fun Capture.captureLocalDate(): LocalDate? =
+    runCatching {
+        Instant.parse(capturedAt).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+    }.getOrElse {
+        runCatching { LocalDate.parse(capturedAt.take(10)) }.getOrNull()
+    }

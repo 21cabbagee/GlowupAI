@@ -11,7 +11,7 @@ import com.glowup.ai.domain.model.Profile
  * No Android dependency, no Compose, no network/DataStore access: every
  * function here is `(SessionState, event) -> SessionState`. Callers
  * (`feature/shell/SessionGate.kt`, repositories) perform the actual I/O —
- * Firebase sign-in, `GET /profile` / `POST /api/auth/session` / `POST
+ * Supabase sign-in, `GET /profile` / `POST /api/auth/session` / `POST
  * /consent`, and clearing DataStore keys — and feed the results in here. That
  * split is what makes the state trustworthy: it can only ever be what the
  * backend's authoritative profile response says it is
@@ -71,7 +71,7 @@ object SessionStateMachine {
     /** Cold-start state before anything has run. */
     fun initial(): SessionState = SessionState.NoUser
 
-    /** UI/repository begins a Firebase sign-in (or is re-validating a stored
+    /** UI/repository begins a Supabase sign-in (or is re-validating a stored
      * candidate user id from `SessionStore` — frontend-api-map.md "Startup
      * and session recovery": "load a locally persisted user_id only as a
      * candidate"). Only meaningful from [SessionState.NoUser] or
@@ -83,7 +83,7 @@ object SessionStateMachine {
             else -> current
         }
 
-    /** Firebase auth failed (bad credentials, cancelled, etc). Back to
+    /** Supabase auth failed (bad credentials, cancelled, etc). Back to
      * [SessionState.NoUser] so the user can retry sign-in; only meaningful
      * while [SessionState.Authenticating]. */
     fun onAuthenticationFailed(current: SessionState): SessionState =
@@ -92,7 +92,7 @@ object SessionStateMachine {
             else -> current
         }
 
-    /** Firebase auth succeeded. Moves to [SessionState.ProfileLoading] —
+    /** Supabase auth succeeded. Moves to [SessionState.ProfileLoading] —
      * still not authoritative until `POST /api/auth/session` (or
      * `GET /profile`) actually returns. */
     fun onAuthenticationSucceeded(current: SessionState): SessionState =
@@ -144,7 +144,7 @@ object SessionStateMachine {
                     is ApiError.NotFound -> SessionState.NoUser
 
                     // A bearer token that is still rejected after AuthInterceptor's
-                    // 401 refresh attempt means the Firebase session itself is dead;
+                    // 401 refresh attempt means the Supabase session itself is dead;
                     // force re-authentication rather than stranding the user on an
                     // error screen with a "retry" button that can never succeed.
                     is ApiError.Unauthorized -> SessionState.NoUser

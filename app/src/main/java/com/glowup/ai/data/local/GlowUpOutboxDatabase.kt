@@ -18,7 +18,7 @@ import androidx.room.RoomDatabase
  */
 @Database(
     entities = [CaptureOutboxEntity::class],
-    version = 1,
+    version = 2,
     // See GlowUpDatabase's identical comment — flip to true once `room.schemaLocation` is
     // configured in app/build.gradle.kts (owned by Task 0.3).
     exportSchema = false,

@@ -60,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Infrastructure
 - GitHub Actions CI/CD for backend and Android
 - Security scanning with Bandit, Safety, and Trivy
-- Render.com deployment for backend
+- Vercel deployment for backend
 - ProGuard/R8 code shrinking for Android release builds
 
 ---

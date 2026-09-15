@@ -29,7 +29,7 @@ import com.glowup.ai.feature.shell.GlowDestination
  * [GlowDestination.Splash]. The system `SplashScreen` API (installed in `MainActivity.onCreate`
  * via `installSplashScreen()`) covers the icon/brand flash before Compose ever draws; this
  * composable is what a user sees for the (usually sub-second, occasionally longer on a slow
- * network) time it takes to resolve `GET /api/health` and, if a Firebase session exists,
+ * network) time it takes to resolve `GET /api/health` and, if a Supabase session exists,
  * `POST /api/auth/session` — see [AuthViewModel.bootstrap].
  */
 @Composable

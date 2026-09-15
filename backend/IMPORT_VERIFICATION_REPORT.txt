@@ -63,7 +63,7 @@ CORE SERVICES
 
 CORE MODULES
 ================================================================================
-✓ glowupai.auth (FirebaseIdentity, JWKSCache, AuthError)
+✓ glowupai.auth (SupabaseIdentity, JWKSCache, AuthError)
 ✓ glowupai.config (Settings)
 ✓ glowupai.db (Database)
 ✓ glowupai.full_db

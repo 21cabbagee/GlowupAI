@@ -37,8 +37,9 @@ sealed class OutboxOutcome {
 
 /**
  * The outbox idempotency mechanism required by ANDROID_PLAN.md 2.4 / frontend-api-map.md trap #9:
- * "a duplicate accepted capture corrupts the user's history." `POST /api/captures` has no
- * server-side idempotency key, so this class implements idempotency on the CLIENT side instead:
+ * "a duplicate accepted capture corrupts the user's history." The request carries a stable
+ * server-side idempotency key, while the history reconciliation below remains a defense for rows
+ * created by older app versions:
  *
  * On any retry (`entry.attemptCount > 0` — i.e. a previous attempt for this exact row already ran
  * and its outcome was never confirmed), [process] calls [wasAlreadyAccepted] BEFORE re-uploading.
@@ -82,6 +83,7 @@ class CaptureOutboxProcessor(
                 experimentId = entry.experimentId,
                 capturedAt = entry.capturedAt,
                 deviceMeta = deviceMeta,
+                idempotencyKey = entry.idempotencyKey,
             )
 
         return when (val result = upload(request)) {

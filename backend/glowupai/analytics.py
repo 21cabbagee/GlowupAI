@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from .db import Database
@@ -36,9 +36,10 @@ class AnalyticsTracker:
         CREATE INDEX IF NOT EXISTS idx_analytics_type_time
         ON analytics_events(event_type, created_at);
         """
-        with self.db._lock:
-            self.db.connection.executescript(schema)
-            self.db.connection.commit()
+        for statement in schema.split(";"):
+            statement = statement.strip()
+            if statement:
+                self.db.execute(statement)
 
     def track_event(
         self,
@@ -334,7 +335,16 @@ class AnalyticsTracker:
         today = datetime.now(UTC).date()
 
         for row in rows:
-            capture_date = datetime.fromisoformat(row["date"]).date()
+            # SQLite returns DATE() as text while PostgreSQL returns a native
+            # ``date``.  Accept both so capture analytics cannot fail after a
+            # successfully stored image.
+            value = row["date"]
+            if isinstance(value, datetime):
+                capture_date = value.date()
+            elif isinstance(value, date):
+                capture_date = value
+            else:
+                capture_date = datetime.fromisoformat(str(value)).date()
             expected_date = today - timedelta(days=streak)
 
             if capture_date == expected_date:

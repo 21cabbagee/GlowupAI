@@ -99,6 +99,7 @@ class QnaViewModel
                                         ChatMessage(
                                             id = UUID.randomUUID().toString(),
                                             role = msg.role,
+                                            serverId = msg.id,
                                             content = msg.content,
                                             scope = msg.scope,
                                             citations = msg.citations,
@@ -130,6 +131,34 @@ class QnaViewModel
         fun onInputChange(text: String) {
             val current = _uiState.value as? QnaUiState.Content ?: return
             _uiState.value = current.copy(input = text)
+        }
+
+        fun reportAnswer(messageId: String) {
+            val state = _uiState.value as? QnaUiState.Content ?: return
+            val message = state.messages.firstOrNull { it.id == messageId } ?: return
+            val serverId = message.serverId ?: return
+            if (message.reporting || message.reported) return
+            fun updateMessage(transform: (ChatMessage) -> ChatMessage) {
+                _uiState.update { current ->
+                    (current as? QnaUiState.Content)?.copy(
+                        messages = current.messages.map { if (it.id == messageId) transform(it) else it },
+                    ) ?: current
+                }
+            }
+            updateMessage { it.copy(reporting = true, reportError = null) }
+            viewModelScope.launch {
+                val userId = sessionStore.userId()
+                if (userId == null) {
+                    updateMessage { it.copy(reporting = false, reportError = "Sign in to report this answer.") }
+                    return@launch
+                }
+                when (val result = repository.reportAnswer(userId, serverId)) {
+                    is GlowResult.Success -> updateMessage { it.copy(reporting = false, reported = true) }
+                    is GlowResult.Failure -> updateMessage {
+                        it.copy(reporting = false, reportError = result.error.toUserMessage())
+                    }
+                }
+            }
         }
 
         fun startNewConversation() {
@@ -203,6 +232,7 @@ class QnaViewModel
                         resolvePending(
                             pendingId,
                             answer.answer,
+                            serverId = answer.messageId,
                             scope = answer.scope,
                             citations = answer.citations,
                             isSafetyHandoff = isHandoff,
@@ -230,6 +260,7 @@ class QnaViewModel
             isSafetyHandoff: Boolean = false,
             isError: Boolean = false,
             blockThread: Boolean = false,
+            serverId: String? = null,
         ) {
             _uiState.update { current ->
                 val content = current as? QnaUiState.Content ?: return@update current
@@ -239,6 +270,7 @@ class QnaViewModel
                             if (message.id == pendingId) {
                                 message.copy(
                                     content = text,
+                                    serverId = serverId,
                                     pending = false,
                                     scope = scope,
                                     citations = citations,

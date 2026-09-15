@@ -20,27 +20,32 @@ jobs:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true  # Don't send failure emails
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
       - name: Run Snyk Security Scan (Backend)
+        if: env.SNYK_TOKEN != ''
         uses: snyk/actions/python@v1.0.0
-        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high --file=backend/pyproject.toml
 
       - name: Run Snyk Security Scan (Android)
+        if: env.SNYK_TOKEN != ''
         uses: snyk/actions/gradle@v1.0.0
-        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high
+
+      - name: Report unavailable optional Snyk scan
+        if: env.SNYK_TOKEN == ''
+        run: echo "::notice::SNYK_TOKEN is not configured; built-in Bandit, Safety, OWASP, and Trivy scans still run."
 
       - name: Upload Snyk Results
         if: always()
@@ -57,31 +62,26 @@ jobs:
     name: Secret Scanning
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true  # Don't send failure emails
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-        continue-on-error: true
         with:
           fetch-depth: 0  # Full history for better secret detection
 
       - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2.3.6
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
       - name: Check for AWS credentials
-        continue-on-error: true
         run: |
           if grep -r "AKIA[0-9A-Z]{16}" . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=venv; then
             echo "::warning::AWS credentials found in code!"
           fi
 
       - name: Check for hardcoded secrets patterns
-        continue-on-error: true
         run: |
           # Check for common secret patterns
           patterns=(
@@ -101,7 +101,6 @@ jobs:
     name: Static Code Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    continue-on-error: true  # Don't send failure emails
 
     steps:
       - name: Checkout code
@@ -127,13 +126,12 @@ jobs:
 
       - name: Run Safety Check (Python Dependencies)
         working-directory: backend
-        continue-on-error: true
         env:
           SAFETY_DB_DIR: /tmp/safety
         run: |
           pip install -e .
-          safety scan --stage cicd --json > safety-report.json || true
-          safety scan --stage cicd || true
+          safety scan --stage cicd --json > safety-report.json
+          safety scan --stage cicd
 
       - name: Upload Security Reports
         if: always()
@@ -149,7 +147,6 @@ jobs:
     name: OWASP Dependency Check
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    continue-on-error: true  # Don't send failure emails
 
     steps:
       - name: Checkout code
@@ -157,7 +154,6 @@ jobs:
 
       - name: Run OWASP Dependency-Check (Android)
         uses: dependency-check/Dependency-Check_Action@main
-        continue-on-error: true  # Don't fail on vulnerabilities found
         with:
           project: 'GlowupAI-Android'
           path: '.'
@@ -165,7 +161,7 @@ jobs:
           out: 'reports'
           args: >-
             --enableRetired
-            --failOnCVSS 11
+            --failOnCVSS 7
             --nvdApiDelay 6000
 
       - name: Upload OWASP Report
@@ -180,52 +176,41 @@ jobs:
     name: Android Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    continue-on-error: true  # Don't send failure emails
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Set up JDK 17
+      - name: Set up JDK 25
         uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '25'
 
       - name: Grant execute permission
         run: chmod +x gradlew
 
       - name: Build APK for analysis
-        continue-on-error: true  # Don't fail if build has issues
         run: ./gradlew assembleDebug
 
       - name: Run Android Lint Security Checks
-        continue-on-error: true  # Don't fail on lint issues
         run: |
           ./gradlew lintDebug
-          # Check for security-related lint issues
-          if [ -f app/build/reports/lint-results-debug.xml ]; then
-            grep -i "security\|permission\|crypto" app/build/reports/lint-results-debug.xml || true
-          fi
 
       - name: Check for insecure configurations
-        continue-on-error: true  # Don't fail workflow, just report
         run: |
           echo "Checking for security misconfigurations..."
 
           # Check for debuggable release builds
           if grep -r "debuggable true" app/src/main --include="*.gradle*"; then
-            echo "::warning::Debuggable flag found in main source!"
+            echo "::error::Debuggable flag found in main source!"
+            exit 1
           fi
 
           # Check for cleartext traffic allowed
           if grep -r "cleartextTrafficPermitted.*true" app/src/main/res; then
-            echo "::warning::Cleartext traffic is permitted"
-          fi
-
-          # Check for exported components without permissions
-          if grep -r 'android:exported="true"' app/src/main/AndroidManifest.xml; then
-            echo "::warning::Exported components found - verify permissions are set"
+            echo "::error::Cleartext traffic is permitted"
+            exit 1
           fi
 
       - name: Upload Android Security Report
@@ -241,7 +226,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [dependency-scan, secret-scan, code-scan, owasp-dependency-check, android-security]
     if: always()
-    continue-on-error: true  # Don't fail workflow if summary generation fails
 
     steps:
       - name: Download all reports
@@ -283,7 +267,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     timeout-minutes: 15
-    continue-on-error: true  # Don't send failure emails
 
     steps:
       - name: Checkout code
@@ -298,13 +281,12 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0
-        continue-on-error: true
         with:
           image-ref: 'glowup-backend:scan'
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
-          exit-code: '0'
+          exit-code: '1'
           ignore-unfixed: true
 
       - name: Check SARIF file exists
@@ -315,14 +297,13 @@ jobs:
             echo "SARIF_EXISTS=true" >> $GITHUB_ENV
             ls -lh trivy-results.sarif
           else
-            echo "WARNING: SARIF file not created by Trivy"
-            echo "SARIF_EXISTS=false" >> $GITHUB_ENV
+            echo "Trivy did not create a SARIF report"
+            exit 1
           fi
 
       - name: Run Trivy vulnerability scanner (table format)
         uses: aquasecurity/trivy-action@v0.36.0
         if: always()
-        continue-on-error: true
         with:
           image-ref: 'glowup-backend:scan'
           format: 'table'
@@ -332,6 +313,5 @@ jobs:
       - name: Upload Trivy results to GitHub Security
         if: always() && env.SARIF_EXISTS == 'true'
         uses: github/codeql-action/upload-sarif@v3
-        continue-on-error: true
         with:
           sarif_file: 'trivy-results.sarif'

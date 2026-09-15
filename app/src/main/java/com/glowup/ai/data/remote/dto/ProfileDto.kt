@@ -14,6 +14,15 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class PlayPurchaseRequestDto(@SerialName("purchase_token") val purchaseToken: String)
+
+@Serializable
+data class BillingConfigDto(
+    val enabled: Boolean = false,
+    @SerialName("product_ids") val productIds: List<String> = emptyList(),
+)
+
+@Serializable
 data class UserCreateRequestDto(
     @SerialName("skin_type") val skinType: String? = null,
 )
@@ -30,7 +39,7 @@ data class UserDto(
     @SerialName("skin_type") val skinType: String? = null,
     @SerialName("consent_state") val consentState: String = "pending",
     @SerialName("created_at") val createdAt: String? = null,
-    @SerialName("firebase_uid") val firebaseUid: String? = null,
+    @SerialName("supabase_uid") val supabaseUid: String? = null,
 )
 
 @Serializable
@@ -111,7 +120,7 @@ fun UserDto.toDomain(): User =
         skinType = skinType,
         consentState = ConsentState.fromRaw(consentState),
         createdAt = createdAt,
-        firebaseUid = firebaseUid,
+        supabaseUid = supabaseUid,
     )
 
 fun ExperienceProfileDto.toDomain(): ExperienceProfile =

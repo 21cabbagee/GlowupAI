@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,8 +51,8 @@ import com.glowup.ai.core.ui.GlowButtonVariant
 import com.glowup.ai.feature.shell.GlowDestination
 
 /**
- * [GlowDestination.Welcome]. The identity choice screen: "Continue with Google" (Firebase
- * generic-OAuth flow, see [FirebaseAuthGateway.signInWithGoogle]) or "Continue with email", which
+ * [GlowDestination.Welcome]. The identity choice screen: "Continue with Google" (Supabase
+ * native Google account chooser, see [SupabaseAuthGateway.signInWithGoogle]) or "Continue with email", which
  * hands off to [GlowDestination.SignIn] for the email/password + create-account flow.
  */
 @Composable
@@ -76,7 +78,14 @@ fun WelcomeRoute(
         onContinueWithGoogle = {
             context.findActivity()?.let(viewModel::signInWithGoogle)
         },
-        onContinueWithEmail = { navController.navigate(GlowDestination.SignIn) },
+        onCancelGoogle = viewModel::cancelAuthentication,
+        onContinueWithEmail = {
+            viewModel.cancelAuthentication()
+            navController.navigate(GlowDestination.SignIn)
+        },
+        onPrivacyPolicy = { navController.navigate(GlowDestination.PrivacyPolicy) },
+        onTermsOfService = { navController.navigate(GlowDestination.TermsOfService) },
+        onMedicalDisclaimer = { navController.navigate(GlowDestination.MedicalDisclaimer) },
     )
 }
 
@@ -84,7 +93,11 @@ fun WelcomeRoute(
 private fun WelcomeContent(
     uiState: AuthUiState,
     onContinueWithGoogle: () -> Unit,
+    onCancelGoogle: () -> Unit,
     onContinueWithEmail: () -> Unit,
+    onPrivacyPolicy: () -> Unit,
+    onTermsOfService: () -> Unit,
+    onMedicalDisclaimer: () -> Unit,
 ) {
     val glow = LocalGlowColors.current
     val isBusy = uiState is AuthUiState.Authenticating
@@ -123,7 +136,7 @@ private fun WelcomeContent(
 
         // Body text - 16sp Regular
         Text(
-            text = "Guided photo tracking, routine testing, and honest verdicts — never a diagnosis.",
+            text = "Guided photo tracking, routine planning, and honest verdicts — never a diagnosis.",
             fontSize = 16.sp,
             fontWeight = FontWeight.Normal,
             color = glow.ink600,
@@ -149,10 +162,8 @@ private fun WelcomeContent(
         // Primary button - Continue with Google
         PremiumPrimaryButton(
             modifier = Modifier.fillMaxWidth(),
-            text = "✨ Continue with Google",
-            onClick = onContinueWithGoogle,
-            enabled = !isBusy,
-            loading = isBusy,
+            text = if (isBusy) "Cancel Google sign-in" else "Continue with Google",
+            onClick = if (isBusy) onCancelGoogle else onContinueWithGoogle,
         )
 
         // Spacing - 16dp (following 8-point grid)
@@ -163,7 +174,6 @@ private fun WelcomeContent(
             modifier = Modifier.fillMaxWidth(),
             text = "Continue with email",
             onClick = onContinueWithEmail,
-            enabled = !isBusy,
         )
 
         // Spacing - 48dp
@@ -187,6 +197,15 @@ private fun WelcomeContent(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
         )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            TextButton(onClick = onPrivacyPolicy) { Text("Privacy") }
+            TextButton(onClick = onTermsOfService) { Text("Terms") }
+            TextButton(onClick = onMedicalDisclaimer) { Text("Safety") }
+        }
 
         // Bottom spacing - 24dp
         Spacer(modifier = Modifier.height(24.dp))
@@ -346,7 +365,7 @@ private fun EnhancedDisclaimerNote(text: String) {
 }
 
 /** Standard Compose recipe for recovering the hosting [Activity] from a (possibly wrapped)
- * [Context] — needed because Firebase's `startActivityForSignInWithProvider` requires one. */
+ * [Context] — needed to launch Android's native Google account chooser. */
 internal fun Context.findActivity(): Activity? {
     var context = this
     while (context is ContextWrapper) {
