@@ -75,28 +75,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
-      - name: Check for AWS credentials
-        run: |
-          if grep -r "AKIA[0-9A-Z]{16}" . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=venv; then
-            echo "::warning::AWS credentials found in code!"
-          fi
-
-      - name: Check for hardcoded secrets patterns
-        run: |
-          # Check for common secret patterns
-          patterns=(
-            "password\s*=\s*['\"][^'\"]*['\"]"
-            "api[_-]?key\s*=\s*['\"][^'\"]*['\"]"
-            "secret\s*=\s*['\"][^'\"]*['\"]"
-            "token\s*=\s*['\"][^'\"]*['\"]"
-          )
-
-          for pattern in "${patterns[@]}"; do
-            if grep -rE "$pattern" . --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=venv --exclude="*.md" --exclude="security.yml"; then
-              echo "::warning::Potential hardcoded secret found matching pattern: $pattern"
-            fi
-          done
-
   code-scan:
     name: Static Code Analysis
     runs-on: ubuntu-latest

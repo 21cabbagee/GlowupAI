@@ -454,7 +454,11 @@ class GlowupAIService:
                             self.db.execute(
                                 "UPDATE ai_analyses SET status='unavailable', safe_error_code=? "
                                 "WHERE id=? AND user_id=?",
-                                ("analysis_unavailable", analysis_id["id"], capture["user_id"]),
+                                (
+                                    "analysis_unavailable",
+                                    analysis_id["id"],
+                                    capture["user_id"],
+                                ),
                             )
                     except Exception as persist_exc:
                         logger.error(
