@@ -5,7 +5,7 @@ import logging
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, cast
 
 from .service import now_iso, row_dict
 from .play_billing import (
@@ -286,7 +286,7 @@ class SubscriptionService:
             "SELECT reference_id FROM engagement_events WHERE user_id=? AND event_type='free_verdict_unlocked' ORDER BY occurred_at LIMIT 1",
             (user_id,),
         )
-        return row["reference_id"] if row else None
+        return cast(str | None, row["reference_id"]) if row else None
 
     def list_subscriptions(self, limit: int = 100) -> list[dict[str, Any]]:
         """List all subscriptions (admin endpoint)."""

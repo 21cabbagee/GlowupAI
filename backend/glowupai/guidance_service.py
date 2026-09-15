@@ -5,7 +5,7 @@ import logging
 import hashlib
 import uuid
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 from .safety import triage
 from .service import now_iso, row_dict
@@ -689,7 +689,7 @@ class GuidanceService:
             "SELECT reference_id FROM engagement_events WHERE user_id=? AND event_type='free_verdict_unlocked' ORDER BY occurred_at LIMIT 1",
             (user_id,),
         )
-        return row["reference_id"] if row else None
+        return cast(str | None, row["reference_id"]) if row else None
 
     def triage_question(self, text: str) -> dict[str, Any]:
         return triage(text).as_dict()
