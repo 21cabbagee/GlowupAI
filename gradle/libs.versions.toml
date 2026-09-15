@@ -18,7 +18,7 @@ androidxHilt = "1.4.0"
 
 # Navigation + serialization
 navigationCompose = "2.9.0"
-kotlinxSerializationJson = "1.7.3"
+kotlinxSerializationJson = "1.11.0"
 
 # Networking
 retrofit = "2.11.0"
