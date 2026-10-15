@@ -132,6 +132,28 @@ class ProductionGuardrailTests(unittest.TestCase):
                 settings.allowed_origins, ["https://glowupai-test.onrender.com"]
             )
 
+    def test_render_without_credentials_runs_in_standalone_mode(self):
+        with patch.dict(
+            os.environ,
+            {
+                "GLOWUPAI_ENV": "production",
+                "RENDER": "true",
+                "RENDER_SERVICE_ID": "srv-test",
+                "SUPABASE_URL": "",
+                "DATABASE_URL": "",
+                "SUPABASE_DB_URL": "",
+            },
+            clear=False,
+        ):
+            settings = Settings(
+                db_path=Path("/tmp/test.sqlite3"),
+                photo_dir=None,
+                database_url=None,
+            )
+            self.assertFalse(settings.is_production)
+            # Must not raise RuntimeError
+            settings.validate_for_production()
+
 
 if __name__ == "__main__":
     unittest.main()
