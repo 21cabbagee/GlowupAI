@@ -14,6 +14,7 @@ import base64
 import io
 import json
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -493,6 +494,12 @@ class RouterRefactoringValidationTest(unittest.TestCase):
         if scan_response.status_code != 200:
             self.skipTest("Shelf scan endpoint not working")
         job_id = scan_response.json()["job_id"]
+
+        for _ in range(50):
+            job = self.service.jobs.get(job_id, user_id=user_id)
+            if job and job.get("status") == "completed":
+                break
+            time.sleep(0.05)
 
         response = self._check_endpoint(
             "captures",
