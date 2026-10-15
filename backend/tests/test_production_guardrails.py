@@ -117,6 +117,21 @@ class ProductionGuardrailTests(unittest.TestCase):
         )
         self.assertEqual(settings.supabase_service_role_key, "server-secret")
 
+    def test_production_picks_up_render_external_url(self):
+        with patch.dict(
+            os.environ,
+            {
+                "GLOWUPAI_ENV": "production",
+                "RENDER_EXTERNAL_URL": "https://glowupai-test.onrender.com",
+                "GLOWUPAI_ALLOWED_ORIGINS": "",
+            },
+            clear=False,
+        ):
+            settings = Settings.from_env()
+            self.assertEqual(
+                settings.allowed_origins, ["https://glowupai-test.onrender.com"]
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

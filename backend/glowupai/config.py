@@ -91,13 +91,13 @@ def play_billing_enabled() -> bool:
     a Play testing track.  When disabled, the API exposes no purchasable
     products and does not require Play service-account or RTDN credentials.
     """
-
-    return os.getenv("GLOWUPAI_PLAY_BILLING_ENABLED", "1").strip().casefold() not in {
-        "0",
-        "false",
-        "no",
-        "off",
-    }
+    flag = os.getenv("GLOWUPAI_PLAY_BILLING_ENABLED")
+    if flag is not None:
+        return flag.strip().casefold() not in {"0", "false", "no", "off"}
+    return bool(
+        os.getenv("GLOWUPAI_PLAY_PACKAGE_NAME", "").strip()
+        or os.getenv("GLOWUPAI_BILLING_KEY", "").strip()
+    )
 
 
 @dataclass(frozen=True)
@@ -326,8 +326,12 @@ class Settings:
             ]
         else:
             if env_name in {"prod", "production"}:
-                # Production must declare its consumer origins explicitly.
-                allowed_origins = []
+                render_url = os.getenv("RENDER_EXTERNAL_URL", "").strip()
+                if render_url and render_url.startswith("https://"):
+                    allowed_origins = [render_url]
+                else:
+                    # Production must declare its consumer origins explicitly.
+                    allowed_origins = []
             else:
                 # Development default: allow localhost and emulator
                 allowed_origins = [
